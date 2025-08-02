@@ -1,0 +1,187 @@
+/* ========== Shared Styles ========== */
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .content-wrapper {
+    flex-direction: row;
+  }
+  .content-wrapper.reverse {
+    flex-direction: row-reverse;
+  }
+}
+
+.image-section,
+.text-section {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .image-section,
+  .text-section {
+    width: 50%;
+  }
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #1f2937; /* gray-900 */
+  margin-bottom: 1.5rem;
+}
+
+.paragraph {
+  font-size: 1.125rem;
+  color: #4b5563; /* gray-700 */
+  margin-bottom: 1.5rem;
+}
+
+.button-wrapper {
+  margin-top: 1.5rem;
+}
+
+/* ========== Background Video ========== */
+
+.background-video {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* ========== Pet Owner Section ========== */
+
+.pet-owner-section {
+  width: 100%;
+  padding: 4rem 0;
+  background-color: white;
+}
+
+.pet-image {
+  width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.register-btn {
+  padding: 1rem 2rem;
+  background-color: #2563eb;
+  color: white;
+  font-size: 1.125rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 9999px;
+  box-shadow: 0 10px 15px rgba(59, 130, 246, 0.3);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.register-btn:hover {
+  background-color: #1d4ed8;
+}
+
+/* ========== Veterinarian Section ========== */
+
+.veterinarian-section {
+  width: 100%;
+  padding: 4rem 0;
+  background-color: #f9fafb;
+}
+
+.vet-image {
+  width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.join-btn {
+  padding: 1rem 2rem;
+  background-color: #26e458;
+  color: white;
+  font-size: 1.125rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 9999px;
+    cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.join-btn:hover {
+  background-color: #20c14b;
+}
+
+/* ========== Service Provider Section ========== */
+
+.service-provider-section {
+  width: 100%;
+  padding: 4rem 0;
+  background-color: white;
+}
+
+.service-image {
+  width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.service-provider-section .register-btn {
+  background-color: #8b5cf6;
+  box-shadow: 0 10px 15px rgba(139, 92, 246, 0.3);
+}
+
+.service-provider-section .register-btn:hover {
+  background-color: #7c3aed;
+}
+
+/* ========== Vet Clinic Section ========== */
+
+.vet-clinic-section {
+  width: 100%;
+  padding: 4rem 0;
+  background-color: #f9fafb;
+}
+
+.clinic-image {
+  width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.partner-btn {
+  padding: 1rem 2rem;
+  background-color: #ec4899;
+  color: white;
+  font-size: 1.125rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 9999px;
+  box-shadow: 0 10px 15px rgba(236, 72, 153, 0.3);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.partner-btn:hover {
+  background-color: #db2777;
+}

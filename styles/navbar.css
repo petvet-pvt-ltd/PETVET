@@ -1,0 +1,62 @@
+body {
+  margin: 0;
+  padding: 0;
+   /* You can change the global font here */
+}
+
+.navbar {
+  font-family: Arial, sans-serif;
+  background-color: #2f5475;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 30px;
+  position: sticky;   /* ✅ Make it stick to top */
+  top: 0;              /* ✅ Position it at the top of the page */
+  z-index: 1000;       /* ✅ Make sure it stays above other elements */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+}
+
+
+.logo img {
+  height: 40px; /* ✅ Change this to resize the logo image */
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 50px; /* ✅ Controls space between menu items */
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links a {
+  display: inline-block; /* ✅ Needed for transform to work */
+  text-decoration: none;
+  color: white;
+  font-size: 17px;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.nav-links a:hover {
+  color: #BCE3F5;
+  transform: scale(1.05);
+}
+
+.nav-links a.active,
+.login-btn.active {
+  color: #BCE3F5; /* Or whatever highlight color you want */
+  /*font-weight: bold;*/
+  border-bottom: 2px solid #BCE3F5;
+}
+
+.login-btn {
+  background-color: #d0e8ff; /* ✅ Login button background */
+  padding: 8px 16px; /* ✅ Padding inside the Login button */
+  border-radius: 6px; /* ✅ Rounded corners for the Login button */
+  text-decoration: none;
+  color: black; /* ✅ Font color for Login button */
+  font-weight: bold;
+  font-size: 15px; /* ✅ Font size of Login button text */
+}
