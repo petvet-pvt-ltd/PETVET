@@ -1,8 +1,8 @@
 <?php
 #server information
-$server_name = "localhost";
+$server_name = "10.241.235.102";
 $server_user = "root";
-$server_pass = "";
+$server_pass = "your_password";
 $server_db = "petvet-test";
 
 #test table - users
