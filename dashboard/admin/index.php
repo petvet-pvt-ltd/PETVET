@@ -19,7 +19,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
     <div class="stats-container">
       <div class="stat-box">
-        <h3>Total </h3>
+        <h3>Total Users</h3>
         <p>12,548</p>
         <span class="green">↑ 12% since last month</span>
       </div>
@@ -31,7 +31,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
       <div class="stat-box">
         <h3>Revenue</h3>
         <p>$48,260</p>
-        <span class="green"> since last month</span>
+        <span class="green">18% since last month</span>
       </div>
       <div class="stat-box">
         <h3>Pets Listed</h3>
