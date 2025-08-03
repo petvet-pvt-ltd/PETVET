@@ -1,3 +1,7 @@
+<?php
+require_once 'redirectorToLoggedUser.php';
+?>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,6 +14,8 @@
   <?php require_once 'navbar.php' ?>
 
 </body>
+<script src="redirectorToLoggedUser.js"></script>       <!-- redirecting javascript file -->
+
  <section class="hero">
     <h1>Contact Us</h1>
     <p>We'd love to hear from you! Reach out with any questions, feedback, or pet emergencies.</p>

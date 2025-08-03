@@ -1,3 +1,7 @@
+<?php
+require_once 'redirectorToLoggedUser.php';
+?>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -8,6 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+<script src="redirectorToLoggedUser.js"></script>       <!-- redirecting javascript file -->
 
 <?php require_once 'navbar.php' ?>
 

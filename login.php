@@ -1,3 +1,7 @@
+<?php
+require_once 'redirectorToLoggedUser.php';              # redirecting php file
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +9,10 @@
   <title>Login | PETVET</title>
   <link rel="stylesheet" href="styles/login.css">
 </head>
+
 <body>
+<script src="redirectorToLoggedUser.js"></script>       <!-- redirecting javascript file -->
+
   <div class="container">
     <div class="image-panel"></div>
 

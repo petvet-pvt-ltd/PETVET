@@ -1,3 +1,7 @@
+<?php
+require_once 'redirectorToLoggedUser.php';
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +11,7 @@
   <link rel="stylesheet" href="styles/petprofile.css"/>
 </head>
 <body>
+<script src="redirectorToLoggedUser.js"></script>       <!-- redirecting javascript file -->
 
   <!-- Hero Banner -->
   <section class="hero-banner">

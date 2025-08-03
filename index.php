@@ -1,5 +1,5 @@
 <?php
-require_once 'redirector.php';
+require_once 'redirectorToLoggedUser.php';
 ?>
 
 <html lang="en">
@@ -10,6 +10,8 @@ require_once 'redirector.php';
     
 </head>
 <body>
+<script src="redirectorToLoggedUser.js"></script>       <!-- redirecting javascript file -->
+
     <?php require_once 'navbar.php' ?>
 
     <video autoplay muted loop class="background-video">
