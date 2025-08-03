@@ -15,7 +15,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
   <div class="main-content">
     <h1>Welcome, Admin</h1>
-    <p>Today is Wednesday, July 31, 2025</p>
+     <?php echo '<p>Today is ', date("l, F j, Y"), '</p>'; ?>
 
     <div class="stats-container">
       <div class="stat-box">
