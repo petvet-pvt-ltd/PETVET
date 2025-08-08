@@ -21,5 +21,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 </head>
 <body>
   <?php require_once '../sidebar.php'; ?>
+  <!-- aminda's 1st commit -->
 </body>
 </html>
