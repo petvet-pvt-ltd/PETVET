@@ -17,6 +17,7 @@ body {
   top: 0;
   left: 0;
   overflow-y: auto; /* ✅ Enables scrolling */
+  z-index: 1000;
 }
 
 .dashboard-sidebar a:not(.active){
