@@ -199,7 +199,7 @@
   position: relative;
 }
 /* .btn.danger::before {
-  content: "⚠️ ";
+  content: "⚠ ";
   font-size: 16px;
   margin-right: 4px;
 } */
@@ -226,6 +226,35 @@
 
 /* Dialog overlay and card */
 #addPetDialog.dialog {
+  padding: 0;
+  border: none;
+  background: rgba(37,99,235,0.08);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(37,99,235,.18);
+  max-width: 540px;
+  width: 96vw;
+  margin: auto;
+  top: 5vh;
+  left: 0;
+  right: 0;
+  position: fixed;
+
+}
+#markMissingDialog.dialog {
+  padding: 0;
+  border: none;
+  background: rgba(37,99,235,0.08);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(37,99,235,.18);
+  max-width: 540px;
+  width: 96vw;
+  margin: auto;
+  top: 5vh;
+  left: 0;
+  right: 0;
+  position: fixed;
+}
+#bookAppointmentDialog.dialog {
   padding: 0;
   border: none;
   background: rgba(37,99,235,0.08);
@@ -373,7 +402,320 @@ textarea:focus {
   padding-left: 32px;
   padding-right: 32px;
 }
+#addPetDialog.dialog {
+  padding: 0;
+  border: none;
+  background: rgba(37,99,235,0.10);
+  border-radius: 22px;
+  box-shadow: 0 12px 48px rgba(37,99,235,.22);
+  max-width: 540px;
+  width: 96vw;
+  margin: auto;
+  top: 5vh;
+  left: 0;
+  right: 0;
+  position: fixed;
+  z-index: 1002;
+}
 
+#addPetDialog .dialog-card {
+  background: var(--card);
+  border-radius: 22px;
+  padding: 0;
+  box-shadow: 0 2px 24px rgba(37,99,235,.13);
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#addPetDialog .dialog-header {
+  padding: 28px 36px 10px 36px;
+  border-bottom: 1.5px solid var(--line);
+  background: #f7f8fa;
+}
+#addPetDialog .dialog-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 24px;
+  color: var(--brand);
+  font-weight: 800;
+  letter-spacing: .5px;
+}
+#addPetDialog .dialog-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+#addPetDialog .dialog-body {
+  padding: 28px 36px 0 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+#addPetDialog .form-section {
+  margin-bottom: 0;
+}
+#addPetDialog .section-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 10px;
+  letter-spacing: .2px;
+}
+
+#petProfileImgWrap {
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #eef2ff 60%, #f5f7fb 100%);
+  border-radius: 50%;
+  box-shadow: 0 2px 16px rgba(37,99,235,.10);
+  border: 2.5px solid var(--line);
+  position: relative;
+}
+#petProfileImg {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(37,99,235,.10);
+  background: #f5f7fb;
+  transition: box-shadow .2s, border-color .2s;
+}
+#petProfileImg:hover {
+  box-shadow: 0 4px 16px rgba(37,99,235,.18);
+  border-color: var(--brand);
+}
+
+#addPetDialog .btn.link {
+  margin-bottom: 10px;
+  cursor: pointer;
+  color: var(--brand);
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 8px;
+  padding: 6px 18px;
+  background: #eef2ff;
+  border: 1.5px solid #c7d2fe;
+  transition: background .2s, border-color .2s;
+}
+#addPetDialog .btn.link:hover {
+  background: #dbeafe;
+  border-color: var(--brand);
+}
+
+#addPetDialog .grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+#addPetDialog .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 0;
+}
+#addPetDialog .input,
+#addPetDialog .select,
+#addPetDialog textarea {
+  padding: 10px 14px;
+  border-radius: 9px;
+  border: 1.5px solid var(--line);
+  background: #f5f7fb;
+  font-size: 16px;
+  color: var(--ink);
+  font-family: inherit;
+  transition: border-color .2s;
+  resize: none;
+}
+#addPetDialog .input:focus,
+#addPetDialog .select:focus,
+#addPetDialog textarea:focus {
+  border-color: var(--brand);
+  outline: none;
+}
+
+#addPetDialog .dialog-actions {
+  display: flex;
+  gap: 18px;
+  padding: 22px 36px 28px 36px;
+  border-top: 1.5px solid var(--line);
+  background: #f7f8fa;
+  justify-content: flex-end;
+}
+
+#addPetDialog .dialog-actions .btn {
+  min-width: 130px;
+  font-size: 17px;
+  padding: 13px 0;
+  border-radius: 10px;
+}
+#markMissingDialog.dialog {
+  padding: 0;
+  border: none;
+  background: rgba(37,99,235,0.10);
+  border-radius: 22px;
+  box-shadow: 0 12px 48px rgba(37,99,235,.22);
+  max-width: 540px;
+  width: 96vw;
+  margin: auto;
+  top: 5vh;
+  left: 0;
+  right: 0;
+  position: fixed;
+  z-index: 1002;
+}
+
+#markMissingDialog .dialog-card {
+  background: var(--card);
+  border-radius: 22px;
+  padding: 0;
+  box-shadow: 0 2px 24px rgba(37,99,235,.13);
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#markMissingDialog .dialog-header {
+  padding: 28px 36px 10px 36px;
+  border-bottom: 1.5px solid var(--line);
+  background: #f7f8fa;
+}
+#markMissingDialog .dialog-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 24px;
+  color: var(--brand);
+  font-weight: 800;
+  letter-spacing: .5px;
+}
+#markMissingDialog .dialog-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+#markMissingDialog .dialog-body {
+  padding: 28px 36px 0 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+#markMissingDialog .form-section {
+  margin-bottom: 0;
+}
+#markMissingDialog .section-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 10px;
+  letter-spacing: .2px;
+}
+
+#petProfileImgWrap {
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #eef2ff 60%, #f5f7fb 100%);
+  border-radius: 50%;
+  box-shadow: 0 2px 16px rgba(37,99,235,.10);
+  border: 2.5px solid var(--line);
+  position: relative;
+}
+#petProfileImg {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(37,99,235,.10);
+  background: #f5f7fb;
+  transition: box-shadow .2s, border-color .2s;
+}
+#petProfileImg:hover {
+  box-shadow: 0 4px 16px rgba(37,99,235,.18);
+  border-color: var(--brand);
+}
+
+#markMissingDialog .btn.link {
+  margin-bottom: 10px;
+  cursor: pointer;
+  color: var(--brand);
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 8px;
+  padding: 6px 18px;
+  background: #eef2ff;
+  border: 1.5px solid #c7d2fe;
+  transition: background .2s, border-color .2s;
+}
+#markMissingDialog .btn.link:hover {
+  background: #dbeafe;
+  border-color: var(--brand);
+}
+
+#markMissingDialog .grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+#markMissingDialog .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 0;
+}
+#markMissingDialog .input,
+#markMissingDialog .select,
+#markMissingDialog textarea {
+  padding: 10px 14px;
+  border-radius: 9px;
+  border: 1.5px solid var(--line);
+  background: #f5f7fb;
+  font-size: 16px;
+  color: var(--ink);
+  font-family: inherit;
+  transition: border-color .2s;
+  resize: none;
+}
+#markMissingDialog .input:focus,
+#markMissingDialog .select:focus,
+#markMissingDialog textarea:focus {
+  border-color: var(--brand);
+  outline: none;
+}
+
+#markMissingDialog .dialog-actions {
+  display: flex;
+  gap: 18px;
+  padding: 22px 36px 28px 36px;
+  border-top: 1.5px solid var(--line);
+  background: #f7f8fa;
+  justify-content: flex-end;
+}
+
+#markMissingDialog .dialog-actions .btn {
+  min-width: 130px;
+  font-size: 17px;
+  padding: 13px 0;
+  border-radius: 10px;
+}
 /* Edit Pet Profile Dialog Styles */
 #petProfileDialog.dialog {
   padding: 0;
@@ -532,23 +874,182 @@ textarea:focus {
   padding: 13px 0;
   border-radius: 10px;
 }
+#bookAppointmentDialog.dialog {
+  padding: 0;
+  border: none;
+  background: rgba(37,99,235,0.10);
+  border-radius: 22px;
+  box-shadow: 0 12px 48px rgba(37,99,235,.22);
+  max-width: 540px;
+  width: 96vw;
+  margin: auto;
+  top: 5vh;
+  left: 0;
+  right: 0;
+  position: fixed;
+  z-index: 1002;
+}
+
+#bookAppointmentDialog .dialog-card {
+  background: var(--card);
+  border-radius: 22px;
+  padding: 0;
+  box-shadow: 0 2px 24px rgba(37,99,235,.13);
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#bookAppointmentDialog .dialog-header {
+  padding: 28px 36px 10px 36px;
+  border-bottom: 1.5px solid var(--line);
+  background: #f7f8fa;
+}
+#bookAppointmentDialog .dialog-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 24px;
+  color: var(--brand);
+  font-weight: 800;
+  letter-spacing: .5px;
+}
+#bookAppointmentDialog .dialog-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+#bookAppointmentDialog .dialog-body {
+  padding: 28px 36px 0 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+#bookAppointmentDialog .form-section {
+  margin-bottom: 0;
+}
+#bookAppointmentDialog .section-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 10px;
+  letter-spacing: .2px;
+}
+
+#petProfileImgWrap {
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #eef2ff 60%, #f5f7fb 100%);
+  border-radius: 50%;
+  box-shadow: 0 2px 16px rgba(37,99,235,.10);
+  border: 2.5px solid var(--line);
+  position: relative;
+}
+#petProfileImg {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(37,99,235,.10);
+  background: #f5f7fb;
+  transition: box-shadow .2s, border-color .2s;
+}
+#petProfileImg:hover {
+  box-shadow: 0 4px 16px rgba(37,99,235,.18);
+  border-color: var(--brand);
+}
+
+#bookAppointmentDialog .btn.link {
+  margin-bottom: 10px;
+  cursor: pointer;
+  color: var(--brand);
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 8px;
+  padding: 6px 18px;
+  background: #eef2ff;
+  border: 1.5px solid #c7d2fe;
+  transition: background .2s, border-color .2s;
+}
+#bookAppointmentDialog .btn.link:hover {
+  background: #dbeafe;
+  border-color: var(--brand);
+}
+
+#bookAppointmentDialog .grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+#bookAppointmentDialog .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 0;
+}
+#bookAppointmentDialog .input,
+#bookAppointmentDialog .select,
+#bookAppointmentDialog textarea {
+  padding: 10px 14px;
+  border-radius: 9px;
+  border: 1.5px solid var(--line);
+  background: #f5f7fb;
+  font-size: 16px;
+  color: var(--ink);
+  font-family: inherit;
+  transition: border-color .2s;
+  resize: none;
+}
+#bookAppointmentDialog .input:focus,
+#bookAppointmentDialog .select:focus,
+#bookAppointmentDialog textarea:focus {
+  border-color: var(--brand);
+  outline: none;
+}
+
+#bookAppointmentDialog .dialog-actions {
+  display: flex;
+  gap: 18px;
+  padding: 22px 36px 28px 36px;
+  border-top: 1.5px solid var(--line);
+  background: #f7f8fa;
+  justify-content: flex-end;
+}
+
+#bookAppointmentDialog .dialog-actions .btn {
+  min-width: 130px;
+  font-size: 17px;
+  padding: 13px 0;
+  border-radius: 10px;
+}
 
 @media (max-width: 600px) {
-  #petProfileDialog.dialog,
-  #petProfileDialog .dialog-card {
+  #bookAppointmentDialog.dialog,
+  #bookAppointmentDialog .dialog-card {
     max-width: 98vw;
     padding: 0;
   }
-  #petProfileDialog .dialog-header,
-  #petProfileDialog .dialog-body,
-  #petProfileDialog .dialog-actions {
+  #bookAppointmentDialog .dialog-header,
+  #bookAppointmentDialog .dialog-body,
+  #bookAppointmentDialog .dialog-actions {
     padding-left: 14px;
     padding-right: 14px;
   }
-  #petProfileDialog .grid-2 {
+  #bookAppointmentDialog .grid-2 {
     grid-template-columns: 1fr;
     gap: 12px;
   }
 }
 
-/* --- End edit popup
+/* --- End edit popup styles --- */
+
+/* --- Add missing pet modal styles --- */
