@@ -74,11 +74,10 @@ function calculateAge($dob) {
     </header>
 
     <section class="pets-grid" id="petsGrid">
-      <!-- Sample Pet Cards -->
       <?php foreach ($pets as $pet): ?>
       <article class="pet-card">
         <div class="pet-hero">
-          <img src="../../images/sample-dog.jpg" alt="<?php echo $pet['name']; ?>">
+          <img src="<?php echo $pet['photo']; ?>" alt="<?php echo $pet['name']; ?>">
         </div>
         <div class="pet-body">
           <div class="pet-title">
@@ -93,19 +92,20 @@ function calculateAge($dob) {
             <li class="tag">Microchipped</li>
             <li class="tag success">Vaccinated</li>
           </ul>
-          <p class="pet-notes">Loves people. No known allergies.</p>
+          <p class="pet-notes"><?php echo $pet['notes']; ?></p>
         </div>
         <div class="pet-actions">
           <a href="pet-profile.php?id=<?php echo $pet['id']; ?>" class="btn">View Profile</a>
-          <a href="../records/index.php?pet=<?php echo $pet['id']; ?>" class="btn">Medical Records</a>
+          <a href="medical-records.php?pet=<?php echo $pet['id']; ?>" class="btn">Medical Records</a>
           <a href="../appointments/book.php?pet=<?php echo $pet['id']; ?>" class="btn">Book Appointment</a>
-          <button class="btn danger">Mark as Missing</button>
+          <button class="btn danger markMissingBtn" data-pet="<?php echo $pet['id']; ?>">Mark as Missing</button>
         </div>
       </article>
       <?php endforeach; ?>
     </section>
   </main>
 
+  <!-- Add Pet Dialog -->
   <dialog id="addPetDialog" class="dialog">
     <form method="dialog" class="dialog-card">
       <header class="dialog-header">
@@ -184,7 +184,7 @@ function calculateAge($dob) {
             <span>Upload Photo</span>
             <input type="file" accept="image/*" class="input">
           </label>
-    </div>
+        </div>
       </div>
       <footer class="dialog-actions">
         <button class="btn link" value="cancel">Cancel</button>
@@ -193,12 +193,7 @@ function calculateAge($dob) {
     </form>
   </dialog>
 
-  <?php
-  // Pass pets array to JS
-  echo '<script>window.petsData = ' . json_encode($pets) . ';</script>';
-  ?>
-
-  <!-- Improved Pet Profile Dialog -->
+  <!-- Pet Profile Dialog -->
   <dialog id="petProfileDialog" class="dialog">
     <form method="dialog" class="dialog-card" id="petProfileForm" enctype="multipart/form-data">
       <header class="dialog-header">
@@ -207,7 +202,6 @@ function calculateAge($dob) {
       </header>
       <div class="dialog-body">
         <div class="form-section" style="align-items:center;display:flex;flex-direction:column;">
-          <!-- Pet Image Preview -->
           <div id="petProfileImgWrap" style="margin-bottom:18px;">
             <img id="petProfileImg" src="../../images/sample-dog.jpg" alt="Pet Photo" style="width:110px;height:110px;object-fit:cover;border-radius:50%;border:2px solid #e5e7eb;box-shadow:0 2px 8px rgba(37,99,235,.10);background:#f5f7fb;">
           </div>
@@ -293,65 +287,156 @@ function calculateAge($dob) {
     </form>
   </dialog>
 
-  <script>
-    (function () {
-      const addBtns = [document.getElementById('addPetBtn')].filter(Boolean);
-      const dlg = document.getElementById('addPetDialog');
-      addBtns.forEach(b => b.addEventListener('click', () => dlg.showModal()));
-      dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close('cancel'); });
-    })();
+  <!-- Mark as Missing Dialog -->
+  <dialog id="markMissingDialog" class="dialog">
+    <form method="dialog" class="dialog-card" id="markMissingForm">
+      <header class="dialog-header">
+        <h3>Report Missing Pet</h3>
+        <p class="dialog-subtitle">Please provide details to help find your pet</p>
+      </header>
+      <div class="dialog-body">
+        <div class="form-section">
+          <label class="field field-col">
+            <span>Last Seen Location *</span>
+            <input type="text" class="input" name="location" required placeholder="Enter address or location">
+          </label><br>
+          <label class="field">
+            <span>Last Seen Date & Time *</span>
+            <input type="datetime-local" class="input" name="datetime" required>
+          </label><br>
+          <label class="field field-col">
+            <span>Circumstances</span>
+            <textarea class="input" name="circumstances" rows="2" maxlength="250" placeholder="How did your pet go missing?"></textarea>
+          </label><br>
+          <label class="field">
+            <span>Distinguishing Features</span>
+            <input type="text" class="input" name="features" placeholder="Special markings, collar, etc.">
+          </label><br>
+          <div class="grid-2">
+            <label class="field">
+              <span>Contact Phone</span>
+              <input type="tel" class="input" name="phone" value="+94 77 123 4567">
+            </label>
+            <label class="field">
+              <span>Contact Email</span>
+              <input type="email" class="input" name="email" value="user@example.com">
+            </label>
+          </div><br>
+          <label class="field field-col">
+            <span>Upload Photos</span>
+            <input type="file" class="input" name="photos[]" accept="image/*" multiple>
+          </label><br>
+          <div class="grid-2">
+            <label class="field">
+              <span><input type="checkbox" id="rewardCheckbox">
+              Offer reward for safe return</span>
+            </label><br>
+            <label class="field" id="rewardAmountWrap" style="display:none;">
+              <span>Reward Amount</span>
+              <input type="number" class="input" name="reward" step="0.01" placeholder="e.g. 5000.00">
+            </label><br>
+          </div><br>
+        </div>
+      </div>
+      <footer class="dialog-actions">
+        <button class="btn link" value="cancel">Cancel</button>
+        <button class="btn primary" value="submit">Submit Report</button>
+      </footer>
+    </form>
+  </dialog>
+  
+    <!-- Book Appointment Dialog -->
+  <dialog id="bookAppointmentDialog" class="dialog">
+    <form method="dialog" class="dialog-card" id="bookAppointmentForm">
+      <header class="dialog-header">
+        <h3 id="appointmentHeader">Book Appointment</h3>
+        <p class="dialog-subtitle" id="appointmentPetInfo">Pet Info</p>
+        <p class="dialog-subtitle" id="appointmentHealthNotes" style="color:#b91c1c;"></p>
+      </header>
 
-    (function () {
-      // Pet profile dialog logic
-      const petProfileDialog = document.getElementById('petProfileDialog');
-      const petProfileForm = document.getElementById('petProfileForm');
-      const petProfileImg = document.getElementById('petProfileImg');
-      const petProfileImgInput = document.getElementById('petProfileImgInput');
+      <div class="dialog-body" id="appointmentFormContent">
+        <!-- Section A: Appointment Type & Reason -->
+        <div class="form-section">
+          <h4 class="section-title">Appointment Details</h4><br>
+          <label class="field">
+            <span>Appointment Type *</span>
+            <select class="select" name="appointment_type" required>
+              <option value="">Select Appointment Type</option>
+              <option>Routine Check-up</option>
+              <option>Vaccination</option>
+              <option>Grooming</option>
+              <option>Dental Cleaning</option>
+              <option>Illness/Injury Consultation</option>
+              <option>Surgery</option>
+              <option>Other</option>
+            </select>
+          </label><br>
+          <label class="field field-col">
+            <span>Reason for Visit / Symptoms</span>
+            <textarea class="input" name="reason" rows="2" placeholder="Please describe any symptoms or concerns"></textarea>
+          </label><br>
+        </div>
 
-      // Attach click event to all "View Profile" buttons
-      document.querySelectorAll('.pet-actions .btn').forEach(btn => {
-        if (btn.textContent.trim() === 'View Profile') {
-          btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            // Get pet id from href
-            const url = new URL(btn.href, window.location.origin);
-            const petId = url.searchParams.get('id');
-            const pet = window.petsData.find(p => p.id == petId);
-            if (pet) {
-              // Fill form fields
-              petProfileForm.name.value = pet.name || '';
-              petProfileForm.species.value = pet.species || '';
-              petProfileForm.breed.value = pet.breed || '';
-              petProfileForm.sex.value = pet.sex || '';
-              petProfileForm.date_of_birth.value = pet.date_of_birth || '';
-              petProfileForm.weight.value = pet.weight || '';
-              petProfileForm.color.value = pet.color || '';
-              petProfileForm.allergies.value = pet.allergies || '';
-              petProfileForm.notes.value = pet.notes || '';
-              petProfileImg.src = pet.photo || '../../images/sample-dog.jpg';
-              petProfileImgInput.value = ""; // Reset file input
-              petProfileDialog.showModal();
-            }
-          });
-        }
-      });
+        <!-- Section B: Date & Time -->
+        <div class="form-section">
+          <h4 class="section-title">Date & Time</h4>
+          <label class="field">
+            <span>Select a Date *</span>
+            <input type="date" class="input" name="date" required>
+          </label><br>
+          <div class="time-slots" id="timeSlotsWrap" style="margin-top:10px;">
+            <!-- JS will generate available time buttons here -->
+          </div>
+        </div>
 
-      // Preview new image when selected
-      petProfileImgInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = function(ev) {
-            petProfileImg.src = ev.target.result;
-          };
-          reader.readAsDataURL(file);
-        }
-      });
+        <!-- Section C: Veterinarian -->
+        <div class="form-section">
+          <h4 class="section-title">Veterinarian</h4>
+          <label class="field">
+            <span>Preferred Veterinarian (Optional)</span>
+            <select class="select" name="vet">
+              <option value="">Any Available Vet</option>
+              <option>Dr. Smith</option>
+              <option>Dr. Jones</option>
+            </select>
+          </label><br>
+        </div>
 
-      petProfileDialog.addEventListener('click', (e) => {
-        if (e.target === petProfileDialog) petProfileDialog.close('cancel');
-      });
-    })();
-  </script>
+        <!-- Section D: Clinic Location -->
+        <div class="form-section">
+          <h4 class="section-title">Clinic Location</h4>
+          <label class="field">
+            <span>Select Clinic Location *</span>
+            <select class="select" name="location" required>
+              <option value="">Select Location</option>
+              <option>Main Clinic</option>
+              <option>Branch A</option>
+              <option>Branch B</option>
+            </select>
+          </label><br>
+        </div>
+
+        
+
+      <!-- Confirmation View (hidden initially) -->
+      <div class="dialog-body" id="appointmentConfirmation" style="display:none;text-align:center;">
+        <div style="font-size:48px;color:#16a34a;">✔</div>
+        <h3>Appointment Confirmed!</h3>
+        <p id="appointmentSummary"></p>
+      </div>
+
+      <footer class="dialog-actions">
+        <button class="btn link" value="cancel" id="appointmentCancelBtn">Cancel</button>
+        <button class="btn primary" value="save" id="appointmentConfirmBtn" disabled>Confirm Booking</button>
+      </footer>
+    </form>
+  </dialog>
+
+
+  <?php
+  // Pass pets array to JS
+  echo '<script>window.petsData = ' . json_encode($pets) . ';</script>';
+  ?>
+  <script src="my-pets.js"></script>
 </body>
 </html>

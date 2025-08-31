@@ -9,16 +9,12 @@
 </ul> -->
 
 <ul class="sidebar-nav-top">
-  <a href="my-pets.php" class="<?= $currentPage == 'index.php' ? 'active' : '' ?>">
+  <a href="index.php" class="<?= $currentPage == 'index.php' ? 'active' : '' ?>">
     <li class="nav-item"><img src="../../images/dashboard/pets.png" class="icon"> My Pets</li>
   </a>
 
   <a href="appointments.php" class="<?= $currentPage == 'appointments.php' ? 'active' : '' ?>">
     <li class="nav-item"><img src="../../images/dashboard/calendar.png" class="icon"> Appointments</li>
-  </a>
-
-  <a href="medical-records.php" class="<?= $currentPage == 'medical-records.php' ? 'active' : '' ?>">
-    <li class="nav-item"><img src="../../images/dashboard/folder.png" class="icon"> Medical Records</li>
   </a>
 
   <a href="shop.php" class="<?= $currentPage == 'shop.php' ? 'active' : '' ?>">
