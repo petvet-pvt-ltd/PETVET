@@ -5,10 +5,28 @@ document.querySelectorAll('.add-to-cart').forEach(button => {
   });
 });
 
-// Quick View click handler
-document.querySelectorAll('.quick-view').forEach(link => {
-  link.addEventListener('click', (e) => {
+// Category filtering
+document.querySelectorAll('.category-card').forEach(card => {
+  card.addEventListener('click', e => {
     e.preventDefault();
-    alert("Quick View popup (UI demo)");
+    const category = card.dataset.category;
+
+    document.querySelectorAll('.product-card').forEach(product => {
+      if (category === 'all' || product.dataset.category === category) {
+        product.classList.remove('hidden'); 
+      } else {
+        product.classList.add('hidden'); 
+      }
+    });
   });
 });
+
+//direct to product page
+document.querySelectorAll('.product-card').forEach(card => {
+  card.addEventListener('click', function(e) {
+    if (!e.target.closest('button') && !e.target.closest('a')) {
+      window.location.href = 'shop-product.php';
+    }
+  });
+});
+
