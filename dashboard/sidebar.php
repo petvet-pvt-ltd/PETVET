@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 //Redirect to index page if user is not logged
 if(empty($_SESSION['user_id'])){
@@ -35,6 +37,11 @@ if(empty($_SESSION['user_id'])){
     elseif ($_SESSION['user_role'] == 'pet-owner'){
       require_once '../sidebars/sidebar-pet-owner.php'; # ---- pet-owner sidebar
     }
+
+    elseif ($_SESSION['user_role'] == 'vet'){
+      require_once '../sidebars/sidebar-vet.php'; # ---- vet sidebar
+    }
+
 
     ?>
 

@@ -40,6 +40,13 @@ if(isset($_POST['login-submit'])){
                 header("Location: ../dashboard/pet-owner/");
                 exit();
             }
+
+            // vet redirection
+            elseif($_SESSION['user_role'] == 'vet'){
+                header("Location: ../dashboard/vet/");
+                exit();
+            }
+
         } else {
             // Login failed
             $msg = "Incorrect Username or password !";
