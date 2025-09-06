@@ -31,6 +31,9 @@ if (!empty($_SESSION['user_id'])) {
         case 'pet-owner':
             header("Location: dashboard/pet-owner/");
             exit();
+        case 'vet':
+            header("Location: dashboard/vet/");
+            exit();    
         default:
             header("Location: dashboard/");
             exit();

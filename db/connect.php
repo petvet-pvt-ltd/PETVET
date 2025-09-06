@@ -1,9 +1,9 @@
 <?php
 #server information
-$server_name = "10.241.235.102";
+$server_name = "localhost";
 $server_user = "root";
-$server_pass = "your_password";
-$server_db = "petvet-test";
+$server_pass = "";
+$server_db = "petvet_db";
 
 #test table - users
 $tb_name = "users";
@@ -15,7 +15,8 @@ $tb_role = "role";
 
 $conn = new mysqli($server_name, $server_user, $server_pass, $server_db);
 
-if($conn->connect_error){
-    die();
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
 }
+
 ?>
