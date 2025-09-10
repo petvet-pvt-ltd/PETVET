@@ -29,8 +29,8 @@
     <li class="nav-item"><img src="../../images/dashboard/compass.png" class="icon"> Lost & Found</li>
   </a>
 
-  <a href="sell-pets.php" class="<?= $currentPage == 'sell-pets.php' ? 'active' : '' ?>">
-    <li class="nav-item"><img src="../../images/dashboard/sell-pets.png" class="icon"> Sell Pets</li>
+  <a href="explore-pets.php" class="<?= $currentPage == 'explore-pets.php' ? 'active' : '' ?>">
+    <li class="nav-item"><img src="../../images/dashboard/sell-pets.png" class="icon"> Explore Pets</li>
   </a>
 </ul>
 
