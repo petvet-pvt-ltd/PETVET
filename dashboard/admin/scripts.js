@@ -23,6 +23,19 @@ window.onload = function () {
   let total = pieData.reduce((a, b) => a + b, 0);
   let startAngle = 0;
 
+  // scripts.js
+document.addEventListener("DOMContentLoaded", function () {
+  const logoutBtn = document.querySelector(".logout");
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", function () {
+      // Redirect to index.php
+      window.location.href = "appointments.php";
+    });
+  }
+});
+
+
   pieData.forEach((value, i) => {
     const sliceAngle = (value / total) * 2 * Math.PI;
     pieCtx.fillStyle = colors[i];
