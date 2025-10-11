@@ -5,25 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pet Vet Admin Dashboard</title>
   <link rel="stylesheet" href="styles.css"/>
+  
+
 </head>
 <body>
   <div class="dashboard">
     <aside class="sidebar">
-      <div class="logo">PET VET<br><span>Admin Dashboard</span></div>
-      <nav>
+     <img src="../../images/petvett.png" alt="PetVett Logo">
+ 
+       <nav>
         <ul>
-          <li class="active">📊 Dashboard Overview</li>
-          <li><a href="manage_users.php">👥 Manage Users</a></li>
-          <li><a href="appointments.php">📅 Appointments</a></li>
-          <li><a href="medical_records.php">📋 Medical Records</a></li>
-          <li>🏪 Pet Shop</li>
-          <li><a href="pet_listings.php">🐶 Pet Listings</a></li>
-          <li>🔍 Lost & Found</li>
-          <li>📝 Content Management</li>
-          <li>📈 Reports & Analytics</li>
-          <li>💵 Finance Panel</li>
-        </ul>
-        <button class="logout">↩ Logout</button>
+  <li class="active"><a href="index.php"><span class="icon">𝄜</span>Dashboard Overview</a></li>
+  <li><a href="manage_users.php"><span class="icon">⚗</span>Manage Users</a></li>
+  <li><a href="appointments.php"><span class="icon">✎</span>  Appointments</a></li>
+  <li><a href="medical_records.php"><span class="icon">✉</span>Medical Records</a></li>
+  <li><a href="#"><span class="icon">𓃠</span>Pet Shop</a></li>
+  <li><a href="pet_listings.php"><span class="icon">☰</span>Pet Listings</a></li>
+  <li><a href="#"><span class="icon">🔍︎</span>Lost & Found</a></li>
+ 
+  <li><a href="#"><span class="icon">🗁</span>Reports & Analytics</a></li>
+  <li><a href="finance-panel.php"><span class="icon">$</span>Finance Panel</a></li>
+</ul>
+
+        <a href="../index.php" class="logout">↩ Logout</a>
+
       </nav>
     </aside>
 
