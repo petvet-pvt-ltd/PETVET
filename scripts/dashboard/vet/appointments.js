@@ -1,101 +1,99 @@
-// ================= DATA =================
-// You can replace this with AJAX calls later to fetch from database
-let appointments = [
-    {id:1,date:"2025-09-01",time:"10:30 AM",pet:"Charlie",owner:"Sarah Johnson",reason:"Annual Checkup",status:"scheduled",prescription:"",record:""},
-    {id:2,date:"2025-09-01",time:"11:00 AM",pet:"Milo",owner:"John Doe",reason:"Vaccination",status:"completed",prescription:"Vaccine given",record:"All good"},
-    {id:3,date:"2025-09-02",time:"12:00 PM",pet:"Lucy",owner:"Emma Watson",reason:"Dental Check",status:"cancelled",prescription:"",record:""},
-    {id:4,date:"2025-09-02",time:"12:30 PM",pet:"Bella",owner:"James Brown",reason:"Follow-up",status:"ongoing",prescription:"",record:""}
-];
+const STORAGE_KEY = 'petvet_v1';
 
-// Split into upcoming and completed arrays
-let upcomingAppointments = appointments.filter(a => ["scheduled","ongoing"].includes(a.status));
-let completedAppointments = appointments.filter(a => ["completed","cancelled"].includes(a.status));
-
-// ================= RENDER TABLE =================
-function renderTable(tableId, data) {
-    const tbody = document.getElementById(tableId);
-    tbody.innerHTML = "";
-    data.forEach(appt => {
-        const tr = document.createElement("tr");
-        tr.dataset.id = appt.id;
-        tr.dataset.status = appt.status;
-        tr.dataset.date = appt.date;
-
-        tr.innerHTML = `
-            <td>${appt.id}</td>
-            <td>${appt.date}</td>
-            <td>${appt.time}</td>
-            <td>${appt.pet}</td>
-            <td>${appt.owner}</td>
-            <td>${appt.reason}</td>
-            <td>${appt.status.charAt(0).toUpperCase() + appt.status.slice(1)}</td>
-            ${tableId === "completedTable" ? `
-            <td>${appt.status==="completed" ? `<button class="btn navy recordBtn" data-id="${appt.id}" data-has-record="${appt.record ? 1 : 0}">${appt.record ? "Edit" : "Add"}</button>` : ""}</td>
-            <td>${appt.status==="completed" ? `<button class="btn navy prescriptionBtn" data-id="${appt.id}" data-has-prescription="${appt.prescription ? 1 : 0}">${appt.prescription ? "Edit" : "Add"}</button>` : ""}</td>
-            ` : ""}
-        `;
-        tbody.appendChild(tr);
-    });
-
-    // Attach click events for prescription and record buttons
-    if(tableId === "completedTable"){
-        document.querySelectorAll(".recordBtn").forEach(btn => {
-            btn.addEventListener("click", () => {
-                let id = btn.dataset.id;
-                let hasRecord = btn.dataset.hasRecord === "1";
-                let action = hasRecord ? "edit" : "add";
-                window.location.href = `medical-records.php?appointment_id=${id}&action=${action}`;
-            });
-        });
-
-        document.querySelectorAll(".prescriptionBtn").forEach(btn => {
-            btn.addEventListener("click", () => {
-                let id = btn.dataset.id;
-                let hasPrescription = btn.dataset.hasPrescription === "1";
-                let action = hasPrescription ? "edit" : "add";
-                window.location.href = `prescriptions.php?appointment_id=${id}&action=${action}`;
-            });
-        });
-    }
+function getData(){ 
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null; 
+}
+function setData(d){ 
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); 
+}
+function initIfNeeded(){
+    if(!localStorage.getItem(STORAGE_KEY) && window.PETVET_INITIAL_DATA) setData(window.PETVET_INITIAL_DATA);
 }
 
-// ================= INITIAL RENDER =================
-renderTable("upcomingTable", upcomingAppointments);
-renderTable("completedTable", completedAppointments);
-
-// ================= FILTER & SEARCH =================
-function filterTable(tableId, data, dateInputId, statusInputId, searchInputId){
-    const dateVal = document.getElementById(dateInputId).value;
-    const statusVal = document.getElementById(statusInputId).value.toLowerCase();
-    const searchVal = document.getElementById(searchInputId).value.toLowerCase();
-
-    let filtered = data.filter(a => {
-        let match = true;
-        if(dateVal) match = match && a.date === dateVal;
-        if(statusVal) match = match && a.status === statusVal;
-        if(searchVal){
-            match = match && (a.pet.toLowerCase().includes(searchVal) ||
-                             a.owner.toLowerCase().includes(searchVal) ||
-                             a.reason.toLowerCase().includes(searchVal));
+// Adds Date column
+function buildTableHTML(rows, includeActions=false){
+    if(rows.length===0) 
+        return '<table><thead><tr><th>ID</th><th>Date</th><th>Time</th><th>Pet</th><th>Owner</th><th>Reason</th>' + 
+               (includeActions? '<th>Actions</th>':'') + 
+               '</tr></thead><tbody><tr><td colspan="'+ (includeActions?7:6) +'">No records</td></tr></tbody></table>';
+    
+    let html = '<table><thead><tr><th>ID</th><th>Date</th><th>Time</th><th>Pet</th><th>Owner</th><th>Reason</th>' + 
+               (includeActions? '<th>Actions</th>':'') + '</tr></thead><tbody>';
+    
+    rows.forEach(r=>{
+        html += `<tr><td>${r.id}</td><td>${r.date}</td><td>${r.time}</td><td>${r.petName}</td><td>${r.ownerName}</td><td>${r.reason}</td>`;
+        
+        if(includeActions){
+            const d = getData();
+            const hasRec = d.medicalRecords.some(m=>m.appointmentId===r.id);
+            const hasPres = d.prescriptions.some(p=>p.appointmentId===r.id);
+            const hasVacc = d.vaccinations.some(v=>v.appointmentId===r.id);
+            let actions = '';
+            if(hasRec) actions += `<button class="btn navy" onclick="goView('medical-records.php','${r.id}')">View Record</button>`;
+            if(hasPres) actions += `<button class="btn blue" onclick="goView('prescriptions.php','${r.id}')">View Prescription</button>`;
+            if(hasVacc) actions += `<button class="btn green" onclick="goView('vaccinations.php','${r.id}')">View Vaccination</button>`;
+            html += `<td>${actions}</td>`;
         }
-        return match;
+
+        html += `</tr>`;
     });
 
-    renderTable(tableId, filtered);
+    html += '</tbody></table>';
+    return html;
 }
 
-// Upcoming filters
-document.getElementById("applyUpcomingFilter").addEventListener("click", () => {
-    filterTable("upcomingTable", upcomingAppointments, "upcomingDateFilter", "upcomingStatusFilter", "searchUpcoming");
-});
-document.getElementById("searchUpcoming").addEventListener("keyup", () => {
-    filterTable("upcomingTable", upcomingAppointments, "upcomingDateFilter", "upcomingStatusFilter", "searchUpcoming");
-});
+function goView(page, apptId){
+    location.href = `${page}?from=completed&appt=${encodeURIComponent(apptId)}`;
+}
 
-// Completed filters
-document.getElementById("applyCompletedFilter").addEventListener("click", () => {
-    filterTable("completedTable", completedAppointments, "completedDateFilter", "completedStatusFilter", "searchCompleted");
-});
-document.getElementById("searchCompleted").addEventListener("keyup", () => {
-    filterTable("completedTable", completedAppointments, "completedDateFilter", "completedStatusFilter", "searchCompleted");
+function renderSection(containerId, data, includeActions=false){
+    document.getElementById(containerId).innerHTML = buildTableHTML(data, includeActions);
+}
+
+function renderAll(){
+    initIfNeeded();
+    const d = getData();
+
+    // Keep all data sets separately for filtering later
+    window.PETVET_TABLES = {
+        ongoing: d.appointments.filter(a=>a.status==='ongoing'),
+        upcoming: d.appointments.filter(a=>a.status==='scheduled'),
+        completed: d.appointments.filter(a=>a.status==='completed'),
+        cancelled: d.appointments.filter(a=>a.status==='cancelled')
+    };
+
+    renderSection('ongoingTableContainer', window.PETVET_TABLES.ongoing, false);
+    renderSection('upcomingTableContainer', window.PETVET_TABLES.upcoming, false);
+    renderSection('completedTableContainer', window.PETVET_TABLES.completed, true);
+    renderSection('cancelledTableContainer', window.PETVET_TABLES.cancelled, false);
+}
+
+// 🔍 Add search functionality
+function setupSearch(){
+    const inputs = document.querySelectorAll('.searchBar');
+    inputs.forEach(input=>{
+        input.addEventListener('input', e=>{
+            const term = e.target.value.toLowerCase();
+            const target = e.target.getAttribute('data-target');
+
+            // Map container to dataset
+            let dataset;
+            if(target.includes('ongoing')) dataset = window.PETVET_TABLES.ongoing;
+            else if(target.includes('upcoming')) dataset = window.PETVET_TABLES.upcoming;
+            else if(target.includes('completed')) dataset = window.PETVET_TABLES.completed;
+            else if(target.includes('cancelled')) dataset = window.PETVET_TABLES.cancelled;
+
+            const filtered = dataset.filter(r => 
+                Object.values(r).some(val => String(val).toLowerCase().includes(term))
+            );
+
+            const includeActions = target.includes('completed');
+            document.getElementById(target).innerHTML = buildTableHTML(filtered, includeActions);
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+    renderAll();
+    setupSearch();
 });

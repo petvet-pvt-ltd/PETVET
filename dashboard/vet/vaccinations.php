@@ -1,148 +1,68 @@
 <?php
 session_start();
-$_SESSION['user_id'] = 1;
-$_SESSION['user_role'] = 'vet';
-$_SESSION['user_name'] = 'Nethmi';
-
-$currentPage = basename($_SERVER['PHP_SELF']);
+if (!isset($_SESSION['user_name'])) $_SESSION['user_name'] = 'Dr. Smith';
 include '../sidebar.php';
-
-// ================= Dummy Vaccination Records =================
-if (!isset($_SESSION['vaccinations'])) {
-    $_SESSION['vaccinations'] = [
-        ["pet"=>"Buddy","vaccine"=>"Rabies","date_given"=>"2025-08-01","next_due"=>"2026-08-01"],
-        ["pet"=>"Charlie","vaccine"=>"Distemper","date_given"=>"2025-07-15","next_due"=>"2026-07-15"]
-    ];
-}
-
-$vaccinations = &$_SESSION['vaccinations'];
-
-// ================= Handle Form Submission =================
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $record = [
-        "pet" => $_POST['pet'] ?? "",
-        "vaccine" => $_POST['vaccine'] ?? "",
-        "date_given" => $_POST['date_given'] ?? "",
-        "next_due" => $_POST['next_due'] ?? ""
-    ];
-
-    // Check if updating (based on hidden index)
-    if (isset($_POST['index']) && $_POST['index'] !== "") {
-        $index = $_POST['index'];
-        $vaccinations[$index] = $record;
-    } else {
-        $vaccinations[] = $record;
-    }
-
-    header("Location: vaccinations.php");
-    exit;
-}
-
-// ================= Handle Edit Request =================
-$editRecord = null;
-$editIndex = null;
-if (isset($_GET['action'], $_GET['index']) && $_GET['action'] === 'edit') {
-    $editIndex = $_GET['index'];
-    $editRecord = $vaccinations[$editIndex];
-}
-
-// ================= Handle Delete Request =================
-if (isset($_GET['action'], $_GET['index']) && $_GET['action'] === 'delete') {
-    $index = $_GET['index'];
-    unset($vaccinations[$index]);
-    $_SESSION['vaccinations'] = array_values($vaccinations); // reindex array
-    header("Location: vaccinations.php");
-    exit;
-}
 ?>
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vaccinations</title>
-<link rel="stylesheet" href="../../styles/dashboard/vet/vaccinations.css">
+  <meta charset="utf-8">
+  <title>Vaccinations</title>
+  <link rel="stylesheet" href="../../styles/dashboard/vet/dashboard.css">
 </head>
 <body>
-<div class="main-content">
+  <div class="main-content">
+    <header class="dashboard-header"><h2>Vaccinations</h2></header>
 
-    <!-- Header -->
-    <header class="dashboard-header">
-        <div class="header-left">
-            <h2>Vaccinations</h2>
-            <p>Manage vaccination records of pets.</p>
+    <!-- Vaccination Form -->
+    <section id="vaccFormSection" style="display:none">
+      <h3>Add Vaccination</h3>
+      <form id="vaccinationForm">
+        <div class="form-row">
+          <label>Appointment ID<input name="appointmentId" readonly></label>
+          <label>Pet Name<input name="petName" readonly></label>
+          <label>Owner<input name="ownerName" readonly></label>
         </div>
-        <div class="header-right">
-            <span class="date"><?php echo date("l, F j, Y"); ?></span>
+        <div class="form-row">
+          <label>Vaccine<input name="vaccine" required></label>
+          <label>Next Due<input type="date" name="nextDue" required></label>
         </div>
-    </header>
-    <br/>
+        <button class="btn green" type="submit">Save Vaccination</button>
+      </form>
+    </section>
 
-    <!-- ===== Form Section ===== -->
-    <div class="appointment-list" style="margin-bottom:40px;">
-        <h3><?php echo $editRecord ? "Edit Vaccination" : "Add Vaccination"; ?></h3>
-        <form method="POST">
-            <?php if ($editRecord !== null): ?>
-                <input type="hidden" name="index" value="<?php echo $editIndex; ?>">
-            <?php endif; ?>
+    <!-- Vaccinations Records Section -->
+    <section>
+      <h3>Vaccination Records</h3>
+      <input id="searchBar" placeholder="Search vaccinations...">
+      <div id="vaccinationsContainer"></div>
+    </section>
+  </div>
 
-            <label>Pet</label>
-            <input type="text" name="pet" value="<?php echo $editRecord['pet'] ?? ''; ?>" required>
+  <script>
+  window.PETVET_INITIAL_DATA = {
+    appointments: [
+      { id: 1, pet: "Bella", owner: "John Doe", status: "Ongoing", date: "2025-10-10" },
+      { id: 2, pet: "Max", owner: "Jane Smith", status: "Completed", date: "2025-09-28" },
+      { id: 3, pet: "Luna", owner: "Chris Brown", status: "Cancelled", date: "2025-09-15" },
+      { id: 4, pet: "Charlie", owner: "Emily Clark", status: "Upcoming", date: "2025-10-20" },
+      { id: 5, pet: "Lucy", owner: "Michael Adams", status: "Completed", date: "2025-09-25" },
+      { id: 6, pet: "Cooper", owner: "Olivia Harris", status: "Completed", date: "2025-09-22" },
+      { id: 7, pet: "Daisy", owner: "William Moore", status: "Ongoing", date: "2025-10-11" },
+      { id: 8, pet: "Milo", owner: "Sophia Lee", status: "Upcoming", date: "2025-10-18" },
+      { id: 9, pet: "Rocky", owner: "James Scott", status: "Completed", date: "2025-09-10" },
+      { id: 10, pet: "Molly", owner: "Ava Taylor", status: "Completed", date: "2025-09-05" }
+    ],
+    vaccinations: [
+      { appointmentId: 2, pet: "Max", owner: "Jane Smith", vaccine: "Rabies", nextDue: "2026-09-28" },
+      { appointmentId: 5, pet: "Lucy", owner: "Michael Adams", vaccine: "Parvovirus", nextDue: "2026-09-25" },
+      { appointmentId: 6, pet: "Cooper", owner: "Olivia Harris", vaccine: "Distemper", nextDue: "2026-09-22" },
+      { appointmentId: 9, pet: "Rocky", owner: "James Scott", vaccine: "Hepatitis", nextDue: "2026-09-10" },
+      { appointmentId: 10, pet: "Molly", owner: "Ava Taylor", vaccine: "Leptospirosis", nextDue: "2026-09-05" }
+    ]
+  };
+  </script>
 
-            <label>Vaccine Name</label>
-            <input type="text" name="vaccine" value="<?php echo $editRecord['vaccine'] ?? ''; ?>" required>
-
-            <label>Date Given</label>
-            <input type="date" name="date_given" value="<?php echo $editRecord['date_given'] ?? ''; ?>" required>
-
-            <label>Next Due</label>
-            <input type="date" name="next_due" value="<?php echo $editRecord['next_due'] ?? ''; ?>">
-
-            <br/>
-            <button type="submit" class="btn navy"><?php echo $editRecord ? "Update Record" : "Save Record"; ?></button>
-        </form>
-    </div>
-
-    <!-- ===== Records Table ===== -->
-    <div class="appointment-list">
-        <h3>Vaccination Records</h3>
-        <input type="text" id="searchBar" placeholder="Search by Pet, Vaccine, Date">
-        <table id="vaccinationTable">
-            <thead>
-                <tr>
-                    <th>Pet</th>
-                    <th>Vaccine</th>
-                    <th>Date Given</th>
-                    <th>Next Due</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($vaccinations as $i => $v): ?>
-                <tr>
-                    <td><?php echo $v['pet']; ?></td>
-                    <td><?php echo $v['vaccine']; ?></td>
-                    <td><?php echo $v['date_given']; ?></td>
-                    <td><?php echo $v['next_due']; ?></td>
-                    <td class="completed-buttons">
-                        <form method="GET" style="display:inline;">
-                            <input type="hidden" name="action" value="edit">
-                            <input type="hidden" name="index" value="<?php echo $i; ?>">
-                            <button type="submit" class="btn navy">Edit</button>
-                        </form>
-                        <form method="GET" style="display:inline;">
-                            <input type="hidden" name="action" value="delete">
-                            <input type="hidden" name="index" value="<?php echo $i; ?>">
-                            <button type="submit" class="btn red">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-
-</div>
-<script src="../../scripts/vaccinations.js"></script>
+  <script src="../../scripts/dashboard/vet/vaccinations.js"></script>
 </body>
 </html>

@@ -9,7 +9,7 @@
 
   <ul class="sidebar-nav-top">
     <a href="index.php" class="<?= basename($_SERVER['PHP_SELF'])==='index.php' ? 'active' : '' ?>">
-      <li class="nav-item"><img src="../../images/dashboard/meter.png" class="icon" alt=""> Dashboard</li>
+      <li class="nav-item"><img src="../../images/dashboard/meter.png" class="icon" alt=""> Overview</li>
     </a>
     <a href="appointments.php" class="<?= basename($_SERVER['PHP_SELF'])==='appointments.php' ? 'active' : '' ?>">
       <li class="nav-item"><img src="../../images/dashboard/calendar.png" class="icon" alt=""> Appointments</li>

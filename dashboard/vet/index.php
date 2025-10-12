@@ -1,143 +1,83 @@
 <?php
 session_start();
-$_SESSION['user_id'] = 1;
-$_SESSION['user_role'] = 'vet';
-$_SESSION['user_name'] = 'Nethmi';
-
+if(!isset($_SESSION['user_name'])){
+    $_SESSION['user_name']='Dr. Smith';
+    $_SESSION['user_id']=1;
+    $_SESSION['user_role']='vet';
+}
 $currentPage = basename($_SERVER['PHP_SELF']);
-include '../sidebar.php';
+include '../sidebar.php'; 
 
-// === Appointments Data as array of associative arrays ===
-$appointments = [
-    [
-        "id" => 1,
-        "time" => "10:30 AM",
-        "pet" => "Charlie",
-        "owner" => "Sarah Johnson",
-        "reason" => "Annual Checkup"
-    ],
-    [
-        "id" => 2,
-        "time" => "11:00 AM",
-        "pet" => "Milo",
-        "owner" => "John Doe",
-        "reason" => "Vaccination"
-    ],
-    [
-        "id" => 3,
-        "time" => "12:00 PM",
-        "pet" => "Lucy",
-        "owner" => "Emma Watson",
-        "reason" => "Dental Check"
-    ],
-    [
-        "id" => 4,
-        "time" => "12:30 PM",
-        "pet" => "Bella",
-        "owner" => "James Brown",
-        "reason" => "Dental Check"
-    ]
+$data = [
+  'appointments' => [
+    ['id'=>'A001','date'=>'2025-10-12','time'=>'09:00','petName'=>'Bella','ownerName'=>'John Perera','reason'=>'Vaccination','status'=>'ongoing','notes'=>'Bring card'],
+    ['id'=>'A002','date'=>'2025-10-12','time'=>'10:00','petName'=>'Max','ownerName'=>'Nimali Silva','reason'=>'Check-up','status'=>'scheduled','notes'=>''],
+    ['id'=>'A003','date'=>'2025-10-12','time'=>'11:00','petName'=>'Charlie','ownerName'=>'Kevin','reason'=>'Dental','status'=>'scheduled','notes'=>''],
+    ['id'=>'A004','date'=>'2025-10-13','time'=>'09:30','petName'=>'Luna','ownerName'=>'Saman','reason'=>'Skin issue','status'=>'scheduled','notes'=>''],
+    ['id'=>'A005','date'=>'2025-09-30','time'=>'14:00','petName'=>'Rocky','ownerName'=>'Anna','reason'=>'Follow-up','status'=>'completed','notes'=>''],
+    ['id'=>'A006','date'=>'2025-09-29','time'=>'15:00','petName'=>'Milo','ownerName'=>'Ravi','reason'=>'Vaccination','status'=>'cancelled','notes'=>''],
+    ['id'=>'A007','date'=>'2025-10-12','time'=>'12:00','petName'=>'Oscar','ownerName'=>'Naveen','reason'=>'Check-up','status'=>'scheduled','notes'=>''],
+    ['id'=>'A008','date'=>'2025-10-12','time'=>'13:30','petName'=>'Daisy','ownerName'=>'Leena','reason'=>'Dental','status'=>'scheduled','notes'=>''],
+    ['id'=>'A009','date'=>'2025-10-12','time'=>'14:30','petName'=>'Muffin','ownerName'=>'Suresh','reason'=>'Vaccination','status'=>'scheduled','notes'=>''],
+    ['id'=>'A010','date'=>'2025-10-12','time'=>'15:00','petName'=>'Lily','ownerName'=>'Kamal','reason'=>'Check-up','status'=>'scheduled','notes'=>'']
+  ],
+  'medicalRecords' => [
+    ['id'=>'M001','appointmentId'=>'A005','petName'=>'Rocky','ownerName'=>'Anna','date'=>'2025-09-30','symptoms'=>'Itchy skin','diagnosis'=>'Dermatitis','treatment'=>'Topical cream'],
+    ['id'=>'M002','appointmentId'=>'A003','petName'=>'Charlie','ownerName'=>'Kevin','date'=>'2025-10-12','symptoms'=>'Tooth pain','diagnosis'=>'Cavities','treatment'=>'Cleaning']
+  ],
+  'prescriptions' => [
+    ['id'=>'P001','appointmentId'=>'A005','petName'=>'Rocky','ownerName'=>'Anna','date'=>'2025-09-30','medication'=>'Antihistamine','dosage'=>'5ml','notes'=>'Twice a day'],
+    ['id'=>'P002','appointmentId'=>'A001','petName'=>'Bella','ownerName'=>'John Perera','date'=>'2025-10-12','medication'=>'Deworm','dosage'=>'1 tab','notes'=>'Today']
+  ],
+  'vaccinations' => [
+    ['id'=>'V001','appointmentId'=>'A001','petName'=>'Bella','ownerName'=>'John Perera','date'=>'2025-10-12','vaccine'=>'Rabies','nextDue'=>'2026-10-12'],
+    ['id'=>'V002','appointmentId'=>'A006','petName'=>'Milo','ownerName'=>'Ravi','date'=>'2025-09-29','vaccine'=>'Distemper','nextDue'=>'2026-09-29']
+  ]
 ];
 
-// === Separate ongoing and upcoming appointments ===
-$ongoing = $appointments[0]; // first appointment is ongoing
-$todayAppointments = array_slice($appointments, 1); // rest are upcoming
-
-// === Stats as array ===
-$stats = [
-    "today" => count($appointments),
-    "week"  => count($appointments) // for example
-];
+// server-side: expose data to JS for initialization
 ?>
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vet Dashboard</title>
-    <link rel="stylesheet" href="../../styles/dashboard/vet/dashboard.css">
+  <meta charset="utf-8">
+  <title>PetVet — Overview</title>
+  <link rel="stylesheet" href="../../styles/dashboard/vet/dashboard.css">
 </head>
 <body>
-<div class="main-content">
-
-    <!-- Header -->
+  <div class="main-content">
     <header class="dashboard-header">
-        <div class="header-left">
-            <h2>Welcome, Dr. <?php echo $_SESSION['user_name']; ?></h2>
-            <p>Manage appointments, medical records, and prescriptions — all in one place.</p>
-        </div>
-        <div class="header-right">
-            <span class="date"><?php echo date("l, F j, Y"); ?></span>
-        </div>
+      <h2>Welcome, Dr. <?php echo htmlspecialchars($_SESSION['user_name']); ?></h2>
+      <div class="date"><?php echo date("l, F j, Y", strtotime('2025-10-12')); ?></div>
     </header>
-    <br/>
 
-    <!-- Dashboard Cards -->
     <div class="cards">
-        <?php foreach ($stats as $label => $count): ?>
-            <div class="card <?php echo $label == 'today' ? 'navy' : 'red'; ?>">
-                <h3><?php echo $count; ?></h3>
-                <p><?php echo $label == 'today' ? "Appointments Today" : "Appointments This Week"; ?></p>
-            </div>
-        <?php endforeach; ?>
+      <div class="card">
+        <h3 id="kpi-today">—</h3>
+        <p>Appointments Today</p>
+      </div>
+      <div class="card">
+        <h3 id="kpi-total">—</h3>
+        <p>Total Appointments</p>
+      </div>
     </div>
 
-    <!-- Ongoing Appointment -->
-    <div class="appointment ongoing">
-    <h3>Ongoing Appointment</h3>
-    <br/>
-    <p><b>ID:</b> <?php echo $ongoing['id']; ?></p>
-    <p><b>Time:</b> <?php echo $ongoing['time']; ?></p>
-    <p><b>Pet:</b> <?php echo $ongoing['pet']; ?></p>
-    <p><b>Owner:</b> <?php echo $ongoing['owner']; ?></p>
-    <p><b>Reason:</b> <?php echo $ongoing['reason']; ?></p>
+    <section id="ongoing-section">
+      <h3>Ongoing Appointment</h3>
+      <div id="ongoing-container"><!-- filled by JS --></div>
+    </section>
 
-    <div class="actions">
-        <button class="btn navy" onclick="window.location.href='medical-records.php?appointment_id=<?php echo $ongoing['id']; ?>&pet=<?php echo urlencode($ongoing['pet']); ?>'">Record</button>
-        <button class="btn navy" onclick="window.location.href='prescriptions.php?appointment_id=<?php echo $ongoing['id']; ?>&pet=<?php echo urlencode($ongoing['pet']); ?>'">Prescription</button>
-        <button id="completeBtn" class="btn navy">Complete</button>
-        <button id="cancelBtn" class="btn red">Cancel</button>
-    </div>
-</div>
+    <section>
+      <h3>Today's Upcoming Appointments</h3>
+      <input id="searchBar" placeholder="Search by pet, owner, reason...">
+      <div style="overflow:auto">
+        <table id="upcomingTable"><thead><tr><th>ID</th><th>Time</th><th>Pet</th><th>Owner</th><th>Reason</th><th>Action</th></tr></thead>
+        <tbody></tbody></table>
+      </div>
+    </section>
+  </div>
 
-
-    <!-- Today's Appointments List -->
-    <div class="appointment-list">
-        <div class="header-row">
-            <h3>Today's Upcoming Appointments</h3>
-            <input type="text" id="searchBar" placeholder="Search by pet, owner, or reason...">
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Time</th>
-                    <th>Pet</th>
-                    <th>Owner</th>
-                    <th>Reason</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="appointmentsTable">
-    <?php foreach ($todayAppointments as $index => $appt): ?>
-        <tr data-index="<?php echo $index; ?>">
-            <td><?php echo $appt['id']; ?></td>
-            <td><?php echo $appt['time']; ?></td>
-            <td><?php echo $appt['pet']; ?></td>
-            <td><?php echo $appt['owner']; ?></td>
-            <td><?php echo $appt['reason']; ?></td>
-            <td>
-                <button class="btn navy" onclick="window.location.href='medical-records.php?appointment_id=<?php echo $appt['id']; ?>&pet=<?php echo urlencode($appt['pet']); ?>'">Record</button>
-                <button class="btn navy" onclick="window.location.href='prescriptions.php?appointment_id=<?php echo $appt['id']; ?>&pet=<?php echo urlencode($appt['pet']); ?>'">Prescription</button>
-                <button class="btn red cancel-btn" data-index="<?php echo $index; ?>">Cancel</button>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-</tbody>
-        </table>
-    </div>
-
-</div>
-<script src="../../scripts/dashboard/vet/dashboard.js"></script>
+  <script>window.PETVET_INITIAL_DATA = <?php echo json_encode($data, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>; window.PETVET_TODAY='2025-10-12';</script>
+  <script src="../../scripts/dashboard/vet/dashboard.js"></script>
 </body>
 </html>
