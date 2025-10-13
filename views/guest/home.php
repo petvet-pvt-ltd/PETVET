@@ -26,7 +26,7 @@
           <h1 class="hero-title">Care. Connect. Cure.</h1>
           <p class="hero-subtitle">All-in-one platform for pet owners, vets, and clinics to keep pets healthier and happier.</p>
           <div class="cta-group">
-            <button class="btn primary" onclick="window.location.href='/PETVET/register/client-reg.php'">I’m a Pet Owner</button>
+            <button class="btn primary" onclick="window.location.href='/PETVET/register/multi-step-registration.php'">I’m a Pet Owner</button>
             <button class="btn success" onclick="window.location.href='/PETVET/register/vet-reg.php'">I’m a Veterinarian</button>
             <button class="btn pink" onclick="window.location.href='/PETVET/register/clinic-manager-reg.php'">I manage a Clinic</button>
           </div>
@@ -61,7 +61,7 @@
           diagnostic imaging (X-Ray/Scan).
         </p>
         <div class="button-wrapper">
-          <button class="register-btn" onclick="window.location.href='/PETVET/register/client-reg.php'">Register as an owner</button>
+          <button class="register-btn" onclick="window.location.href='/PETVET/register/multi-step-registration.php'">Register as an owner</button>
         </div>
       </div>
     </div>
@@ -131,7 +131,7 @@
           community of dedicated pet owners.
         </p>
         <div class="button-wrapper">
-          <button class="register-btn">Register your service</button>
+          <button class="register-btn" onclick="window.location.href='/PETVET/register/multi-step-registration.php'">Register as a servive provider</button>
         </div>
       </div>
     </div>
