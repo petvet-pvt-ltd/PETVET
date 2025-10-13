@@ -1,0 +1,106 @@
+// Pet Owner Settings JS
+(function(){
+  const $ = s=>document.querySelector(s);
+  const $$ = s=>Array.from(document.querySelectorAll(s));
+  const toastEl = $('#toast');
+  function showToast(msg){
+    if(!toastEl) return; toastEl.textContent = msg; toastEl.classList.add('show');
+    clearTimeout(showToast._t); showToast._t = setTimeout(()=>toastEl.classList.remove('show'),2600);
+  }
+
+  // Scroll spy via IntersectionObserver for reliable highlighting
+  const navLinks = $$('.quick-nav a');
+  const sectionMap = new Map();
+  navLinks.forEach(a=>{
+    const id = a.getAttribute('href').replace('#','');
+    const sec = document.getElementById(id);
+    if(sec) sectionMap.set(sec, a);
+  });
+  const observer = new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        const link = sectionMap.get(entry.target);
+        if(link){ navLinks.forEach(l=>l.classList.remove('active')); link.classList.add('active'); }
+      }
+    });
+  }, {rootMargin:'-40% 0px -50% 0px', threshold:[0, .25, .5, 1]});
+  sectionMap.forEach((_, sec)=>observer.observe(sec));
+  // Smooth scroll assist: active state will be handled by observer
+  // Smooth scroll for nav
+  navLinks.forEach(a=>a.addEventListener('click', e=>{
+    const id = a.getAttribute('href');
+    if(id && id.startsWith('#')){
+      e.preventDefault();
+      const target = document.querySelector(id);
+      if(target){ target.scrollIntoView({behavior:'smooth', block:'start'}); }
+    }
+  }));
+
+  // Reveal animation for cards
+  const cards = Array.from(document.querySelectorAll('.settings-grid > section.card'));
+  if('IntersectionObserver' in window){
+    const ro = new IntersectionObserver(entries=>{
+      entries.forEach(en=>{
+        if(en.isIntersecting){ en.target.classList.add('reveal-in'); ro.unobserve(en.target); }
+      });
+    }, {threshold:.2});
+    cards.forEach(c=>{c.classList.add('reveal-ready'); ro.observe(c);});
+  }
+
+  // Avatar preview
+  const avatarInput = $('#ownerAvatar');
+  const avatarPreview = $('#ownerAvatarPreview .image-preview-item img');
+  document.addEventListener('click', e=>{
+    const btn = e.target.closest('[data-for="ownerAvatar"]');
+    if(btn && avatarInput){ avatarInput.click(); }
+  });
+  if(avatarInput){
+    avatarInput.addEventListener('change', e=>{
+      const file = avatarInput.files && avatarInput.files[0];
+      if(!file) return;
+      if(!file.type.startsWith('image/')){ showToast('Please select an image file'); return; }
+      const url = URL.createObjectURL(file);
+      if(avatarPreview){ avatarPreview.src = url; }
+    });
+  }
+
+  // Generic form save simulation
+  function handleFakeSubmit(form, label){
+    if(!form) return;
+    form.addEventListener('submit', e=>{
+      e.preventDefault();
+      // Basic validation example for password confirm
+      if(form.id === 'formPassword'){
+        const np = form.querySelector('input[name="new_password"]').value.trim();
+        const cp = form.querySelector('input[name="confirm_password"]').value.trim();
+        if(np.length < 6){ showToast('Password too short (min 6)'); return; }
+        if(np !== cp){ showToast('Passwords do not match'); return; }
+      }
+      showToast(label + ' saved');
+      form.dataset.clean = 'true';
+    });
+  }
+  handleFakeSubmit($('#formProfile'),'Profile');
+  handleFakeSubmit($('#formPassword'),'Password');
+  handleFakeSubmit($('#formPrefs'),'Preferences');
+
+  // Set current reminder value if select has value attribute (server injected)
+  const reminderSelect = document.querySelector('select[name="reminder_appointments"]');
+  if(reminderSelect){
+    const val = reminderSelect.getAttribute('value');
+    if(val && !reminderSelect.value) reminderSelect.value = val;
+  }
+
+  // Dirty form tracking
+  ['#formProfile','#formPassword','#formPrefs'].forEach(id=>{
+    const f = $(id);
+    if(!f) return; f.dataset.clean='true';
+    f.addEventListener('input', ()=>{ f.dataset.clean='false'; });
+  });
+  window.addEventListener('beforeunload', e=>{
+    const dirty = ['#formProfile','#formPassword','#formPrefs'].some(id=>{
+      const f=$(id); return f && f.dataset.clean==='false';
+    });
+    if(dirty){ e.preventDefault(); e.returnValue=''; }
+  });
+})();

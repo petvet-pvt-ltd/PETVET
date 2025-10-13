@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Client Register</title>
-  <link rel="stylesheet" href="../styles/reg-client.css">
+  <link rel="stylesheet" href="/PETVET/public/css/guest/reg-client.css">
 </head>
 <body>
   <div class="card-wrapper">
@@ -11,9 +12,9 @@
       <div class="card-image">
 
         <!-- From Uiverse.io by SteveBloX -->  
-        <button class=gobackbtn onclick="history.back()">Go Back</button>
+        <button class=gobackbtn onclick="window.location.href='/PETVET/index.php?module=guest&page=home'">Home</button>
 
-        <img src="../images/kid-and-pet.avif" alt="Pet Owner">
+        <img src="/PETVET/views/shared/images/kid-and-pet.avif" alt="Pet Owner">
       </div>
       <div class="form-container">
         <h2>Owner Registration</h2>

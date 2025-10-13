@@ -1,0 +1,159 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  transition: margin-left 0.3s ease-in-out;
+}
+
+.dashboard-sidebar {
+  width: 240px;
+  height: 100vh;
+  background-color: #17293F;
+  color: rgb(214, 214, 214);
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  box-sizing: border-box;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+  z-index: 1000;
+  transition: transform 0.3s ease-in-out;
+}
+
+@media (max-width: 768px) {
+  .dashboard-sidebar {
+    transform: translateX(-100%);
+    z-index: 2000;
+  }
+  .dashboard-sidebar.active-sidebar {
+    transform: translateX(0);
+  }
+  body.active-sidebar {
+    margin-left: 0; /* No margin when sidebar is active */
+    width: 100%; /* Full width when sidebar is active */
+  }
+  body:not(.active-sidebar) {
+    margin-left: 0; /* No margin when sidebar is hidden */
+    width: 100%; /* Full width when sidebar is hidden */
+  }
+}
+
+.sidebar-toggle {
+  display: none;
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1500;
+  background-color: #17293F;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+  background-color: #374B5F;
+}
+
+@media (max-width: 768px) {
+  .sidebar-toggle {
+    display: block;
+  }
+}
+
+.sidebar-close {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+@media (max-width: 768px) {
+  .sidebar-close {
+    display: block;
+  }
+}
+
+.dashboard-sidebar a:not(.active) {
+  text-decoration: none;
+  color: rgb(214, 214, 214);
+}
+
+.active {
+  text-decoration: none;
+  color: white;
+}
+
+.active li {
+  background-color: #374B5F;
+}
+
+.sidebar-title {
+  font-size: 20px;
+  margin-bottom: 0px;
+  margin-top: 0px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+.sidebar-nav-top,
+.sidebar-nav-bottom {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-nav-top {
+  flex-grow: 1;
+  margin-top: 8px;
+}
+
+.sidebar-nav-bottom {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(214, 214, 214, 0.2);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.2s ease, transform 0.2s ease;
+  margin: 6px 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.nav-item:hover {
+  transform: scale(1.05);
+}
+
+.active li:hover {
+  transform: scale(1.00);
+}
+
+.petvet-logo {
+  width: 50px;
+}
+
+.icon {
+  width: 25px;
+  height: 25px;
+}

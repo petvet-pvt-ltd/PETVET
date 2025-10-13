@@ -1,0 +1,411 @@
+/* Reset and base styles */
+* { box-sizing: border-box; padding: 0; }
+
+:root {
+    --surface: #ffffff;
+    --bg: #f6f8fa;
+    --text: #1e293b;
+    --muted: #64748b;
+    --primary: #2563eb;
+    --primary-600: #1d4ed8;
+    --primary-700: #1e40af;
+    --success: #22c55e;
+    --success-600: #16a34a;
+    --danger: #ef4444;
+    --danger-600: #dc2626;
+    --ring: rgba(37, 99, 235, 0.25);
+    --shadow-sm: 0 1px 2px rgba(2, 6, 23, 0.05);
+    --shadow-md: 0 4px 12px rgba(2, 6, 23, 0.08);
+    --shadow-lg: 0 8px 24px rgba(2, 6, 23, 0.12);
+}
+
+body { background: var(--bg); color: var(--text); line-height: 1.5; }
+
+/* Main content */
+.main-content {
+    margin-left: 240px;
+    padding: 24px;
+    min-height: 100vh;
+}
+
+/* Header */
+.shop-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    background: var(--surface);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    padding: 16px 24px;
+}
+
+.shop-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2563eb;
+}
+
+.shop-header .buttons {
+    display: flex;
+    gap: 12px;
+}
+
+/* Unified button system (pure CSS, no frameworks) */
+.btn,
+.pending-orders-btn,
+.add-product-btn,
+.add-product-modal-btn {
+        appearance: none;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 16px;
+        color: #fff;
+        transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease, color .12s ease;
+        box-shadow: var(--shadow-sm);
+}
+
+/* Header buttons */
+.pending-orders-btn { background: var(--primary); position: relative; }
+.pending-orders-btn:hover { background: var(--primary-600); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.pending-orders-btn:active { transform: translateY(0); }
+
+.add-product-btn { background: var(--success); }
+.add-product-btn:hover { background: var(--success-600); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.add-product-btn:active { transform: translateY(0); }
+
+/* Success variant and utility width for shared .btn */
+.btn.success { background: var(--success); color: #fff; }
+.btn.success:hover { background: var(--success-600); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.btn.success:active { transform: translateY(0); }
+.btn.full { width: 100%; }
+
+.pending-orders-btn .badge {
+        background: var(--danger);
+        color: #fff;
+        border-radius: 999px;
+        padding: 2px 8px;
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        font-size: 0.75rem;
+        box-shadow: var(--shadow-md);
+}
+
+/* Badge positioning when the badge is inside a generic .btn in the header */
+.shop-header .buttons .btn .badge { position: static; margin-left: 8px; padding-inline: 8px; transform: translateY(-1px); }
+
+/* Product action buttons */
+.product-actions .btn { min-width: 100px; }
+.btn.primary { background: var(--primary); color: #fff; }
+.btn.primary:hover { background: var(--primary-600); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.btn.primary:active { transform: translateY(0); }
+
+.btn.danger { background: var(--danger); color: #fff; }
+.btn.danger:hover { background: var(--danger-600); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.btn.danger:active { transform: translateY(0); }
+
+/* Modal primary button */
+.add-product-modal-btn { background: var(--success); }
+.add-product-modal-btn:hover { background: var(--success-600); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.add-product-modal-btn:active { transform: translateY(0); }
+
+/* Accessible focus ring for all buttons */
+.btn:focus,
+.pending-orders-btn:focus,
+.add-product-btn:focus,
+.add-product-modal-btn:focus,
+.img-nav-btn:focus { outline: none; box-shadow: 0 0 0 3px var(--ring), var(--shadow-md); }
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .btn, .pending-orders-btn, .add-product-btn, .add-product-modal-btn, .img-nav-btn { transition: background-color .12s ease, color .12s ease; }
+}
+
+/* Products Grid */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.product-card { background: var(--surface); border-radius: 12px; box-shadow: var(--shadow-md); overflow: hidden; transition: transform .18s ease, box-shadow .18s ease; }
+.product-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+
+.product-image-wrap {
+    position: relative;
+    height: 180px;
+    overflow: hidden;
+}
+
+.product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.product-card:hover .product-img {
+    transform: scale(1.05);
+}
+
+.img-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.9);
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1;
+    color: var(--primary);
+    border-radius: 999px;
+    box-shadow: var(--shadow-md);
+}
+.img-nav-btn:hover { background: var(--primary); color: #ffffff; }
+.img-nav-btn.left {
+    left: 8px;
+}
+
+.img-nav-btn.right {
+    right: 8px;
+}
+
+.product-info { padding: 16px; background: var(--surface); }
+
+.product-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+
+.product-category {
+    font-size: 0.875rem;
+    color: #2563eb;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.product-desc {
+    font-size: 0.875rem;
+    color: #475569;
+    margin-bottom: 12px;
+    height: 60px;
+    overflow: hidden;
+}
+
+.product-stock-price { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: var(--surface); }
+
+.product-stock {
+    font-size: 0.875rem;
+    color: #334155;
+}
+
+.stock-low {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.product-price {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #047857;
+}
+
+.product-actions { display: flex; gap: 8px; }
+
+/* Modals */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 24px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    animation: modal-in 0.3s ease-out;
+    box-shadow: var(--shadow-lg);
+}
+
+/* Wide modal variant (used for Pending Orders) */
+.modal.modal--wide .modal-content { max-width: 880px; }
+
+.modal-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.modal-header h3 { margin: 0; font-size: 1.25rem; color: var(--text); }
+.modal-body { padding-top: 6px; max-height: 70vh; overflow: auto; }
+
+/* Scrollable wrapper for large tables */
+.table-wrap { width: 100%; overflow: auto; border-radius: 8px; }
+
+@keyframes modal-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #64748b;
+}
+
+.close:hover {
+    color: #2563eb;
+}
+
+.modal h3 {
+    font-size: 1.25rem;
+    margin-bottom: 16px;
+    color: #1e293b;
+}
+
+form label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 500;
+    color: #1e293b;
+}
+
+form input, form textarea {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #1e293b;
+}
+
+.images-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.images-preview img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+}
+
+.add-product-modal-btn { width: 100%; padding: 12px; border-radius: 10px; }
+
+/* Orders Table in Modal */
+.orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    background: #ffffff;
+}
+
+.orders-table th, .orders-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+    color: #1e293b;
+}
+
+.orders-table th {
+    background: #eef2ff;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.orders-table td {
+    font-size: 0.875rem;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 16px;
+    }
+    
+    .shop-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .shop-header .buttons {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .pending-orders-btn, .add-product-btn {
+        width: 100%;
+    }
+    
+    .products-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .product-image-wrap {
+        height: 200px;
+    }
+    
+    .modal-content { width: 95%; padding: 16px; }
+    .modal.modal--wide .modal-content { width: 98%; max-width: none; }
+    
+    .orders-table {
+        font-size: 0.75rem;
+    }
+    
+    .orders-table th, .orders-table td {
+        padding: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .product-info {
+        padding: 12px;
+    }
+    
+    .product-desc {
+        height: auto;
+    }
+    
+    .img-nav-btn {
+        padding: 4px;
+    }
+}
+
+/* Form layout in Add Product modal */
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.form-field { display: flex; flex-direction: column; }
+.form-col-span-2 { grid-column: span 2; }
+.file-input { padding: 10px; border: 1px dashed #cbd5e1; border-radius: 8px; background: #f8fafc; }

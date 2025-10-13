@@ -3,16 +3,17 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vet Register</title>
-  <link rel="stylesheet" href="../styles/reg-vet.css">
+  <link rel="stylesheet" href="/PETVET/public/css/guest/reg-vet.css">
 </head>
 
 <body>
   <div class="card-wrapper">
     <div class="card">
       <div class="card-image">
-        <button class="gobackbtn" onclick="window.location.href='../index.php'">Home</button>
-        <img src="../images/vet-reg-cover.jpg" alt="Pet Owner">
+        <button class="gobackbtn" onclick="window.location.href='/PETVET/index.php?module=guest&page=home'">Home</button>
+        <img src="/PETVET/views/shared/images/vet-reg-cover.jpg" alt="Pet Owner">
       </div>
 
       <div class="form-container">
@@ -31,14 +32,6 @@
               <input type="text" id="lname" name="lname" placeholder="Last Name" required>
               <span class="error-msg" id="lname-error"></span>
             </div>
-
-            <!--
-            <div class="radio-group">
-              <label><input type="radio" name="gender" value="male" required> Male</label>
-              <label><input type="radio" name="gender" value="female"> Female</label>
-              <span class="error-msg" id="gender-error"></span>
-            </div>
-            -->
 
             <div>
               <input type="email" id="email" name="email" placeholder="Email Address" required>
