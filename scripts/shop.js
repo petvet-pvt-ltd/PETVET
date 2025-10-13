@@ -25,7 +25,12 @@ document.querySelectorAll('.category-card').forEach(card => {
 document.querySelectorAll('.product-card').forEach(card => {
   card.addEventListener('click', function(e) {
     if (!e.target.closest('button') && !e.target.closest('a')) {
-      window.location.href = 'shop-product.php';
+      const productId = this.dataset.productId;
+      if (productId) {
+        window.location.href = `shop-product.php?id=${productId}`;
+      } else {
+        window.location.href = 'shop-product.php';
+      }
     }
   });
 });
