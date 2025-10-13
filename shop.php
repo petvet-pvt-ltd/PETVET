@@ -70,83 +70,83 @@ require_once 'redirectorToLoggedUser.php';
 <section class="products">
   <h2>Products</h2>
   <div class="product-grid">
-    <div class="product-card" data-category="food">
+    <div class="product-card" data-category="food" data-product-id="1">
       <img src="images/fproduct1.png" alt="Dog Treats">
       <h3>Denta Fun Veggie Jaw Bone</h3>
       <p class="price">Rs. 500</p>
       <div class="product-actions">
         <button class="add-to-cart">Add to Cart</button>
-        <a href="#" class="quick-view">Quick View</a>
+        <a href="shop-product.php?id=1" class="quick-view">Quick View</a>
       </div>
     </div>
 
-    <div class="product-card" data-category="litter">
+    <div class="product-card" data-category="litter" data-product-id="2">
       <img src="images/fproduct2.png" alt="Trixie Litter Scoop">
       <h3>Trixie Litter Scoop</h3>
       <p class="price">Rs. 900</p>
       <div class="product-actions">
         <button class="add-to-cart">Add to Cart</button>
-        <a href="#" class="quick-view">Quick View</a>
+        <a href="shop-product.php?id=2" class="quick-view">Quick View</a>
       </div>
     </div>
 
-    <div class="product-card" data-category="toys">
+    <div class="product-card" data-category="toys" data-product-id="3">
       <img src="images/fproduct3.png" alt="Dog Toy Tug Rope">
       <h3>Dog Toy Tug Rope</h3>
       <p class="price">Rs. 2100</p>
       <div class="product-actions">
         <button class="add-to-cart">Add to Cart</button>
-        <a href="#" class="quick-view">Quick View</a>
+        <a href="shop-product.php?id=3" class="quick-view">Quick View</a>
       </div>
     </div>
 
-    <div class="product-card" data-category="grooming">
+    <div class="product-card" data-category="grooming" data-product-id="4">
       <img src="images/fproduct4.png" alt="Trixie Aloe Vera Shampoo">
       <h3>Trixie Aloe Vera Shampoo</h3>
       <p class="price">Rs. 1900</p>
       <div class="product-actions">
         <button class="add-to-cart">Add to Cart</button>
-        <a href="#" class="quick-view">Quick View</a>
+        <a href="shop-product.php?id=4" class="quick-view">Quick View</a>
       </div>
     </div>
 
-    <div class="product-card" data-category="food">
+    <div class="product-card" data-category="food" data-product-id="1">
       <img src="images/fproduct1.png" alt="Dog Treats">
       <h3>Denta Fun Veggie Jaw Bone</h3>
       <p class="price">Rs. 500</p>
       <div class="product-actions">
         <button class="add-to-cart">Add to Cart</button>
-        <a href="#" class="quick-view">Quick View</a>
+        <a href="shop-product.php?id=1" class="quick-view">Quick View</a>
       </div>
     </div>
 
-    <div class="product-card" data-category="litter">
+    <div class="product-card" data-category="litter" data-product-id="2">
       <img src="images/fproduct2.png" alt="Trixie Litter Scoop">
       <h3>Trixie Litter Scoop</h3>
       <p class="price">Rs. 900</p>
       <div class="product-actions">
         <button class="add-to-cart">Add to Cart</button>
-        <a href="#" class="quick-view">Quick View</a>
+        <a href="shop-product.php?id=2" class="quick-view">Quick View</a>
       </div>
     </div>
 
-    <div class="product-card" data-category="toys">
+    <div class="product-card" data-category="toys" data-product-id="3">
       <img src="images/fproduct3.png" alt="Dog Toy Tug Rope">
       <h3>Dog Toy Tug Rope</h3>
       <p class="price">Rs. 2100</p>
       <div class="product-actions">
         <button class="add-to-cart">Add to Cart</button>
-        <a href="#" class="quick-view">Quick View</a>
+        <a href="shop-product.php?id=3" class="quick-view">Quick View</a>
       </div>
     </div>
 
-    <div class="product-card" data-category="grooming">
+    <div class="product-card" data-category="grooming" data-product-id="4">
       <img src="images/fproduct4.png" alt="Trixie Aloe Vera Shampoo">
       <h3>Trixie Aloe Vera Shampoo</h3>
       <p class="price">Rs. 1900</p>
       <div class="product-actions">
         <button class="add-to-cart">Add to Cart</button>
-        <a href="#" class="quick-view">Quick View</a>
+        <a href="shop-product.php?id=4" class="quick-view">Quick View</a>
       </div>
     </div>
   </div>   

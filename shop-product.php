@@ -1,5 +1,41 @@
 <?php
 require_once 'redirectorToLoggedUser.php';
+
+// Product data
+$products = [
+    1 => [
+        'name' => 'Denta Fun Veggie Jaw Bone',
+        'price' => 500,
+        'image' => 'images/fproduct1.png',
+        'description' => 'A healthy, delicious treat for your dog. Made from natural ingredients to support dental health while satisfying chewing needs. Composition sweet potato meal, pea starch, vegetable by-products, minerals, yeast, cellulose, oils and fats, rosemary | gluten-free formula | vegetarian | no added sugar',
+        'category' => 'food'
+    ],
+    2 => [
+        'name' => 'Trixie Litter Scoop',
+        'price' => 900,
+        'image' => 'images/fproduct2.png',
+        'description' => 'High-quality litter scoop made from durable materials. Perfect for easy and hygienic litter box maintenance. Features comfortable grip handle and efficient scooping design.',
+        'category' => 'litter'
+    ],
+    3 => [
+        'name' => 'Dog Toy Tug Rope',
+        'price' => 2100,
+        'image' => 'images/fproduct3.png',
+        'description' => 'Interactive rope toy perfect for playing tug-of-war with your dog. Made from durable cotton fibers that help clean teeth during play. Great for bonding and exercise.',
+        'category' => 'toys'
+    ],
+    4 => [
+        'name' => 'Trixie Aloe Vera Shampoo',
+        'price' => 1900,
+        'image' => 'images/fproduct4.png',
+        'description' => 'Gentle pet shampoo enriched with Aloe Vera for sensitive skin. Cleanses thoroughly while moisturizing and soothing your pet\'s coat. Suitable for regular use.',
+        'category' => 'grooming'
+    ]
+];
+
+// Get product ID from URL parameter
+$productId = isset($_GET['id']) ? (int)$_GET['id'] : 1;
+$product = isset($products[$productId]) ? $products[$productId] : $products[1];
 ?>
 <html lang="en">
 <head>
@@ -19,14 +55,14 @@ require_once 'redirectorToLoggedUser.php';
 <!-- Product Details Section -->
 <section class="product-details">
     <div class="product-image">
-        <img src="images/fproduct1.png" alt="Denta Fun Veggie Jaw Bone">
+        <img src="<?php echo htmlspecialchars($product['image']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
     </div>
 
     <div class="product-info">
-        <h1>Denta Fun Veggie Jaw Bone</h1>
-        <p class="price">Rs. 500</p>
+        <h1><?php echo htmlspecialchars($product['name']); ?></h1>
+        <p class="price">Rs. <?php echo number_format($product['price']); ?></p>
         <p class="short-desc">
-            A healthy, delicious treat for your dog. Made from natural ingredients to support dental health while satisfying chewing needs. Composition sweet potato meal, pea starch, vegetable by-products, minerals, yeast, cellulose, oils and fats, rosemary | gluten-free formula | vegetarian | no added sugar 
+            <?php echo htmlspecialchars($product['description']); ?>
         </p>
 
         <div class="quantity-wrapper">
@@ -46,45 +82,19 @@ require_once 'redirectorToLoggedUser.php';
 <section class="products">
     <h2>Related Products</h2>
     <div class="product-grid">
-        <div class="product-card" data-category="food">
-            <img src="images/fproduct1.png" alt="Dog Treats">
-            <h3>Denta Fun Veggie Jaw Bone</h3>
-            <p class="price">Rs. 500</p>
+        <?php foreach($products as $id => $relatedProduct): ?>
+            <?php if($id != $productId): // Don't show the current product ?>
+        <div class="product-card" data-category="<?php echo $relatedProduct['category']; ?>" data-product-id="<?php echo $id; ?>">
+            <img src="<?php echo htmlspecialchars($relatedProduct['image']); ?>" alt="<?php echo htmlspecialchars($relatedProduct['name']); ?>">
+            <h3><?php echo htmlspecialchars($relatedProduct['name']); ?></h3>
+            <p class="price">Rs. <?php echo number_format($relatedProduct['price']); ?></p>
             <div class="product-actions">
                 <button class="add-to-cart" type="button">Add to Cart</button>
-                <a href="#" class="quick-view">Quick View</a>
+                <a href="shop-product.php?id=<?php echo $id; ?>" class="quick-view">Quick View</a>
             </div>
         </div>
-
-        <div class="product-card" data-category="litter">
-            <img src="images/fproduct2.png" alt="Trixie Litter Scoop">
-            <h3>Trixie Litter Scoop</h3>
-            <p class="price">Rs. 900</p>
-            <div class="product-actions">
-                <button class="add-to-cart" type="button">Add to Cart</button>
-                <a href="#" class="quick-view">Quick View</a>
-            </div>
-        </div>
-
-        <div class="product-card" data-category="toys">
-            <img src="images/fproduct3.png" alt="Dog Toy Tug Rope">
-            <h3>Dog Toy Tug Rope</h3>
-            <p class="price">Rs. 2100</p>
-            <div class="product-actions">
-                <button class="add-to-cart" type="button">Add to Cart</button>
-                <a href="#" class="quick-view">Quick View</a>
-            </div>
-        </div>
-
-        <div class="product-card" data-category="grooming">
-            <img src="images/fproduct4.png" alt="Trixie Aloe Vera Shampoo">
-            <h3>Trixie Aloe Vera Shampoo</h3>
-            <p class="price">Rs. 1900</p>
-            <div class="product-actions">
-                <button class="add-to-cart" type="button">Add to Cart</button>
-                <a href="#" class="quick-view">Quick View</a>
-            </div>
-        </div>
+            <?php endif; ?>
+        <?php endforeach; ?>
     </div>
 </section>
 

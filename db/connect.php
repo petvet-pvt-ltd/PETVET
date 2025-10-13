@@ -3,7 +3,7 @@
 $server_name = "localhost";
 $server_user = "root";
 $server_pass = "";
-$server_db = "petvet_db";
+$server_db = "petvet-test";
 
 #test table - users
 $tb_name = "users";
