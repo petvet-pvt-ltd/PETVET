@@ -1,182 +1,74 @@
 <?php
 session_start();
-$_SESSION['user_id'] = 1;
-$_SESSION['user_role'] = 'vet';
-$_SESSION['user_name'] = 'Nethmi';
-
-$currentPage = basename($_SERVER['PHP_SELF']);
+if(!isset($_SESSION['user_name'])){ $_SESSION['user_name']='Dr. Smith'; $_SESSION['user_id']=1; }
 include '../sidebar.php';
 
-// === Appointments Data ===
-$appointments = [
-    ["id"=>1,"date"=>"2025-09-01","time"=>"10:30 AM","pet"=>"Charlie","owner"=>"Sarah Johnson","reason"=>"Annual Checkup","status"=>"scheduled","prescription"=>"","record"=>""],
-    ["id"=>2,"date"=>"2025-09-01","time"=>"11:00 AM","pet"=>"Milo","owner"=>"John Doe","reason"=>"Vaccination","status"=>"completed","prescription"=>"Vaccine given","record"=>"All good"],
-    ["id"=>3,"date"=>"2025-09-02","time"=>"12:00 PM","pet"=>"Lucy","owner"=>"Emma Watson","reason"=>"Dental Check","status"=>"cancelled","prescription"=>"","record"=>""],
-    ["id"=>4,"date"=>"2025-09-02","time"=>"12:30 PM","pet"=>"Bella","owner"=>"James Brown","reason"=>"Follow-up","status"=>"ongoing","prescription"=>"","record"=>""]
-];
-
-// === Split appointments by status using arrays for JS use ===
-$appointmentsArray = [
-    "upcoming" => array_values(array_filter($appointments, fn($a) => in_array($a['status'], ['scheduled', 'ongoing']))),
-    "completed" => array_values(array_filter($appointments, fn($a) => in_array($a['status'], ['completed', 'cancelled'])))
-];
-
-// === KPI Stats as array ===
-$stats = [
-    "upcoming" => count($appointmentsArray['upcoming']),
-    "completed" => count($appointmentsArray['completed']),
-    "cancelled" => count(array_filter($appointments, fn($a) => $a['status'] === 'cancelled'))
+$data = [
+  'appointments' => [
+    ['id'=>'A001','date'=>'2025-10-12','time'=>'09:00','petName'=>'Bella','ownerName'=>'John Perera','reason'=>'Vaccination','status'=>'ongoing','notes'=>'Bring card'],
+    ['id'=>'A002','date'=>'2025-10-12','time'=>'10:00','petName'=>'Max','ownerName'=>'Nimali Silva','reason'=>'Check-up','status'=>'scheduled','notes'=>''],
+    ['id'=>'A003','date'=>'2025-10-12','time'=>'11:00','petName'=>'Charlie','ownerName'=>'Kevin','reason'=>'Dental','status'=>'scheduled','notes'=>''],
+    ['id'=>'A004','date'=>'2025-10-13','time'=>'09:30','petName'=>'Luna','ownerName'=>'Saman','reason'=>'Skin issue','status'=>'scheduled','notes'=>''],
+    ['id'=>'A005','date'=>'2025-09-30','time'=>'14:00','petName'=>'Rocky','ownerName'=>'Anna','reason'=>'Follow-up','status'=>'completed','notes'=>''],
+    ['id'=>'A006','date'=>'2025-09-29','time'=>'15:00','petName'=>'Milo','ownerName'=>'Ravi','reason'=>'Vaccination','status'=>'cancelled','notes'=>''],
+    ['id'=>'A007','date'=>'2025-10-12','time'=>'12:00','petName'=>'Oscar','ownerName'=>'Naveen','reason'=>'Check-up','status'=>'scheduled','notes'=>''],
+    ['id'=>'A008','date'=>'2025-10-12','time'=>'13:30','petName'=>'Daisy','ownerName'=>'Leena','reason'=>'Dental','status'=>'scheduled','notes'=>''],
+    ['id'=>'A009','date'=>'2025-10-12','time'=>'14:30','petName'=>'Muffin','ownerName'=>'Suresh','reason'=>'Vaccination','status'=>'scheduled','notes'=>''],
+    ['id'=>'A010','date'=>'2025-10-12','time'=>'15:00','petName'=>'Lily','ownerName'=>'Kamal','reason'=>'Check-up','status'=>'scheduled','notes'=>'']
+  ],
+  'medicalRecords' => [
+    ['id'=>'M001','appointmentId'=>'A005','petName'=>'Rocky','ownerName'=>'Anna','date'=>'2025-09-30','symptoms'=>'Itchy skin','diagnosis'=>'Dermatitis','treatment'=>'Topical cream']
+  ],
+  'prescriptions' => [
+    ['id'=>'P001','appointmentId'=>'A005','petName'=>'Rocky','ownerName'=>'Anna','date'=>'2025-09-30','medication'=>'Antihistamine','dosage'=>'5ml','notes'=>'Twice a day']
+  ],
+  'vaccinations' => [
+    ['id'=>'V001','appointmentId'=>'A001','petName'=>'Bella','ownerName'=>'John Perera','date'=>'2025-10-12','vaccine'=>'Rabies','nextDue'=>'2026-10-12']
+  ]
 ];
 ?>
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Appointments Dashboard</title>
-<link rel="stylesheet" href="../../styles/dashboard/vet/appointments.css">
+  <meta charset="utf-8">
+  <title>Appointments</title>
+  <link rel="stylesheet" href="../../styles/dashboard/vet/dashboard.css">
 </head>
 <body>
-<div class="main-content">
-
-    <!-- Header -->
+  <div class="main-content">
     <header class="dashboard-header">
-        <div class="header-left">
-            <h2>Appointments</h2>
-            <p>View, filter, and manage all appointments.</p>
-        </div>
-        <div class="header-right">
-            <span class="date"><?php echo date("l, F j, Y"); ?></span>
-        </div>
+      <h2>Appointments</h2>
     </header>
-    <br/>
 
-    <!-- KPI Cards -->
-<div class="cards">
-    <?php 
-    // Define colors for each KPI
-    $colors = [
-        "upcoming" => "navy",
-        "completed" => "green",
-        "cancelled" => "red"
-    ];
-    foreach ($stats as $label => $count): ?>
-        <div class="card <?php echo $colors[$label]; ?>">
-            <h3><?php echo $count; ?></h3>
-            <p><?php echo ucfirst($label); ?></p>
-        </div>
-    <?php endforeach; ?>
-</div>
+    <section>
+      <h3>Ongoing Appointments</h3>
+      <input id="searchBar" data-target="ongoingTableContainer" placeholder="Search ...">
+      <div id="ongoingTableContainer"></div>
+    </section>
 
+    <section>
+      <h3>Upcoming Appointments</h3>
+      <input id="searchBar" data-target="upcomingTableContainer" placeholder="Search ...">
+      <div id="upcomingTableContainer"></div>
+    </section>
 
-    <!-- Upcoming Appointments Table -->
-    <div class="appointment-list">
-        <h3>Upcoming Appointments</h3>
-        <div class="filters" style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
-            <input type="date" id="upcomingDateFilter">
-            <select id="upcomingStatusFilter">
-                <option value="">All Status</option>
-                <option value="scheduled">Scheduled</option>
-                <option value="ongoing">Ongoing</option>
-            </select>
-            <button id="applyUpcomingFilter" class="btn navy">Apply Filter</button>
-            <input type="text" id="searchUpcoming" placeholder="Search upcoming appointments...">
-        </div>
-        <br/>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Pet</th>
-                    <th>Owner</th>
-                    <th>Reason</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="upcomingTable">
-                <?php foreach ($appointmentsArray['upcoming'] as $appt): ?>
-                    <tr data-id="<?php echo $appt['id']; ?>" data-status="<?php echo $appt['status']; ?>" data-date="<?php echo $appt['date']; ?>">
-                        <td><?php echo $appt['id']; ?></td>
-                        <td><?php echo $appt['date']; ?></td>
-                        <td><?php echo $appt['time']; ?></td>
-                        <td><?php echo $appt['pet']; ?></td>
-                        <td><?php echo $appt['owner']; ?></td>
-                        <td><?php echo $appt['reason']; ?></td>
-                        <td><?php echo ucfirst($appt['status']); ?></td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
+    <section>
+      <h3>Completed Appointments</h3>
+      <input id="searchBar" data-target="completedTableContainer" placeholder="Search ...">
+      <div id="completedTableContainer"></div>
+    </section>
 
-    <!-- Completed Appointments Table -->
-    <div class="appointment-list" style="margin-top:40px;">
-        <h3>Completed Appointments</h3>
-        <div class="filters" style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
-            <input type="date" id="completedDateFilter">
-            <select id="completedStatusFilter">
-                <option value="">All Status</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-            </select>
-            <button id="applyCompletedFilter" class="btn navy">Apply Filter</button>
-            <input type="text" id="searchCompleted" placeholder="Search completed appointments...">
-        </div>
-        <br/>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Pet</th>
-                    <th>Owner</th>
-                    <th>Reason</th>
-                    <th>Status</th>
-                    <th>Record</th>
-                    <th>Prescription</th>
-                </tr>
-            </thead>
-<tbody id="completedTable">
-<?php foreach ($appointmentsArray['completed'] as $appt): ?>
-    <tr data-id="<?php echo $appt['id']; ?>" data-status="<?php echo $appt['status']; ?>" data-date="<?php echo $appt['date']; ?>">
-        <td><?php echo $appt['id']; ?></td>
-        <td><?php echo $appt['date']; ?></td>
-        <td><?php echo $appt['time']; ?></td>
-        <td><?php echo $appt['pet']; ?></td>
-        <td><?php echo $appt['owner']; ?></td>
-        <td><?php echo $appt['reason']; ?></td>
-        <td><?php echo ucfirst($appt['status']); ?></td>
+    <section>
+      <h3>Cancelled Appointments</h3>
+      <input id="searchBar" data-target="cancelledTableContainer" placeholder="Search ...">
+      <div id="cancelledTableContainer"></div>
+    </section>
+  </div>
 
-        <!-- ✅ Record Add/Edit button -->
-        <td>
-            <?php if($appt['status'] === 'completed'): ?>
-                <a href="medical-records.php?appointment_id=<?php echo $appt['id']; ?>&action=<?php echo $appt['record'] ? 'edit' : 'add'; ?>" 
-                   class="btn navy">
-                   <?php echo $appt['record'] ? "Edit" : "Add"; ?>
-                </a>
-            <?php endif; ?>
-        </td>
-
-        <!-- ✅ Prescription Add/Edit button -->
-        <td>
-            <?php if($appt['status'] === 'completed'): ?>
-                <a href="prescriptions.php?appointment_id=<?php echo $appt['id']; ?>&action=<?php echo $appt['prescription'] ? 'edit' : 'add'; ?>" 
-                   class="btn navy">
-                   <?php echo $appt['prescription'] ? "Edit" : "Add"; ?>
-                </a>
-            <?php endif; ?>
-        </td>
-    </tr>
-<?php endforeach; ?>
-</tbody>
-        </table>
-    </div>
-
-</div>
-<script src="../../scripts/dashboard/vet/appointments.js"></script>
+  <script>
+    window.PETVET_INITIAL_DATA = <?php echo json_encode($data); ?>;
+    window.PETVET_TODAY='2025-10-12';
+  </script>
+  <script src="../../scripts/dashboard/vet/appointments.js"></script>
 </body>
 </html>

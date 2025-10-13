@@ -1,206 +1,99 @@
 <?php
 session_start();
-$_SESSION['user_id'] = 1;
-$_SESSION['user_role'] = 'vet';
-$_SESSION['user_name'] = 'Nethmi';
-
-$currentPage = basename($_SERVER['PHP_SELF']);
+if(!isset($_SESSION['user_name'])){ $_SESSION['user_name']='Dr. Smith'; }
 include '../sidebar.php';
 
-// ================= Dummy Appointment Data =================
-$appointments = [
-    ["id"=>1,"pet"=>"Charlie","owner"=>"Sarah Johnson"],
-    ["id"=>2,"pet"=>"Milo","owner"=>"John Doe"],
-    ["id"=>3,"pet"=>"Lucy","owner"=>"Emma Watson"],
-    ["id"=>4,"pet"=>"Bella","owner"=>"James Brown"]
+$data = [
+  'appointments' => [
+    ['id'=>'A001','date'=>'2025-10-12','time'=>'09:00','petName'=>'Bella','ownerName'=>'John Perera','reason'=>'Vaccination','status'=>'ongoing','notes'=>'Bring card'],
+    ['id'=>'A002','date'=>'2025-10-12','time'=>'10:00','petName'=>'Max','ownerName'=>'Nimali Silva','reason'=>'Check-up','status'=>'scheduled','notes'=>''],
+    ['id'=>'A003','date'=>'2025-10-12','time'=>'11:00','petName'=>'Charlie','ownerName'=>'Kevin','reason'=>'Dental','status'=>'scheduled','notes'=>''],
+    ['id'=>'A004','date'=>'2025-10-13','time'=>'09:30','petName'=>'Luna','ownerName'=>'Saman','reason'=>'Skin issue','status'=>'scheduled','notes'=>''],
+    ['id'=>'A005','date'=>'2025-09-30','time'=>'14:00','petName'=>'Rocky','ownerName'=>'Anna','reason'=>'Follow-up','status'=>'completed','notes'=>''],
+    ['id'=>'A006','date'=>'2025-09-29','time'=>'15:00','petName'=>'Milo','ownerName'=>'Ravi','reason'=>'Vaccination','status'=>'cancelled','notes'=>''],
+    ['id'=>'A007','date'=>'2025-10-12','time'=>'12:00','petName'=>'Oscar','ownerName'=>'Naveen','reason'=>'Check-up','status'=>'scheduled','notes'=>''],
+    ['id'=>'A008','date'=>'2025-10-12','time'=>'13:30','petName'=>'Daisy','ownerName'=>'Leena','reason'=>'Dental','status'=>'scheduled','notes'=>''],
+    ['id'=>'A009','date'=>'2025-10-12','time'=>'14:30','petName'=>'Muffin','ownerName'=>'Suresh','reason'=>'Vaccination','status'=>'scheduled','notes'=>''],
+    ['id'=>'A010','date'=>'2025-10-12','time'=>'15:00','petName'=>'Lily','ownerName'=>'Kamal','reason'=>'Check-up','status'=>'scheduled','notes'=>'']
+  ],
+  'medicalRecords' => [
+    ['id'=>'M001','appointmentId'=>'A005','petName'=>'Rocky','ownerName'=>'Anna','date'=>'2025-09-30','symptoms'=>'Itchy skin','diagnosis'=>'Dermatitis','treatment'=>'Topical cream'],
+    ['id'=>'M002','appointmentId'=>'A003','petName'=>'Charlie','ownerName'=>'Kevin','date'=>'2025-10-12','symptoms'=>'Tooth pain','diagnosis'=>'Cavities','treatment'=>'Cleaning']
+  ],
+  'prescriptions' => [
+    ['id'=>'P001','appointmentId'=>'A005','petName'=>'Rocky','ownerName'=>'Anna','date'=>'2025-09-30','medication'=>'Antihistamine','dosage'=>'5ml','notes'=>'Twice a day'],
+    ['id'=>'P002','appointmentId'=>'A001','petName'=>'Bella','ownerName'=>'John Perera','date'=>'2025-10-12','medication'=>'Deworm','dosage'=>'1 tab','notes'=>'Today']
+  ],
+  'vaccinations' => [
+    ['id'=>'V001','appointmentId'=>'A001','petName'=>'Bella','ownerName'=>'John Perera','date'=>'2025-10-12','vaccine'=>'Rabies','nextDue'=>'2026-10-12'],
+    ['id'=>'V002','appointmentId'=>'A006','petName'=>'Milo','ownerName'=>'Ravi','date'=>'2025-09-29','vaccine'=>'Distemper','nextDue'=>'2026-09-29']
+  ]
 ];
 
-// ================= Dummy Medical Records =================
-if (!isset($_SESSION['medicalRecords'])) {
-    $_SESSION['medicalRecords'] = [
-        ["appointment_id"=>1,"pet"=>"Charlie","date"=>"2025-08-20","symptoms"=>"Coughing","diagnosis"=>"Allergic dermatitis","treatment"=>"Topical ointment"],
-        ["appointment_id"=>3,"pet"=>"Lucy","date"=>"2025-08-21","symptoms"=>"Fever","diagnosis"=>"Fever","treatment"=>"Oral fluids"]
-    ];
-}
-
-$medicalRecords = &$_SESSION['medicalRecords'];
-
-// ================= Handle Form Submission =================
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['delete_id'])) {
-        // Delete record by appointment_id
-        $deleteId = $_POST['delete_id'];
-        foreach ($medicalRecords as $key => $r) {
-            if ($r['appointment_id'] == $deleteId) {
-                unset($medicalRecords[$key]);
-                break;
-            }
-        }
-        header("Location: medical-records.php");
-        exit;
-    }
-
-    $record = [
-        "appointment_id" => $_POST['appointment_id'] ?? "",
-        "pet" => $_POST['pet'] ?? "",
-        "date" => $_POST['date'] ?? "",
-        "symptoms" => $_POST['symptoms'] ?? "",
-        "diagnosis" => $_POST['diagnosis'] ?? "",
-        "treatment" => $_POST['treatment'] ?? ""
-    ];
-
-    $updated = false;
-    foreach ($medicalRecords as &$r) {
-        if ($r['appointment_id'] == $record['appointment_id']) {
-            $r = $record;
-            $updated = true;
-            break;
-        }
-    }
-    if (!$updated) {
-        $medicalRecords[] = $record;
-    }
-
-    header("Location: medical-records.php");
-    exit;
-}
-
-// ================= Handle Edit Request =================
-$editRecord = null;
-if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['appointment_id'])) {
-    foreach ($medicalRecords as $rec) {
-        if ($rec['appointment_id'] == $_GET['appointment_id']) {
-            $editRecord = $rec;
-            break;
-        }
-    }
-}
 ?>
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Medical Records</title>
-<link rel="stylesheet" href="../../styles/dashboard/vet/dashboard.css">
-<link rel="stylesheet" href="../../styles/dashboard/vet/medical-records.css">
+  <meta charset="utf-8">
+  <title>Medical Records</title>
+  <link rel="stylesheet" href="../../styles/dashboard/vet/dashboard.css">
 </head>
 <body>
-<div class="main-content">
+  <div class="main-content">
+    <header class="dashboard-header"><h2>Medical Records</h2></header>
 
-    <!-- Header -->
-    <header class="dashboard-header">
-        <div class="header-left">
-            <h2>Medical Records</h2>
-            <p>Manage and review medical history of pets.</p>
+    <!-- Form (visible only when from=ongoing) -->
+    <section id="formSection" style="display:none">
+      <h3>Add Medical Record</h3>
+      <form id="medicalRecordForm">
+        <div class="form-row">
+          <label>Appointment ID<input name="appointmentId" readonly></label>
+          <label>Pet name<input name="petName" readonly></label>
+          <label>Owner<input name="ownerName" readonly></label>
         </div>
-        <div class="header-right">
-            <span class="date"><?php echo date("l, F j, Y"); ?></span>
+        <div class="form-row">
+          <label>Symptoms<textarea name="symptoms" rows="2" required></textarea></label>
+          <label>Diagnosis<textarea name="diagnosis" rows="2" required></textarea></label>
         </div>
-    </header>
-    <br/>
+        <div class="form-row">
+          <label>Treatment<textarea name="treatment" rows="2" required></textarea></label>
+        </div>
+        <button class="btn navy" type="submit">Save Record</button>
+      </form>
+    </section>
 
-    <!-- ===== Form Section ===== -->
-    <div class="appointment-list" style="margin-bottom:40px;">
-        <h3><?php echo $editRecord ? "Edit Medical Record" : "Add Medical Record"; ?></h3>
-        <form method="POST">
-            <!-- Appointment ID Auto-filled -->
-            <label>Appointment ID</label>
-            <input type="number" name="appointment_id" 
-                   value="<?php echo $editRecord['appointment_id'] ?? htmlspecialchars($_GET['appointment_id'] ?? ''); ?>" 
-                   readonly>
+    <section>
+      <h3>Records</h3>
+      <input id="searchBar" placeholder="Search records...">
+      <div id="recordsContainer"></div>
+    </section>
+  </div>
 
-            <!-- Pet Name Input -->
-            <label>Pet</label>
-            <input type="text" name="pet" value="<?php echo $editRecord['pet'] ?? ''; ?>" required>
-
-            <!-- Visit Date -->
-            <label>Visit Date</label>
-            <input type="date" name="date" value="<?php echo $editRecord['date'] ?? ''; ?>" required>
-
-            <!-- Symptoms -->
-            <label>Symptoms</label>
-            <textarea name="symptoms"><?php echo $editRecord['symptoms'] ?? ''; ?></textarea>
-
-            <!-- Diagnosis -->
-            <label>Diagnosis</label>
-            <textarea name="diagnosis"><?php echo $editRecord['diagnosis'] ?? ''; ?></textarea>
-
-            <!-- Treatment Notes -->
-            <label>Treatment Notes</label>
-            <textarea name="treatment"><?php echo $editRecord['treatment'] ?? ''; ?></textarea>
-            
-            <br/>
-            <button type="submit" class="btn navy"><?php echo $editRecord ? "Update Record" : "Save Record"; ?></button>
-        </form>
-    </div>
-
-    <!-- ===== Records Table ===== -->
-    <div class="appointment-list">
-        <h3>Recent Records</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Appointment ID</th>
-                    <th>Pet</th>
-                    <th>Owner</th>
-                    <th>Date</th>
-                    <th>Symptoms</th>
-                    <th>Diagnosis</th>
-                    <th>Treatment</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($medicalRecords as $rec): ?>
-                <tr>
-                    <td><?php echo $rec['appointment_id']; ?></td>
-                    <td><?php echo $rec['pet']; ?></td>
-                    <td>
-                        <?php
-                        $owner = '';
-                        foreach ($appointments as $appt) {
-                            if ($appt['id'] == $rec['appointment_id']) {
-                                $owner = $appt['owner'];
-                                break;
-                            }
-                        }
-                        echo $owner ?: 'N/A';
-                        ?>
-                    </td>
-                    <td><?php echo $rec['date']; ?></td>
-                    <td><?php echo $rec['symptoms']; ?></td>
-                    <td><?php echo $rec['diagnosis']; ?></td>
-                    <td><?php echo $rec['treatment']; ?></td>
-                    <td class="completed-buttons">
-                        <!-- Edit -->
-                        <form method="GET" action="medical-records.php" style="display:inline;">
-                            <input type="hidden" name="action" value="edit">
-                            <input type="hidden" name="appointment_id" value="<?php echo $rec['appointment_id']; ?>">
-                            <button type="submit" class="btn navy">Edit</button>
-                        </form>
-
-                        <!-- Delete -->
-                        <form method="POST" action="medical-records.php" style="display:inline;" 
-                              onsubmit="return confirm('Are you sure you want to delete this record?');">
-                            <input type="hidden" name="delete_id" value="<?php echo $rec['appointment_id']; ?>">
-                            <button type="submit" class="btn red">Delete</button>
-                        </form>
-
-                        <!-- Add Prescription -->
-                        <form method="GET" action="prescriptions.php" style="display:inline;">
-                            <input type="hidden" name="appointment_id" value="<?php echo $rec['appointment_id']; ?>">
-                            <input type="hidden" name="pet" value="<?php echo $rec['pet']; ?>">
-                            <button type="submit" class="btn navy">Add Prescription</button>
-                        </form>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-
-</div>
-<script src="../../scripts/medical-records.js"></script>
+  <script>window.PETVET_INITIAL_DATA = <?php echo json_encode( 
+  [
+  'appointments'=>[
+    ['id'=>'A001','date'=>'2025-10-12','time'=>'09:00','petName'=>'Bella','ownerName'=>'John Perera','reason'=>'Vaccination','status'=>'ongoing','notes'=>'Bring card'],
+    ['id'=>'A002','date'=>'2025-10-12','time'=>'10:00','petName'=>'Max','ownerName'=>'Nimali Silva','reason'=>'Check-up','status'=>'scheduled','notes'=>''],
+    ['id'=>'A003','date'=>'2025-10-12','time'=>'11:00','petName'=>'Charlie','ownerName'=>'Kevin','reason'=>'Dental','status'=>'scheduled','notes'=>''],
+    ['id'=>'A004','date'=>'2025-10-13','time'=>'09:30','petName'=>'Luna','ownerName'=>'Saman','reason'=>'Skin issue','status'=>'scheduled','notes'=>''],
+    ['id'=>'A005','date'=>'2025-09-30','time'=>'14:00','petName'=>'Rocky','ownerName'=>'Anna','reason'=>'Follow-up','status'=>'completed','notes'=>''],
+    ['id'=>'A006','date'=>'2025-09-29','time'=>'15:00','petName'=>'Milo','ownerName'=>'Ravi','reason'=>'Vaccination','status'=>'cancelled','notes'=>''],
+    ['id'=>'A007','date'=>'2025-10-12','time'=>'12:00','petName'=>'Oscar','ownerName'=>'Naveen','reason'=>'Check-up','status'=>'scheduled','notes'=>''],
+    ['id'=>'A008','date'=>'2025-10-12','time'=>'13:30','petName'=>'Daisy','ownerName'=>'Leena','reason'=>'Dental','status'=>'scheduled','notes'=>''],
+    ['id'=>'A009','date'=>'2025-10-12','time'=>'14:30','petName'=>'Muffin','ownerName'=>'Suresh','reason'=>'Vaccination','status'=>'scheduled','notes'=>''],
+    ['id'=>'A010','date'=>'2025-10-12','time'=>'15:00','petName'=>'Lily','ownerName'=>'Kamal','reason'=>'Check-up','status'=>'scheduled','notes'=>'']
+  ],
+  'medicalRecords'=>[
+    ['id'=>'M001','appointmentId'=>'A005','petName'=>'Rocky','ownerName'=>'Anna','date'=>'2025-09-30','symptoms'=>'Itchy skin','diagnosis'=>'Dermatitis','treatment'=>'Topical cream'],
+    ['id'=>'M002','appointmentId'=>'A003','petName'=>'Charlie','ownerName'=>'Kevin','date'=>'2025-10-12','symptoms'=>'Tooth pain','diagnosis'=>'Cavities','treatment'=>'Cleaning']
+  ],
+  'prescriptions'=>[
+    ['id'=>'P001','appointmentId'=>'A005','petName'=>'Rocky','ownerName'=>'Anna','date'=>'2025-09-30','medication'=>'Antihistamine','dosage'=>'5ml','notes'=>'Twice a day']
+  ],
+  'vaccinations'=>[
+    ['id'=>'V001','appointmentId'=>'A001','petName'=>'Bella','ownerName'=>'John Perera','date'=>'2025-10-12','vaccine'=>'Rabies','nextDue'=>'2026-10-12']
+  ]
+  ]) ?>;</script>
+  <script src="../../scripts/dashboard/vet/medical-records.js"></script>
 </body>
 </html>
