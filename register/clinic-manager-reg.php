@@ -3,16 +3,17 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clinic Manager Register</title>
-  <link rel="stylesheet" href="../styles/clinic-manager-reg.css">
+  <link rel="stylesheet" href="/PETVET/public/css/guest/clinic-manager-reg.css">
 </head>
 
 <body>
   <div class="card-wrapper">
     <div class="card">
       <div class="card-image">
-        <button class="gobackbtn" onclick="window.location.href='../index.php'">Home</button>
-        <img src="../images/clinic-manager.jpg" alt="Clinic Manager">
+        <button class="gobackbtn" onclick="window.location.href='/PETVET/index.php?module=guest&page=home'">Home</button>
+        <img src="/PETVET/views/shared/images/clinic-manager.jpg" alt="Clinic Manager">
       </div>
 
       <div class="form-container">

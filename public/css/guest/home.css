@@ -1,0 +1,74 @@
+/* ========== Shared Styles ========== */
+
+body { font-family: Arial, sans-serif; margin: 0; }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+
+.content-wrapper { display: flex; flex-direction: column; gap: 2rem; align-items: center; }
+@media (min-width: 768px) {
+  .content-wrapper { flex-direction: row; }
+  .content-wrapper.reverse { flex-direction: row-reverse; }
+}
+
+.image-section, .text-section { width: 100%; }
+@media (min-width: 768px) {
+  .image-section, .text-section { width: 50%; }
+}
+
+.title { font-size: clamp(1.6rem, 3.5vw, 2.5rem); font-weight: bold; color: #1f2937; margin-bottom: 1.5rem; }
+.paragraph { font-size: clamp(1rem, 2.6vw, 1.125rem); color: #4b5563; margin-bottom: 1.5rem; }
+.button-wrapper { margin-top: 1.5rem; }
+
+/* ========== Background Video ========== */
+
+.background-video { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; z-index: -1; filter: brightness(0.95); }
+.backdrop-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: -1; }
+
+/* ========== Hero ========== */
+.hero { display: grid; place-items: center; min-height: 68vh; padding: 5rem 0 2rem; color: #fff; text-align: center; }
+.hero-inner { max-width: 900px; margin: 0 auto; padding: 1rem; }
+.hero-title { font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.1; margin: 0 0 1rem; text-shadow: 0 2px 18px rgba(0,0,0,0.35); }
+.hero-subtitle { font-size: clamp(1rem, 3vw, 1.25rem); opacity: 0.95; margin-bottom: 1.4rem; }
+.cta-group { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; }
+.btn { padding: .85rem 1.25rem; border-radius: 9999px; border: none; cursor: pointer; font-weight: 600; font-size: clamp(.95rem, 2.8vw, 1.05rem); box-shadow: 0 10px 18px rgba(0,0,0,0.2); transition: transform .15s ease, filter .2s ease; }
+.btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+.btn.primary { background: #2563eb; color: #fff; }
+.btn.success { background: #22c55e; color: #fff; }
+.btn.pink { background: #ec4899; color: #fff; }
+
+/* ========== Pet Owner Section ========== */
+
+.pet-owner-section { width: 100%; padding: 4rem 0; background-color: white; }
+.pet-image { width: 100%; height: auto; border-radius: 0.5rem; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+.register-btn { padding: .9rem 1.6rem; background-color: #2563eb; color: #fff; font-size: clamp(1rem, 3vw, 1.125rem); font-weight: 500; border: none; border-radius: 9999px; box-shadow: 0 10px 15px rgba(59,130,246,0.3); cursor: pointer; transition: background-color .3s ease; }
+.register-btn:hover { background-color: #1d4ed8; }
+
+/* ========== Veterinarian Section ========== */
+
+.veterinarian-section { width: 100%; padding: 4rem 0; background-color: #f9fafb; }
+.vet-image { width: 100%; height: auto; border-radius: 0.5rem; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+.join-btn { padding: .9rem 1.6rem; background-color: #26e458; color: #fff; font-size: clamp(1rem, 3vw, 1.125rem); font-weight: 500; border: none; border-radius: 9999px; cursor: pointer; transition: background-color .3s ease; }
+.join-btn:hover { background-color: #20c14b; }
+
+/* ========== Service Provider Section ========== */
+
+.service-provider-section { width: 100%; padding: 4rem 0; background-color: white; }
+.service-image { width: 100%; height: auto; border-radius: 0.5rem; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+.service-provider-section .register-btn { background-color: #8b5cf6; box-shadow: 0 10px 15px rgba(139,92,246,0.3); }
+.service-provider-section .register-btn:hover { background-color: #7c3aed; }
+
+/* ========== Vet Clinic Section ========== */
+
+.vet-clinic-section { width: 100%; padding: 4rem 0; background-color: #f9fafb; }
+.clinic-image { width: 100%; height: auto; border-radius: 0.5rem; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+.partner-btn { padding: .9rem 1.6rem; background-color: #ec4899; color: #fff; font-size: clamp(1rem, 3vw, 1.125rem); font-weight: 500; border: none; border-radius: 9999px; box-shadow: 0 10px 15px rgba(236,72,153,0.3); cursor: pointer; transition: background-color .3s ease; }
+.partner-btn:hover { background-color: #db2777; }
+
+/* ========== Mobile Spacing ========== */
+@media (max-width: 640px) {
+  .container { padding: 0 4vw; }
+  .hero { min-height: 56vh; padding: 3.5rem 0 1.2rem; }
+  .content-wrapper { gap: 1.2rem; }
+  .button-wrapper { margin-top: 1rem; }
+  .pet-owner-section, .veterinarian-section, .service-provider-section, .vet-clinic-section { padding: 2.2rem 0; }
+}

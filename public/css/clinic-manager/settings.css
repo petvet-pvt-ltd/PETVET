@@ -1,0 +1,190 @@
+/* ===== Polished Light Theme – Layout refresh ===== */
+
+:root{
+  --bg:#f6f8fb; --bg-soft:#f9fafb; --card:#fff; --text:#0f172a; --muted:#64748b;
+  --border:#e5e7eb; --border-strong:#d1d5db; --ring:#dbeafe; --shadow:0 10px 30px rgba(2,6,23,.06);
+  --primary:#2563eb; --primary-600:#1d4ed8;
+  --radius:14px; --radius-sm:10px; --radius-lg:18px;
+  --space-1:6px; --space-2:10px; --space-3:14px; --space-4:18px; --space-5:24px; --space-6:32px;
+  --transition:.18s cubic-bezier(.2,.6,.2,1);
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  line-height:1.6;
+}
+
+.main-content{padding:var(--space-5);margin-left:240px}
+.page-wrap{max-width:1120px;margin:0 auto}
+@media (max-width:900px){.main-content{margin-left:0;padding:var(--space-4)}}
+
+/* Header + segmented quick-nav */
+.settings-header{
+  position:sticky; top:0; z-index:10; background:linear-gradient(to bottom,var(--bg) 70%,transparent);
+  display:flex; gap:var(--space-3); align-items:flex-end; justify-content:space-between;
+  padding:var(--space-3) 0 var(--space-2); margin-bottom:var(--space-2);
+}
+.settings-header h1{margin:0; font-size:26px}
+.muted{color:var(--muted); margin:4px 0 0}
+.quick-nav{display:flex; gap:8px; padding:6px; background:var(--card); border:1px solid var(--border); border-radius:999px; box-shadow:var(--shadow); position:relative}
+.quick-nav a{position:relative; padding:8px 16px; border-radius:999px; text-decoration:none; color:var(--muted); border:1px solid transparent; font-weight:600; transition:var(--transition); line-height:1}
+.quick-nav a:hover{background:var(--bg-soft); color:var(--text)}
+.quick-nav a.active{background:var(--primary); color:#fff; border-color:var(--primary); box-shadow:0 4px 14px rgba(37,99,235,.35)}
+.quick-nav a.active::after{content:""; position:absolute; left:50%; bottom:-6px; width:10px; height:10px; background:var(--primary); border-radius:50%; transform:translateX(-50%)}
+
+.settings-grid{display:grid; grid-template-columns:1fr; gap:var(--space-4)}
+
+.card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; scroll-margin-top:96px}
+.card-head{padding:14px 18px; border-bottom:1px solid var(--border); background:linear-gradient(180deg,var(--card),var(--bg-soft))}
+.card-head h2{margin:0; font-size:18px}
+.form{padding:18px}
+
+/* ---------- Manager: two-column with big avatar ---------- */
+.profile-grid{display:grid; grid-template-columns:340px 1fr; gap:var(--space-5)}
+@media (max-width:860px){.profile-grid{grid-template-columns:1fr}}
+.profile-left{display:flex; justify-content:center; align-items:center}
+.avatar-frame{display:flex; flex-direction:column; align-items:center; gap:12px}
+
+.image-preview-list{display:flex; gap:12px; flex-wrap:wrap; margin:6px 0}
+.image-preview-item{position:relative; width:84px; height:84px; border:1px dashed var(--border-strong); border-radius:12px; overflow:hidden; background:var(--bg-soft)}
+.image-preview-item img{width:100%; height:100%; object-fit:cover; display:block}
+
+.image-preview-list.avatar.big .image-preview-item{
+  width:220px; height:220px; border-radius:50%; border:6px solid #fff; box-shadow:0 10px 24px rgba(2,6,23,.10);
+  position:relative; overflow:hidden; transition:var(--transition);
+}
+.image-preview-list.avatar.big .image-preview-item::after{content:"Change"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:600; letter-spacing:.5px; background:rgba(15,23,42,.55); color:#fff; opacity:0; transition:var(--transition)}
+.image-preview-list.avatar.big .image-preview-item:hover{transform:translateY(-4px)}
+.image-preview-list.avatar.big .image-preview-item:hover::after{opacity:1}
+
+.uploader-actions{display:flex; gap:10px; align-items:center}
+.uploader-actions.center{justify-content:center}
+.btn-sm{padding:6px 10px; font-size:13px}
+
+/* ---------- Clinic: Facebook-style hero ---------- */
+.brand-hero{position:relative; margin-bottom:18px}
+.cover-wrap{position:relative}
+.hero-cover .image-preview-item,
+.image-preview-item.hero{width:100%; height:240px; border-radius:16px; border:1px solid var(--border); overflow:hidden}
+@media (max-width:720px){.image-preview-item.hero{height:190px}}
+
+.change-cover{position:absolute; right:12px; top:12px}
+
+.logo-wrap{
+  position:relative; width:100%; display:flex; justify-content:center;
+  transform:translateY(-50px); margin-bottom:-40px; /* pull up over the cover */
+}
+.hero-logo .image-preview-item{
+  width:120px; height:120px; border-radius:50%; border:5px solid #fff; box-shadow:0 10px 30px rgba(2,6,23,.15);
+}
+.change-logo{position:absolute; top:88px; /* sits just under the logo */}
+
+/* Title + subtitle under hero */
+.hero-title{font-size:22px; font-weight:800; margin:6px 0 0}
+.hero-sub{margin:2px 0 0; color:var(--muted)}
+
+/* Form rows */
+.row{display:grid; gap:var(--space-3); margin-bottom:var(--space-3)}
+.row.one{grid-template-columns:1fr}
+.row.two{grid-template-columns:1fr 1fr}
+@media (max-width:720px){.row.two{grid-template-columns:1fr}}
+label{display:flex; flex-direction:column; gap:8px; font-weight:600}
+input[type=text],input[type=email],input[type=tel],input[type=url],input[type=password],input[type=time],input[type=date],select,textarea{
+  padding:12px 14px; border:1px solid var(--border); border-radius:12px; background:var(--card); color:var(--text);
+  outline:none; transition:var(--transition); box-shadow:0 1px 0 rgba(0,0,0,.02)
+}
+input:focus,select:focus,textarea:focus{border-color:var(--primary); box-shadow:0 0 0 4px var(--ring)}
+textarea{resize:vertical; min-height:96px}
+
+/* Fieldset */
+.fieldset{border:1px dashed var(--border-strong); border-radius:12px; padding:12px; background:rgba(0,0,0,.02)}
+.fieldset legend{font-weight:700}
+
+/* Hours list */
+.hours-list{display:flex; flex-direction:column; gap:10px}
+.hours-row{display:grid; grid-template-columns:140px 130px 1fr; align-items:center; gap:12px; padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:var(--bg-soft)}
+.time-group{display:grid; grid-template-columns:1fr 28px 1fr; gap:10px; align-items:center}
+.hours-row .sep{color:var(--muted); text-align:center}
+@media (max-width:720px){.hours-row{grid-template-columns:1fr 1fr}.time-group{grid-column:1/-1}}
+
+/* Holidays / Closures as chips */
+.holiday-list{display:flex; flex-wrap:wrap; gap:10px}
+.holiday-item{display:flex; align-items:center; gap:8px; background:var(--bg-soft); border:1px solid var(--border); border-radius:999px; padding:4px 6px; height:38px}
+.holiday-item input[type=date]{border:none; background:transparent; color:var(--text); padding:6px 10px; border-radius:999px; height:28px; min-width:170px}
+.holiday-item input[type=date]:focus{outline:none; box-shadow:0 0 0 3px var(--ring)}
+.icon-btn{display:grid; place-items:center; border:1px solid var(--border); background:#fff; color:#334155; width:26px; height:26px; border-radius:50%; cursor:pointer; transition:var(--transition)}
+.icon-btn.remove:hover{background:#fee2e2; border-color:#fecaca; color:#7f1d1d}
+.icon-btn:focus-visible{outline:2px solid var(--primary); outline-offset:2px}
+.add-holiday{display:flex; align-items:center; gap:10px; margin-top:8px; flex-wrap:wrap}
+.add-holiday #newHoliday{padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:#fff}
+
+/* Open switch (pure CSS) */
+.switch{position:relative; display:flex; align-items:center; gap:10px; padding-left:56px; cursor:pointer}
+.switch input{position:absolute; inset:0; opacity:0; margin:0}
+.switch::before{content:""; position:absolute; left:0; width:44px; height:26px; border-radius:999px; background:#e2e8f0; border:1px solid var(--border-strong); transition:var(--transition)}
+.switch::after{content:""; position:absolute; left:2px; top:50%; width:22px; height:22px; transform:translateY(-50%); border-radius:999px; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.15); transition:var(--transition)}
+.switch:has(input:checked)::before{background:var(--primary); border-color:var(--primary)}
+.switch:has(input:checked)::after{left:20px}
+
+/* Buttons & toast */
+.actions{display:flex; gap:10px; justify-content:flex-end; margin-top:var(--space-3)}
+.btn{border:1px solid var(--border); background:var(--card); color:var(--text); border-radius:12px; padding:10px 14px; cursor:pointer; transition:var(--transition); font-weight:700}
+.btn:hover{transform:translateY(-1px); box-shadow:0 8px 20px rgba(2,6,23,.06)}
+.btn-light{background:var(--bg-soft)}
+.btn-primary{background:var(--primary); border-color:var(--primary); color:#fff}
+.btn-primary:hover{background:var(--primary-600)}
+
+.toast{position:fixed; bottom:24px; right:24px; background:#0b1220; color:#fff; padding:12px 14px; border-radius:12px; box-shadow:0 12px 34px rgba(0,0,0,.25); opacity:0; transform:translateY(10px); transition:var(--transition); z-index:2000}
+.toast.show{opacity:1; transform:none}
+/* Reveal animations */
+.reveal-ready{opacity:0; transform:translateY(28px); transition:opacity .65s ease, transform .65s ease}
+.reveal-in{opacity:1; transform:translateY(0)}
+
+/* ================= Mobile Optimizations ================= */
+/* Tighten vertical rhythm + make nav scrollable on small devices */
+@media (max-width:600px){
+  .main-content{padding:var(--space-3)}
+  .settings-header{flex-direction:column; align-items:flex-start; gap:12px; padding:var(--space-2) 0 var(--space-2)}
+  .settings-header h1{font-size:22px}
+  .quick-nav{width:100%; overflow-x:auto; scrollbar-width:none; padding:4px 6px; gap:6px}
+  .quick-nav::-webkit-scrollbar{display:none}
+  .quick-nav a{flex:0 0 auto; padding:6px 12px; font-size:13px}
+  .card{border-radius:var(--radius-sm)}
+  .card-head{padding:12px 14px}
+  .card-head h2{font-size:16px}
+  .form{padding:14px 14px 18px}
+  .profile-grid{gap:var(--space-4)}
+  .image-preview-list.avatar.big .image-preview-item{width:180px; height:180px}
+  .hero-logo .image-preview-item{width:100px; height:100px}
+  .image-preview-item.hero{height:180px}
+  .logo-wrap{transform:translateY(-44px); margin-bottom:-36px}
+  input[type=text],input[type=email],input[type=tel],input[type=url],input[type=password],input[type=time],input[type=date],select,textarea{padding:10px 12px; font-size:14px}
+  .row{margin-bottom:14px}
+  .row.two{grid-template-columns:1fr}
+  .hours-row{grid-template-columns:1fr; gap:8px; padding:10px 12px}
+  .time-group{grid-template-columns:1fr 1fr; gap:8px}
+  .hours-row .sep{display:none}
+  .switch{padding-left:52px}
+  .switch::before{width:42px; height:24px}
+  .switch::after{width:20px; height:20px; left:2px}
+  .switch:has(input:checked)::after{left:20px}
+  textarea{min-height:84px}
+  .actions{justify-content:stretch}
+  .actions .btn{flex:1}
+  .holiday-item{height:auto; padding:6px 8px}
+  .holiday-item input[type=date]{min-width:140px; padding:4px 6px}
+}
+
+/* Ultra-narrow adjustments */
+@media (max-width:380px){
+  .settings-header h1{font-size:20px}
+  .image-preview-list.avatar.big .image-preview-item{width:150px; height:150px}
+  .hero-logo .image-preview-item{width:90px; height:90px}
+  .image-preview-item.hero{height:160px}
+  .quick-nav a{padding:6px 10px; font-size:12px}
+  .btn{padding:9px 12px; font-size:14px}
+  .hours-row{padding:8px 10px}
+  .hours-row input[type=time]{font-size:13px}
+}

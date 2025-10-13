@@ -1,0 +1,57 @@
+/* Medical Records Responsive Styles */
+:root { --bg:#f5f7fb; --card:#fff; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --brand:#2563eb; }
+body{background:var(--bg);} .main-content{margin-left:240px;padding:24px 28px 48px;min-height:100vh;background:var(--bg);} @media (max-width:900px){body:not(.active-sidebar) .main-content,body.active-sidebar .main-content{margin-left:0;padding:18px 18px 42px}}
+
+.page-header,.top-card{background:var(--card);border-radius:18px;box-shadow:0 2px 8px rgba(0,0,0,.05);padding:22px 26px;margin:0 0 22px;display:flex;justify-content:space-between;align-items:flex-start;gap:18px;max-width:1100px}
+.top-card h1{margin:0;font-size:26px;color:var(--ink);} .top-card p{margin:4px 0 10px;color:var(--muted);} .badge{display:inline-block;padding:4px 10px;font-size:12px;border-radius:999px;background:#eef2ff;color:#1e40af;margin-right:6px;font-weight:500}
+.microchip{background:#ecfdf5;color:#065f46} .vaccine{background:#dbeafe;color:#1e3a8a}
+
+.section{background:var(--card);border-radius:18px;box-shadow:0 2px 8px rgba(0,0,0,.05);padding:22px 26px;margin:0 0 22px;max-width:1100px}
+.section h2{margin:0 0 12px;font-size:20px;color:var(--ink);} .emergency{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;padding:10px 14px;border-radius:10px;font-weight:600}
+.visit-card,.report-card{background:#f9fafb;border-radius:14px;padding:14px 16px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;gap:16px;border:1.5px solid #e2e8f0}
+.report-card{border-left:4px solid #e67e22}
+/* Refined clinic visits to match design: subtle card, accent bar only */
+.visit-card{position:relative;display:block;padding:12px 18px 10px 18px;margin:8px 0;background:#f8f9fb;border:0;border-radius:10px;box-shadow:none}
+.visit-card:before{content:"";position:absolute;left:6px;top:8px;bottom:8px;width:4px;border-radius:4px;background:var(--brand);}
+.visit-card b{font-weight:700;color:#111827;}
+table{width:100%;border-collapse:collapse;font-size:14px} th,td{padding:10px 12px;border:1px solid #e5e7eb;text-align:left} th{background:#f1f5f9;font-weight:600}
+
+.btn{background:var(--brand);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:500;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.18);transition:background .2s,transform .15s} .btn:hover{background:#1d4ed8} .btn:active{transform:translateY(2px)} .btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.secondary{background:#e2e8f0;color:#334155;box-shadow:none} .btn.secondary:hover{background:#cbd5e1}
+
+/* Modal system (shared) */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;justify-content:center;align-items:flex-start;padding:40px 20px;overflow:auto;z-index:2000;animation:fadeIn .25s}
+/* Guarantee hidden always wins */
+.modal-overlay[hidden]{display:none !important;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-card{background:var(--card);border-radius:20px;box-shadow:0 8px 40px rgba(0,0,0,.18);width:100%;max-width:560px;display:flex;flex-direction:column;animation:pop .25s ease;position:relative;overflow:hidden} @keyframes pop{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-header{padding:22px 26px 10px;border-bottom:1px solid var(--line)} .modal-header h3{margin:0;font-size:22px;color:var(--brand);font-weight:700}
+.modal-header{background:linear-gradient(135deg,#f8fafc,#eef2ff);position:relative}
+.modal-header:after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,var(--brand),#60a5fa)}
+.modal-body{padding:20px 26px 6px;display:flex;flex-direction:column;gap:16px;max-height:70vh;overflow-y:auto;scrollbar-width:thin}
+.modal-body::-webkit-scrollbar{width:8px}
+.modal-body::-webkit-scrollbar-track{background:transparent}
+.modal-body::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+.modal-body::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+.modal-actions{display:flex;gap:14px;padding:18px 26px 24px;border-top:1px solid var(--line);justify-content:flex-end;background:#f9fafb}
+.close-btn{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:none;background:#f1f5f9;color:#334155;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center} .close-btn:hover{background:#e2e8f0}
+
+/* Form fields */
+.field{display:flex;flex-direction:column;gap:4px} .field label{font-size:13px;font-weight:600;color:var(--muted)} .input,select,textarea{padding:10px 12px;border-radius:8px;border:1.5px solid var(--line);background:#f8fafc;font-size:14px;font-family:inherit} .input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);background:#fff}
+textarea{resize:vertical;min-height:90px}
+/* Form layout helpers */
+.form-grid .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:640px){.form-grid .grid-2{grid-template-columns:1fr;gap:14px}}
+.help-text{font-size:12px;color:var(--muted);margin-top:2px}
+.input.error,select.error,textarea.error{border-color:#dc2626;background:#fef2f2}
+.form-divider{height:1px;background:var(--line);margin:4px 0 8px}
+.modal-card.record{max-width:620px}
+
+/* Mobile adjustments */
+@media (max-width:780px){.top-card,.section{padding:20px 20px}.top-card h1{font-size:22px}.section h2{font-size:18px}.visit-card,.report-card{flex-direction:column;align-items:flex-start}.modal-card{max-width:520px}}
+@media (max-width:640px){.main-content{padding:18px 18px 40px}.top-card,.section{margin:0 0 18px}.top-card{flex-direction:column;align-items:flex-start}.visit-card,.report-card{padding:12px 14px}.modal-overlay{align-items:flex-start;padding:30px 14px}.modal-card{max-width:96vw}.modal-body,.modal-header,.modal-actions{padding-left:18px;padding-right:18px}}
+@media (max-width:400px){.top-card h1{font-size:20px}.btn{padding:9px 14px;font-size:13px}.badge{margin-bottom:4px}.visit-card,.report-card{gap:10px}.modal-header h3{font-size:20px}}
+
+/* Sidebar collapse parity with other pages */
+@media (max-width:900px){body:not(.active-sidebar) .main-content,body.active-sidebar .main-content{margin-left:0}}
+
