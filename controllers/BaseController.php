@@ -1,5 +1,10 @@
 <?php
 abstract class BaseController {
+    
+    public function __construct() {
+        // Base constructor - can be overridden by child classes
+    }
+    
     protected function view(string $module, string $name, array $data = []) {
         extract($data);
     $page = $name;

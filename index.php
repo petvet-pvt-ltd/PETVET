@@ -22,6 +22,8 @@ if ($module === 'clinic-manager') {
   $page = $_GET['page'] ?? 'dashboard';
 } elseif ($module === 'admin') {
   $page = $_GET['page'] ?? 'dashboard';
+} elseif ($module === 'receptionist') {
+  $page = $_GET['page'] ?? 'dashboard';
 } elseif ($module === 'guest') {
   // Default guest landing page
   $page = $_GET['page'] ?? 'home';
@@ -70,6 +72,17 @@ switch ($module) {
       case 'prescriptions': $c->prescriptions(); break;
       case 'vaccinations': $c->vaccinations(); break;
       default: show404("This veterinarian page doesn't exist."); break;
+    }
+    break;
+
+  case 'receptionist':
+    require_once __DIR__ . '/controllers/ReceptionistController.php';
+    $c = new ReceptionistController();
+    switch ($page) {
+      case 'dashboard': $c->dashboard(); break;
+      case 'appointments': $c->appointments(); break;
+      case 'settings': $c->settings(); break;
+      default: show404("This receptionist page doesn't exist."); break;
     }
     break;
 

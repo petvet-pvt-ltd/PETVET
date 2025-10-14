@@ -26,22 +26,22 @@ echo "<!-- activeModule: $activeModule -->";
     // Clinic Manager Sidebar
     ?>
     <ul class="sidebar-nav-top">
-  <a href="/PETVET/index.php?module=clinic-manager&page=overview" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'overview.php') ? 'active' : '' ?>">
+      <a href="/PETVET/index.php?module=clinic-manager&page=overview" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'overview.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/meter.png" class="icon"> Overview</li>
       </a>
-  <a href="/PETVET/index.php?module=clinic-manager&page=appointments" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'appointments.php') ? 'active' : '' ?>">
+      <a href="/PETVET/index.php?module=clinic-manager&page=appointments" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'appointments.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Appointments</li>
       </a>
-  <a href="/PETVET/index.php?module=clinic-manager&page=vets" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'vets.php') ? 'active' : '' ?>">
+      <a href="/PETVET/index.php?module=clinic-manager&page=vets" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'vets.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/vets.png" class="icon"> Vets</li>
       </a>
-  <a href="/PETVET/index.php?module=clinic-manager&page=staff" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'staff.php') ? 'active' : '' ?>">
+      <a href="/PETVET/index.php?module=clinic-manager&page=staff" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'staff.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/staff.png" class="icon"> Staff</li>
       </a>
-  <a href="/PETVET/index.php?module=clinic-manager&page=shop" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'shop.php') ? 'active' : '' ?>">
+      <a href="/PETVET/index.php?module=clinic-manager&page=shop" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'shop.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/shopping-cart.png" class="icon"> Shop</li>
       </a>
-  <a href="/PETVET/index.php?module=clinic-manager&page=reports" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'reports.php') ? 'active' : '' ?>">
+      <a href="/PETVET/index.php?module=clinic-manager&page=reports" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'reports.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/reports.png" class="icon"> Reports</li>
       </a>
     </ul>
@@ -116,6 +116,17 @@ echo "<!-- activeModule: $activeModule -->";
       </a>
     </ul>
     <?php
+  } elseif ($activeModule == 'receptionist') {
+    ?>
+    <ul class="sidebar-nav-top">
+      <a href="/PETVET/index.php?module=receptionist&page=dashboard" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'dashboard.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/meter.png" class="icon"> Overview</li>
+      </a>
+      <a href="/PETVET/index.php?module=receptionist&page=appointments" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'appointments.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Appointments</li>
+      </a>
+    </ul>
+    <?php
   }
   ?>
 
@@ -134,6 +145,10 @@ echo "<!-- activeModule: $activeModule -->";
     </a>
   <?php elseif ($activeModule == 'admin'): ?>
     <a href="/PETVET/index.php?module=admin&page=settings" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'settings.php') ? 'active' : '' ?>">
+      <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/account-settings.png" class="icon"> Settings</li>
+    </a>
+  <?php elseif ($activeModule == 'receptionist'): ?>
+    <a href="/PETVET/index.php?module=receptionist&page=settings" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'settings.php') ? 'active' : '' ?>">
       <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/account-settings.png" class="icon"> Settings</li>
     </a>
   <?php else: ?>
