@@ -13,7 +13,7 @@
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #265B7F, #BCE3F5);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -23,8 +23,8 @@
 
     .registration-container {
       background: white;
-      border-radius: 20px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
       overflow: hidden;
       max-width: 900px;
       width: 100%;
@@ -34,7 +34,7 @@
     }
 
     .left-panel {
-      background: linear-gradient(45deg, #4f46e5, #7c3aed);
+      background: linear-gradient(45deg, #265B7F, #BCE3F5);
       color: white;
       padding: 40px;
       display: flex;
@@ -97,17 +97,19 @@
       left: 20px;
       background: rgba(255, 255, 255, 0.2);
       color: white;
-      border: none;
+      border: 3px solid #315cfd;
       padding: 10px 20px;
       border-radius: 25px;
       cursor: pointer;
       font-size: 14px;
       backdrop-filter: blur(10px);
       transition: all 0.3s ease;
+      font-weight: 550;
     }
 
     .back-home:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: #315cfd;
+      color: white;
       transform: translateY(-2px);
     }
 
@@ -132,7 +134,7 @@
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #4f46e5, #7c3aed);
+      background: #2563eb;
       border-radius: 3px;
       transition: width 0.4s ease;
       width: 33.33%;
@@ -153,7 +155,7 @@
     }
 
     .step-indicator.active {
-      color: #4f46e5;
+      color: #2563eb;
       font-weight: 600;
     }
 
@@ -175,7 +177,7 @@
     }
 
     .step-indicator.active .step-number {
-      background: #4f46e5;
+      background: #2563eb;
       color: white;
     }
 
@@ -243,8 +245,8 @@
 
     .form-input:focus {
       outline: none;
-      border-color: #4f46e5;
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
 
     .form-input.error {
@@ -289,15 +291,15 @@
       left: 0;
       right: 0;
       height: 4px;
-      background: linear-gradient(90deg, #4f46e5, #7c3aed);
+      background: #2563eb;
       transform: scaleX(0);
       transition: transform 0.3s ease;
     }
 
     .role-card:hover {
-      border-color: #4f46e5;
+      border-color: #2563eb;
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(79, 70, 229, 0.15);
+      box-shadow: 0 8px 25px rgba(37, 99, 235, 0.15);
     }
 
     .role-card:hover::before {
@@ -305,10 +307,10 @@
     }
 
     .role-card.selected {
-      border-color: #4f46e5;
-      background: linear-gradient(135deg, #f8faff, #f0f4ff);
+      border-color: #2563eb;
+      background: linear-gradient(135f, #f8faff, #f0f4ff);
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(79, 70, 229, 0.15);
+      box-shadow: 0 8px 25px rgba(37, 99, 235, 0.15);
     }
 
     .role-card.selected::before {
@@ -374,8 +376,8 @@
 
     .form-textarea:focus {
       outline: none;
-      border-color: #4f46e5;
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
 
     .form-select {
@@ -391,8 +393,8 @@
 
     .form-select:focus {
       outline: none;
-      border-color: #4f46e5;
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
 
     .file-upload-area {
@@ -407,12 +409,12 @@
     }
 
     .file-upload-area:hover {
-      border-color: #4f46e5;
+      border-color: #2563eb;
       background: #f8faff;
     }
 
     .file-upload-area.dragover {
-      border-color: #4f46e5;
+      border-color: #2563eb;
       background: #f0f4ff;
       transform: scale(1.02);
     }
@@ -456,8 +458,8 @@
     }
 
     .custom-checkbox.checked {
-      background: #4f46e5;
-      border-color: #4f46e5;
+      background: #2563eb;
+      border-color: #2563eb;
     }
 
     .custom-checkbox.checked::after {
@@ -480,9 +482,9 @@
     }
 
     .btn {
-      padding: 15px 30px;
+      padding: 12px 30px;
       border: none;
-      border-radius: 12px;
+      border-radius: 6px;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
@@ -503,13 +505,13 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      background: #2563eb;
       color: white;
     }
 
     .btn-primary:hover {
+      background: #1d4ed8;
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(79, 70, 229, 0.25);
     }
 
     .btn:disabled {

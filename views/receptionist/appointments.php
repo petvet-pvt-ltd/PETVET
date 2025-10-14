@@ -2,7 +2,7 @@
 $currentPage = basename($_SERVER['PHP_SELF']);
 
 // Set user role for shared components
-$userRole = 'clinic-manager';
+$userRole = 'receptionist';
 
 // Include the shared appointments model
 require_once __DIR__ . '/../../models/SharedAppointmentsModel.php';
@@ -26,7 +26,7 @@ $moduleName = $appointmentsModel->getModuleName($userRole);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Appointments | Clinic Manager</title>
+  <title>Appointments | Receptionist</title>
   <link rel="stylesheet" href="/PETVET/public/css/clinic-manager/enhanced-global.css">
   <link rel="stylesheet" href="/PETVET/public/css/clinic-manager/appointments.css">
   <link rel="stylesheet" href="/PETVET/public/css/shared/appointments.css">

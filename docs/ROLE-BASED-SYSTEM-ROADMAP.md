@@ -46,7 +46,8 @@ INSERT INTO roles (name, description) VALUES
 ('trainer', 'Pet Trainer'),
 ('groomer', 'Pet Groomer'),
 ('sitter', 'Pet Sitter'),
-('breeder', 'Pet Breeder');
+('breeder', 'Pet Breeder'),
+('receptionist', 'Clinic Receptionist');
 ```
 
 ### Role-Specific Profile Tables
@@ -61,6 +62,21 @@ CREATE TABLE service_provider_profiles (
     is_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Clinic staff profiles (for receptionists and clinic employees)
+CREATE TABLE clinic_staff_profiles (
+    user_id INT PRIMARY KEY,
+    clinic_id INT NOT NULL,
+    position VARCHAR(100),
+    hire_date DATE,
+    shift_preference ENUM('morning', 'afternoon', 'evening', 'flexible'),
+    skills TEXT,
+    software_experience TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    -- Note: clinic_id would reference a clinics table when implemented
 );
 
 -- Trainer specific data
@@ -217,6 +233,41 @@ Current Role: Pet Owner ↓
 - Inquiry Management
 - Health Records
 
+**Receptionist Dashboard:**
+- Today's Appointments
+- Appointment Management (same as clinic manager)
+- Client Communication
+- Emergency Scheduling
+
+## Shared Components Architecture
+
+### Appointment Management System
+To avoid code duplication between Clinic Manager and Receptionist roles, shared components are implemented:
+
+```
+views/shared/appointments/
+├── calendar-component.php (Shared calendar view)
+├── appointment-modals.php (Add/Edit/View modals)
+└── appointment-functions.php (Common JavaScript functions)
+```
+
+**Benefits:**
+- Single source of truth for appointment logic
+- Consistent UI/UX across roles
+- Easy maintenance and updates
+- Reduced code duplication
+
+**Usage:**
+```php
+// In clinic manager appointments.php
+include __DIR__ . '/../shared/appointments/calendar-component.php';
+include __DIR__ . '/../shared/appointments/appointment-modals.php';
+
+// In receptionist appointments.php  
+include __DIR__ . '/../shared/appointments/calendar-component.php';
+include __DIR__ . '/../shared/appointments/appointment-modals.php';
+```
+
 ## File Upload System
 
 ### Document Upload Requirements
@@ -273,6 +324,8 @@ Current Role: Pet Owner ↓
 
 ## File Structure Updates
 
+### File Structure Updates
+
 ### New Files Needed
 ```
 register/
@@ -285,6 +338,19 @@ register/
 └── process/
     ├── registration-process.php
     └── role-addition-process.php
+
+views/shared/appointments/
+├── calendar-component.php (Shared appointment calendar)
+├── appointment-modals.php (Add/Edit/View appointment modals)
+└── appointment-functions.php (Common JavaScript functions)
+
+views/receptionist/
+├── dashboard.php (Receptionist dashboard)
+├── appointments.php (Uses shared components)
+└── settings.php
+
+controllers/
+└── ReceptionistController.php (Handles receptionist functionality)
 
 components/
 ├── role-switcher.php
