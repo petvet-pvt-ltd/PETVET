@@ -9,7 +9,7 @@ $GLOBALS['module'] = 'sitter';
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sitter Dashboard - PetVet</title>
+<title>Sitter Overview - PetVet</title>
 <link rel="stylesheet" href="/PETVET/public/css/sitter/dashboard.css">
 </head>
 <body>
@@ -33,8 +33,8 @@ $GLOBALS['module'] = 'sitter';
 <div class="stat-label">Completed</div>
 </div>
 <div class="stat-card">
-<div class="stat-number">$<?php echo number_format($stats['monthly_earnings']); ?></div>
-<div class="stat-label">Monthly Earnings</div>
+<div class="stat-number"><?php echo $stats['pending_requests']; ?></div>
+<div class="stat-label">Pending Requests</div>
 </div>
 </div>
 </main>

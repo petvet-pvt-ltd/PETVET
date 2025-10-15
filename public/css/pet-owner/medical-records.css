@@ -1,6 +1,6 @@
 /* Medical Records Responsive Styles */
 :root { --bg:#f5f7fb; --card:#fff; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --brand:#2563eb; }
-body{background:var(--bg);} .main-content{margin-left:240px;padding:24px 28px 48px;min-height:100vh;background:var(--bg);} @media (max-width:900px){body:not(.active-sidebar) .main-content,body.active-sidebar .main-content{margin-left:0;padding:18px 18px 42px}}
+body{background:var(--bg);} .main-content{margin-left:240px;padding:24px 28px 48px;min-height:100vh;background:var(--bg);} @media (max-width:900px){body:not(.active-sidebar) .main-content,body.active-sidebar .main-content{margin-left:0;padding:18px 18px 42px;padding-top:80px}}
 
 .page-header,.top-card{background:var(--card);border-radius:18px;box-shadow:0 2px 8px rgba(0,0,0,.05);padding:22px 26px;margin:0 0 22px;display:flex;justify-content:space-between;align-items:flex-start;gap:18px;max-width:1100px}
 .top-card h1{margin:0;font-size:26px;color:var(--ink);} .top-card p{margin:4px 0 10px;color:var(--muted);} .badge{display:inline-block;padding:4px 10px;font-size:12px;border-radius:999px;background:#eef2ff;color:#1e40af;margin-right:6px;font-weight:500}

@@ -12,7 +12,6 @@ $currentPage = "bookings";
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?> - PetVet Sitter</title>
     <link rel="stylesheet" href="../../public/css/sidebar/sidebar.css">
-    <link rel="stylesheet" href="../../public/css/shared/role-switcher.css">
     <style>
         .main-content {
             margin-left: 280px;
@@ -22,14 +21,28 @@ $currentPage = "bookings";
         }
 
         .page-header {
-            background: white;
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
             padding: 25px;
             border-radius: 12px;
             margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .page-header h1 {
+            color: white;
+            margin: 0 0 5px 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .page-header p {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0;
+            font-size: 16px;
         }
 
         .booking-filters {
@@ -184,6 +197,7 @@ $currentPage = "bookings";
             .main-content {
                 margin-left: 0;
                 padding: 20px;
+                padding-top: 80px;
             }
 
             .page-header {
@@ -209,58 +223,7 @@ $currentPage = "bookings";
 </head>
 <body>
     <!-- Sidebar -->
-    <nav class="sidebar">
-        <div class="sidebar-header">
-            <h2>🤗 Pet Sitter</h2>
-        </div>
-
-        <?php include '../shared/role-switcher.php'; ?>
-
-        <ul class="nav-menu">
-            <li class="nav-item">
-                <a href="dashboard.php" class="nav-link">
-                    <span class="nav-icon">📊</span>
-                    <span class="nav-text">Dashboard</span>
-                </a>
-            </li>
-            <li class="nav-item active">
-                <a href="bookings.php" class="nav-link">
-                    <span class="nav-icon">📅</span>
-                    <span class="nav-text">Bookings</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="pets.php" class="nav-link">
-                    <span class="nav-icon">🐾</span>
-                    <span class="nav-text">Pet Profiles</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="services.php" class="nav-link">
-                    <span class="nav-icon">⭐</span>
-                    <span class="nav-text">Services</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="availability.php" class="nav-link">
-                    <span class="nav-icon">⏰</span>
-                    <span class="nav-text">Availability</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="reviews.php" class="nav-link">
-                    <span class="nav-icon">⭐</span>
-                    <span class="nav-text">Reviews</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="earnings.php" class="nav-link">
-                    <span class="nav-icon">💰</span>
-                    <span class="nav-text">Earnings</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
+    <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
 
     <main class="main-content">
         <div class="page-header">
@@ -271,118 +234,163 @@ $currentPage = "bookings";
         </div>
 
         <div class="booking-filters">
-            <div class="filter-btn active">All Bookings (23)</div>
-            <div class="filter-btn">Pending (5)</div>
-            <div class="filter-btn">Confirmed (12)</div>
-            <div class="filter-btn">Completed (6)</div>
+            <div class="filter-btn active" data-filter="pending" onclick="filterBookings('pending')">
+                Pending (<?php echo count($pendingBookings); ?>)
+            </div>
+            <div class="filter-btn" data-filter="confirmed" onclick="filterBookings('confirmed')">
+                Confirmed (<?php echo count($activeBookings); ?>)
+            </div>
+            <div class="filter-btn" data-filter="completed" onclick="filterBookings('completed')">
+                Completed (<?php echo count($completedBookings); ?>)
+            </div>
         </div>
 
-        <div class="bookings-grid">
-            <div class="booking-card">
+        <div class="bookings-grid" id="bookingsGrid">
+            <!-- Pending Bookings -->
+            <?php foreach ($pendingBookings as $booking): ?>
+            <div class="booking-card" data-status="pending">
                 <div class="booking-header">
                     <div>
-                        <div class="booking-title">Luna & Shadow - Dog Walking</div>
-                        <div class="booking-date">Today, March 20, 2025</div>
-                    </div>
-                    <div class="booking-status status-confirmed">Confirmed</div>
-                </div>
-                <div class="booking-details">
-                    <div class="detail-item">
-                        <span class="detail-icon">👤</span>
-                        <span>Maria Garcia</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-icon">⏰</span>
-                        <span>9:00 AM - 10:00 AM</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-icon">📍</span>
-                        <span>Central Park Area</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-icon">💰</span>
-                        <span>$25</span>
-                    </div>
-                </div>
-                <div class="booking-description">
-                    Two friendly Golden Retrievers need their daily walk. They're well-trained and love meeting other dogs at the park.
-                </div>
-                <div class="booking-actions">
-                    <button class="btn btn-success">Mark Complete</button>
-                    <button class="btn btn-outline">Contact Owner</button>
-                </div>
-            </div>
-
-            <div class="booking-card">
-                <div class="booking-header">
-                    <div>
-                        <div class="booking-title">Whiskers - Pet Sitting</div>
-                        <div class="booking-date">March 20-22, 2025</div>
-                    </div>
-                    <div class="booking-status status-confirmed">Confirmed</div>
-                </div>
-                <div class="booking-details">
-                    <div class="detail-item">
-                        <span class="detail-icon">👤</span>
-                        <span>Tom Wilson</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-icon">⏰</span>
-                        <span>12:00 PM - 6:00 PM</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-icon">🐱</span>
-                        <span>Cat</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-icon">💰</span>
-                        <span>$180 (3 days)</span>
-                    </div>
-                </div>
-                <div class="booking-description">
-                    Indoor cat needs daily feeding, litter cleaning, and companionship while owner is away on business trip.
-                </div>
-                <div class="booking-actions">
-                    <button class="btn btn-primary">View Details</button>
-                    <button class="btn btn-outline">Contact Owner</button>
-                </div>
-            </div>
-
-            <div class="booking-card">
-                <div class="booking-header">
-                    <div>
-                        <div class="booking-title">Buddy - Dog Walking</div>
-                        <div class="booking-date">Today, March 20, 2025</div>
+                        <div class="booking-title"><?php echo htmlspecialchars($booking['pet_name']); ?> - <?php echo htmlspecialchars($booking['service_type']); ?></div>
+                        <div class="booking-date"><?php echo date('M d, Y', strtotime($booking['start_date'])); ?><?php if ($booking['start_date'] != $booking['end_date']): ?> - <?php echo date('M d, Y', strtotime($booking['end_date'])); ?><?php endif; ?></div>
                     </div>
                     <div class="booking-status status-pending">Pending</div>
                 </div>
                 <div class="booking-details">
                     <div class="detail-item">
                         <span class="detail-icon">👤</span>
-                        <span>Lisa Chen</span>
+                        <span><?php echo htmlspecialchars($booking['owner_name']); ?></span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-icon">⏰</span>
-                        <span>4:00 PM - 5:00 PM</span>
+                        <span><?php echo htmlspecialchars($booking['start_time']); ?> - <?php echo htmlspecialchars($booking['end_time']); ?></span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-icon">🐕</span>
-                        <span>Beagle</span>
+                        <span class="detail-icon"><?php echo $booking['pet_type'] == 'Dog' ? '�' : '🐱'; ?></span>
+                        <span><?php echo htmlspecialchars($booking['pet_breed']); ?></span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-icon">💰</span>
-                        <span>$20</span>
+                        <span class="detail-icon">�</span>
+                        <span><?php echo htmlspecialchars($booking['location']); ?></span>
                     </div>
                 </div>
                 <div class="booking-description">
-                    Young Beagle needs exercise and socialization. First time client - please review special instructions.
+                    <?php echo htmlspecialchars($booking['special_notes']); ?>
                 </div>
                 <div class="booking-actions">
                     <button class="btn btn-success">Accept</button>
                     <button class="btn btn-outline">Decline</button>
                 </div>
             </div>
+            <?php endforeach; ?>
+
+            <!-- Confirmed Bookings -->
+            <?php foreach ($activeBookings as $booking): ?>
+            <div class="booking-card" data-status="confirmed" style="display: none;">
+                <div class="booking-header">
+                    <div>
+                        <div class="booking-title"><?php echo htmlspecialchars($booking['pet_name']); ?> - <?php echo htmlspecialchars($booking['service_type']); ?></div>
+                        <div class="booking-date"><?php echo date('M d, Y', strtotime($booking['start_date'])); ?><?php if ($booking['start_date'] != $booking['end_date']): ?> - <?php echo date('M d, Y', strtotime($booking['end_date'])); ?><?php endif; ?></div>
+                    </div>
+                    <div class="booking-status status-confirmed">Confirmed</div>
+                </div>
+                <div class="booking-details">
+                    <div class="detail-item">
+                        <span class="detail-icon">👤</span>
+                        <span><?php echo htmlspecialchars($booking['owner_name']); ?></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">⏰</span>
+                        <span><?php echo htmlspecialchars($booking['start_time']); ?> - <?php echo htmlspecialchars($booking['end_time']); ?></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon"><?php echo $booking['pet_type'] == 'Dog' ? '🐕' : '🐱'; ?></span>
+                        <span><?php echo htmlspecialchars($booking['pet_breed']); ?></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">�</span>
+                        <span><?php echo htmlspecialchars($booking['location']); ?></span>
+                    </div>
+                </div>
+                <div class="booking-description">
+                    <?php echo htmlspecialchars($booking['special_notes']); ?>
+                </div>
+                <div class="booking-actions">
+                    <button class="btn btn-success">Mark Complete</button>
+                    <button class="btn btn-outline">Contact Owner</button>
+                </div>
+            </div>
+            <?php endforeach; ?>
+
+            <!-- Completed Bookings -->
+            <?php foreach ($completedBookings as $booking): ?>
+            <div class="booking-card" data-status="completed" style="display: none;">
+                <div class="booking-header">
+                    <div>
+                        <div class="booking-title"><?php echo htmlspecialchars($booking['pet_name']); ?> - <?php echo htmlspecialchars($booking['service_type']); ?></div>
+                        <div class="booking-date"><?php echo date('M d, Y', strtotime($booking['start_date'])); ?><?php if ($booking['start_date'] != $booking['end_date']): ?> - <?php echo date('M d, Y', strtotime($booking['end_date'])); ?><?php endif; ?></div>
+                    </div>
+                    <div class="booking-status status-completed">Completed</div>
+                </div>
+                <div class="booking-details">
+                    <div class="detail-item">
+                        <span class="detail-icon">👤</span>
+                        <span><?php echo htmlspecialchars($booking['owner_name']); ?></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">⏰</span>
+                        <span><?php echo htmlspecialchars($booking['start_time']); ?> - <?php echo htmlspecialchars($booking['end_time']); ?></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon"><?php echo $booking['pet_type'] == 'Dog' ? '🐕' : '🐱'; ?></span>
+                        <span><?php echo htmlspecialchars($booking['pet_breed']); ?></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">�</span>
+                        <span><?php echo htmlspecialchars($booking['location']); ?></span>
+                    </div>
+                </div>
+                <div class="booking-description">
+                    <?php echo htmlspecialchars($booking['special_notes']); ?>
+                </div>
+                <div class="booking-actions">
+                    <button class="btn btn-outline">View Details</button>
+                    <button class="btn btn-outline">Contact Owner</button>
+                </div>
+            </div>
+            <?php endforeach; ?>
         </div>
     </main>
+
+    <script>
+        function filterBookings(status) {
+            // Get all booking cards
+            const cards = document.querySelectorAll('.booking-card');
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            
+            // Remove active class from all buttons
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Add active class to clicked button
+            const activeButton = document.querySelector(`[data-filter="${status}"]`);
+            if (activeButton) {
+                activeButton.classList.add('active');
+            }
+            
+            // Show/hide cards based on status
+            cards.forEach(card => {
+                if (card.dataset.status === status) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Initialize: show pending bookings by default
+        document.addEventListener('DOMContentLoaded', function() {
+            filterBookings('pending');
+        });
+    </script>
 </body>
 </html>

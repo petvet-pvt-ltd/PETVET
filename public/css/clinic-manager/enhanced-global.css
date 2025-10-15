@@ -84,6 +84,7 @@ body {
   .main-content {
     margin-left: 0 !important;
     padding: 16px !important;
+    padding-top: 80px !important;
   }
 }
 

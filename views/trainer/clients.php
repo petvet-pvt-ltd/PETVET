@@ -12,7 +12,6 @@ $currentPage = "clients";
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?> - PetVet Trainer</title>
     <link rel="stylesheet" href="../../public/css/sidebar/sidebar.css">
-    <link rel="stylesheet" href="../../public/css/shared/role-switcher.css">
     <style>
         .main-content {
             margin-left: 280px;
@@ -208,52 +207,7 @@ $currentPage = "clients";
 </head>
 <body>
     <!-- Sidebar -->
-    <nav class="sidebar">
-        <div class="sidebar-header">
-            <h2>🎯 Trainer</h2>
-        </div>
-
-        <?php include '../shared/role-switcher.php'; ?>
-
-        <ul class="nav-menu">
-            <li class="nav-item">
-                <a href="dashboard.php" class="nav-link">
-                    <span class="nav-icon">📊</span>
-                    <span class="nav-text">Dashboard</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="programs.php" class="nav-link">
-                    <span class="nav-icon">📚</span>
-                    <span class="nav-text">Training Programs</span>
-                </a>
-            </li>
-            <li class="nav-item active">
-                <a href="clients.php" class="nav-link">
-                    <span class="nav-icon">🐕</span>
-                    <span class="nav-text">Client Pets</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="appointments.php" class="nav-link">
-                    <span class="nav-icon">📅</span>
-                    <span class="nav-text">Appointments</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="progress.php" class="nav-link">
-                    <span class="nav-icon">📈</span>
-                    <span class="nav-text">Progress Reports</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="earnings.php" class="nav-link">
-                    <span class="nav-icon">💰</span>
-                    <span class="nav-text">Earnings</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
+    <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
 
     <main class="main-content">
         <div class="page-header">

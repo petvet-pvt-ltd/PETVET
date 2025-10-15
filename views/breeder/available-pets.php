@@ -12,7 +12,6 @@ $currentPage = "available-pets";
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?> - PetVet Breeder</title>
     <link rel="stylesheet" href="../../public/css/sidebar/sidebar.css">
-    <link rel="stylesheet" href="../../public/css/shared/role-switcher.css">
     <style>
         .main-content {
             margin-left: 280px;
@@ -219,52 +218,7 @@ $currentPage = "available-pets";
 </head>
 <body>
     <!-- Sidebar -->
-    <nav class="sidebar">
-        <div class="sidebar-header">
-            <h2>🐕‍🦺 Breeder</h2>
-        </div>
-
-        <?php include '../shared/role-switcher.php'; ?>
-
-        <ul class="nav-menu">
-            <li class="nav-item">
-                <a href="dashboard.php" class="nav-link">
-                    <span class="nav-icon">📊</span>
-                    <span class="nav-text">Dashboard</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="breeding-records.php" class="nav-link">
-                    <span class="nav-icon">📝</span>
-                    <span class="nav-text">Breeding Records</span>
-                </a>
-            </li>
-            <li class="nav-item active">
-                <a href="available-pets.php" class="nav-link">
-                    <span class="nav-icon">🐾</span>
-                    <span class="nav-text">Available Pets</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="health-records.php" class="nav-link">
-                    <span class="nav-icon">🏥</span>
-                    <span class="nav-text">Health Records</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="inquiries.php" class="nav-link">
-                    <span class="nav-icon">📧</span>
-                    <span class="nav-text">Inquiries</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="sales.php" class="nav-link">
-                    <span class="nav-icon">💰</span>
-                    <span class="nav-text">Sales History</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
+    <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
 
     <main class="main-content">
         <div class="page-header">

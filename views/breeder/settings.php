@@ -1,4 +1,8 @@
 <?php
+$currentPage = basename($_SERVER['PHP_SELF']);
+$module = 'breeder';
+$GLOBALS['currentPage'] = 'settings.php';
+$GLOBALS['module'] = 'breeder';
 /** Breeder Settings (Profile & Preferences) */
 $profile = isset($profile) ? $profile : [
 	'name' => 'Your Name',
@@ -29,7 +33,16 @@ $prefs = isset($prefs) ? $prefs : [
 	'show_pricing' => true
 ];
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings - Breeder - PetVet</title>
 <link rel="stylesheet" href="/PETVET/public/css/breeder/settings.css" />
+</head>
+<body>
+<?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
 <main class="main-content">
 	<div class="page-wrap">
 		<div class="settings-header">
@@ -248,3 +261,5 @@ $prefs = isset($prefs) ? $prefs : [
 </main>
 <div id="toast" class="toast"></div>
 <script src="/PETVET/public/js/breeder/settings.js"></script>
+</body>
+</html>
