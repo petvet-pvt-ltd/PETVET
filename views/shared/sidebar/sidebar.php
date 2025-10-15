@@ -148,7 +148,7 @@ echo "<!-- activeModule: $activeModule -->";
     ?>
     <ul class="sidebar-nav-top">
       <a href="/PETVET/index.php?module=sitter&page=dashboard" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'dashboard.php') ? 'active' : '' ?>">
-        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/meter.png" class="icon"> Dashboard</li>
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/meter.png" class="icon"> Overview</li>
       </a>
       <a href="/PETVET/index.php?module=sitter&page=bookings" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'bookings.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Bookings</li>

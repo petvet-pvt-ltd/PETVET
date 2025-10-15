@@ -29,7 +29,7 @@
   /* When sidebar is hidden (mobile) remove reserved left space */
   body:not(.active-sidebar) .main-content { margin-left: 0; }
   body.active-sidebar .main-content { margin-left: 0; } /* overlay mode */
-  .main-content { padding: 18px 18px 40px; }
+  .main-content { padding: 18px 18px 40px; padding-top: 80px; }
 }
 
 .page-header {

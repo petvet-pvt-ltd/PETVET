@@ -1,7 +1,9 @@
 <?php
+$currentPage = basename($_SERVER['PHP_SELF']);
+$module = 'pet-owner';
+$GLOBALS['currentPage'] = 'settings.php';
+$GLOBALS['module'] = 'pet-owner';
 /** Pet Owner Settings (Profile & Preferences) */
-// When rendered via BaseController, sidebar + any global layout already output.
-// We only output the inner main content here (avoid duplicate <html>/<body>). 
 // Provide safe defaults if controller didn't pass data.
 $profile = isset($profile) ? $profile : [
 	'name' => 'Your Name',
@@ -36,7 +38,16 @@ $accountStats = isset($accountStats) ? $accountStats : [
 	'profile_completion' => 50
 ];
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings - Pet Owner - PetVet</title>
 <link rel="stylesheet" href="/PETVET/public/css/pet-owner/settings.css" />
+</head>
+<body>
+<?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
 <main class="main-content">
 		<div class="page-wrap">
 			<div class="settings-header">
@@ -192,3 +203,5 @@ $accountStats = isset($accountStats) ? $accountStats : [
 </main>
 <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 <script src="/PETVET/public/js/pet-owner/settings.js"></script>
+</body>
+</html>
