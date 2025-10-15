@@ -48,10 +48,10 @@
   }
 
   // Avatar preview
-  const avatarInput = $('#ownerAvatar');
-  const avatarPreview = $('#ownerAvatarPreview .image-preview-item img');
+  const avatarInput = $('#trainerAvatar');
+  const avatarPreview = $('#trainerAvatarPreview .image-preview-item img');
   document.addEventListener('click', e=>{
-    const btn = e.target.closest('[data-for="ownerAvatar"]');
+    const btn = e.target.closest('[data-for="trainerAvatar"]');
     if(btn && avatarInput){ avatarInput.click(); }
   });
   if(avatarInput){

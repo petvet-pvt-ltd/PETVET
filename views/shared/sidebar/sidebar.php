@@ -49,6 +49,7 @@ echo "<!-- activeModule: $activeModule -->";
   } elseif ($activeModule == 'pet-owner') {
     // Pet Owner Sidebar
     ?>
+    
     <ul class="sidebar-nav-top">
       <a href="/PETVET/index.php?module=pet-owner&page=my-pets" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'my-pets.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/pets.png" class="icon"> My Pets</li>
@@ -127,6 +128,51 @@ echo "<!-- activeModule: $activeModule -->";
       </a>
     </ul>
     <?php
+  } elseif ($activeModule == 'trainer') {
+    // Trainer Sidebar
+    ?>
+    <ul class="sidebar-nav-top">
+      <a href="/PETVET/index.php?module=trainer&page=dashboard" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'dashboard.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/meter.png" class="icon"> Dashboard</li>
+      </a>
+      <a href="/PETVET/index.php?module=trainer&page=appointments" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'appointments.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Appointments</li>
+      </a>
+      <a href="/PETVET/index.php?module=trainer&page=clients" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'clients.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/staff.png" class="icon"> Clients</li>
+      </a>
+    </ul>
+    <?php
+  } elseif ($activeModule == 'sitter') {
+    // Sitter Sidebar
+    ?>
+    <ul class="sidebar-nav-top">
+      <a href="/PETVET/index.php?module=sitter&page=dashboard" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'dashboard.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/meter.png" class="icon"> Dashboard</li>
+      </a>
+      <a href="/PETVET/index.php?module=sitter&page=bookings" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'bookings.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Bookings</li>
+      </a>
+      <a href="/PETVET/index.php?module=sitter&page=pets" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'pets.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/pets.png" class="icon"> Pets</li>
+      </a>
+    </ul>
+    <?php
+  } elseif ($activeModule == 'breeder') {
+    // Breeder Sidebar
+    ?>
+    <ul class="sidebar-nav-top">
+      <a href="/PETVET/index.php?module=breeder&page=dashboard" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'dashboard.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/meter.png" class="icon"> Dashboard</li>
+      </a>
+      <a href="/PETVET/index.php?module=breeder&page=pets" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'pets.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/pets.png" class="icon"> My Pets</li>
+      </a>
+      <a href="/PETVET/index.php?module=breeder&page=sales" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'sales.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/package-box.png" class="icon"> Sales</li>
+      </a>
+    </ul>
+    <?php
   }
   ?>
 
@@ -149,6 +195,18 @@ echo "<!-- activeModule: $activeModule -->";
     </a>
   <?php elseif ($activeModule == 'receptionist'): ?>
     <a href="/PETVET/index.php?module=receptionist&page=settings" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'settings.php') ? 'active' : '' ?>">
+      <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/account-settings.png" class="icon"> Settings</li>
+    </a>
+  <?php elseif ($activeModule == 'trainer'): ?>
+    <a href="/PETVET/index.php?module=trainer&page=settings" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'settings.php') ? 'active' : '' ?>">
+      <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/account-settings.png" class="icon"> Settings</li>
+    </a>
+  <?php elseif ($activeModule == 'sitter'): ?>
+    <a href="/PETVET/index.php?module=sitter&page=settings" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'settings.php') ? 'active' : '' ?>">
+      <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/account-settings.png" class="icon"> Settings</li>
+    </a>
+  <?php elseif ($activeModule == 'breeder'): ?>
+    <a href="/PETVET/index.php?module=breeder&page=settings" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'settings.php') ? 'active' : '' ?>">
       <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/account-settings.png" class="icon"> Settings</li>
     </a>
   <?php else: ?>
