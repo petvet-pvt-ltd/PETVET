@@ -33,44 +33,58 @@
   <div class="section">
     <h2>Clinic Visits</h2>
     <div id="clinicVisits">
-      <?php foreach ($clinic_visits as $v): ?>
-        <div class="visit-card"><b><?php echo htmlspecialchars($v['date']); ?>:</b> <?php echo htmlspecialchars($v['title']); ?><br><?php echo htmlspecialchars($v['details']); ?></div>
-      <?php endforeach; ?>
+      <?php if (empty($clinic_visits)): ?>
+        <p class="empty-state">No clinic visits recorded yet.</p>
+      <?php else: ?>
+        <?php foreach ($clinic_visits as $v): ?>
+          <div class="visit-card"><b><?php echo htmlspecialchars($v['date']); ?>:</b> <?php echo htmlspecialchars($v['title']); ?><br><?php echo htmlspecialchars($v['details']); ?></div>
+        <?php endforeach; ?>
+      <?php endif; ?>
     </div>
   </div>
 
   <!-- Vaccinations -->
   <div class="section">
     <h2>Vaccinations</h2>
-    <table id="vaccinationTable">
-      <thead>
-        <tr><th>Vaccine</th><th>Date</th><th>Next Due</th><th>Vet</th></tr>
-      </thead>
-      <tbody>
-        <?php foreach ($vaccinations as $v): ?>
-        <tr>
-          <td><?php echo htmlspecialchars($v['vaccine']); ?></td>
-          <td><?php echo htmlspecialchars($v['date']); ?></td>
-          <td><?php echo htmlspecialchars($v['nextDue']); ?></td>
-          <td><?php echo htmlspecialchars($v['vet']); ?></td>
-        </tr>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
+    <?php if (empty($vaccinations)): ?>
+      <p class="empty-state">No vaccination records available.</p>
+    <?php else: ?>
+      <div class="table-wrapper">
+        <table id="vaccinationTable">
+          <thead>
+            <tr><th>Vaccine</th><th>Date</th><th>Next Due</th><th>Vet</th></tr>
+          </thead>
+          <tbody>
+            <?php foreach ($vaccinations as $v): ?>
+            <tr>
+              <td><?php echo htmlspecialchars($v['vaccine']); ?></td>
+              <td><?php echo htmlspecialchars($v['date']); ?></td>
+              <td><?php echo htmlspecialchars($v['nextDue']); ?></td>
+              <td><?php echo htmlspecialchars($v['vet']); ?></td>
+            </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
   </div>
 
   <!-- Reports -->
   <div class="section">
     <h2>Reports</h2>
     <div id="reports">
-      <?php foreach ($reports as $index => $r): ?>
-        <div class="report-card">
-          <div>
-            <b><?php echo htmlspecialchars($r['date']); ?>:</b> <?php echo htmlspecialchars($r['title']); ?><br><?php echo htmlspecialchars($r['details']); ?>
+      <?php if (empty($reports)): ?>
+        <p class="empty-state">No reports uploaded yet.</p>
+      <?php else: ?>
+        <?php foreach ($reports as $index => $r): ?>
+          <div class="report-card">
+            <div>
+              <b><?php echo htmlspecialchars($r['date']); ?>:</b> <?php echo htmlspecialchars($r['title']); ?><br><?php echo htmlspecialchars($r['details']); ?>
+            </div>
+            <button class="btn" onclick="previewReport(<?php echo (int)$index; ?>)">Preview</button>
           </div>
-          <button class="btn" onclick="previewReport(<?php echo (int)$index; ?>)">Preview</button>
-        </div>
-      <?php endforeach; ?>
+        <?php endforeach; ?>
+      <?php endif; ?>
     </div>
   </div>
 
@@ -103,14 +117,43 @@
   </div>
 
   <script>
-    // Modal helpers (re-usable)
-    function showOverlay(id){const el=document.getElementById(id); if(!el) return; // close others
-      document.querySelectorAll('.modal-overlay:not([hidden])').forEach(o=>{ if(o.id!==id){o.hidden=true;}});
-      el.hidden=false; el.querySelector('[role="dialog"]').focus?.(); document.body.style.overflow='hidden'; }
-    function hideOverlay(id){const el=document.getElementById(id); if(el){el.hidden=true; if(!document.querySelector('.modal-overlay:not([hidden])')) document.body.style.overflow='';}}
-    function openForm(){hideOverlay('previewModal'); showOverlay('recordModal');}
-    function closeForm(){hideOverlay('recordModal');}
-    function closePreview(){hideOverlay('previewModal');}
+    // Modal helpers (re-usable) with body scroll lock
+    function showOverlay(id){
+      const el=document.getElementById(id); 
+      if(!el) return;
+      // close others
+      document.querySelectorAll('.modal-overlay:not([hidden])').forEach(o=>{ 
+        if(o.id!==id){
+          o.hidden=true;
+        }
+      });
+      el.hidden=false; 
+      el.querySelector('[role="dialog"]').focus?.(); 
+      document.body.classList.add('modal-open');
+    }
+    
+    function hideOverlay(id){
+      const el=document.getElementById(id); 
+      if(el){
+        el.hidden=true; 
+        if(!document.querySelector('.modal-overlay:not([hidden])')) {
+          document.body.classList.remove('modal-open');
+        }
+      }
+    }
+    
+    function openForm(){
+      hideOverlay('previewModal'); 
+      showOverlay('recordModal');
+    }
+    
+    function closeForm(){
+      hideOverlay('recordModal');
+    }
+    
+    function closePreview(){
+      hideOverlay('previewModal');
+    }
 
     // Preview state
     const previewState={images:[],current:0};

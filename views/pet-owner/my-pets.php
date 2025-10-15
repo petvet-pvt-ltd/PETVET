@@ -16,6 +16,116 @@ function calculateAge($dob) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Pets</title>
   <link rel="stylesheet" href="/PETVET/public/css/pet-owner/my-pets.css">
+  <style>
+    /* Prevent background scroll when dialog is open */
+    body.dialog-open {
+      overflow: hidden !important;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Make dialog footer buttons consistent across all popups on this page */
+    dialog .dialog-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      align-items: stretch;
+    }
+    dialog .dialog-actions .btn {
+      min-width: 140px; /* same minimum width for all buttons */
+      padding: 10px 18px;
+      box-sizing: border-box;
+      text-align: center;
+      height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.2;
+      vertical-align: middle;
+    }
+    /* Ensure primary and ghost/outline buttons share height/line-height */
+    dialog .dialog-actions .btn.primary,
+    dialog .dialog-actions .btn.ghost,
+    dialog .dialog-actions .btn.outline {
+      height: 44px;
+      line-height: 1.2;
+    }
+
+    /* Mobile responsive fixes for dialogs */
+    @media (max-width: 768px) {
+      dialog.dialog {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        margin: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        border-radius: 0 !important;
+      }
+
+      .dialog-card {
+        max-height: 100vh;
+        height: 100vh;
+        border-radius: 0 !important;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .dialog-header {
+        flex-shrink: 0;
+        padding: 20px 16px 12px !important;
+      }
+
+      .dialog-body {
+        flex: 1;
+        overflow-y: auto !important;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        padding: 20px 16px !important;
+        max-height: none !important;
+      }
+
+      .dialog-actions {
+        flex-shrink: 0;
+        padding: 16px !important;
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+
+      .field-col {
+        grid-column: span 1 !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+      
+      .page-header .btn {
+        width: 100%;
+      }
+
+      dialog .dialog-actions {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      dialog .dialog-actions .btn {
+        width: 100%;
+        min-width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
   <?php //require_once '../sidebar.php'; ?>
@@ -282,7 +392,7 @@ function calculateAge($dob) {
       </div>
       <footer class="dialog-actions">
         <button class="btn ghost" value="cancel">Cancel</button>
-        <button class="btn primary" value="submit">Submit Report</button>
+        <button class="btn primary" value="submit">Report</button>
       </footer>
     </form>
   </dialog>
@@ -369,7 +479,7 @@ function calculateAge($dob) {
 
       <footer class="dialog-actions">
         <button class="btn ghost" value="cancel" id="appointmentCancelBtn">Cancel</button>
-        <button class="btn primary" value="save" id="appointmentConfirmBtn" disabled>Confirm Booking</button>
+        <button class="btn primary" value="save" id="appointmentConfirmBtn" disabled>Confirm</button>
       </footer>
     </form>
   </dialog>
@@ -380,5 +490,64 @@ function calculateAge($dob) {
   echo '<script>window.petsData = ' . json_encode($pets) . ';</script>';
   ?>
   <script src="/PETVET/public/js/pet-owner/my-pets.js"></script>
+  <script>
+    // Prevent background scroll when dialog is open
+    (function() {
+      const dialogs = document.querySelectorAll('dialog');
+      
+      dialogs.forEach(dialog => {
+        // When dialog opens
+        dialog.addEventListener('click', function(e) {
+          if (e.target === dialog) {
+            // Clicked on backdrop
+            document.body.classList.remove('dialog-open');
+          }
+        });
+
+        // MutationObserver to detect when dialog opens/closes
+        const observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            if (mutation.attributeName === 'open') {
+              if (dialog.hasAttribute('open')) {
+                document.body.classList.add('dialog-open');
+              } else {
+                document.body.classList.remove('dialog-open');
+              }
+            }
+          });
+        });
+
+        observer.observe(dialog, {
+          attributes: true
+        });
+
+        // Handle form close
+        dialog.addEventListener('close', function() {
+          document.body.classList.remove('dialog-open');
+        });
+
+        // Handle cancel button
+        const cancelButtons = dialog.querySelectorAll('button[value="cancel"]');
+        cancelButtons.forEach(btn => {
+          btn.addEventListener('click', function() {
+            document.body.classList.remove('dialog-open');
+          });
+        });
+      });
+
+      // Also handle programmatic showModal calls
+      const originalShowModal = HTMLDialogElement.prototype.showModal;
+      HTMLDialogElement.prototype.showModal = function() {
+        originalShowModal.call(this);
+        document.body.classList.add('dialog-open');
+      };
+
+      const originalClose = HTMLDialogElement.prototype.close;
+      HTMLDialogElement.prototype.close = function() {
+        originalClose.call(this);
+        document.body.classList.remove('dialog-open');
+      };
+    })();
+  </script>
 </body>
 </html>
