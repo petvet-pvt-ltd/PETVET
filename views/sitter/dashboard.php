@@ -37,6 +37,25 @@ $GLOBALS['module'] = 'sitter';
 <div class="stat-label">Pending Requests</div>
 </div>
 </div>
+
+<div class="upcoming-section">
+<h2 class="section-title">Upcoming Bookings</h2>
+<div class="bookings-list">
+<?php if (!empty($upcomingBookings)): ?>
+<?php foreach ($upcomingBookings as $booking): ?>
+<div class="booking-item">
+<div class="booking-time"><?php echo htmlspecialchars($booking['time']); ?></div>
+<div class="booking-details">
+<div class="booking-customer"><?php echo htmlspecialchars($booking['customer_name']); ?></div>
+<div class="booking-category"><?php echo htmlspecialchars($booking['category']); ?></div>
+</div>
+</div>
+<?php endforeach; ?>
+<?php else: ?>
+<p class="no-bookings">No upcoming bookings scheduled.</p>
+<?php endif; ?>
+</div>
+</div>
 </main>
 </body>
 </html>

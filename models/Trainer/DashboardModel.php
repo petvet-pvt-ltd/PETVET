@@ -1,40 +1,15 @@
 <?php
 require_once __DIR__ . '/../BaseModel.php';
+require_once __DIR__ . '/TrainerData.php';
 
 class TrainerDashboardModel extends BaseModel {
     
     public function getStats($trainerId) {
-        return [
-            'total_clients' => 24,
-            'active_sessions' => 8,
-            'completed_sessions' => 156,
-            'monthly_earnings' => 3200
-        ];
+        return TrainerData::getStats();
     }
 
-    public function getUpcomingSessions($trainerId) {
-        return [
-            [
-                'id' => 1,
-                'client_name' => 'Sarah Johnson',
-                'pet_name' => 'Max',
-                'session_type' => 'Basic Obedience',
-                'date' => '2025-10-16',
-                'time' => '10:00 AM',
-                'duration' => '60 min',
-                'status' => 'confirmed'
-            ],
-            [
-                'id' => 2,
-                'client_name' => 'Mike Davis',
-                'pet_name' => 'Bella',
-                'session_type' => 'Advanced Training',
-                'date' => '2025-10-17',
-                'time' => '2:00 PM',
-                'duration' => '90 min',
-                'status' => 'confirmed'
-            ]
-        ];
+    public function getUpcomingAppointments($trainerId, $limit = 5) {
+        return TrainerData::getUpcomingAppointments($limit);
     }
 
     public function getRecentClients($trainerId) {

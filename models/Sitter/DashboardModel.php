@@ -1,15 +1,11 @@
 <?php
 require_once __DIR__ . '/../BaseModel.php';
+require_once __DIR__ . '/SitterData.php';
 
 class SitterDashboardModel extends BaseModel {
     
     public function getStats($sitterId) {
-        return [
-            'active_bookings' => 3,
-            'total_pets_cared' => 87,
-            'completed_bookings' => 2,
-            'pending_requests' => 3
-        ];
+        return SitterData::getStats();
     }
 
     public function getActiveBookings($sitterId) {
@@ -47,35 +43,7 @@ class SitterDashboardModel extends BaseModel {
         ];
     }
 
-    public function getUpcomingBookings($sitterId) {
-        return [
-            [
-                'id' => 1,
-                'pet_name' => 'Buddy',
-                'pet_type' => 'Dog',
-                'owner_name' => 'Lisa Chen',
-                'start_date' => '2025-10-20',
-                'end_date' => '2025-10-20',
-                'status' => 'pending'
-            ],
-            [
-                'id' => 2,
-                'pet_name' => 'Charlie',
-                'pet_type' => 'Dog',
-                'owner_name' => 'David Smith',
-                'start_date' => '2025-10-22',
-                'end_date' => '2025-10-24',
-                'status' => 'pending'
-            ],
-            [
-                'id' => 3,
-                'pet_name' => 'Mittens',
-                'pet_type' => 'Cat',
-                'owner_name' => 'Sarah Johnson',
-                'start_date' => '2025-10-25',
-                'end_date' => '2025-10-27',
-                'status' => 'pending'
-            ]
-        ];
+    public function getUpcomingBookings($sitterId, $limit = 5) {
+        return SitterData::getUpcomingBookings($limit);
     }
 }

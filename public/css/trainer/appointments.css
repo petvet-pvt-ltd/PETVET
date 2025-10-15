@@ -1,0 +1,636 @@
+/* Import shared bookings styles as base */
+@import url('../shared/bookings.css');
+
+/* Trainer-specific purple theme override */
+:root {
+    --trainer-primary: #8b5cf6;
+    --trainer-primary-dark: #7c3aed;
+    --trainer-primary-light: #a78bfa;
+    --trainer-primary-pale: rgba(139, 92, 246, 0.1);
+    --trainer-success: #10b981;
+    --trainer-danger: #ef4444;
+    --trainer-warning: #f59e0b;
+    --trainer-info: #3b82f6;
+}
+
+/* Page Header - Purple gradient */
+.page-header {
+    background: linear-gradient(135deg, var(--trainer-primary) 0%, var(--trainer-primary-dark) 100%);
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.page-header p {
+    margin: 0;
+    opacity: 0.95;
+    font-size: 1rem;
+}
+
+/* Filter Buttons - Purple theme */
+.appointment-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 0.75rem 1.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+    color: #6b7280;
+}
+
+.filter-btn:hover {
+    border-color: var(--trainer-primary);
+    color: var(--trainer-primary);
+    background: var(--trainer-primary-pale);
+}
+
+.filter-btn.active {
+    background: var(--trainer-primary);
+    border-color: var(--trainer-primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* Appointment Cards */
+.appointments-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.appointments-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.appointment-card {
+    background: white;
+    border-radius: 12px;
+    border-left: 4px solid var(--trainer-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 1.5rem;
+    transition: all 0.3s;
+}
+
+.appointment-card:hover {
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2);
+    transform: translateY(-2px);
+}
+
+.appointment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.appointment-date {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--trainer-primary);
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.date-icon {
+    font-size: 1.25rem;
+}
+
+/* Training Type Badges */
+.training-type-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.training-type-basic {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.training-type-intermediate {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.training-type-advanced {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Appointment Body */
+.appointment-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.pet-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    color: #111827;
+}
+
+.pet-details {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+.owner-info,
+.training-goals,
+.additional-notes,
+.last-session-notes,
+.next-session-goals,
+.completion-info,
+.final-notes {
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.owner-info p,
+.training-goals p,
+.additional-notes p,
+.last-session-notes p,
+.next-session-goals p,
+.completion-info p,
+.final-notes p {
+    margin: 0.5rem 0;
+    line-height: 1.6;
+}
+
+.owner-info p:first-child,
+.training-goals p:first-child,
+.additional-notes p:first-child,
+.last-session-notes p:first-child,
+.next-session-goals p:first-child,
+.final-notes p:first-child {
+    margin-top: 0;
+}
+
+.owner-info p:last-child,
+.training-goals p:last-child,
+.additional-notes p:last-child,
+.last-session-notes p:last-child,
+.next-session-goals p:last-child,
+.final-notes p:last-child {
+    margin-bottom: 0;
+}
+
+/* Session Progress */
+.session-progress {
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.session-progress p {
+    margin: 0 0 0.75rem 0;
+    font-weight: 600;
+    color: #374151;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background: #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--trainer-primary-dark), var(--trainer-primary-light));
+    border-radius: 6px;
+    transition: width 0.5s ease;
+}
+
+.session-date-label {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-top: 0.5rem !important;
+    font-style: italic;
+}
+
+.outcome-success {
+    color: var(--trainer-success);
+    font-weight: 600;
+}
+
+.payment-status {
+    color: var(--trainer-success);
+    font-weight: 600;
+}
+
+/* Action Buttons */
+.appointment-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    flex-wrap: wrap;
+}
+
+.appointment-actions button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+    flex: 1;
+    min-width: 120px;
+}
+
+.btn-accept {
+    background: var(--trainer-success);
+    color: white;
+}
+
+.btn-accept:hover {
+    background: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-decline {
+    background: var(--trainer-danger);
+    color: white;
+}
+
+.btn-decline:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-contact {
+    background: var(--trainer-primary);
+    color: white;
+}
+
+.btn-contact:hover {
+    background: var(--trainer-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.btn-complete {
+    background: var(--trainer-primary);
+    color: white;
+}
+
+.btn-complete:hover {
+    background: var(--trainer-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    margin: 0 0 0.5rem 0;
+    color: #374151;
+    font-size: 1.5rem;
+}
+
+.empty-state p {
+    margin: 0;
+    color: #6b7280;
+}
+
+/* Modals */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease;
+}
+
+.modal-large {
+    max-width: 700px;
+}
+
+.modal-small {
+    max-width: 400px;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-content h2 {
+    margin: 0 0 1.5rem 0;
+    color: #111827;
+    font-size: 1.5rem;
+}
+
+/* Contact Modal */
+.contact-info {
+    margin-bottom: 1.5rem;
+}
+
+.contact-info p {
+    margin: 0.75rem 0;
+    padding: 0.75rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.contact-info strong {
+    color: #6b7280;
+}
+
+.contact-info span {
+    color: #111827;
+    font-weight: 500;
+}
+
+.call-btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: var(--trainer-primary);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.call-btn:hover {
+    background: var(--trainer-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* Complete Session Form */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.form-group input[type="text"],
+.form-group input[type="date"],
+.form-group input[type="time"],
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--trainer-primary);
+    box-shadow: 0 0 0 3px var(--trainer-primary-pale);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 0.5rem;
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-section-title {
+    font-weight: 600;
+    color: #374151;
+    margin: 1.5rem 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--trainer-primary-pale);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.checkbox-group label {
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+    color: #374151;
+}
+
+/* Modal Actions */
+.modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.modal-actions button,
+.modal-actions a {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1rem;
+}
+
+.btn-submit,
+.confirm-btn-confirm {
+    background: var(--trainer-primary);
+    color: white;
+}
+
+.btn-submit:hover,
+.confirm-btn-confirm:hover {
+    background: var(--trainer-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.btn-cancel,
+.btn-close,
+.confirm-btn-cancel {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.btn-cancel:hover,
+.btn-close:hover,
+.confirm-btn-cancel:hover {
+    background: #d1d5db;
+}
+
+/* Scroll freeze when modal open */
+body.modal-open {
+    overflow: hidden;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-header {
+        padding: 1.5rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .appointment-filters {
+        flex-direction: column;
+    }
+
+    .filter-btn {
+        text-align: center;
+    }
+
+    .appointment-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .appointment-actions {
+        flex-direction: column;
+    }
+
+    .appointment-actions button {
+        width: 100%;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-content {
+        padding: 1.5rem;
+        max-height: 95vh;
+        align-self: flex-end;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            transform: translateY(100%);
+        }
+        to {
+            transform: translateY(0);
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .appointment-card {
+        padding: 1rem;
+    }
+
+    .pet-info h3 {
+        font-size: 1.25rem;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .modal-actions button,
+    .modal-actions a {
+        width: 100%;
+    }
+}

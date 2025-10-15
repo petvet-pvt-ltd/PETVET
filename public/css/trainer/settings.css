@@ -48,15 +48,15 @@ body{margin:0; background:var(--bg); color:var(--text); line-height:1.55; overfl
 .row.two{grid-template-columns:1fr 1fr}
 @media (max-width:640px){.row.two{grid-template-columns:1fr}}
 label{display:flex; flex-direction:column; gap:8px; font-weight:600; font-size:14px}
-input[type=text],input[type=email],input[type=tel],input[type=password],select,textarea{padding:12px 14px; border:1px solid var(--border); border-radius:12px; background:var(--card); color:var(--text); outline:none; transition:var(--transition); box-shadow:0 1px 0 rgba(0,0,0,.02)}
+input[type=text],input[type=email],input[type=tel],input[type=password],input[type=number],select,textarea{padding:12px 14px; border:1px solid var(--border); border-radius:12px; background:var(--card); color:var(--text); outline:none; transition:var(--transition); box-shadow:0 1px 0 rgba(0,0,0,.02); width:100%}
 input:focus,select:focus,textarea:focus{border-color:var(--primary); box-shadow:0 0 0 4px var(--ring)}
 textarea{resize:vertical; min-height:96px}
 .actions{display:flex; gap:10px; justify-content:flex-end; margin-top:var(--space-3)}
-.pref-grid{display:flex; flex-direction:column; gap:12px; margin-bottom:10px}
+.pref-grid{display:flex; flex-direction:column; gap:16px; margin-bottom:10px}
 .switch-row{display:flex; align-items:center; gap:14px; background:var(--bg-soft); padding:10px 14px; border:1px solid var(--border); border-radius:12px; font-weight:600; cursor:pointer}
 .switch-row input{width:20px; height:20px; accent-color:var(--primary)}
-.pref-simplified{display:flex; flex-direction:column; gap:22px; margin-bottom:10px}
-.pref-row{display:flex; flex-direction:column; gap:10px; background:var(--bg-soft); padding:18px 20px; border:1px solid var(--border); border-radius:16px; position:relative}
+.pref-simplified{display:flex; flex-direction:column; gap:18px; margin-bottom:10px}
+.pref-row{display:flex; flex-direction:column; gap:10px; background:var(--bg-soft); padding:18px 20px; border:1px solid var(--border); border-radius:16px; position:relative; margin-bottom:0}
 .pref-row:hover{border-color:var(--primary); box-shadow:0 0 0 4px var(--ring)}
 .toggle{display:flex; align-items:center; gap:16px; cursor:pointer; font-weight:600}
 .toggle input{position:absolute; opacity:0; pointer-events:none}
@@ -92,10 +92,12 @@ textarea{resize:vertical; min-height:96px}
   .profile-grid{gap:var(--space-4); grid-template-columns:1fr}
   .avatar-frame{width:100%; align-items:center}
   .image-preview-list.avatar.big .image-preview-item{width:160px; height:160px}
-  input[type=text],input[type=email],input[type=tel],input[type=password],select,textarea{padding:10px 12px; font-size:14px; width:100%; max-width:100%; box-sizing:border-box}
+  input[type=text],input[type=email],input[type=tel],input[type=password],input[type=number],select,textarea{padding:10px 12px; font-size:14px; width:100%; max-width:100%; box-sizing:border-box}
   .row{margin-bottom:14px; gap:12px}
   .row.two{grid-template-columns:1fr}
-  .pref-row{padding:14px; max-width:100%}
+  .pref-row{padding:16px; max-width:100%}
+  .pref-grid{gap:14px}
+  .switch-row{padding:12px 14px}
   .toggle-label{word-break:break-word; max-width:calc(100% - 72px)}
   .actions{justify-content:stretch; flex-direction:column; gap:10px}
   .actions .btn{flex:1; width:100%; max-width:100%}
@@ -111,8 +113,10 @@ textarea{resize:vertical; min-height:96px}
   .card{max-width:100%}
   .card-head{padding:10px 12px}
   .form{padding:12px; max-width:100%}
-  input[type=text],input[type=email],input[type=tel],input[type=password],select,textarea{font-size:16px; padding:10px; max-width:100%}
+  input[type=text],input[type=email],input[type=tel],input[type=password],input[type=number],select,textarea{font-size:16px; padding:10px; max-width:100%}
   .row{gap:10px}
+  .pref-row{padding:14px}
+  .switch-row{padding:10px 12px}
 }
 
 /* Role Management Styles */

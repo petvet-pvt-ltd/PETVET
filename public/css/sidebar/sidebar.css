@@ -59,6 +59,20 @@ body {
     margin-left: 0; /* No margin when sidebar is hidden */
     width: 100%; /* Full width when sidebar is hidden */
   }
+  
+  /* Universal fix: Add top padding to all main content on mobile */
+  .main-content,
+  main.main-content,
+  .page-content,
+  .content-wrapper {
+    padding-top: 80px !important;
+  }
+  
+  /* Ensure page headers and first elements have proper spacing */
+  .main-content > *:first-child,
+  main.main-content > *:first-child {
+    margin-top: 0 !important;
+  }
 }
 
 .sidebar-toggle {

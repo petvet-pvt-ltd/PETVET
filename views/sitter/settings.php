@@ -149,62 +149,33 @@ $prefs = isset($prefs) ? $prefs : [
 					<p class="muted small">Customize notifications &amp; settings</p>
 				</div>
 				<form id="formPrefs" class="form">
-					<div class="pref-row">
-						<div class="pref-label">
-							<strong>Email Notifications</strong>
-							<span class="muted small">Receive email alerts for new bookings</span>
+					<div class="pref-simplified">
+						<div class="pref-row">
+							<label class="toggle">
+								<input type="checkbox" name="email_notifications" <?= $prefs['email_notifications'] ? 'checked' : '' ?> />
+								<span class="toggle-track"><span class="toggle-handle"></span></span>
+								<span class="toggle-label">Email Notifications <small>Receive email alerts for new bookings</small></span>
+							</label>
 						</div>
-						<label class="toggle">
-							<input type="checkbox" name="email_notifications" <?= $prefs['email_notifications'] ? 'checked' : '' ?> />
-							<span class="slider"></span>
-						</label>
-					</div>
-					<div class="pref-row">
-						<div class="pref-label">
-							<strong>SMS Notifications</strong>
-							<span class="muted small">Get text messages for urgent updates</span>
+						<div class="pref-row">
+							<label class="select-group">Booking Reminders
+								<select name="booking_reminders" value="<?= $prefs['booking_reminders'] ?>">
+									<option value="24" <?= $prefs['booking_reminders'] == 24 ? 'selected' : '' ?>>24 hours before</option>
+									<option value="48" <?= $prefs['booking_reminders'] == 48 ? 'selected' : '' ?>>48 hours before</option>
+									<option value="168" <?= $prefs['booking_reminders'] == 168 ? 'selected' : '' ?>>1 week before</option>
+								</select>
+							</label>
 						</div>
-						<label class="toggle">
-							<input type="checkbox" name="sms_notifications" <?= $prefs['sms_notifications'] ? 'checked' : '' ?> />
-							<span class="slider"></span>
-						</label>
-					</div>
-					<div class="pref-row">
-						<div class="pref-label">
-							<strong>Booking Reminders</strong>
-							<span class="muted small">When to send booking reminders</span>
+						<div class="pref-row">
+							<label class="select-group">Maximum Pets
+								<select name="max_pets" value="<?= $prefs['max_pets'] ?>">
+									<option value="1" <?= $prefs['max_pets'] == 1 ? 'selected' : '' ?>>1 pet</option>
+									<option value="2" <?= $prefs['max_pets'] == 2 ? 'selected' : '' ?>>2 pets</option>
+									<option value="3" <?= $prefs['max_pets'] == 3 ? 'selected' : '' ?>>3 pets</option>
+									<option value="5" <?= $prefs['max_pets'] == 5 ? 'selected' : '' ?>>5 pets</option>
+								</select>
+							</label>
 						</div>
-						<div class="select-group">
-							<select name="booking_reminders" value="<?= $prefs['booking_reminders'] ?>">
-								<option value="24" <?= $prefs['booking_reminders'] == 24 ? 'selected' : '' ?>>24 hours before</option>
-								<option value="48" <?= $prefs['booking_reminders'] == 48 ? 'selected' : '' ?>>48 hours before</option>
-								<option value="168" <?= $prefs['booking_reminders'] == 168 ? 'selected' : '' ?>>1 week before</option>
-							</select>
-						</div>
-					</div>
-					<div class="pref-row">
-						<div class="pref-label">
-							<strong>Maximum Pets</strong>
-							<span class="muted small">Max pets you can care for at once</span>
-						</div>
-						<div class="select-group">
-							<select name="max_pets" value="<?= $prefs['max_pets'] ?>">
-								<option value="1" <?= $prefs['max_pets'] == 1 ? 'selected' : '' ?>>1 pet</option>
-								<option value="2" <?= $prefs['max_pets'] == 2 ? 'selected' : '' ?>>2 pets</option>
-								<option value="3" <?= $prefs['max_pets'] == 3 ? 'selected' : '' ?>>3 pets</option>
-								<option value="5" <?= $prefs['max_pets'] == 5 ? 'selected' : '' ?>>5 pets</option>
-							</select>
-						</div>
-					</div>
-					<div class="pref-row">
-						<div class="pref-label">
-							<strong>Newsletter</strong>
-							<span class="muted small">Weekly tips and updates</span>
-						</div>
-						<label class="toggle">
-							<input type="checkbox" name="newsletter_subscription" <?= $prefs['newsletter_subscription'] ? 'checked' : '' ?> />
-							<span class="slider"></span>
-						</label>
 					</div>
 					<div class="actions">
 						<button class="btn primary" type="submit">Save Preferences</button>
