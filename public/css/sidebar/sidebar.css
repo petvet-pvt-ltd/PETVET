@@ -4,6 +4,10 @@ body {
   transition: margin-left 0.3s ease-in-out;
 }
 
+body {
+  overflow-x: hidden;
+}
+
 .dashboard-sidebar {
   width: 240px;
   height: 100vh;
@@ -17,8 +21,26 @@ body {
   top: 0;
   left: 0;
   overflow-y: auto;
+  overflow-x: hidden; /* prevent horizontal scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #2a3d52 transparent; /* Firefox */
   z-index: 1000;
   transition: transform 0.3s ease-in-out;
+}
+
+/* Webkit scrollbar styling */
+.dashboard-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+.dashboard-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.dashboard-sidebar::-webkit-scrollbar-thumb {
+  background: #2a3d52;
+  border-radius: 4px;
+}
+.dashboard-sidebar::-webkit-scrollbar-thumb:hover {
+  background: #34506a;
 }
 
 @media (max-width: 768px) {

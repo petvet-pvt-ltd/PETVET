@@ -24,6 +24,12 @@ if ($module === 'clinic-manager') {
   $page = $_GET['page'] ?? 'dashboard';
 } elseif ($module === 'receptionist') {
   $page = $_GET['page'] ?? 'dashboard';
+} elseif ($module === 'trainer') {
+  $page = $_GET['page'] ?? 'dashboard';
+} elseif ($module === 'sitter') {
+  $page = $_GET['page'] ?? 'dashboard';
+} elseif ($module === 'breeder') {
+  $page = $_GET['page'] ?? 'dashboard';
 } elseif ($module === 'guest') {
   // Default guest landing page
   $page = $_GET['page'] ?? 'home';
@@ -100,6 +106,42 @@ switch ($module) {
       case 'lost-found': $c->lostFound(); break;
       case 'settings': $c->settings(); break;
       default: show404("This admin page doesn't exist."); break;
+    }
+    break;
+
+  case 'trainer':
+    require_once __DIR__ . '/controllers/TrainerController.php';
+    $c = new TrainerController();
+    switch ($page) {
+      case 'dashboard': $c->dashboard(); break;
+      case 'appointments': $c->appointments(); break;
+      case 'clients': $c->clients(); break;
+      case 'settings': $c->settings(); break;
+      default: show404("This trainer page doesn't exist."); break;
+    }
+    break;
+
+  case 'sitter':
+    require_once __DIR__ . '/controllers/SitterController.php';
+    $c = new SitterController();
+    switch ($page) {
+      case 'dashboard': $c->dashboard(); break;
+      case 'bookings': $c->bookings(); break;
+      case 'pets': $c->pets(); break;
+      case 'settings': $c->settings(); break;
+      default: show404("This sitter page doesn't exist."); break;
+    }
+    break;
+
+  case 'breeder':
+    require_once __DIR__ . '/controllers/BreederController.php';
+    $c = new BreederController();
+    switch ($page) {
+      case 'dashboard': $c->dashboard(); break;
+      case 'pets': $c->pets(); break;
+      case 'sales': $c->sales(); break;
+      case 'settings': $c->settings(); break;
+      default: show404("This breeder page doesn't exist."); break;
     }
     break;
 

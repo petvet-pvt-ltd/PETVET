@@ -148,6 +148,45 @@ $accountStats = isset($accountStats) ? $accountStats : [
 						</div>
 					</form>
 				</section>
+
+				<!-- Role Management Card -->
+				<section class="card" id="section-role" data-section>
+					<div class="card-head">
+						<h2>Active Role</h2>
+						<p class="muted small">Switch between your registered service provider roles</p>
+					</div>
+					<form id="formRole" class="form">
+						<?php
+						// Define available roles (in real app, this would come from user's registered roles)
+						$availableRoles = [
+							'pet-owner' => ['name' => 'Pet Owner', 'desc' => 'Manage your pets and appointments'],
+							'trainer' => ['name' => 'Trainer', 'desc' => 'Provide training services'],
+							'sitter' => ['name' => 'Pet Sitter', 'desc' => 'Offer pet sitting services'],
+							'breeder' => ['name' => 'Breeder', 'desc' => 'Manage breeding operations']
+						];
+						$currentRole = $_SESSION['current_role'] ?? 'pet-owner';
+						?>
+						<div class="role-options">
+							<?php foreach ($availableRoles as $roleKey => $roleData): ?>
+								<label class="role-option <?= $roleKey === $currentRole ? 'active' : '' ?>">
+									<input type="radio" name="active_role" value="<?= $roleKey ?>" <?= $roleKey === $currentRole ? 'checked' : '' ?> />
+									<div class="role-card">
+										<div class="role-header">
+											<span class="role-name"><?= htmlspecialchars($roleData['name']) ?></span>
+											<?php if ($roleKey === $currentRole): ?>
+												<span class="role-badge">Active</span>
+											<?php endif; ?>
+										</div>
+										<p class="role-desc"><?= htmlspecialchars($roleData['desc']) ?></p>
+									</div>
+								</label>
+							<?php endforeach; ?>
+						</div>
+						<div class="actions">
+							<button class="btn primary" type="submit">Switch Role</button>
+						</div>
+					</form>
+				</section>
 			</div>
 	</div>
 </main>
