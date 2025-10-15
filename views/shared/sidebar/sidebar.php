@@ -136,7 +136,10 @@ echo "<!-- activeModule: $activeModule -->";
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/meter.png" class="icon"> Dashboard</li>
       </a>
       <a href="/PETVET/index.php?module=trainer&page=appointments" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'appointments.php') ? 'active' : '' ?>">
-        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Appointments</li>
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/todo.png" class="icon"> Appointments</li>
+      </a>
+      <a href="/PETVET/index.php?module=trainer&page=availability" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'availability.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Availability</li>
       </a>
       <a href="/PETVET/index.php?module=trainer&page=clients" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'clients.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/staff.png" class="icon"> Clients</li>
@@ -151,7 +154,10 @@ echo "<!-- activeModule: $activeModule -->";
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/meter.png" class="icon"> Overview</li>
       </a>
       <a href="/PETVET/index.php?module=sitter&page=bookings" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'bookings.php') ? 'active' : '' ?>">
-        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Bookings</li>
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/todo.png" class="icon"> Bookings</li>
+      </a>
+      <a href="/PETVET/index.php?module=sitter&page=availability" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'availability.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Availability</li>
       </a>
       <a href="/PETVET/index.php?module=sitter&page=pets" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'pets.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/pets.png" class="icon"> Pets</li>

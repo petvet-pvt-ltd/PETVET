@@ -112,9 +112,18 @@ switch ($module) {
   case 'trainer':
     require_once __DIR__ . '/controllers/TrainerController.php';
     $c = new TrainerController();
+    
+    // Handle AJAX actions
+    $action = $_GET['action'] ?? null;
+    if ($action === 'handleTrainingAction') {
+      $c->handleTrainingAction();
+      exit;
+    }
+    
     switch ($page) {
       case 'dashboard': $c->dashboard(); break;
       case 'appointments': $c->appointments(); break;
+      case 'availability': $c->availability(); break;
       case 'clients': $c->clients(); break;
       case 'settings': $c->settings(); break;
       default: show404("This trainer page doesn't exist."); break;
@@ -124,10 +133,19 @@ switch ($module) {
   case 'sitter':
     require_once __DIR__ . '/controllers/SitterController.php';
     $c = new SitterController();
+    
+    // Handle AJAX actions
+    $action = $_GET['action'] ?? null;
+    if ($action === 'handleBookingAction') {
+      $c->handleBookingAction();
+      exit;
+    }
+    
     switch ($page) {
       case 'dashboard': $c->dashboard(); break;
       case 'bookings': $c->bookings(); break;
       case 'pets': $c->pets(); break;
+      case 'availability': $c->availability(); break;
       case 'settings': $c->settings(); break;
       default: show404("This sitter page doesn't exist."); break;
     }

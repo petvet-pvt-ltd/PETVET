@@ -20,6 +20,7 @@ class SitterBookingsModel extends BaseModel {
                 'pet_breed' => 'Beagle',
                 'owner_name' => 'Lisa Chen',
                 'owner_phone' => '555-0201',
+                'owner_phone_2' => '555-0211',
                 'start_date' => '2025-10-20',
                 'end_date' => '2025-10-20',
                 'start_time' => '4:00 PM',
@@ -37,6 +38,7 @@ class SitterBookingsModel extends BaseModel {
                 'pet_breed' => 'Labrador',
                 'owner_name' => 'David Smith',
                 'owner_phone' => '555-0204',
+                'owner_phone_2' => '',
                 'start_date' => '2025-10-22',
                 'end_date' => '2025-10-24',
                 'start_time' => '10:00 AM',
@@ -54,6 +56,7 @@ class SitterBookingsModel extends BaseModel {
                 'pet_breed' => 'Siamese',
                 'owner_name' => 'Sarah Johnson',
                 'owner_phone' => '555-0205',
+                'owner_phone_2' => '555-0215',
                 'start_date' => '2025-10-25',
                 'end_date' => '2025-10-27',
                 'start_time' => '9:00 AM',
@@ -76,6 +79,7 @@ class SitterBookingsModel extends BaseModel {
                 'pet_breed' => 'Golden Retrievers',
                 'owner_name' => 'Maria Garcia',
                 'owner_phone' => '555-0202',
+                'owner_phone_2' => '555-0212',
                 'start_date' => '2025-10-20',
                 'end_date' => '2025-10-20',
                 'start_time' => '9:00 AM',
@@ -93,6 +97,7 @@ class SitterBookingsModel extends BaseModel {
                 'pet_breed' => 'Tabby',
                 'owner_name' => 'Tom Wilson',
                 'owner_phone' => '555-0203',
+                'owner_phone_2' => '',
                 'start_date' => '2025-10-20',
                 'end_date' => '2025-10-22',
                 'start_time' => '12:00 PM',
@@ -110,6 +115,7 @@ class SitterBookingsModel extends BaseModel {
                 'pet_breed' => 'German Shepherd',
                 'owner_name' => 'James Miller',
                 'owner_phone' => '555-0206',
+                'owner_phone_2' => '',
                 'start_date' => '2025-10-19',
                 'end_date' => '2025-10-21',
                 'start_time' => '8:00 AM',
@@ -160,5 +166,55 @@ class SitterBookingsModel extends BaseModel {
                 'special_notes' => 'Small dog, easy to care for. Owner very satisfied.'
             ]
         ];
+    }
+
+    // Action Methods
+    public function acceptBooking($bookingId, $sitterId) {
+        // In production, update database:
+        // UPDATE bookings SET status = 'confirmed', sitter_id = ? WHERE id = ? AND status = 'pending'
+        
+        // Mock response
+        return [
+            'success' => true,
+            'message' => 'Booking accepted successfully!',
+            'booking_id' => $bookingId
+        ];
+    }
+
+    public function declineBooking($bookingId, $sitterId) {
+        // In production, update database:
+        // UPDATE bookings SET status = 'declined', sitter_id = ? WHERE id = ? AND status = 'pending'
+        
+        // Mock response
+        return [
+            'success' => true,
+            'message' => 'Booking declined',
+            'booking_id' => $bookingId
+        ];
+    }
+
+    public function completeBooking($bookingId, $sitterId) {
+        // In production, update database:
+        // UPDATE bookings SET status = 'completed', completed_at = NOW() WHERE id = ? AND sitter_id = ?
+        
+        // Mock response
+        return [
+            'success' => true,
+            'message' => 'Booking marked as complete!',
+            'booking_id' => $bookingId
+        ];
+    }
+
+    public function getBookingById($bookingId, $sitterId) {
+        // In production: SELECT * FROM bookings WHERE id = ? AND sitter_id = ?
+        
+        // Mock: search in all booking arrays
+        $allBookings = $this->getAllBookings($sitterId);
+        foreach ($allBookings as $booking) {
+            if ($booking['id'] == $bookingId) {
+                return $booking;
+            }
+        }
+        return null;
     }
 }

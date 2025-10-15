@@ -13,8 +13,7 @@ class SitterController extends BaseController {
         
         $data = [
             'stats' => $model->getStats($sitterId),
-            'activeBookings' => $model->getActiveBookings($sitterId),
-            'upcomingBookings' => $model->getUpcomingBookings($sitterId)
+            'upcomingBookings' => $model->getUpcomingBookings($sitterId, 5)
         ];
         
         $this->view('sitter', 'dashboard', $data);
@@ -22,7 +21,7 @@ class SitterController extends BaseController {
 
     public function bookings() {
         $model = new SitterBookingsModel();
-        $sitterId = 1; // Mock sitter ID
+        $sitterId = $_SESSION['user_id'] ?? 1; // Get from session or mock
         
         $data = [
             'bookings' => $model->getAllBookings($sitterId),
@@ -32,6 +31,41 @@ class SitterController extends BaseController {
         ];
         
         $this->view('sitter', 'bookings', $data);
+    }
+
+    public function handleBookingAction() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            return;
+        }
+
+        $action = $_POST['action'] ?? '';
+        $bookingId = $_POST['booking_id'] ?? 0;
+        $sitterId = $_SESSION['user_id'] ?? 1;
+
+        $model = new SitterBookingsModel();
+        
+        switch ($action) {
+            case 'accept':
+                $result = $model->acceptBooking($bookingId, $sitterId);
+                break;
+            case 'decline':
+                $result = $model->declineBooking($bookingId, $sitterId);
+                break;
+            case 'complete':
+                $result = $model->completeBooking($bookingId, $sitterId);
+                break;
+            default:
+                $result = ['success' => false, 'message' => 'Invalid action'];
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode($result);
+    }
+
+    public function availability() {
+        $this->view('sitter', 'availability');
     }
 
     public function pets() {

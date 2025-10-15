@@ -1,0 +1,813 @@
+/* Trainer Availability Management Styles */
+:root {
+    --sitter-primary: #8b5cf6;
+    --sitter-primary-dark: #7c3aed;
+    --sitter-primary-light: rgba(139, 92, 246, 0.1);
+    --bg: #f6f8fb;
+    --bg-soft: #f9fafb;
+    --card: #fff;
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #e5e7eb;
+    --border-strong: #d1d5db;
+    --shadow: 0 10px 30px rgba(2, 6, 23, 0.06);
+    --radius: 14px;
+    --radius-sm: 10px;
+    --transition: 0.18s cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.55;
+}
+
+.main-content {
+    padding: 24px;
+    margin-left: 280px;
+    min-height: 100vh;
+}
+
+.page-wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Header */
+.availability-header {
+    position: sticky;
+    top: 0;
+    background: linear-gradient(to bottom, var(--bg) 70%, transparent);
+    z-index: 10;
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 16px 0 12px;
+    margin-bottom: 12px;
+}
+
+.availability-header h1 {
+    margin: 0;
+    font-size: 28px;
+    background: linear-gradient(135deg, var(--sitter-primary) 0%, var(--sitter-primary-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.muted {
+    color: var(--muted);
+    margin: 4px 0 0;
+    font-weight: 500;
+    font-size: 15px;
+}
+
+.quick-nav {
+    display: flex;
+    gap: 8px;
+    padding: 6px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    box-shadow: var(--shadow);
+}
+
+.quick-nav a {
+    padding: 8px 16px;
+    border-radius: 999px;
+    text-decoration: none;
+    color: var(--muted);
+    font-weight: 600;
+    transition: var(--transition);
+    font-size: 14px;
+}
+
+.quick-nav a:hover {
+    background: var(--bg-soft);
+    color: var(--text);
+}
+
+.quick-nav a.active {
+    background: var(--sitter-primary);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+}
+
+/* Card */
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 24px;
+    scroll-margin-top: 96px;
+}
+
+.card-head {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, var(--card), var(--bg-soft));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.card-head h2 {
+    margin: 0;
+    font-size: 19px;
+    color: var(--text);
+}
+
+.card-body {
+    padding: 24px;
+}
+
+.section-desc {
+    color: var(--muted);
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+/* Removed calendar styles - keeping only schedule and blocked dates */
+
+/* Schedule Grid */
+.schedule-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.schedule-row {
+    background: var(--bg-soft);
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    transition: var(--transition);
+}
+
+.schedule-row:hover {
+    border-color: var(--sitter-primary);
+    box-shadow: 0 0 0 4px var(--sitter-primary-light);
+}
+
+.day-toggle {
+    min-width: 150px;
+}
+
+.toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.toggle-track {
+    position: relative;
+    width: 50px;
+    height: 28px;
+    background: #e2e8f0;
+    border: 1px solid var(--border-strong);
+    border-radius: 28px;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.toggle-handle {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: var(--transition);
+}
+
+.toggle input:checked + .toggle-track {
+    background: linear-gradient(135deg, var(--sitter-primary), var(--sitter-primary-dark));
+    border-color: var(--sitter-primary);
+}
+
+.toggle input:checked + .toggle-track .toggle-handle {
+    transform: translateX(22px);
+}
+
+.day-name {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.time-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+}
+
+.time-controls.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.time-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.time-input-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.time-input {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    transition: var(--transition);
+    width: 120px;
+}
+
+.time-input:focus {
+    outline: none;
+    border-color: var(--sitter-primary);
+    box-shadow: 0 0 0 4px var(--sitter-primary-light);
+}
+
+.time-separator {
+    color: var(--muted);
+    font-weight: 600;
+    margin-top: 20px;
+}
+
+/* Blocked Dates */
+.blocked-dates-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.add-blocked-date {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: var(--bg-soft);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.add-blocked-date .input-group {
+    width: 100%;
+}
+
+.add-blocked-date .btn {
+    align-self: flex-start;
+    margin-top: 8px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-group.full {
+    grid-column: 1 / -1;
+}
+
+.input-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.input-group input[type="date"],
+.input-group input[type="text"],
+.input-group input[type="number"],
+.input-group input[type="time"],
+.input-group select {
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--text);
+    font-size: 14px;
+    transition: var(--transition);
+    width: 100%;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+    outline: none;
+    border-color: var(--sitter-primary);
+    box-shadow: 0 0 0 4px var(--sitter-primary-light);
+}
+
+/* Time input group styling */
+#timeInputGroup {
+    background: var(--sitter-primary-light);
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 4px solid var(--sitter-primary);
+}
+
+#timeInputGroup label {
+    color: var(--sitter-primary-dark);
+    font-weight: 700;
+}
+
+.blocked-dates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.blocked-dates-list h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+
+.blocked-date-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 16px 18px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: var(--transition);
+    gap: 12px;
+}
+
+.blocked-date-item:hover {
+    border-color: var(--sitter-primary);
+    box-shadow: 0 0 0 4px var(--sitter-primary-light);
+    transform: translateY(-2px);
+}
+
+.blocked-date-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.blocked-date-value {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text);
+}
+
+.blocked-date-type {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--sitter-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--sitter-primary-light);
+    padding: 6px 12px;
+    border-radius: 8px;
+    width: fit-content;
+    line-height: 1.4;
+}
+
+/* Color variants for different block types */
+.blocked-date-item[data-type="full-day"] .blocked-date-type {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.blocked-date-item[data-type="before"] .blocked-date-type,
+.blocked-date-item[data-type="after"] .blocked-date-type {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.blocked-date-reason {
+    font-size: 13px;
+    color: var(--muted);
+    font-style: italic;
+}
+
+.btn-remove {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #fecaca;
+    background: #fee2e2;
+    color: #dc2626;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-remove:hover {
+    background: #dc2626;
+    color: white;
+    border-color: #dc2626;
+    transform: scale(1.1);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 15px;
+}
+
+/* Removed settings grid styles */
+
+/* Buttons */
+.btn {
+    padding: 11px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    border: none;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn.primary {
+    background: linear-gradient(135deg, var(--sitter-primary), var(--sitter-primary-dark));
+    color: white;
+    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
+}
+
+.btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}
+
+.btn.outline {
+    background: white;
+    color: var(--sitter-primary);
+    border: 1px solid var(--sitter-primary);
+}
+
+.btn.outline:hover {
+    background: var(--sitter-primary-light);
+}
+
+.btn.small {
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+.actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #0f172a;
+    color: white;
+    padding: 14px 20px;
+    border-radius: 12px;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: var(--transition);
+    z-index: 10000;
+    font-size: 14px;
+    font-weight: 600;
+    max-width: 400px;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast.success {
+    background: #10b981;
+}
+
+.toast.error {
+    background: #ef4444;
+}
+
+/* Mobile Responsive */
+@media (max-width: 900px) {
+    .main-content {
+        margin-left: 0;
+        padding: 12px;
+        padding-top: 75px;
+    }
+
+    .availability-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 8px 0;
+        margin-bottom: 8px;
+    }
+
+    .availability-header h1 {
+        font-size: 20px;
+    }
+
+    .muted {
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .quick-nav {
+        width: 100%;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding: 4px;
+        gap: 6px;
+    }
+
+    .quick-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .quick-nav a {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .card-head {
+        padding: 10px 12px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .card-head h2 {
+        font-size: 15px;
+    }
+
+    .card-body {
+        padding: 12px;
+    }
+
+    .schedule-container {
+        gap: 10px;
+    }
+
+    .schedule-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding: 10px;
+        border-radius: 8px;
+    }
+
+    .day-toggle {
+        min-width: auto;
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .day-name {
+        font-size: 14px;
+    }
+
+    .toggle-track {
+        width: 40px;
+        height: 22px;
+    }
+
+    .toggle-handle {
+        width: 18px;
+        height: 18px;
+        top: 2px;
+        left: 2px;
+    }
+
+    .toggle input:checked + .toggle-track .toggle-handle {
+        transform: translateX(18px);
+    }
+
+    .time-controls {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        padding-left: 0;
+    }
+
+    .time-input-group {
+        flex: 1;
+    }
+
+    .time-input-group label {
+        font-size: 11px;
+        margin-bottom: 2px;
+    }
+
+    .time-input {
+        width: 100%;
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+
+    .time-separator {
+        margin-top: 14px;
+        font-size: 13px;
+    }
+
+    .add-blocked-date {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .input-group label {
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+
+    .input-group input,
+    .input-group select {
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+
+    .blocked-date-item {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .blocked-date-info {
+        flex: 1;
+    }
+
+    .blocked-date-date {
+        font-size: 13px;
+        margin-bottom: 2px;
+    }
+
+    .blocked-date-type {
+        font-size: 11px;
+        padding: 2px 8px;
+    }
+
+    .blocked-date-reason {
+        font-size: 12px;
+        margin-top: 2px;
+    }
+
+    .btn-remove {
+        padding: 6px;
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+    }
+
+    .actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+
+    .toast {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 600px) {
+    .main-content {
+        padding: 10px;
+        padding-top: 70px;
+    }
+
+    .availability-header {
+        padding: 6px 0;
+        margin-bottom: 6px;
+    }
+
+    .availability-header h1 {
+        font-size: 18px;
+    }
+
+    .muted {
+        font-size: 12px;
+    }
+
+    .quick-nav a {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+
+    .card-head {
+        padding: 8px 10px;
+    }
+
+    .card-head h2 {
+        font-size: 14px;
+    }
+
+    .card-body {
+        padding: 10px;
+    }
+
+    .schedule-row {
+        padding: 8px;
+        gap: 6px;
+    }
+
+    .day-name {
+        font-size: 13px;
+    }
+
+    .time-input {
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+
+    .time-input-group label {
+        font-size: 10px;
+    }
+
+    .time-separator {
+        margin-top: 12px;
+        font-size: 12px;
+    }
+
+    .add-blocked-date {
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .blocked-date-item {
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+}
