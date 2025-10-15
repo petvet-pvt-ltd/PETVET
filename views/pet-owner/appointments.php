@@ -91,8 +91,8 @@ function fmt12($hhmm){
     <h3 id="cancelTitle">Cancel Appointment?</h3>
     <p class="modal-text">This action cannot be undone. Do you want to cancel this appointment?</p>
     <div class="modal-actions">
-      <button type="button" class="btn outline" id="backCancel">Keep Appointment</button>
-      <button type="button" class="btn danger" id="confirmCancel">Confirm Cancel</button>
+      <button type="button" class="btn outline" id="backCancel">Keep</button>
+      <button type="button" class="btn danger" id="confirmCancel">Confirm</button>
     </div>
   </div>
 </div>
