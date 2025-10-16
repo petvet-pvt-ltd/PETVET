@@ -57,6 +57,12 @@ body.modal-open {
     color: white;
 }
 
+.bookings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
 .bookings-grid {
     display: grid;
     gap: 20px;
@@ -244,6 +250,79 @@ body.modal-open {
 
 .modal-close:hover {
     color: #333;
+}
+
+.modal-body {
+    margin-bottom: 20px;
+}
+
+.modal-message {
+    color: #666;
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.modal-footer .btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    min-width: 100px;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+}
+
+select.form-control {
+    cursor: pointer;
+    background-color: white;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
 }
 
 .owner-name {

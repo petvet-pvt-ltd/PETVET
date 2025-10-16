@@ -153,7 +153,6 @@ function generateInvoiceHTML(data) {
         <h2>INVOICE</h2>
         <p><strong>Invoice #:</strong> ${data.invoiceNumber}</p>
         <p><strong>Date:</strong> ${data.date}</p>
-        <p><strong>Status:</strong> <span style="color: #f59e0b;">Pending Payment</span></p>
       </div>
     </div>
     

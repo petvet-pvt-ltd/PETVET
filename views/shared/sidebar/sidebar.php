@@ -127,10 +127,10 @@ echo "<!-- activeModule: $activeModule -->";
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Appointments</li>
       </a>
       <a href="/PETVET/index.php?module=receptionist&page=payments" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'payments.php') ? 'active' : '' ?>">
-        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/package-box.png" class="icon"> Payments</li>
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/coin.png" class="icon"> Payments</li>
       </a>
       <a href="/PETVET/index.php?module=receptionist&page=payment-records" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'payment-records.php') ? 'active' : '' ?>">
-        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/folder.png" class="icon"> Payment Records</li>
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/folder.png" class="icon"> Records</li>
       </a>
     </ul>
     <?php
@@ -177,11 +177,14 @@ echo "<!-- activeModule: $activeModule -->";
       <a href="/PETVET/index.php?module=breeder&page=dashboard" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'dashboard.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/meter.png" class="icon"> Dashboard</li>
       </a>
-      <a href="/PETVET/index.php?module=breeder&page=pets" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'pets.php') ? 'active' : '' ?>">
-        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/pets.png" class="icon"> My Pets</li>
+      <a href="/PETVET/index.php?module=breeder&page=requests" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'requests.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/todo.png" class="icon"> Requests</li>
       </a>
-      <a href="/PETVET/index.php?module=breeder&page=sales" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'sales.php') ? 'active' : '' ?>">
-        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/package-box.png" class="icon"> Sales</li>
+      <a href="/PETVET/index.php?module=breeder&page=breeding-pets" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'breeding-pets.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/pets.png" class="icon"> Breeding Pets</li>
+      </a>
+      <a href="/PETVET/index.php?module=breeder&page=availability" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'availability.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Availability</li>
       </a>
     </ul>
     <?php

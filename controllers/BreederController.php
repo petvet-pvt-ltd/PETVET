@@ -2,7 +2,6 @@
 require_once __DIR__ . '/BaseController.php';
 require_once __DIR__ . '/../models/Breeder/DashboardModel.php';
 require_once __DIR__ . '/../models/Breeder/PetsModel.php';
-require_once __DIR__ . '/../models/Breeder/SalesModel.php';
 require_once __DIR__ . '/../models/Breeder/SettingsModel.php';
 
 class BreederController extends BaseController {
@@ -13,11 +12,38 @@ class BreederController extends BaseController {
         
         $data = [
             'stats' => $model->getStats($breederId),
-            'activePets' => $model->getActivePets($breederId),
-            'recentSales' => $model->getRecentSales($breederId)
+            'upcomingBreedingDates' => $model->getUpcomingBreedingDates($breederId, 5)
         ];
         
         $this->view('breeder', 'dashboard', $data);
+    }
+
+    public function requests() {
+        $model = new BreederDashboardModel();
+        $breederId = 1; // Mock breeder ID
+        
+        $data = [
+            'pendingRequests' => $model->getPendingRequests($breederId),
+            'approvedRequests' => $model->getApprovedRequests($breederId),
+            'completedRequests' => $model->getCompletedRequests($breederId)
+        ];
+        
+        $this->view('breeder', 'requests', $data);
+    }
+
+    public function breedingPets() {
+        $model = new BreederPetsModel();
+        $breederId = 1; // Mock breeder ID
+        
+        $data = [
+            'breedingPets' => $model->getBreedingPets($breederId)
+        ];
+        
+        $this->view('breeder', 'breeding-pets', $data);
+    }
+
+    public function availability() {
+        $this->view('breeder', 'availability', []);
     }
 
     public function pets() {
@@ -32,20 +58,6 @@ class BreederController extends BaseController {
         ];
         
         $this->view('breeder', 'pets', $data);
-    }
-
-    public function sales() {
-        $model = new BreederSalesModel();
-        $breederId = 1; // Mock breeder ID
-        
-        $data = [
-            'sales' => $model->getAllSales($breederId),
-            'pendingSales' => $model->getPendingSales($breederId),
-            'completedSales' => $model->getCompletedSales($breederId),
-            'revenue' => $model->getRevenueStats($breederId)
-        ];
-        
-        $this->view('breeder', 'sales', $data);
     }
 
     public function settings() {

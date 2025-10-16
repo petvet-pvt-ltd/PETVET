@@ -253,7 +253,7 @@ $pageTitle = "Training Appointments";
                 <?php endif; ?>
                 <div class="booking-actions">
                     <button class="btn btn-outline" onclick="showSessionHistoryModal(<?php echo $session['session_id']; ?>, '<?php echo htmlspecialchars($session['pet_name'], ENT_QUOTES); ?>')">View Session History</button>
-                    <button class="btn btn-outline" onclick="showContactModal('<?php echo htmlspecialchars($session['pet_owner_name']); ?>', '<?php echo htmlspecialchars($session['pet_owner_phone']); ?>', '<?php echo isset($session['pet_owner_email']) ? htmlspecialchars($session['pet_owner_email']) : ''; ?>')">Contact Owner</button>
+                    <button class="btn btn-outline" onclick="showContactModal('<?php echo htmlspecialchars($session['pet_owner_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($session['pet_owner_phone'], ENT_QUOTES); ?>', '<?php echo isset($session['pet_owner_email']) ? htmlspecialchars($session['pet_owner_email'], ENT_QUOTES) : ''; ?>')">Contact Owner</button>
                 </div>
             </div>
             <?php endforeach; ?>

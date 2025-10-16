@@ -10,7 +10,7 @@ function show404($message = null) {
 }
 
 /************************************************************/
-$module = $_GET['module'] ?? 'guest'; // default module
+$module = $_GET['module'] ?? 'receptionist'; // default module
 /************************************************************/
 
 // Landing pages of each user-role
@@ -158,8 +158,10 @@ switch ($module) {
     $c = new BreederController();
     switch ($page) {
       case 'dashboard': $c->dashboard(); break;
+      case 'requests': $c->requests(); break;
+      case 'breeding-pets': $c->breedingPets(); break;
+      case 'availability': $c->availability(); break;
       case 'pets': $c->pets(); break;
-      case 'sales': $c->sales(); break;
       case 'settings': $c->settings(); break;
       default: show404("This breeder page doesn't exist."); break;
     }
