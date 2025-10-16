@@ -126,6 +126,12 @@ echo "<!-- activeModule: $activeModule -->";
       <a href="/PETVET/index.php?module=receptionist&page=appointments" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'appointments.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Appointments</li>
       </a>
+      <a href="/PETVET/index.php?module=receptionist&page=payments" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'payments.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/package-box.png" class="icon"> Payments</li>
+      </a>
+      <a href="/PETVET/index.php?module=receptionist&page=payment-records" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'payment-records.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/folder.png" class="icon"> Payment Records</li>
+      </a>
     </ul>
     <?php
   } elseif ($activeModule == 'trainer') {

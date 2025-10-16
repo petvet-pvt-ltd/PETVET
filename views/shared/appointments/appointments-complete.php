@@ -57,6 +57,7 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
                      data-time="<?= $appt['time'] ?>"
                      onclick="openDetailsFromEl(this)">
                     <span class="evt-time"><?= date('g:i A', strtotime($appt['time'])) ?></span>
+                    <span class="evt-client"><?= htmlspecialchars($appt['client']) ?></span>
                     <span class="evt-vet"><?= htmlspecialchars($appt['vet']) ?></span>
                 </div>
             <?php
@@ -91,6 +92,7 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
                          data-time="<?= $appt['time'] ?>"
                          onclick="openDetailsFromEl(this)">
                         <span class="evt-time"><?= date('g:i A', strtotime($appt['time'])) ?></span>
+                        <span class="evt-client"><?= htmlspecialchars($appt['client']) ?></span>
                         <span class="evt-vet"><?= htmlspecialchars($appt['vet']) ?></span>
                     </div>
                 <?php endforeach; ?>
@@ -184,7 +186,13 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
         </div>
         <div class="form-group">
             <label>Veterinarian</label>
-            <input type="text" id="newVetName" placeholder="Enter vet name" required>
+            <select id="newVetName" class="select" required>
+                <option value="">Select a veterinarian</option>
+                <option value="Any Available Vet">Any Available Vet</option>
+                <?php foreach($vetNames as $vn): ?>
+                    <option value="<?= htmlspecialchars($vn); ?>"><?= htmlspecialchars($vn); ?></option>
+                <?php endforeach; ?>
+            </select>
         </div>
         <div class="input-row">
             <div>

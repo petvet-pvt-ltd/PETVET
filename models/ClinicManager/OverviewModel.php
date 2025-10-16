@@ -70,17 +70,37 @@ class OverviewModel extends BaseModel {
                 'name'=>$v['name'],
                 'time'=>'09:00 – 17:00',
                 'status'=>'online'
-            ], $dutyVets),
-            'Veterinary Assistants' => [
-                ['name'=>'Lisa','time'=>'08:00 – 16:00','status'=>'online']
-            ],
-            'Front Desk' => [
-                ['name'=>'Sarah','time'=>'08:00 – 14:00','status'=>'online']
-            ],
-            'Support Staff' => [
-                ['name'=>'John','time'=>'11:00 – 19:00','status'=>'online']
-            ],
+            ], $dutyVets)
         ];
+        
+        // Get actual staff from StaffModel
+        require_once __DIR__ . '/StaffModel.php';
+        $staffModel = new StaffModel();
+        $allStaff = $staffModel->all();
+        
+        // TODO: Replace with actual duty schedule from database
+        // For now, manually set which staff are on duty today (for demo purposes)
+        // In production, this would come from a staff_duty_schedule table
+        $todayDutyStaffIds = [1, 3, 5, 7, 8]; // Anushka, Kavinda, Malini, Ruwan, Dilani are on duty today
+        // Not on duty: Nimasha (2), Sachini (4), Tharindu (6), Kasun (9), Chamika (10)
+        
+        // Group only the staff who are scheduled for duty today
+        foreach ($allStaff as $member) {
+            if ($member['status'] === 'Active' && in_array($member['id'], $todayDutyStaffIds)) {
+                $roleKey = $member['role'];
+                if ($roleKey === 'Veterinary Assistant') {
+                    $roleKey = 'Veterinary Assistants'; // Pluralize for consistency
+                }
+                if (!isset($staff[$roleKey])) {
+                    $staff[$roleKey] = [];
+                }
+                $staff[$roleKey][] = [
+                    'name' => $member['name'],
+                    'time' => '08:00 – 16:00', // Default time (later from duty schedule)
+                    'status' => 'online'
+                ];
+            }
+        }
         $staffCount = 0; foreach($staff as $group){ $staffCount += count($group); }
         $kpis = [
             ['label'=>'Appointments Today','value'=>count($appointments)],

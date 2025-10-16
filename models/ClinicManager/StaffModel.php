@@ -29,6 +29,7 @@ class StaffModel extends BaseModel {
 
     private function seed(): array {
         return [
+            // Veterinary Assistants
             [
                 'id'=>1,
                 'name'=>'Anushka Perera',
@@ -41,6 +42,38 @@ class StaffModel extends BaseModel {
             ],
             [
                 'id'=>2,
+                'name'=>'Nimasha De Silva',
+                'role'=>'Veterinary Assistant',
+                'email'=>'nimasha.assist@petvet.lk',
+                'phone'=>'+94 71 444 8899',
+                'photo'=>'https://i.pravatar.cc/64?img=47',
+                'status'=>'Active',
+                'next_shift'=> null,
+            ],
+            [
+                'id'=>3,
+                'name'=>'Kavinda Fernando',
+                'role'=>'Veterinary Assistant',
+                'email'=>'kavinda.assist@petvet.lk',
+                'phone'=>'+94 77 555 1234',
+                'photo'=>'https://i.pravatar.cc/64?img=12',
+                'status'=>'Active',
+                'next_shift'=> null,
+            ],
+            [
+                'id'=>4,
+                'name'=>'Sachini Wijesinghe',
+                'role'=>'Veterinary Assistant',
+                'email'=>'sachini.assist@petvet.lk',
+                'phone'=>'+94 76 888 9999',
+                'photo'=>'https://i.pravatar.cc/64?img=45',
+                'status'=>'Active',
+                'next_shift'=> null,
+            ],
+            
+            // Front Desk Staff
+            [
+                'id'=>5,
                 'name'=>'Malini Silva',
                 'role'=>'Front Desk',
                 'email'=>'malini.front@petvet.lk',
@@ -50,7 +83,19 @@ class StaffModel extends BaseModel {
                 'next_shift'=> null,
             ],
             [
-                'id'=>3,
+                'id'=>6,
+                'name'=>'Tharindu Gamage',
+                'role'=>'Front Desk',
+                'email'=>'tharindu.front@petvet.lk',
+                'phone'=>'+94 71 222 3333',
+                'photo'=>'https://i.pravatar.cc/64?img=13',
+                'status'=>'Active',
+                'next_shift'=> null,
+            ],
+            
+            // Support Staff
+            [
+                'id'=>7,
                 'name'=>'Ruwan Jayasuriya',
                 'role'=>'Support Staff',
                 'email'=>'ruwan.support@petvet.lk',
@@ -60,12 +105,32 @@ class StaffModel extends BaseModel {
                 'next_shift'=> null,
             ],
             [
-                'id'=>4,
-                'name'=>'Nimasha De Silva',
-                'role'=>'Veterinary Assistant',
-                'email'=>'nimasha.assist@petvet.lk',
-                'phone'=>'+94 71 444 8899',
-                'photo'=>'https://i.pravatar.cc/64?img=47',
+                'id'=>8,
+                'name'=>'Dilani Rathnayake',
+                'role'=>'Support Staff',
+                'email'=>'dilani.support@petvet.lk',
+                'phone'=>'+94 77 444 5555',
+                'photo'=>'https://i.pravatar.cc/64?img=38',
+                'status'=>'Active',
+                'next_shift'=> null,
+            ],
+            [
+                'id'=>9,
+                'name'=>'Kasun Bandara',
+                'role'=>'Support Staff',
+                'email'=>'kasun.support@petvet.lk',
+                'phone'=>'+94 71 666 7777',
+                'photo'=>'https://i.pravatar.cc/64?img=33',
+                'status'=>'Active',
+                'next_shift'=> null,
+            ],
+            [
+                'id'=>10,
+                'name'=>'Chamika Herath',
+                'role'=>'Support Staff',
+                'email'=>'chamika.support@petvet.lk',
+                'phone'=>'+94 76 999 1111',
+                'photo'=>'https://i.pravatar.cc/64?img=52',
                 'status'=>'Active',
                 'next_shift'=> null,
             ],
