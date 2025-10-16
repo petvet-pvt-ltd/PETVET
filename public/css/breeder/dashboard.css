@@ -1,40 +1,461 @@
-/* Breeder Dashboard Styles */
+/* Breeder Dashboard Styles *//* Breeder Dashboard Styles *//* Breeder Dashboard Styles */
+
 *{margin:0; padding:0; box-sizing:border-box}
-body{font-family:system-ui, -apple-system, sans-serif; background:#f8f9fa}
+
+body{font-family:system-ui, -apple-system, sans-serif; background:#f8f9fa}*{margin:0; padding:0; box-sizing:border-box}* {
+
 .main-content{margin-left:280px; padding:30px; min-height:100vh}
 
-.dashboard-header{background:linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%); color:white; padding:30px; border-radius:15px; margin-bottom:30px; box-shadow:0 4px 15px rgba(111, 66, 193, 0.3)}
-.dashboard-title{font-size:28px; font-weight:700; margin-bottom:8px}
-.dashboard-subtitle{font-size:16px; opacity:0.9}
+body{font-family:system-ui, -apple-system, sans-serif; background:#f8f9fa}    margin: 0;
 
-.stats-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px; margin-bottom:30px}
-.stat-card{background:white; padding:25px; border-radius:12px; box-shadow:0 2px 10px rgba(0, 0, 0, 0.1); border-left:4px solid #6f42c1; transition:transform 0.2s ease}
+.dashboard-header{background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color:white; padding:30px; border-radius:15px; margin-bottom:30px; box-shadow:0 4px 15px rgba(245, 158, 11, 0.3)}
+
+.dashboard-header h1{font-size:28px; font-weight:700; margin-bottom:8px}.main-content{margin-left:280px; padding:30px; min-height:100vh}    padding: 0;
+
+.dashboard-header p{font-size:16px; opacity:0.9}
+
+    box-sizing: border-box;
+
+.stats-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:20px; margin-bottom:30px}
+
+.stat-card{background:white; padding:25px; border-radius:12px; box-shadow:0 2px 10px rgba(0, 0, 0, 0.1); border-left:4px solid #f59e0b; transition:transform 0.2s ease}.dashboard-header{background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color:white; padding:30px; border-radius:15px; margin-bottom:30px; box-shadow:0 4px 15px rgba(245, 158, 11, 0.3)}}
+
 .stat-card:hover{transform:translateY(-2px); box-shadow:0 4px 20px rgba(0, 0, 0, 0.15)}
-.stat-icon{font-size:32px; margin-bottom:15px}
-.stat-number{font-size:32px; font-weight:700; color:#6f42c1; margin-bottom:5px}
+
+.stat-number{font-size:32px; font-weight:700; color:#f59e0b; margin-bottom:5px}.dashboard-header h1{font-size:28px; font-weight:700; margin-bottom:8px}
+
 .stat-label{color:#6c757d; font-size:14px; font-weight:600}
 
-.dashboard-content{display:grid; grid-template-columns:2fr 1fr; gap:30px}
-.content-section{background:white; border-radius:12px; padding:25px; box-shadow:0 2px 10px rgba(0, 0, 0, 0.1)}
-.section-title{font-size:20px; font-weight:700; color:#212529; margin-bottom:20px}
+.dashboard-header p{font-size:16px; opacity:0.9}body {
 
-.pet-card{background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:12px; border-left:4px solid #6f42c1; display:flex; justify-content:space-between; align-items:center}
-.pet-info .pet-name{font-weight:700; color:#6f42c1; font-size:16px; margin-bottom:4px}
-.pet-info .pet-breed{font-weight:600; color:#212529; margin:4px 0}
-.pet-info .pet-details{font-size:12px; color:#6c757d}
-.pet-price{font-size:20px; font-weight:700; color:#28a745}
+.upcoming-section{background:white; border-radius:12px; padding:25px; box-shadow:0 2px 10px rgba(0, 0, 0, 0.1)}
 
-.sale-item{padding:15px 0; border-bottom:1px solid #e9ecef}
-.sale-item:last-child{border-bottom:none}
-.sale-pet{font-weight:600; color:#212529; margin-bottom:4px}
-.sale-buyer{font-size:14px; color:#6c757d; margin-bottom:4px}
-.sale-amount{font-size:14px; font-weight:700; color:#28a745}
+.upcoming-section .section-title{font-size:20px; font-weight:700; color:#212529; margin-bottom:20px}    font-family: system-ui, -apple-system, sans-serif;
 
-@media (max-width:1200px){.dashboard-content{grid-template-columns:1fr}}
+.bookings-list{display:flex; flex-direction:column; gap:12px}
+
+.booking-item{display:flex; align-items:center; gap:15px; padding:12px 15px; background:#f8f9fa; border-radius:8px; border-left:4px solid #f59e0b; transition:background 0.2s}.stats-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:20px; margin-bottom:30px}    background: #f8f9fa;
+
+.booking-item:hover{background:#fef3c7}
+
+.booking-time{font-size:14px; font-weight:700; color:#f59e0b; min-width:80px; flex-shrink:0}.stat-card{background:white; padding:25px; border-radius:12px; box-shadow:0 2px 10px rgba(0, 0, 0, 0.1); border-left:4px solid #f59e0b; transition:transform 0.2s ease}}
+
+.booking-details{flex:1; display:flex; flex-direction:column; gap:2px}
+
+.booking-customer{font-size:14px; font-weight:600; color:#212529}.stat-card:hover{transform:translateY(-2px); box-shadow:0 4px 20px rgba(0, 0, 0, 0.15)}
+
+.booking-category{font-size:12px; color:#6c757d}
+
+.no-bookings{color:#6c757d; text-align:center; padding:20px; font-size:14px}.stat-number{font-size:32px; font-weight:700; color:#f59e0b; margin-bottom:5px}.main-content {
+
+
+
+@media (max-width:1200px){.stat-label{color:#6c757d; font-size:14px; font-weight:600}    margin-left: 280px;
+
+  .stats-grid{grid-template-columns:repeat(2, 1fr); gap:15px}
+
+}    padding: 30px;
+
 @media (max-width:768px){
-  .main-content{margin-left:0; padding:20px; padding-top:80px}
-  .stats-grid{grid-template-columns:1fr}
-  .dashboard-header{padding:20px}
-  .dashboard-title{font-size:24px}
-  .pet-card{flex-direction:column; align-items:flex-start; gap:10px}
+
+  .main-content{margin-left:0; padding:12px; padding-top:75px}.upcoming-section{background:white; border-radius:12px; padding:25px; box-shadow:0 2px 10px rgba(0, 0, 0, 0.1)}    min-height: 100vh;
+
+  .stats-grid{grid-template-columns:repeat(2, 1fr); gap:10px}
+
+  .stat-card{padding:15px; border-radius:10px}.upcoming-section .section-title{font-size:20px; font-weight:700; color:#212529; margin-bottom:20px}}
+
+  .stat-number{font-size:24px; margin-bottom:3px}
+
+  .stat-label{font-size:12px}.bookings-list{display:flex; flex-direction:column; gap:12px}
+
+  .dashboard-header{padding:20px; margin-bottom:20px}
+
+  .dashboard-header h1{font-size:22px}.booking-item{display:flex; align-items:center; gap:15px; padding:12px 15px; background:#f8f9fa; border-radius:8px; border-left:4px solid #f59e0b; transition:background 0.2s}/* Dashboard Header */
+
+  .dashboard-header p{font-size:14px}
+
+  .upcoming-section{padding:15px; margin-top:20px}.booking-item:hover{background:#fef3c7}.dashboard-header {
+
+  .upcoming-section .section-title{font-size:18px; margin-bottom:15px}
+
+  .booking-item{flex-direction:column; align-items:flex-start; gap:6px; padding:10px 12px}.booking-time{font-size:14px; font-weight:700; color:#f59e0b; min-width:100px; flex-shrink:0}    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+
+  .booking-time{min-width:auto; font-size:13px}
+
+  .booking-customer{font-size:13px}.booking-details{flex:1; display:flex; flex-direction:column; gap:2px}    color: white;
+
+  .booking-category{font-size:11px}
+
+}.booking-customer{font-size:14px; font-weight:600; color:#212529}    padding: 30px;
+
+
+.booking-category{font-size:12px; color:#6c757d}    border-radius:15px;
+
+.no-bookings{color:#6c757d; text-align:center; padding:20px; font-size:14px}    margin-bottom: 30px;
+
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+
+@media (max-width:1200px){}
+
+  .stats-grid{grid-template-columns:repeat(2, 1fr); gap:15px}
+
+}.dashboard-header h1 {
+
+@media (max-width:768px){    font-size: 28px;
+
+  .main-content{margin-left:0; padding:12px; padding-top:75px}    font-weight: 700;
+
+  .stats-grid{grid-template-columns:repeat(2, 1fr); gap:10px}    margin-bottom: 8px;
+
+  .stat-card{padding:15px; border-radius:10px}}
+
+  .stat-number{font-size:24px; margin-bottom:3px}
+
+  .stat-label{font-size:12px}.dashboard-header p {
+
+  .dashboard-header{padding:20px; margin-bottom:20px}    font-size: 16px;
+
+  .dashboard-header h1{font-size:22px}    opacity: 0.9;
+
+  .dashboard-header p{font-size:14px}}
+
+  .upcoming-section{padding:15px; margin-top:20px}
+
+  .upcoming-section .section-title{font-size:18px; margin-bottom:15px}/* Stats Grid */
+
+  .booking-item{flex-direction:column; align-items:flex-start; gap:6px; padding:10px 12px}.stats-grid {
+
+  .booking-time{min-width:auto; font-size:13px}    display: grid;
+
+  .booking-customer{font-size:13px}    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+
+  .booking-category{font-size:11px}    gap: 20px;
+
+}    margin-bottom: 30px;
+
+}
+
+.stat-card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #f59e0b;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+    font-size: 40px;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: #f59e0b;
+    margin-bottom: 5px;
+    line-height: 1;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Requests Row */
+.requests-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.requests-section {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f8f9fa;
+}
+
+.section-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #212529;
+}
+
+.count-badge {
+    background: #f59e0b;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 200px;
+}
+
+.request-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 3px solid #f59e0b;
+    transition: all 0.2s ease;
+}
+
+.request-item:hover {
+    background: #fff8e1;
+    transform: translateX(2px);
+}
+
+.request-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.request-details {
+    flex: 1;
+}
+
+.request-pet-name {
+    font-weight: 700;
+    color: #212529;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.request-owner {
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 2px;
+}
+
+.request-date {
+    font-size: 12px;
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+.quick-action-btn {
+    padding: 6px 16px;
+    background: white;
+    color: #f59e0b;
+    border: 2px solid #f59e0b;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.quick-action-btn:hover {
+    background: #f59e0b;
+    color: white;
+}
+
+.quick-action-btn.approved {
+    border-color: #10b981;
+    color: #10b981;
+}
+
+.quick-action-btn.approved:hover {
+    background: #10b981;
+    color: white;
+}
+
+.no-data {
+    text-align: center;
+    color: #6c757d;
+    font-size: 14px;
+    padding: 40px 20px;
+}
+
+.section-footer {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e9ecef;
+    text-align: center;
+}
+
+.view-all-link {
+    color: #f59e0b;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.view-all-link:hover {
+    color: #d97706;
+}
+
+/* Upcoming Breeding Dates */
+.upcoming-section {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.upcoming-section .section-header {
+    display: block;
+    margin-bottom: 20px;
+}
+
+.upcoming-section .section-header h2 {
+    font-size: 20px;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 400;
+}
+
+.breeding-dates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.breeding-date-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 18px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #f59e0b;
+    transition: all 0.2s ease;
+}
+
+.breeding-date-item:hover {
+    background: #fff8e1;
+    transform: translateX(3px);
+}
+
+.breeding-date-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+}
+
+.breeding-date-info {
+    flex: 1;
+}
+
+.breeding-pets {
+    font-size: 16px;
+    color: #212529;
+    margin-bottom: 6px;
+}
+
+.breeding-separator {
+    color: #f59e0b;
+    font-weight: 700;
+    margin: 0 8px;
+}
+
+.breeding-details {
+    font-size: 13px;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.breeding-breed {
+    font-weight: 600;
+}
+
+.breeding-dot {
+    color: #d1d5db;
+}
+
+.breeding-date-time {
+    text-align: center;
+    padding: 10px 15px;
+    background: white;
+    border-radius: 8px;
+    border: 2px solid #f59e0b;
+    min-width: 80px;
+}
+
+.date-display {
+    font-size: 16px;
+    font-weight: 700;
+    color: #f59e0b;
+    line-height: 1.2;
+}
+
+.year-display {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .requests-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        padding: 20px;
+        padding-top: 80px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-header {
+        padding: 20px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 24px;
+    }
+
+    .breeding-date-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .breeding-date-time {
+        align-self: flex-start;
+    }
 }

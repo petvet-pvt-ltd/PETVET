@@ -206,8 +206,7 @@ $pageTitle = "Bookings";
                     <?php echo htmlspecialchars($booking['special_notes']); ?>
                 </div>
                 <div class="booking-actions">
-                    <button class="btn btn-outline">View Details</button>
-                    <button class="btn btn-outline">Contact Owner</button>
+                    <button class="btn btn-outline" onclick="showContactModal('<?php echo htmlspecialchars($booking['owner_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($booking['owner_phone'], ENT_QUOTES); ?>', '<?php echo isset($booking['owner_phone_2']) ? htmlspecialchars($booking['owner_phone_2'], ENT_QUOTES) : ''; ?>')">Contact Owner</button>
                 </div>
             </div>
             <?php endforeach; ?>
