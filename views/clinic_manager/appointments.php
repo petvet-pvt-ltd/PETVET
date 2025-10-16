@@ -39,10 +39,7 @@ $moduleName = $appointmentsModel->getModuleName($userRole);
       <h1 class="page-title">Appointments</h1>
       <p class="page-subtitle">Manage and schedule patient appointments</p>
     </div>
-    <div style="display: flex; gap: 12px;">
-      <button class="btn btn-secondary" onclick="exportAppointments()">
-        📊 Export
-      </button>
+    <div>
       <button class="btn btn-primary" onclick="openAddModal()">
         ➕ New Appointment
       </button>

@@ -14,11 +14,17 @@ class ClinicManagerController extends BaseController {
     public function overview() {
         $model = new OverviewModel();
         $overviewData = $model->fetchOverviewData();
+        
+        // Get all staff members for the edit modal
+        $staffModel = new StaffModel();
+        $allStaff = $staffModel->all();
+        
         $data = [
             'kpis' => $overviewData['kpis'],
             'appointments' => $overviewData['appointments'],
             'ongoingAppointments' => $overviewData['ongoingAppointments'] ?? [],
             'staff' => $overviewData['staff'],
+            'allStaff' => $allStaff, // All staff for the edit modal
             'badgeClasses' => $overviewData['badgeClasses']
         ];
         $this->view('clinic_manager', 'overview', $data);

@@ -11,6 +11,89 @@ class ReceptionistController extends BaseController {
         $this->appointmentsModel = new AppointmentsModel();
     }
     
+    public function payments() {
+        try {
+            // Get completed appointments pending payment
+            $appointments = $this->appointmentsModel->fetchAppointments();
+            $pendingPayments = [];
+            
+            $vets = [
+                1 => 'Dr. Robert Fox',
+                2 => 'Theresa Webb',
+                3 => 'Marvin McKinney',
+                4 => 'Dr. Kathryn Murphy'
+            ];
+            
+            // Filter completed appointments (mock data - in production filter by payment_status)
+            foreach ($appointments as $date => $dayAppointments) {
+                foreach ($dayAppointments as $appt) {
+                    if (isset($appt['status']) && $appt['status'] === 'Completed') {
+                        $pendingPayments[] = [
+                            'id' => uniqid('appt_'),
+                            'client' => $appt['client'],
+                            'pet' => $appt['pet'],
+                            'animal' => $appt['animal'],
+                            'vet' => $vets[$appt['vet_id']] ?? 'Unknown',
+                            'type' => $appt['type'],
+                            'date' => $date,
+                            'time' => $appt['time'],
+                            'status' => 'Pending Payment'
+                        ];
+                    }
+                }
+            }
+            
+            $this->view('receptionist', 'payments', [
+                'pendingPayments' => $pendingPayments
+            ]);
+            
+        } catch (Exception $e) {
+            echo "Error: " . $e->getMessage();
+        }
+    }
+    
+    public function paymentRecords() {
+        try {
+            // Mock payment records (in production, fetch from database)
+            $paymentRecords = [
+                [
+                    'invoice_number' => 'INV-001234',
+                    'date' => date('Y-m-d', strtotime('-2 days')),
+                    'client' => 'John Silva',
+                    'pet' => 'Max',
+                    'vet' => 'Dr. Robert Fox',
+                    'amount' => 3500.00,
+                    'status' => 'Paid'
+                ],
+                [
+                    'invoice_number' => 'INV-001235',
+                    'date' => date('Y-m-d', strtotime('-1 day')),
+                    'client' => 'Sarah Fernando',
+                    'pet' => 'Bella',
+                    'vet' => 'Marvin McKinney',
+                    'amount' => 5200.00,
+                    'status' => 'Paid'
+                ],
+                [
+                    'invoice_number' => 'INV-001236',
+                    'date' => date('Y-m-d'),
+                    'client' => 'David Perera',
+                    'pet' => 'Rocky',
+                    'vet' => 'Dr. Robert Fox',
+                    'amount' => 2800.00,
+                    'status' => 'Paid'
+                ],
+            ];
+            
+            $this->view('receptionist', 'payment-records', [
+                'paymentRecords' => $paymentRecords
+            ]);
+            
+        } catch (Exception $e) {
+            echo "Error: " . $e->getMessage();
+        }
+    }
+    
     public function appointments() {
         try {
             // Get appointment data (same as clinic manager)
@@ -44,25 +127,124 @@ class ReceptionistController extends BaseController {
     
     public function dashboard() {
         try {
-            // Get today's appointments
+            // Get all appointments
             $appointments = $this->appointmentsModel->fetchAppointments();
             $today = date('Y-m-d');
             $todayAppointments = $appointments[$today] ?? [];
             
-            // Get quick stats
-            $totalToday = count($todayAppointments);
-            $upcomingWeek = 0;
-            
-            // Count upcoming week appointments
-            for ($i = 0; $i < 7; $i++) {
-                $date = date('Y-m-d', strtotime("+$i days"));
-                $upcomingWeek += count($appointments[$date] ?? []);
+            // Count pending appointments (appointments with status != Completed)
+            $pendingCount = 0;
+            foreach ($appointments as $date => $dayAppointments) {
+                foreach ($dayAppointments as $appt) {
+                    if (isset($appt['status']) && $appt['status'] !== 'Completed') {
+                        $pendingCount++;
+                    }
+                }
             }
             
+            // Get ongoing appointments (appointments happening right now)
+            $vets = [
+                1 => 'Dr. Robert Fox',
+                2 => 'Theresa Webb',
+                3 => 'Marvin McKinney',
+                4 => 'Dr. Kathryn Murphy'
+            ];
+            
+            $currentTime = time();
+            $currentHour = (int)date('H', $currentTime);
+            $currentMinute = (int)date('i', $currentTime);
+            
+            $ongoingAppointments = [];
+            
+            // Check each vet for current appointments
+            foreach ($vets as $vetId => $vetName) {
+                $foundAppointment = false;
+                
+                foreach ($todayAppointments as $appt) {
+                    if ($appt['vet_id'] == $vetId && $appt['status'] === 'Confirmed') {
+                        // Parse appointment time
+                        list($apptHour, $apptMinute) = explode(':', $appt['time']);
+                        $apptHour = (int)$apptHour;
+                        $apptMinute = (int)$apptMinute;
+                        
+                        // Calculate if appointment is ongoing (within 20 minutes window)
+                        $apptStart = $apptHour * 60 + $apptMinute;
+                        $apptEnd = $apptStart + 20; // 20 minute slots
+                        $currentTimeMinutes = $currentHour * 60 + $currentMinute;
+                        
+                        if ($currentTimeMinutes >= $apptStart && $currentTimeMinutes <= $apptEnd) {
+                            $endHour = floor($apptEnd / 60);
+                            $endMinute = $apptEnd % 60;
+                            
+                            $ongoingAppointments[] = [
+                                'hasAppointment' => true,
+                                'vet' => $vetName,
+                                'animal' => $appt['animal'],
+                                'client' => $appt['client'],
+                                'type' => $appt['type'],
+                                'time_range' => sprintf('%02d:%02d - %02d:%02d', $apptHour, $apptMinute, $endHour, $endMinute),
+                                'pet' => $appt['pet']
+                            ];
+                            $foundAppointment = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // If no ongoing appointment found, add "No current appointment"
+                if (!$foundAppointment) {
+                    $ongoingAppointments[] = [
+                        'hasAppointment' => false,
+                        'vet' => $vetName,
+                        'animal' => '',
+                        'client' => '',
+                        'type' => '',
+                        'time_range' => '',
+                        'pet' => ''
+                    ];
+                }
+            }
+            
+            // Count ongoing appointments
+            $ongoingCount = 0;
+            foreach ($ongoingAppointments as $appt) {
+                if ($appt['hasAppointment']) {
+                    $ongoingCount++;
+                }
+            }
+            
+            // Get upcoming appointments for TODAY only (after current time)
+            $upcomingAppointments = [];
+            $currentTimeTimestamp = $currentTime;
+            
+            // Only check today's appointments
+            foreach ($todayAppointments as $appt) {
+                $apptDateTime = strtotime($today . ' ' . $appt['time']);
+                
+                // Only include future appointments with Confirmed status
+                if ($apptDateTime > $currentTimeTimestamp && $appt['status'] === 'Confirmed') {
+                    $upcomingAppointments[] = [
+                        'date' => $today,
+                        'time' => $appt['time'],
+                        'pet' => $appt['pet'],
+                        'client' => $appt['client'],
+                        'vet' => $appt['vet'],
+                        'type' => $appt['type'],
+                        'timestamp' => $apptDateTime
+                    ];
+                }
+            }
+            
+            // Sort by timestamp
+            usort($upcomingAppointments, function($a, $b) {
+                return $a['timestamp'] - $b['timestamp'];
+            });
+            
             $this->view('receptionist', 'dashboard', [
-                'todayAppointments' => $todayAppointments,
-                'totalToday' => $totalToday,
-                'upcomingWeek' => $upcomingWeek
+                'pendingCount' => $pendingCount,
+                'ongoingCount' => $ongoingCount,
+                'ongoingAppointments' => $ongoingAppointments,
+                'upcomingAppointments' => $upcomingAppointments
             ]);
             
         } catch (Exception $e) {

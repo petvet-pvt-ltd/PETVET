@@ -181,7 +181,7 @@ $pageTitle = "Training Appointments";
                                 <?php echo htmlspecialchars($session['training_type']); ?>
                             </span>
                         </div>
-                        <div class="booking-date"><?php echo date('M d, Y', strtotime($session['session_date'])); ?></div>
+                        <div class="booking-date"><?php echo date('M d, Y', strtotime($session['next_session_date'])); ?></div>
                     </div>
                     <div class="booking-status status-confirmed">Confirmed</div>
                 </div>
@@ -192,7 +192,7 @@ $pageTitle = "Training Appointments";
                     </div>
                     <div class="detail-item">
                         <span class="detail-icon">⏰</span>
-                        <span><?php echo htmlspecialchars($session['session_time']); ?></span>
+                        <span><?php echo htmlspecialchars($session['next_session_time']); ?></span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-icon">🐕</span>
@@ -204,7 +204,7 @@ $pageTitle = "Training Appointments";
                     </div>
                 </div>
                 <div class="booking-description">
-                    <strong>Sessions Completed:</strong> <?php echo $session['session_count']; ?>
+                    <strong>Sessions Completed:</strong> <?php echo $session['session_number']; ?>
                     <?php if (!empty($session['next_session_goals'])): ?>
                     <br><strong>Today's Goals:</strong> <?php echo htmlspecialchars($session['next_session_goals']); ?>
                     <?php endif; ?>
@@ -239,7 +239,7 @@ $pageTitle = "Training Appointments";
                     </div>
                     <div class="detail-item">
                         <span class="detail-icon">✓</span>
-                        <span>Sessions Completed: <?php echo $session['session_count']; ?></span>
+                        <span>Sessions Completed: <?php echo $session['sessions_completed']; ?></span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-icon">🐕</span>

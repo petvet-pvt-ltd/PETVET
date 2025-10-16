@@ -87,6 +87,8 @@ switch ($module) {
     switch ($page) {
       case 'dashboard': $c->dashboard(); break;
       case 'appointments': $c->appointments(); break;
+      case 'payments': $c->payments(); break;
+      case 'payment-records': $c->paymentRecords(); break;
       case 'settings': $c->settings(); break;
       default: show404("This receptionist page doesn't exist."); break;
     }

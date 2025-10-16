@@ -261,11 +261,20 @@
     font-size: 13px;
 }
 
-.evt-vet {
+.evt-client {
     font-weight: 600;
-    color: #495057;
+    color: #1e293b;
+    font-size: 12px;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.evt-vet {
+    font-weight: 500;
+    color: #64748b;
     font-size: 11px;
     line-height: 1.3;
+    display: block;
 }
 
 /* Button styles */
