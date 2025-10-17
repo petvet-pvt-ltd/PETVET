@@ -163,9 +163,12 @@ $pageTitle = "Training Appointments";
                 </div>
                 <?php endif; ?>
                 <div class="booking-actions">
-                    <button class="btn btn-success" onclick="confirmAction('accept', '<?php echo htmlspecialchars($request['pet_name']); ?>', <?php echo $request['request_id']; ?>)">Accept</button>
-                    <button class="btn btn-outline" onclick="confirmAction('decline', '<?php echo htmlspecialchars($request['pet_name']); ?>', <?php echo $request['request_id']; ?>)">Decline</button>
-                    <button class="btn btn-outline" onclick="showContactModal('<?php echo htmlspecialchars($request['pet_owner_name']); ?>', '<?php echo htmlspecialchars($request['pet_owner_phone']); ?>', '<?php echo isset($request['pet_owner_email']) ? htmlspecialchars($request['pet_owner_email']) : ''; ?>')">Contact Owner</button>
+                    <button class="btn btn-success" onclick="confirmAction('accept', '<?php echo addslashes($request['pet_name']); ?>', <?php echo $request['request_id']; ?>)">Accept</button>
+                    <button class="btn btn-outline" onclick="confirmAction('decline', '<?php echo addslashes($request['pet_name']); ?>', <?php echo $request['request_id']; ?>)">Decline</button>
+                    <button class="btn btn-outline" 
+                        data-owner-name="<?php echo htmlspecialchars($request['pet_owner_name'] ?? ''); ?>" 
+                        data-owner-phone="<?php echo htmlspecialchars($request['pet_owner_phone'] ?? ''); ?>"
+                        onclick="showContactModal(this.dataset.ownerName, this.dataset.ownerPhone, '')">Contact Owner</button>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -210,9 +213,12 @@ $pageTitle = "Training Appointments";
                     <?php endif; ?>
                 </div>
                 <div class="booking-actions">
-                    <button class="btn btn-success" onclick="showCompleteSessionModal(<?php echo htmlspecialchars(json_encode($session), ENT_QUOTES); ?>)">Complete Session</button>
-                    <button class="btn btn-outline" onclick="showSessionHistoryModal(<?php echo $session['session_id']; ?>, '<?php echo htmlspecialchars($session['pet_name'], ENT_QUOTES); ?>')">View Session History</button>
-                    <button class="btn btn-outline" onclick="showContactModal('<?php echo htmlspecialchars($session['pet_owner_name']); ?>', '<?php echo htmlspecialchars($session['pet_owner_phone']); ?>', '<?php echo isset($session['pet_owner_email']) ? htmlspecialchars($session['pet_owner_email']) : ''; ?>')">Contact Owner</button>
+                    <button class="btn btn-success" onclick="showCompleteSessionModal(<?php echo htmlspecialchars(json_encode($session)); ?>)">Complete Session</button>
+                    <button class="btn btn-outline" onclick="showSessionHistoryModal(<?php echo $session['session_id']; ?>, '<?php echo addslashes($session['pet_name']); ?>')">View Session History</button>
+                    <button class="btn btn-outline" 
+                        data-owner-name="<?php echo htmlspecialchars($session['pet_owner_name'] ?? ''); ?>" 
+                        data-owner-phone="<?php echo htmlspecialchars($session['pet_owner_phone'] ?? ''); ?>"
+                        onclick="showContactModal(this.dataset.ownerName, this.dataset.ownerPhone, '')">Contact Owner</button>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -252,8 +258,11 @@ $pageTitle = "Training Appointments";
                 </div>
                 <?php endif; ?>
                 <div class="booking-actions">
-                    <button class="btn btn-outline" onclick="showSessionHistoryModal(<?php echo $session['session_id']; ?>, '<?php echo htmlspecialchars($session['pet_name'], ENT_QUOTES); ?>')">View Session History</button>
-                    <button class="btn btn-outline" onclick="showContactModal('<?php echo htmlspecialchars($session['pet_owner_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($session['pet_owner_phone'], ENT_QUOTES); ?>', '<?php echo isset($session['pet_owner_email']) ? htmlspecialchars($session['pet_owner_email'], ENT_QUOTES) : ''; ?>')">Contact Owner</button>
+                    <button class="btn btn-outline" onclick="showSessionHistoryModal(<?php echo $session['session_id']; ?>, '<?php echo addslashes($session['pet_name']); ?>')">View Session History</button>
+                    <button class="btn btn-outline" 
+                        data-owner-name="<?php echo htmlspecialchars($session['pet_owner_name'] ?? ''); ?>" 
+                        data-owner-phone="<?php echo htmlspecialchars($session['pet_owner_phone'] ?? ''); ?>"
+                        onclick="showContactModal(this.dataset.ownerName, this.dataset.ownerPhone, '')">Contact Owner</button>
                 </div>
             </div>
             <?php endforeach; ?>

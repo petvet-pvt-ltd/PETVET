@@ -206,7 +206,11 @@ $pageTitle = "Bookings";
                     <?php echo htmlspecialchars($booking['special_notes']); ?>
                 </div>
                 <div class="booking-actions">
-                    <button class="btn btn-outline" onclick="showContactModal('<?php echo htmlspecialchars($booking['owner_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($booking['owner_phone'], ENT_QUOTES); ?>', '<?php echo isset($booking['owner_phone_2']) ? htmlspecialchars($booking['owner_phone_2'], ENT_QUOTES) : ''; ?>')">Contact Owner</button>
+                    <button class="btn btn-outline" 
+                        data-owner-name="<?php echo htmlspecialchars($booking['owner_name'] ?? ''); ?>" 
+                        data-owner-phone="<?php echo htmlspecialchars($booking['owner_phone'] ?? ''); ?>"
+                        data-owner-phone2="<?php echo htmlspecialchars($booking['owner_phone_2'] ?? ''); ?>"
+                        onclick="showContactModal(this.dataset.ownerName, this.dataset.ownerPhone, this.dataset.ownerPhone2)">Contact Owner</button>
                 </div>
             </div>
             <?php endforeach; ?>

@@ -63,6 +63,15 @@ $prefs = isset($prefs) ? $prefs : [
 			<section class="card" id="section-profile" data-section>
 				<div class="card-head"><h2>Profile</h2></div>
 				<form id="formProfile" class="form" enctype="multipart/form-data">
+					<div class="cover-photo-section">
+						<div class="cover-photo-preview" id="coverPhotoPreview">
+							<img src="<?= htmlspecialchars($profile['cover_photo'] ?? 'https://placehold.co/1200x300?text=Cover+Photo') ?>" alt="Cover Photo" />
+							<div class="cover-photo-overlay">
+								<button type="button" class="btn outline small" data-for="coverPhoto">Change Cover Photo</button>
+							</div>
+						</div>
+						<input type="file" id="coverPhoto" accept="image/*" hidden />
+					</div>
 					<div class="profile-grid">
 						<div class="profile-left">
 							<div class="avatar-frame">
@@ -150,69 +159,25 @@ $prefs = isset($prefs) ? $prefs : [
 			<section class="card" id="section-preferences" data-section>
 				<div class="card-head">
 					<h2>Preferences</h2>
-					<p class="muted small">Customize notifications &amp; settings</p>
+					<p class="muted small">Customize notifications &amp; services</p>
 				</div>
 				<form id="formPrefs" class="form">
-					<div class="pref-row">
-						<div class="pref-label">
-							<strong>Email Notifications</strong>
-							<span class="muted small">Receive email alerts for inquiries</span>
+					<div class="pref-simplified">
+						<div class="pref-row">
+							<label class="toggle">
+								<input type="checkbox" name="email_notifications" <?= $prefs['email_notifications'] ? 'checked' : '' ?> />
+								<span class="toggle-track"><span class="toggle-handle"></span></span>
+								<span class="toggle-label">Email Notifications <small>Receive email alerts for inquiries</small></span>
+							</label>
 						</div>
-						<label class="toggle">
-							<input type="checkbox" name="email_notifications" <?= $prefs['email_notifications'] ? 'checked' : '' ?> />
-							<span class="slider"></span>
-						</label>
 					</div>
-					<div class="pref-row">
-						<div class="pref-label">
-							<strong>SMS Notifications</strong>
-							<span class="muted small">Get text messages for urgent updates</span>
-						</div>
-						<label class="toggle">
-							<input type="checkbox" name="sms_notifications" <?= $prefs['sms_notifications'] ? 'checked' : '' ?> />
-							<span class="slider"></span>
-						</label>
-					</div>
-					<div class="pref-row">
-						<div class="pref-label">
-							<strong>Inquiry Alerts</strong>
-							<span class="muted small">Instant alerts for new pet inquiries</span>
-						</div>
-						<label class="toggle">
-							<input type="checkbox" name="inquiry_alerts" <?= $prefs['inquiry_alerts'] ? 'checked' : '' ?> />
-							<span class="slider"></span>
-						</label>
-					</div>
-					<div class="pref-row">
-						<div class="pref-label">
-							<strong>Public Profile</strong>
-							<span class="muted small">Show your profile to potential buyers</span>
-						</div>
-						<label class="toggle">
-							<input type="checkbox" name="public_profile" <?= $prefs['public_profile'] ? 'checked' : '' ?> />
-							<span class="slider"></span>
-						</label>
-					</div>
-					<div class="pref-row">
-						<div class="pref-label">
-							<strong>Show Pricing</strong>
-							<span class="muted small">Display pet prices publicly</span>
-						</div>
-						<label class="toggle">
-							<input type="checkbox" name="show_pricing" <?= $prefs['show_pricing'] ? 'checked' : '' ?> />
-							<span class="slider"></span>
-						</label>
-					</div>
-					<div class="pref-row">
-						<div class="pref-label">
-							<strong>Newsletter</strong>
-							<span class="muted small">Weekly breeding tips and updates</span>
-						</div>
-						<label class="toggle">
-							<input type="checkbox" name="newsletter_subscription" <?= $prefs['newsletter_subscription'] ? 'checked' : '' ?> />
-							<span class="slider"></span>
-						</label>
-					</div>
+					<hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid #e5e5e5;">
+					<h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">Breeding Services & Pricing</h3>
+					<p class="muted small" style="margin-bottom: 1rem;">Describe your breeding services and rates</p>
+					<label>Services Description
+						<textarea name="services_description" rows="6" placeholder="Describe your breeding services, e.g.,&#10;&#10;• Stud Service - LKR 50,000&#10;• Puppies/Kittens for Sale - LKR 80,000+&#10;• Breeding Consultation - LKR 5,000&#10;• Health Certificates Included"><?= htmlspecialchars($prefs['services_description'] ?? '') ?></textarea>
+						<small class="field-hint">List your services, breeds, and prices in LKR</small>
+					</label>
 					<div class="actions">
 						<button class="btn primary" type="submit">Save Preferences</button>
 					</div>
@@ -231,7 +196,8 @@ $prefs = isset($prefs) ? $prefs : [
 						'pet-owner' => ['name' => 'Pet Owner', 'desc' => 'Manage your pets and appointments'],
 						'trainer' => ['name' => 'Trainer', 'desc' => 'Provide training services'],
 						'sitter' => ['name' => 'Pet Sitter', 'desc' => 'Offer pet sitting services'],
-						'breeder' => ['name' => 'Breeder', 'desc' => 'Manage breeding operations']
+						'breeder' => ['name' => 'Breeder', 'desc' => 'Manage breeding operations'],
+						'groomer' => ['name' => 'Groomer', 'desc' => 'Provide grooming services']
 					];
 					$currentRole = 'breeder';
 					?>

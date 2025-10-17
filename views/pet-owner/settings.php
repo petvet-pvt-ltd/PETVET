@@ -173,7 +173,8 @@ $accountStats = isset($accountStats) ? $accountStats : [
 							'pet-owner' => ['name' => 'Pet Owner', 'desc' => 'Manage your pets and appointments'],
 							'trainer' => ['name' => 'Trainer', 'desc' => 'Provide training services'],
 							'sitter' => ['name' => 'Pet Sitter', 'desc' => 'Offer pet sitting services'],
-							'breeder' => ['name' => 'Breeder', 'desc' => 'Manage breeding operations']
+							'breeder' => ['name' => 'Breeder', 'desc' => 'Manage breeding operations'],
+							'groomer' => ['name' => 'Groomer', 'desc' => 'Provide grooming services']
 						];
 						$currentRole = $_SESSION['current_role'] ?? 'pet-owner';
 						?>
