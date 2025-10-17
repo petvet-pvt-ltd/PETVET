@@ -97,12 +97,7 @@ echo "<!-- activeModule: $activeModule -->";
       <a href="/PETVET/index.php?module=admin&page=manage-users" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'manage-users.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/staff.png" class="icon"> Manage Users</li>
       </a>
-      <a href="/PETVET/index.php?module=admin&page=appointments" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'appointments.php') ? 'active' : '' ?>">
-        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Appointments</li>
-      </a>
-      <a href="/PETVET/index.php?module=admin&page=medical-records" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'medical-records.php') ? 'active' : '' ?>">
-        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/folder.png" class="icon"> Medical Records</li>
-      </a>
+      <!-- Appointments and Medical Records intentionally hidden for admin -->
       <a href="/PETVET/index.php?module=admin&page=pet-listings" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'pet-listings.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/pets.png" class="icon"> Pet Listings</li>
       </a>
