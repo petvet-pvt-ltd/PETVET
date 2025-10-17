@@ -202,10 +202,22 @@ $pending[] = [
 
 <div class="main-content">
   <header class="topbar">
-    <input type="text" placeholder="Search..." class="search-bar" />
+    <div class="search-with-icon">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="11" cy="11" r="8" stroke="#94a3b8" stroke-width="2"/>
+        <path d="M21 21l-4.35-4.35" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <input type="text" placeholder="Search users, roles, or email..." class="search-bar" id="globalSearch" />
+    </div>
     <div class="actions">
-  <button type="button" class="btn pending-requests" id="openDrawer" aria-expanded="false">🔔 Pending User Requests <span class="badge" style="background:#dc2626;color:#fff;margin-left:8px"><?php echo htmlspecialchars($stats['pendingRequests'] ?? 0); ?></span></button>
-  
+      <button type="button" class="btn pending-requests" id="openDrawer" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;margin-right:6px">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Pending Requests 
+        <span class="pulse-badge"><?php echo htmlspecialchars($stats['pendingRequests'] ?? 0); ?></span>
+      </button>
       <div class="profile">
         <div class="circle">AJ</div>
         <span>Admin User</span>
@@ -218,36 +230,61 @@ $pending[] = [
     <p>View and manage system users</p>
 
     <div class="cards">
-      <div class="card">
+      <div class="card card-hover" data-stat="users">
+        <div class="card-icon-bg users-bg">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </div>
         <h3>Total Registered Users</h3>
         <div class="value-with-icon">
-          <p class="number"><?php echo htmlspecialchars($stats['totalUsers']); ?></p>
-          <div class="icon">👤</div>
+          <p class="number animated-number" data-target="<?php echo htmlspecialchars($stats['totalUsers']); ?>">0</p>
         </div>
-        <span class="success"><?php echo htmlspecialchars($stats['usersGrowth']); ?> from last month</span>
+        <span class="success"><span class="trend-up">↗</span> <?php echo htmlspecialchars($stats['usersGrowth']); ?> from last month</span>
       </div>
 
-      <div class="card">
+      <div class="card card-hover" data-stat="pending">
+        <div class="card-icon-bg pending-bg">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
         <h3>Pending Registration Requests</h3>
         <div class="value-with-icon">
-          <p class="number"><?php echo htmlspecialchars($stats['pendingRequests']); ?></p>
+          <p class="number animated-number" data-target="<?php echo htmlspecialchars($stats['pendingRequests']); ?>">0</p>
         </div>
+        <button class="mini-btn" onclick="document.getElementById('openDrawer').click()">Review Now</button>
       </div>
 
-      <div class="card">
+      <div class="card card-hover" data-stat="professionals">
+        <div class="card-icon-bg professionals-bg">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="8.5" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+            <path d="M20 8v6M23 11h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
         <h3>Verified Professionals</h3>
         <div class="value-with-icon">
-          <p class="number"><?php echo htmlspecialchars($stats['vets']); ?></p>
+          <p class="number animated-number" data-target="<?php echo htmlspecialchars($stats['vets']); ?>">0</p>
         </div>
-       
+        <span class="info-text">Active & Verified</span>
       </div>
 
-      <div class="card">
+      <div class="card card-hover" data-stat="clinics">
+        <div class="card-icon-bg clinics-bg">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 22V12h6v10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
         <h3>Active Clinics</h3>
         <div class="value-with-icon">
-          <p class="number"><?php echo htmlspecialchars($stats['clinics']); ?></p>
-          
+          <p class="number animated-number" data-target="<?php echo htmlspecialchars($stats['clinics']); ?>">0</p>
         </div>
+        <span class="info-text">Registered Partners</span>
       </div>
     </div>
 
@@ -296,47 +333,38 @@ $pending[] = [
                   </div>
                 </div>
 
-                <style>
-                /* Trainer modal styling */
-                .trainer-header{display:flex;gap:12px;align-items:center}
-                .trainer-avatar{width:72px;height:72px;border-radius:12px;overflow:hidden}
-                .trainer-contact-buttons{display:flex;gap:12px;margin-top:12px}
-                .trainer-contact-buttons .btn{flex:1}
-                .trainer-specs{margin-top:12px}
-                .trainer-spec{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;background:#fff;border:1px solid #eef2f7;margin-bottom:8px}
-                .trainer-toggle{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;background:#fff;border:1px solid #eef2f7;margin-top:8px}
-                </style>
-
-            <style>
-            /* Groomer modal styling - vertical card */
-            .groomer-profile{display:flex;flex-direction:column;gap:14px}
-            .groomer-top{display:flex;gap:12px;align-items:center}
-            .groomer-avatar{width:64px;height:64px;border-radius:12px;overflow:hidden;background:#f3f4f6;display:flex;align-items:center;justify-content:center}
-            .groomer-avatar img{width:100%;height:100%;object-fit:cover}
-            .groomer-services{margin-top:6px}
-            .groomer-service{display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;background:#fff;border:1px solid #eef2f7;margin-bottom:8px}
-            .groomer-service .icon{width:36px;height:36px;border-radius:10px;background:#e6f6f6;display:flex;align-items:center;justify-content:center;color:#10b981}
-            </style>
-
-        <style>
-        /* Clinic modal specific */
-        .clinic-header{display:flex;gap:14px;align-items:center}
-        .clinic-avatar{width:48px;height:48px;border-radius:10px;background:#eef2ff;display:flex;align-items:center;justify-content:center;font-weight:700;color:#2563eb}
-        .clinic-meta h4{margin:0}
-        .clinic-row{display:block;margin-top:12px}
-        .clinic-row > div{margin-bottom:10px}
-        .clinic-services{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-        .clinic-service{background:#eef2ff;padding:6px 10px;border-radius:999px;color:#2563eb;border:1px solid #e1e8ff}
-        .clinic-status{display:inline-block;padding:6px 10px;border-radius:999px;background:#ecfdf5;color:#065f46}
-        </style>
-
     <div class="search-filter">
-      <input type="text" placeholder="Search users by name, email, or ID..." class="search-filter-input" />
-      <select>
-        <option>All Users</option>
-        <option>Active</option>
-        <option>Inactive</option>
-      </select>
+      <div class="filter-group">
+        <svg class="filter-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="11" cy="11" r="8" stroke="#64748b" stroke-width="2"/>
+          <path d="M21 21l-4.35-4.35" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <input type="text" placeholder="Search users by name, email, or ID..." class="search-filter-input" id="tableSearch" />
+      </div>
+      <div class="filter-controls">
+        <select id="roleFilter" class="filter-select">
+          <option value="">All Roles</option>
+          <option value="owner">Pet Owners</option>
+          <option value="clinic">Clinics</option>
+          <option value="groomer">Groomers</option>
+          <option value="trainer">Trainers</option>
+          <option value="sitter">Sitters</option>
+        </select>
+        <select id="statusFilter" class="filter-select">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="pending">Pending</option>
+          <option value="suspended">Suspended</option>
+        </select>
+        <button class="icon-btn-filter" id="exportBtn" title="Export to CSV">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="7 10 12 15 17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <table>
@@ -387,138 +415,8 @@ $pending[] = [
 </div>
 
 <!-- Pending Requests Drawer -->
-<style>
-  /* owner modal specific */
-  .owner-profile{display:flex;gap:12px;align-items:center}
-  .owner-avatar{width:72px;height:72px;border-radius:12px;background:linear-gradient(135deg,#6fb1ff,#9b8cff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:28px}
-  .owner-meta h4{font-size:18px}
-  .owner-pet-card{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:10px;background:#fff;margin-top:8px;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
-  .owner-pet-info{display:flex;gap:10px;align-items:center}
-  .owner-pet-thumb{width:44px;height:44px;flex:0 0 44px;border-radius:8px;overflow:hidden}
-  .owner-pet-name{font-weight:600}
-  .activity-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed rgba(0,0,0,0.04)}
-  .activity-item:last-child{border-bottom:none}
-  .muted{color:#6b7280}
-/* Minimal drawer/backdrop styles (used by clinic-manager; ensure same behaviour here) */
-.drawer {
-  position: fixed;
-  right: -360px;
-  top: 0;
-  height: 100%;
-  width: 340px;
-  background: #fff;
-  border-left: 1px solid #e5e7eb;
-  box-shadow: -6px 0 18px rgba(15,23,42,0.06);
-  transition: right 220ms ease;
-  z-index: 1100;
-  display: flex;
-  flex-direction: column;
-}
-.drawer.open { right: 0; }
-.drawer-header { display:flex; align-items:center; justify-content:space-between; padding:16px; border-bottom:1px solid #eef2f7; }
-.drawer-body { padding:16px; overflow:auto; }
-.pending-item { background: linear-gradient(180deg, #fff8e1 0%, #fff6d9 100%); border:1px solid #fce7a7; border-radius:8px; padding:12px; margin-bottom:12px; display:block; }
-.pending-item .row { display:flex; align-items:center; gap:12px; }
-.pending-item .meta { display:block; }
-.pending-item .meta .role { color:#6b7280; font-size:13px; margin-top:6px; }
-.pending-actions { margin-top:10px; display:flex; gap:10px; }
-.btn-approve { background:#22c55e; color:#fff; border:none; padding:8px 18px; border-radius:8px; font-weight:700; }
-.btn-reject { background:#ef4444; color:#fff; border:none; padding:8px 18px; border-radius:8px; font-weight:700; }
-.avatar-sm { width:40px; height:40px; border-radius:8px; object-fit:cover; }
-.backdrop { position:fixed; inset:0; background:rgba(2,6,23,0.45); opacity:0; visibility:hidden; transition:opacity 180ms ease; z-index:1000; }
-.backdrop.show { opacity:1; visibility:visible; }
-.icon-btn { background:none; border:none; font-size:18px; cursor:pointer; }
-.empty { padding:16px; color:#6b7280; }
-</style>
 
-<!-- Page polish styles: table, badges, buttons, modal -->
-<style>
-/* Layout polish */
-.main-content { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color: #0f172a; }
-.overview h1 { font-size: 20px; margin:0 0 6px; }
-.cards .card { border-radius: 12px; box-shadow: 0 6px 18px rgba(15,23,42,0.04); }
-
-/* Table polish */
-table { width:100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 6px 18px rgba(2,6,23,0.04); }
-thead th { background:#f8fafc; color:#334155; font-weight:700; padding:14px; text-align:left; font-size:13px; }
-tbody td { padding:14px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
-tbody tr:hover { background:#fbfdff; }
-
-.avatar { width:44px; height:44px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; background:#0ea5a9; color:#fff; font-weight:800; margin-right:12px; }
-.user-info small { color:#64748b; display:block; }
-
-/* Badges */
-.badge { padding:6px 10px; border-radius:999px; font-weight:700; text-transform:capitalize; font-size:12px; }
-.badge.green { background:#ecfdf5; color:#065f46; border:1px solid #bbf7d0; }
-.badge.blue { background:#eff6ff; color:#1e3a8a; border:1px solid #bfdbfe; }
-.badge.orange { background:#fff7ed; color:#92400e; border:1px solid #fed7aa; }
-.badge.gray { background:#f8fafc; color:#334155; border:1px solid #e6eef7; }
-.badge.yellow { background:#fff8e1; color:#92400e; border:1px solid #fde68a; }
-
-/* Action buttons */
-.action { border:0; background:transparent; cursor:pointer; font-size:16px; padding:8px; border-radius:8px; transition:all .12s ease; }
-.action:hover { background:rgba(2,6,23,0.04); transform:translateY(-1px); }
-.view-btn { color:#2563eb; font-weight:700; }
-.edit-btn { color:#10b981; }
-.msg-btn { color:#7c3aed; }
-.del-btn { color:#ef4444; }
-
-/* Status pills (light backgrounds) */
-.status-pill { display:inline-block; padding:6px 12px; border-radius:999px; font-weight:700; font-size:13px; }
-.status-pill.active { background:#ecfdf5; color:#065f46; }
-.status-pill.pending { background:#fff7ed; color:#92400e; }
-.status-pill.suspended { background:#fee2e2; color:#991b1b; }
-.status-pill.inactive { background:#f1f5f9; color:#334155; border:1px solid #e2e8f0 }
-
-/* Action icons styling */
-.icon { border-radius:6px; padding:6px; }
-.icon span { font-size:16px; }
-
-/* Drawer card tweak */
-.pending-item { transition: transform .12s ease, box-shadow .12s ease; }
-.pending-item:hover { transform: translateY(-6px); box-shadow: 0 10px 30px rgba(2,6,23,0.06); }
-
-/* Modal styles */
-.cmc-modal { display:none; }
-.cmc-modal.show { display:flex; }
-.owner-profile { display:flex; gap:12px; align-items:center; }
-.owner-avatar { width:68px; height:68px; border-radius:12px; background:#2563eb; color:#fff; display:inline-flex; align-items:center; justify-content:center; font-weight:800; font-size:20px; }
-.owner-meta { color:#475569; }
-.owner-meta p { margin:6px 0; }
-.pet-list { margin-top:12px; }
-.pet-list li { margin-bottom:8px; color:#0f172a; }
-
-/* Responsive tweaks */
-@media (max-width:720px){
-  .owner-avatar { width:56px; height:56px; }
-}
-</style>
-
-<style>
-/* Modal polished styles */
-.cmc-modal { position: fixed; inset: 0; display: grid; place-items: center; z-index: 1400; pointer-events: none; }
-.cmc-modal .cmc-modal-backdrop { position:absolute; inset:0; background: rgba(2,6,23,0.62); backdrop-filter: blur(5px); opacity:0; transition: opacity .18s ease; }
-.cmc-modal .cmc-modal-dialog { position:relative; z-index:2; max-width:920px; width:92%; max-height:86vh; overflow:auto; transform: translateY(18px) scale(.98); transition: transform .18s ease, opacity .12s ease; opacity:0; }
-.cmc-modal .cmc-modal-content { background:#fff; border-radius:12px; padding:22px; box-shadow: 0 28px 80px rgba(2,6,23,0.18); }
-.cmc-modal .cmc-modal-header { display:flex; align-items:center; justify-content:space-between; }
-.cmc-modal .cmc-modal-body { margin-top:12px; color:#334155; }
-.cmc-modal .cmc-modal-footer { margin-top:14px; text-align:right; }
-.cmc-modal.show { pointer-events: auto; }
-.cmc-modal.show .cmc-modal-backdrop { opacity:1; }
-.cmc-modal.show .cmc-modal-dialog { transform: translateY(0) scale(1); opacity:1; }
-
-/* ensure centered dialog and disable page scroll while modal open */
-body.modal-open{overflow:hidden;height:100%;}
-.cmc-modal .cmc-modal-dialog{margin:0 auto}
-
-.pet-list { margin-top:10px; padding-left:18px; }
-.pet-list li { background:#f8fafc; border:1px solid #e6eef7; padding:8px 10px; border-radius:8px; margin-bottom:8px; }
-
-.btn { padding:8px 14px; border-radius:8px; border:1px solid #cbd5e1; background:#fff; cursor:pointer; }
-.btn:hover { box-shadow: 0 6px 18px rgba(2,6,23,0.06); }
-</style>
-
-<!-- Delete confirmation modal -->
+<div id="pendingDrawer" class="drawer">
 <div id="confirmModal" class="cmc-modal" aria-hidden="true" style="display:none;">
   <div class="cmc-modal-backdrop"></div>
   <div class="cmc-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
@@ -539,7 +437,285 @@ body.modal-open{overflow:hidden;height:100%;}
 </div>
 
 <script>
-// Delete confirmation modal logic
+// Enhanced features: animated counters, search, filters, export, tooltips
+
+// Animated number counters
+document.addEventListener('DOMContentLoaded', function() {
+  const counters = document.querySelectorAll('.animated-number');
+  counters.forEach(counter => {
+    const target = parseInt(counter.getAttribute('data-target'));
+    const duration = 2000;
+    const step = target / (duration / 16);
+    let current = 0;
+    
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= target) {
+        counter.textContent = target.toLocaleString();
+        clearInterval(timer);
+      } else {
+        counter.textContent = Math.floor(current).toLocaleString();
+      }
+    }, 16);
+  });
+});
+
+// Global search functionality
+const globalSearch = document.getElementById('globalSearch');
+if (globalSearch) {
+  globalSearch.addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('tbody tr');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      if (text.includes(searchTerm)) {
+        row.style.display = '';
+        visibleCount++;
+        // Add highlight animation
+        if (searchTerm.length > 2) {
+          row.classList.add('row-highlight');
+          setTimeout(() => row.classList.remove('row-highlight'), 1500);
+        }
+      } else {
+        row.style.display = 'none';
+      }
+    });
+    
+    // Show no results message
+    updateTableMessage(visibleCount);
+  });
+}
+
+// Table search
+const tableSearch = document.getElementById('tableSearch');
+if (tableSearch) {
+  tableSearch.addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    filterTable();
+  });
+}
+
+// Role filter
+const roleFilter = document.getElementById('roleFilter');
+if (roleFilter) {
+  roleFilter.addEventListener('change', filterTable);
+}
+
+// Status filter
+const statusFilter = document.getElementById('statusFilter');
+if (statusFilter) {
+  statusFilter.addEventListener('change', filterTable);
+}
+
+// Combined filter function
+function filterTable() {
+  const searchTerm = document.getElementById('tableSearch')?.value.toLowerCase() || '';
+  const roleValue = document.getElementById('roleFilter')?.value.toLowerCase() || '';
+  const statusValue = document.getElementById('statusFilter')?.value.toLowerCase() || '';
+  
+  const rows = document.querySelectorAll('tbody tr');
+  let visibleCount = 0;
+  
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    const roleCell = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+    const statusCell = row.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
+    
+    const matchesSearch = searchTerm === '' || text.includes(searchTerm);
+    const matchesRole = roleValue === '' || roleCell.includes(roleValue);
+    const matchesStatus = statusValue === '' || statusCell.includes(statusValue);
+    
+    if (matchesSearch && matchesRole && matchesStatus) {
+      row.style.display = '';
+      visibleCount++;
+    } else {
+      row.style.display = 'none';
+    }
+  });
+  
+  updateTableMessage(visibleCount);
+}
+
+// Update table message for no results
+function updateTableMessage(count) {
+  let messageRow = document.querySelector('.no-results-message');
+  const tbody = document.querySelector('tbody');
+  
+  if (count === 0) {
+    if (!messageRow) {
+      messageRow = document.createElement('tr');
+      messageRow.className = 'no-results-message';
+      messageRow.innerHTML = `
+        <td colspan="6" style="text-align:center;padding:40px;color:#64748b;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin:0 auto 12px;display:block;opacity:0.5">
+            <circle cx="12" cy="12" r="10" stroke="#cbd5e1" stroke-width="2"/>
+            <path d="M12 8v4M12 16h.01" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <div style="font-size:16px;font-weight:600;margin-bottom:4px">No users found</div>
+          <div style="font-size:14px">Try adjusting your search or filter criteria</div>
+        </td>
+      `;
+      tbody.appendChild(messageRow);
+    }
+  } else {
+    if (messageRow) {
+      messageRow.remove();
+    }
+  }
+}
+
+// Export to CSV functionality
+const exportBtn = document.getElementById('exportBtn');
+if (exportBtn) {
+  exportBtn.addEventListener('click', function() {
+    const rows = Array.from(document.querySelectorAll('tbody tr')).filter(row => row.style.display !== 'none');
+    
+    if (rows.length === 0) {
+      alert('No data to export');
+      return;
+    }
+    
+    let csvContent = 'Name,Role,Email,Status,Date Registered\n';
+    
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      const name = cells[0]?.querySelector('strong')?.textContent.trim() || '';
+      const role = cells[1]?.querySelector('.badge')?.textContent.trim() || '';
+      const email = cells[2]?.textContent.trim() || '';
+      const status = cells[3]?.querySelector('.status-pill')?.textContent.trim() || '';
+      const date = cells[4]?.textContent.trim() || '';
+      
+      csvContent += `"${name}","${role}","${email}","${status}","${date}"\n`;
+    });
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `users_export_${new Date().toISOString().slice(0,10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Show success notification
+    showNotification('✓ Export successful', 'success');
+  });
+}
+
+// Notification system
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.textContent = message;
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${type === 'success' ? '#10b981' : '#3b82f6'};
+    color: white;
+    padding: 14px 20px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    z-index: 10000;
+    font-weight: 600;
+    animation: slideIn 0.3s ease, slideOut 0.3s ease 2.7s;
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.remove();
+  }, 3000);
+}
+
+// Add CSS for notification animations
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn {
+    from { transform: translateX(400px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(400px); opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
+
+// Add tooltips on hover
+document.querySelectorAll('.action').forEach(btn => {
+  btn.addEventListener('mouseenter', function(e) {
+    const title = this.getAttribute('title');
+    if (title) {
+      const tooltip = document.createElement('div');
+      tooltip.className = 'tooltip';
+      tooltip.textContent = title;
+      tooltip.style.cssText = `
+        position: absolute;
+        background: #0f172a;
+        color: white;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        white-space: nowrap;
+        z-index: 1000;
+        pointer-events: none;
+        transform: translateY(-100%);
+        margin-top: -8px;
+      `;
+      
+      this.style.position = 'relative';
+      this.appendChild(tooltip);
+      
+      // Position tooltip
+      const rect = this.getBoundingClientRect();
+      tooltip.style.left = '50%';
+      tooltip.style.transform = 'translateX(-50%) translateY(-100%)';
+    }
+  });
+  
+  btn.addEventListener('mouseleave', function() {
+    const tooltip = this.querySelector('.tooltip');
+    if (tooltip) tooltip.remove();
+  });
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+  // Ctrl/Cmd + K for search focus
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('tableSearch')?.focus();
+  }
+  
+  // Ctrl/Cmd + E for export
+  if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+    e.preventDefault();
+    document.getElementById('exportBtn')?.click();
+  }
+});
+
+// Add subtle entrance animation to table rows
+window.addEventListener('load', function() {
+  const rows = document.querySelectorAll('tbody tr');
+  rows.forEach((row, index) => {
+    row.style.opacity = '0';
+    row.style.transform = 'translateY(20px)';
+    row.style.transition = 'all 0.3s ease';
+    
+    setTimeout(() => {
+      row.style.opacity = '1';
+      row.style.transform = 'translateY(0)';
+    }, index * 50);
+  });
+});
+
+// ============================================
+// DELETE CONFIRMATION & TOGGLE STATUS
+// ============================================
 let _pendingDeleteUserId = null;
 const confirmModal = document.getElementById('confirmModal');
 const confirmBody = document.getElementById('confirmModalBody');
@@ -579,8 +755,11 @@ confirmYes.addEventListener('click', function(){
 
 // Delegate clicks for delete buttons anywhere in the table
 document.addEventListener('click', function(e){
+  // Check if clicked element or its parent is a delete button
   const del = e.target.closest('.del-btn');
   if(del){
+    e.preventDefault();
+    e.stopPropagation();
     const uid = del.dataset.userId || del.getAttribute('data-user-id');
     const tr = del.closest('tr');
     const name = tr ? (tr.querySelector('.user-info strong')?.textContent.trim() || 'this user') : 'this user';
@@ -588,8 +767,11 @@ document.addEventListener('click', function(e){
     return;
   }
 
+  // Check if clicked element or its parent is a toggle status button
   const toggleBtn = e.target.closest('.toggle-status-btn');
   if(toggleBtn){
+    e.preventDefault();
+    e.stopPropagation();
     const uid = toggleBtn.dataset.userId || toggleBtn.getAttribute('data-user-id');
     const tr = toggleBtn.closest('tr');
     if(!tr) return;
@@ -622,19 +804,26 @@ document.addEventListener('click', function(e){
     <?php if ($pending): foreach ($pending as $p): ?>
       <div class="pending-item">
         <div class="row">
-          <div class="avatar-sm" style="background:#2563eb;color:#fff;display:inline-flex;align-items:center;justify-content:center;"><?= htmlspecialchars(strtoupper(substr($p['name'] ?? '-',0,1))) ?></div>
+          <div class="avatar-sm"><?= htmlspecialchars(strtoupper(substr($p['name'] ?? '-',0,1))) ?></div>
           <div class="meta">
-            <div style="font-weight:700"><?= htmlspecialchars($p['name'] ?? 'Unknown') ?></div>
+            <div class="name"><?= htmlspecialchars($p['name'] ?? 'Unknown') ?></div>
             <div class="role"><?= htmlspecialchars($p['role'] . ($p['email'] ? ' • ' . $p['email'] : '')) ?></div>
           </div>
         </div>
         <div class="pending-actions">
-          <button class="btn-approve">Approve</button>
-          <button class="btn-reject">Reject</button>
+          <button class="btn-approve">✓ Approve</button>
+          <button class="btn-reject">✕ Reject</button>
         </div>
       </div>
     <?php endforeach; else: ?>
-      <div class="empty">No pending requests.</div>
+      <div class="empty">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="#cbd5e1" stroke-width="2"/>
+          <path d="M9 12h6M12 9v6" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div style="font-size:16px;font-weight:600;margin-bottom:4px;color:#64748b">All clear!</div>
+        <div style="font-size:14px;color:#94a3b8">No pending requests at the moment</div>
+      </div>
     <?php endif; ?>
   </div>
 </aside>
