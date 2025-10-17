@@ -156,9 +156,13 @@ $pageTitle = "Breeding Requests";
                 </div>
                 <?php endif; ?>
                 <div class="booking-actions">
-                    <button class="btn btn-primary" onclick="showAcceptModal(<?php echo $request['id']; ?>, '<?php echo htmlspecialchars($request['pet_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($request['owner_name'], ENT_QUOTES); ?>')">Accept</button>
-                    <button class="btn btn-danger" onclick="showDeclineModal(<?php echo $request['id']; ?>, '<?php echo htmlspecialchars($request['pet_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($request['owner_name'], ENT_QUOTES); ?>')">Decline</button>
-                    <button class="btn btn-outline" onclick="showContactModal('<?php echo htmlspecialchars($request['owner_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($request['phone'], ENT_QUOTES); ?>', '<?php echo isset($request['phone_2']) ? htmlspecialchars($request['phone_2'], ENT_QUOTES) : ''; ?>')">Contact Owner</button>
+                    <button class="btn btn-primary" onclick="showAcceptModal(<?php echo $request['id']; ?>, '<?php echo addslashes($request['pet_name']); ?>', '<?php echo addslashes($request['owner_name']); ?>')">Accept</button>
+                    <button class="btn btn-danger" onclick="showDeclineModal(<?php echo $request['id']; ?>, '<?php echo addslashes($request['pet_name']); ?>', '<?php echo addslashes($request['owner_name']); ?>')">Decline</button>
+                    <button class="btn btn-outline" 
+                        data-owner-name="<?php echo htmlspecialchars($request['owner_name'] ?? ''); ?>" 
+                        data-owner-phone="<?php echo htmlspecialchars($request['phone'] ?? ''); ?>"
+                        data-owner-phone2="<?php echo htmlspecialchars($request['phone_2'] ?? ''); ?>"
+                        onclick="showContactModal(this.dataset.ownerName, this.dataset.ownerPhone, this.dataset.ownerPhone2)">Contact Owner</button>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -199,8 +203,12 @@ $pageTitle = "Breeding Requests";
                 </div>
                 <?php endif; ?>
                 <div class="booking-actions">
-                    <button class="btn btn-primary" onclick="showCompleteModal(<?php echo $request['id']; ?>, '<?php echo htmlspecialchars($request['pet_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($request['owner_name'], ENT_QUOTES); ?>')">Mark Complete</button>
-                    <button class="btn btn-outline" onclick="showContactModal('<?php echo htmlspecialchars($request['owner_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($request['phone'], ENT_QUOTES); ?>', '<?php echo isset($request['phone_2']) ? htmlspecialchars($request['phone_2'], ENT_QUOTES) : ''; ?>')">Contact Owner</button>
+                    <button class="btn btn-primary" onclick="showCompleteModal(<?php echo $request['id']; ?>, '<?php echo addslashes($request['pet_name']); ?>', '<?php echo addslashes($request['owner_name']); ?>')">Mark Complete</button>
+                    <button class="btn btn-outline" 
+                        data-owner-name="<?php echo htmlspecialchars($request['owner_name'] ?? ''); ?>" 
+                        data-owner-phone="<?php echo htmlspecialchars($request['phone'] ?? ''); ?>"
+                        data-owner-phone2="<?php echo htmlspecialchars($request['phone_2'] ?? ''); ?>"
+                        onclick="showContactModal(this.dataset.ownerName, this.dataset.ownerPhone, this.dataset.ownerPhone2)">Contact Owner</button>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -235,7 +243,11 @@ $pageTitle = "Breeding Requests";
                 </div>
                 <?php endif; ?>
                 <div class="booking-actions">
-                    <button class="btn btn-outline" onclick="showContactModal('<?php echo htmlspecialchars($request['owner_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($request['phone'], ENT_QUOTES); ?>', '<?php echo isset($request['phone_2']) ? htmlspecialchars($request['phone_2'], ENT_QUOTES) : ''; ?>')">Contact Owner</button>
+                    <button class="btn btn-outline" 
+                        data-owner-name="<?php echo htmlspecialchars($request['owner_name'] ?? ''); ?>" 
+                        data-owner-phone="<?php echo htmlspecialchars($request['phone'] ?? ''); ?>"
+                        data-owner-phone2="<?php echo htmlspecialchars($request['phone_2'] ?? ''); ?>"
+                        onclick="showContactModal(this.dataset.ownerName, this.dataset.ownerPhone, this.dataset.ownerPhone2)">Contact Owner</button>
                 </div>
             </div>
             <?php endforeach; ?>

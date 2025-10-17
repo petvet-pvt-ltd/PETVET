@@ -1,7 +1,7 @@
-/* Breeder Availability Management Styles */
+/* Trainer Availability Management Styles */
 :root {
-    --sitter-primary: #f59e0b;
-    --sitter-primary-dark: #d97706;
+    --sitter-primary: #8b5cf6;
+    --sitter-primary-dark: #7c3aed;
     --sitter-primary-light: rgba(139, 92, 246, 0.1);
     --bg: #f6f8fb;
     --bg-soft: #f9fafb;
@@ -811,4 +811,3 @@ body {
         font-size: 12px;
     }
 }
-

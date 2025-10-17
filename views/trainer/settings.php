@@ -61,6 +61,15 @@ $prefs = isset($prefs) ? $prefs : [
 			<section class="card" id="section-profile" data-section>
 				<div class="card-head"><h2>Profile</h2></div>
 				<form id="formProfile" class="form" enctype="multipart/form-data">
+					<div class="cover-photo-section">
+						<div class="cover-photo-preview" id="coverPhotoPreview">
+							<img src="<?= htmlspecialchars($profile['cover_photo'] ?? 'https://placehold.co/1200x300?text=Cover+Photo') ?>" alt="Cover Photo" />
+							<div class="cover-photo-overlay">
+								<button type="button" class="btn outline small" data-for="coverPhoto">Change Cover Photo</button>
+							</div>
+						</div>
+						<input type="file" id="coverPhoto" accept="image/*" hidden />
+					</div>
 					<div class="profile-grid">
 						<div class="profile-left">
 							<div class="avatar-frame">
@@ -145,52 +154,41 @@ $prefs = isset($prefs) ? $prefs : [
 			<section class="card" id="section-preferences" data-section>
 				<div class="card-head">
 					<h2>Preferences</h2>
-					<p class="muted small">Customize notifications &amp; settings</p>
+					<p class="muted small">Customize notifications &amp; pricing</p>
 				</div>
 				<form id="formPrefs" class="form">
-					<div class="pref-row">
-						<div class="pref-label">
-							<strong>Email Notifications</strong>
-							<span class="muted small">Receive email alerts for new bookings</span>
+					<div class="pref-simplified">
+						<div class="pref-row">
+							<label class="toggle">
+								<input type="checkbox" name="email_notifications" <?= $prefs['email_notifications'] ? 'checked' : '' ?> />
+								<span class="toggle-track"><span class="toggle-handle"></span></span>
+								<span class="toggle-label">Email Notifications <small>Receive email alerts for new bookings</small></span>
+							</label>
 						</div>
-						<label class="toggle">
-							<input type="checkbox" name="email_notifications" <?= $prefs['email_notifications'] ? 'checked' : '' ?> />
-							<span class="slider"></span>
-						</label>
-					</div>
-					<div class="pref-row">
-						<div class="pref-label">
-							<strong>SMS Notifications</strong>
-							<span class="muted small">Get text messages for urgent updates</span>
-						</div>
-						<label class="toggle">
-							<input type="checkbox" name="sms_notifications" <?= $prefs['sms_notifications'] ? 'checked' : '' ?> />
-							<span class="slider"></span>
-						</label>
-					</div>
-					<div class="pref-row">
-						<div class="pref-label">
-							<strong>Session Reminders</strong>
-							<span class="muted small">When to send training session reminders</span>
-						</div>
-						<div class="select-group">
-							<select name="session_reminders" value="<?= $prefs['session_reminders'] ?>">
-								<option value="24" <?= $prefs['session_reminders'] == 24 ? 'selected' : '' ?>>24 hours before</option>
-								<option value="48" <?= $prefs['session_reminders'] == 48 ? 'selected' : '' ?>>48 hours before</option>
-								<option value="168" <?= $prefs['session_reminders'] == 168 ? 'selected' : '' ?>>1 week before</option>
-							</select>
+						<div class="pref-row">
+							<label class="select-group">Session Reminders
+								<select name="session_reminders" value="<?= $prefs['session_reminders'] ?>">
+									<option value="24" <?= $prefs['session_reminders'] == 24 ? 'selected' : '' ?>>24 hours before</option>
+									<option value="48" <?= $prefs['session_reminders'] == 48 ? 'selected' : '' ?>>48 hours before</option>
+									<option value="168" <?= $prefs['session_reminders'] == 168 ? 'selected' : '' ?>>1 week before</option>
+								</select>
+							</label>
 						</div>
 					</div>
-					<div class="pref-row">
-						<div class="pref-label">
-							<strong>Newsletter</strong>
-							<span class="muted small">Weekly tips and updates</span>
-						</div>
-						<label class="toggle">
-							<input type="checkbox" name="newsletter_subscription" <?= $prefs['newsletter_subscription'] ? 'checked' : '' ?> />
-							<span class="slider"></span>
-						</label>
-					</div>
+					<hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid #e5e5e5;">
+					<h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Hourly Training Rates (LKR)</h3>
+					<label>Basic Training
+						<input type="number" name="rate_basic" value="<?= $prefs['rate_basic'] ?? 2000 ?>" min="0" step="100" placeholder="e.g., 2000" />
+						<small class="field-hint">Per hour rate for basic obedience training</small>
+					</label>
+					<label>Intermediate Training
+						<input type="number" name="rate_intermediate" value="<?= $prefs['rate_intermediate'] ?? 3500 ?>" min="0" step="100" placeholder="e.g., 3500" />
+						<small class="field-hint">Per hour rate for intermediate training</small>
+					</label>
+					<label>Advanced Training
+						<input type="number" name="rate_advanced" value="<?= $prefs['rate_advanced'] ?? 5000 ?>" min="0" step="100" placeholder="e.g., 5000" />
+						<small class="field-hint">Per hour rate for advanced/specialized training</small>
+					</label>
 					<div class="actions">
 						<button class="btn primary" type="submit">Save Preferences</button>
 					</div>
@@ -209,7 +207,8 @@ $prefs = isset($prefs) ? $prefs : [
 						'pet-owner' => ['name' => 'Pet Owner', 'desc' => 'Manage your pets and appointments'],
 						'trainer' => ['name' => 'Trainer', 'desc' => 'Provide training services'],
 						'sitter' => ['name' => 'Pet Sitter', 'desc' => 'Offer pet sitting services'],
-						'breeder' => ['name' => 'Breeder', 'desc' => 'Manage breeding operations']
+						'breeder' => ['name' => 'Breeder', 'desc' => 'Manage breeding operations'],
+						'groomer' => ['name' => 'Groomer', 'desc' => 'Provide grooming services']
 					];
 					$currentRole = 'trainer';
 					?>

@@ -1,7 +1,7 @@
-/* Breeder Availability Management Styles */
+/* Groomer Availability Management Styles */
 :root {
-    --sitter-primary: #f59e0b;
-    --sitter-primary-dark: #d97706;
+    --sitter-primary: #14b8a6;
+    --sitter-primary-dark: #0d9488;
     --sitter-primary-light: rgba(139, 92, 246, 0.1);
     --bg: #f6f8fb;
     --bg-soft: #f9fafb;
