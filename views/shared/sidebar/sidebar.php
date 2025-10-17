@@ -188,6 +188,21 @@ echo "<!-- activeModule: $activeModule -->";
       </a>
     </ul>
     <?php
+  } elseif ($activeModule == 'groomer') {
+    // Groomer Sidebar
+    ?>
+    <ul class="sidebar-nav-top">
+      <a href="/PETVET/index.php?module=groomer&page=services" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'services.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/package-box.png" class="icon"> My Services</li>
+      </a>
+      <a href="/PETVET/index.php?module=groomer&page=packages" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'packages.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/shopping-cart.png" class="icon"> My Packages</li>
+      </a>
+      <a href="/PETVET/index.php?module=groomer&page=availability" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'availability.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Availability</li>
+      </a>
+    </ul>
+    <?php
   }
   ?>
 
@@ -222,6 +237,10 @@ echo "<!-- activeModule: $activeModule -->";
     </a>
   <?php elseif ($activeModule == 'breeder'): ?>
     <a href="/PETVET/index.php?module=breeder&page=settings" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'settings.php') ? 'active' : '' ?>">
+      <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/account-settings.png" class="icon"> Settings</li>
+    </a>
+  <?php elseif ($activeModule == 'groomer'): ?>
+    <a href="/PETVET/index.php?module=groomer&page=settings" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'settings.php') ? 'active' : '' ?>">
       <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/account-settings.png" class="icon"> Settings</li>
     </a>
   <?php else: ?>

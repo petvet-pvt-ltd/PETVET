@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Service Provider Enhancements Demo</title>
+<link rel="stylesheet" href="/PETVET/public/css/shared/confirm-modal.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.demo-container {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 600px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+h1 {
+    font-size: 32px;
+    margin-bottom: 10px;
+    color: #0f172a;
+}
+.subtitle {
+    color: #64748b;
+    margin-bottom: 30px;
+    font-size: 16px;
+}
+.features {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 15px;
+    color: #0f172a;
+}
+.feature-item:last-child { margin-bottom: 0; }
+.feature-icon {
+    width: 24px;
+    height: 24px;
+    background: #10b981;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+}
+.demo-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.demo-btn {
+    padding: 14px 24px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+.demo-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+.demo-btn.warning {
+    background: #fbbf24;
+    color: #78350f;
+}
+.demo-btn.danger {
+    background: #ef4444;
+    color: white;
+}
+.demo-btn.info {
+    background: #3b82f6;
+    color: white;
+}
+.demo-btn.success {
+    background: #10b981;
+    color: white;
+}
+.credits {
+    margin-top: 30px;
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
+}
+.credits strong {
+    color: #14b8a6;
+}
+@media (max-width: 600px) {
+    .demo-container {
+        padding: 24px;
+    }
+    h1 {
+        font-size: 24px;
+    }
+}
+</style>
+</head>
+<body>
+<div class="demo-container">
+    <h1>🎨 Custom Modal System</h1>
+    <p class="subtitle">Interactive demo of the new confirmation modal system</p>
+
+    <div class="features">
+        <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <span>No jQuery, React, or any frameworks</span>
+        </div>
+        <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <span>Background freeze with blur effect</span>
+        </div>
+        <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <span>Fully mobile responsive</span>
+        </div>
+        <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <span>Smooth animations & transitions</span>
+        </div>
+        <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <span>Promise-based API</span>
+        </div>
+    </div>
+
+    <div class="demo-buttons">
+        <button class="demo-btn warning" onclick="testWarning()">
+            ⚠️ Warning Modal
+        </button>
+        <button class="demo-btn danger" onclick="testDanger()">
+            🗑️ Danger Modal (Delete)
+        </button>
+        <button class="demo-btn info" onclick="testInfo()">
+            ℹ️ Info Modal (Alert)
+        </button>
+        <button class="demo-btn success" onclick="testSuccess()">
+            ✓ Success Modal
+        </button>
+    </div>
+
+    <div class="credits">
+        Built with <strong>100% Vanilla JavaScript</strong> 💪<br>
+        No frameworks or libraries used!
+    </div>
+</div>
+
+<script src="/PETVET/public/js/shared/confirm-modal.js"></script>
+<script>
+async function testWarning() {
+    const confirmed = await ConfirmModal.show({
+        title: 'Are you sure?',
+        message: 'This is a warning modal. Do you want to proceed with this action?',
+        type: 'warning',
+        confirmText: 'Yes, proceed',
+        cancelText: 'No, cancel'
+    });
+    
+    if (confirmed) {
+        await ConfirmModal.alert('You clicked Yes!', 'Confirmed');
+    } else {
+        await ConfirmModal.alert('You cancelled the action.', 'Cancelled');
+    }
+}
+
+async function testDanger() {
+    const confirmed = await ConfirmModal.show({
+        title: 'Delete Item?',
+        message: 'Are you sure you want to delete "Example Service"? This action cannot be undone.',
+        type: 'danger',
+        confirmText: 'Delete',
+        cancelText: 'Cancel'
+    });
+    
+    if (confirmed) {
+        await ConfirmModal.show({
+            title: 'Deleted Successfully',
+            message: 'The item has been permanently deleted.',
+            type: 'success',
+            confirmText: 'OK',
+            cancelText: ''
+        });
+    }
+}
+
+async function testInfo() {
+    await ConfirmModal.show({
+        title: 'Information',
+        message: 'This is an informational modal. It works just like window.alert() but looks way better!',
+        type: 'info',
+        confirmText: 'Got it',
+        cancelText: ''
+    });
+}
+
+async function testSuccess() {
+    await ConfirmModal.show({
+        title: 'Success!',
+        message: 'Your profile has been updated successfully. All changes have been saved.',
+        type: 'success',
+        confirmText: 'Awesome',
+        cancelText: ''
+    });
+}
+
+// Demo: Try closing with ESC key or clicking outside!
+console.log('💡 Tip: You can close modals by pressing ESC or clicking outside!');
+</script>
+</body>
+</html>

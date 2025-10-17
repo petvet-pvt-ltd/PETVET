@@ -30,6 +30,8 @@ if ($module === 'clinic-manager') {
   $page = $_GET['page'] ?? 'dashboard';
 } elseif ($module === 'breeder') {
   $page = $_GET['page'] ?? 'dashboard';
+} elseif ($module === 'groomer') {
+  $page = $_GET['page'] ?? 'services';
 } elseif ($module === 'guest') {
   // Default guest landing page
   $page = $_GET['page'] ?? 'home';
@@ -164,6 +166,31 @@ switch ($module) {
       case 'pets': $c->pets(); break;
       case 'settings': $c->settings(); break;
       default: show404("This breeder page doesn't exist."); break;
+    }
+    break;
+
+  case 'groomer':
+    require_once __DIR__ . '/controllers/GroomerController.php';
+    $c = new GroomerController();
+    
+    // Handle AJAX actions
+    $action = $_GET['action'] ?? null;
+    if ($action === 'handleServiceAction') {
+      $c->handleServiceAction();
+      exit;
+    }
+    if ($action === 'handlePackageAction') {
+      $c->handlePackageAction();
+      exit;
+    }
+    
+    switch ($page) {
+      case '':
+      case 'services': $c->services(); break;
+      case 'packages': $c->packages(); break;
+      case 'availability': $c->availability(); break;
+      case 'settings': $c->settings(); break;
+      default: show404("This groomer page doesn't exist."); break;
     }
     break;
 

@@ -51,7 +51,7 @@ class ClinicData {
         $animalTypes = ['Dog','Cat','Rabbit','Bird','Hamster','Turtle'];
         $apptTypes = ['Checkup','Vaccination','Dental Cleaning','Surgery Consult','Follow-up'];
         $clients = ['John','Sarah','David','Emma','James','Kevin','Ravi','Dilani','Tharindu','Sanduni','Isuru','Harsha','Rashmi','Anushka','Priyan','Vishva','Janani','Mahesh','Madhavi'];
-        $statuses = ['Confirmed','Confirmed','Completed']; // weighted
+        $statuses = ['Confirmed','Confirmed','Confirmed','Confirmed','Confirmed','Confirmed','Confirmed','Confirmed','Completed']; // Only ~11% completed (3 out of 28 appointments)
         $vetIds = array_column(self::getVets(),'id');
         $dayCount = 7; // next 7 days including today
         $pi = 0;
