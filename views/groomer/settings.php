@@ -1,9 +1,9 @@
 <?php
 $currentPage = basename($_SERVER['PHP_SELF']);
-$module = 'sitter';
+$module = 'groomer';
 $GLOBALS['currentPage'] = 'settings.php';
-$GLOBALS['module'] = 'sitter';
-/** Sitter Settings (Profile & Preferences) */
+$GLOBALS['module'] = 'groomer';
+/** Groomer Settings (Profile & Preferences) */
 $profile = isset($profile) ? $profile : [
 	'name' => 'Your Name',
 	'email' => 'you@example.com',
@@ -12,9 +12,12 @@ $profile = isset($profile) ? $profile : [
 	'city' => '',
 	'postal_code' => '',
 	'avatar' => 'https://placehold.co/200x200?text=Avatar',
+	'cover_photo' => 'https://placehold.co/1200x300?text=Cover',
 	'experience_years' => 0,
-	'pet_types' => '',
-	'home_type' => '',
+	'specializations' => '',
+	'certifications' => '',
+	'bio' => '',
+	'google_maps_link' => '',
 	'date_joined' => date('Y-m-d'),
 	'verified_email' => false,
 	'verified_phone' => false
@@ -22,14 +25,14 @@ $profile = isset($profile) ? $profile : [
 $prefs = isset($prefs) ? $prefs : [
 	'email_notifications' => true,
 	'sms_notifications' => false,
-	'booking_reminders' => 48,
+	'booking_reminders' => 24,
 	'newsletter_subscription' => true,
 	'marketing_emails' => false,
 	'language' => 'en',
 	'timezone' => 'Asia/Colombo',
 	'theme' => 'light',
-	'max_pets' => 3,
-	'availability' => 'Flexible'
+	'auto_accept_bookings' => false,
+	'max_bookings_per_day' => 6
 ];
 ?>
 <!DOCTYPE html>
@@ -37,8 +40,8 @@ $prefs = isset($prefs) ? $prefs : [
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Settings - Sitter - PetVet</title>
-<link rel="stylesheet" href="/PETVET/public/css/sitter/settings.css" />
+<title>Settings - Groomer - PetVet</title>
+<link rel="stylesheet" href="/PETVET/public/css/groomer/settings.css" />
 </head>
 <body>
 <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
@@ -52,7 +55,6 @@ $prefs = isset($prefs) ? $prefs : [
 			<nav class="quick-nav" aria-label="Quick navigation">
 				<a href="#section-profile">Profile</a>
 				<a href="#section-password">Password</a>
-				<a href="#section-preferences">Preferences</a>
 				<a href="#section-role">Role</a>
 			</nav>
 		</div>
@@ -62,26 +64,28 @@ $prefs = isset($prefs) ? $prefs : [
 			<section class="card" id="section-profile" data-section>
 				<div class="card-head"><h2>Profile</h2></div>
 				<form id="formProfile" class="form" enctype="multipart/form-data">
+					<!-- Cover Photo Section -->
 					<div class="cover-photo-section">
 						<div class="cover-photo-preview" id="coverPhotoPreview">
-							<img src="<?= htmlspecialchars($profile['cover_photo'] ?? 'https://placehold.co/1200x300?text=Cover+Photo') ?>" alt="Cover Photo" />
+							<img src="<?= htmlspecialchars($profile['cover_photo']) ?>" alt="Cover Photo" />
 							<div class="cover-photo-overlay">
 								<button type="button" class="btn outline small" data-for="coverPhoto">Change Cover Photo</button>
 							</div>
 						</div>
 						<input type="file" id="coverPhoto" accept="image/*" hidden />
 					</div>
+
 					<div class="profile-grid">
 						<div class="profile-left">
 							<div class="avatar-frame">
-								<div class="image-preview-list avatar big" id="sitterAvatarPreview">
+								<div class="image-preview-list avatar big" id="groomerAvatarPreview">
 									<div class="image-preview-item">
 										<img src="<?= htmlspecialchars($profile['avatar']) ?>" alt="avatar" />
 									</div>
 								</div>
 								<div class="uploader-actions center">
-									<input type="file" id="sitterAvatar" accept="image/*" hidden />
-									<button type="button" class="btn outline" data-for="sitterAvatar">Change</button>
+									<input type="file" id="groomerAvatar" accept="image/*" hidden />
+									<button type="button" class="btn outline" data-for="groomerAvatar">Change</button>
 								</div>
 							</div>
 						</div>
@@ -103,13 +107,16 @@ $prefs = isset($prefs) ? $prefs : [
 								</label>
 							</div>
 							<div class="row two">
-								<label>Pet Types
-									<input type="text" name="pet_types" value="<?= htmlspecialchars($profile['pet_types']) ?>" placeholder="Dogs, Cats, etc." />
+								<label>Specializations
+									<input type="text" name="specializations" value="<?= htmlspecialchars($profile['specializations']) ?>" placeholder="e.g., Dogs, Cats, Show Grooming" />
 								</label>
-								<label>Home Type
-									<input type="text" name="home_type" value="<?= htmlspecialchars($profile['home_type']) ?>" placeholder="House, Apartment, etc." />
+								<label>Certifications
+									<input type="text" name="certifications" value="<?= htmlspecialchars($profile['certifications']) ?>" placeholder="e.g., Certified Professional Groomer" />
 								</label>
 							</div>
+							<label>Bio
+								<textarea name="bio" rows="3" placeholder="Tell clients about your grooming experience..."><?= htmlspecialchars($profile['bio']) ?></textarea>
+							</label>
 							<label>Address
 								<input type="text" name="address" value="<?= htmlspecialchars($profile['address']) ?>" />
 							</label>
@@ -121,6 +128,10 @@ $prefs = isset($prefs) ? $prefs : [
 									<input type="text" name="postal_code" value="<?= htmlspecialchars($profile['postal_code']) ?>" />
 								</label>
 							</div>
+							<label>Google Maps Location Link
+								<input type="url" name="google_maps_link" value="<?= htmlspecialchars($profile['google_maps_link']) ?>" placeholder="https://maps.google.com/..." />
+								<small class="field-hint">Share your location to help clients find you</small>
+							</label>
 						</div>
 					</div>
 					<div class="actions">
@@ -151,54 +162,6 @@ $prefs = isset($prefs) ? $prefs : [
 				</form>
 			</section>
 
-			<!-- Preferences Card -->
-			<section class="card" id="section-preferences" data-section>
-				<div class="card-head">
-					<h2>Preferences</h2>
-					<p class="muted small">Customize notifications &amp; services</p>
-				</div>
-				<form id="formPrefs" class="form">
-					<div class="pref-simplified">
-						<div class="pref-row">
-							<label class="toggle">
-								<input type="checkbox" name="email_notifications" <?= $prefs['email_notifications'] ? 'checked' : '' ?> />
-								<span class="toggle-track"><span class="toggle-handle"></span></span>
-								<span class="toggle-label">Email Notifications <small>Receive email alerts for new bookings</small></span>
-							</label>
-						</div>
-						<div class="pref-row">
-							<label class="select-group">Booking Reminders
-								<select name="booking_reminders" value="<?= $prefs['booking_reminders'] ?>">
-									<option value="24" <?= $prefs['booking_reminders'] == 24 ? 'selected' : '' ?>>24 hours before</option>
-									<option value="48" <?= $prefs['booking_reminders'] == 48 ? 'selected' : '' ?>>48 hours before</option>
-									<option value="168" <?= $prefs['booking_reminders'] == 168 ? 'selected' : '' ?>>1 week before</option>
-								</select>
-							</label>
-						</div>
-						<div class="pref-row">
-							<label class="select-group">Maximum Pets
-								<select name="max_pets" value="<?= $prefs['max_pets'] ?>">
-									<option value="1" <?= $prefs['max_pets'] == 1 ? 'selected' : '' ?>>1 pet</option>
-									<option value="2" <?= $prefs['max_pets'] == 2 ? 'selected' : '' ?>>2 pets</option>
-									<option value="3" <?= $prefs['max_pets'] == 3 ? 'selected' : '' ?>>3 pets</option>
-									<option value="5" <?= $prefs['max_pets'] == 5 ? 'selected' : '' ?>>5 pets</option>
-								</select>
-							</label>
-						</div>
-					</div>
-					<hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid #e5e5e5;">
-					<h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">Services & Pricing</h3>
-					<p class="muted small" style="margin-bottom: 1rem;">Describe your pet sitting services and rates</p>
-					<label>Services Description
-						<textarea name="services_description" rows="6" placeholder="Describe your services, e.g.,&#10;&#10;• Dog Walking - LKR 1,500/hour&#10;• Pet Sitting (per day) - LKR 3,000&#10;• Overnight Care - LKR 5,000&#10;• Pet Feeding - LKR 800/visit"><?= htmlspecialchars($prefs['services_description'] ?? '') ?></textarea>
-						<small class="field-hint">List your services and their prices in LKR</small>
-					</label>
-					<div class="actions">
-						<button class="btn primary" type="submit">Save Preferences</button>
-					</div>
-				</form>
-			</section>
-
 			<!-- Role Management Card -->
 			<section class="card" id="section-role" data-section>
 				<div class="card-head">
@@ -214,7 +177,7 @@ $prefs = isset($prefs) ? $prefs : [
 						'breeder' => ['name' => 'Breeder', 'desc' => 'Manage breeding operations'],
 						'groomer' => ['name' => 'Groomer', 'desc' => 'Provide grooming services']
 					];
-					$currentRole = 'sitter';
+					$currentRole = 'groomer';
 					?>
 					<div class="role-options">
 						<?php foreach ($availableRoles as $roleKey => $roleData): ?>
@@ -241,6 +204,6 @@ $prefs = isset($prefs) ? $prefs : [
 	</div>
 </main>
 <div id="toast" class="toast"></div>
-<script src="/PETVET/public/js/sitter/settings.js"></script>
+<script src="/PETVET/public/js/groomer/settings.js"></script>
 </body>
 </html>

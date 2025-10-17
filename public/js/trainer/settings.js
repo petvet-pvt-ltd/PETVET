@@ -64,6 +64,25 @@
     });
   }
 
+  // Cover photo preview
+  const coverPhotoInput = document.getElementById('coverPhoto');
+  if (coverPhotoInput) {
+    coverPhotoInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const preview = document.querySelector('#coverPhotoPreview img');
+          if (preview) {
+            preview.src = event.target.result;
+            showToast('Cover photo updated (not saved yet)');
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
   // Generic form save simulation
   function handleFakeSubmit(form, label){
     if(!form) return;
@@ -111,7 +130,8 @@
     'pet-owner': '/PETVET/index.php?module=pet-owner&page=my-pets',
     'trainer': '/PETVET/index.php?module=trainer&page=dashboard',
     'sitter': '/PETVET/index.php?module=sitter&page=dashboard',
-    'breeder': '/PETVET/index.php?module=breeder&page=dashboard'
+    'breeder': '/PETVET/index.php?module=breeder&page=dashboard',
+    'groomer': '/PETVET/index.php?module=groomer&page=services'
   };
   
   roleOptions.forEach(opt=>{

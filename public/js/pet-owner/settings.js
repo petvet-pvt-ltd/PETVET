@@ -111,7 +111,8 @@
     'pet-owner': '/PETVET/index.php?module=pet-owner&page=my-pets',
     'trainer': '/PETVET/index.php?module=trainer&page=dashboard',
     'sitter': '/PETVET/index.php?module=sitter&page=dashboard',
-    'breeder': '/PETVET/index.php?module=breeder&page=dashboard'
+    'breeder': '/PETVET/index.php?module=breeder&page=dashboard',
+    'groomer': '/PETVET/index.php?module=groomer&page=services'
   };
   
   roleOptions.forEach(opt=>{
