@@ -16,7 +16,10 @@ class PetOwnerController extends BaseController {
 
     public function myPets() {
         $model = new MyPetsModel();
-        $data = ['pets' => $model->fetchPets()];
+        $data = [
+            'pets' => $model->fetchPets(),
+            'clinics' => $model->getClinics()
+        ];
         $this->view('pet-owner', 'my-pets', $data);
     }
 

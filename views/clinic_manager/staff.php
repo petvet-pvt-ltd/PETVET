@@ -18,6 +18,7 @@ $total_staff = count($staff);
 <title>Staff Management | Clinic Manager</title>
 <link rel="stylesheet" href="/PETVET/public/css/clinic-manager/enhanced-global.css">
 <link rel="stylesheet" href="/PETVET/public/css/clinic-manager/vets.css">
+<link rel="stylesheet" href="/PETVET/public/css/clinic-manager/staff.css">
 <style>
   .role-badge {
     display: inline-block;
@@ -45,72 +46,6 @@ $total_staff = count($staff);
     color: var(--gray-500);
     font-size: 13px;
   }
-  
-  .staff-modal {
-    position: fixed;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0,0,0,0.5);
-    z-index: 1000;
-  }
-  
-  .staff-modal.show {
-    display: flex;
-  }
-  
-  .staff-modal-dialog {
-    background: white;
-    width: min(520px, 92%);
-    border-radius: var(--border-radius);
-    padding: 24px;
-    box-shadow: var(--shadow-xl);
-    animation: modalSlideIn 0.3s ease;
-  }
-  
-  @keyframes modalSlideIn {
-    from {
-      opacity: 0;
-      transform: translateY(-20px) scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-  
-  .staff-form {
-    display: grid;
-    gap: 16px;
-  }
-  
-  .staff-form .row {
-    display: grid;
-    gap: 16px;
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .staff-form label {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-weight: 600;
-    color: var(--gray-700);
-  }
-  
-  .staff-modal-actions {
-    margin-top: 20px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-  }
-  
-  @media (max-width: 640px) {
-    .staff-form .row {
-      grid-template-columns: 1fr;
-    }
-  }
 </style>
 </head>
 <body>
@@ -122,6 +57,7 @@ $total_staff = count($staff);
     </div>
     <div class="cmc-actions">
       <button class="btn btn-primary" id="openAddStaff">➕ Add Staff Member</button>
+      <button class="btn btn-success" id="openAddReceptionist">➕ Add Receptionist</button>
     </div>
   </header>
   
@@ -212,6 +148,57 @@ $total_staff = count($staff);
   </div>
 </div>
 
+<!-- Add Receptionist Modal -->
+<div id="addReceptionistModal" class="staff-modal" role="dialog" aria-modal="true">
+  <div class="staff-modal-dialog">
+    <h3>Create Receptionist Account</h3>
+    <form id="receptionistForm" class="staff-form">
+      <label>
+        Full Name
+        <input type="text" name="name" id="recepName" placeholder="Enter full name" required>
+      </label>
+      <label>
+        Email Address
+        <input type="email" name="email" id="recepEmail" placeholder="receptionist@clinic.com" required>
+      </label>
+      <label>
+        Password
+        <input type="password" name="password" id="recepPassword" placeholder="Create a secure password" required minlength="6">
+      </label>
+      <label>
+        Confirm Password
+        <input type="password" name="confirm_password" id="recepConfirmPassword" placeholder="Re-enter password" required minlength="6">
+      </label>
+      <div class="password-match-indicator" id="passwordMatchIndicator" style="display: none;"></div>
+      <div class="staff-modal-actions">
+        <button type="button" class="btn btn-ghost" id="cancelAddReceptionist">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Account</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Success Modal with Credentials -->
+<div id="credentialsSuccessModal" class="staff-modal" role="dialog" aria-modal="true">
+  <div class="staff-modal-dialog credentials-modal">
+    <h3>✓ Account Created Successfully</h3>
+    <div class="credentials-content">
+      <p class="success-message">The receptionist account has been created successfully. Share these credentials with the new team member:</p>
+      
+      <div class="credentials-box" id="credentialsBox">
+        <div class="credentials-text" id="credentialsText"></div>
+      </div>
+      
+      <div class="credentials-actions">
+        <button type="button" class="btn btn-success btn-copy" id="copyCredentialsBtn">
+          <span class="copy-icon">📋</span> Copy Credentials
+        </button>
+        <button type="button" class="btn btn-primary" id="closeCredentialsModal">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Status confirm reuse from vets (simplified) -->
 <div id="staffStatusModal" class="cmc-modal" role="dialog" aria-modal="true" aria-labelledby="staffStatusTitle">
   <div class="cmc-modal-dialog">
@@ -275,6 +262,292 @@ function bindDeleteButtons(){
   });
 }
 bindDeleteButtons();
+
+// ============================================
+// RECEPTIONIST ACCOUNT CREATION
+// ============================================
+
+const addReceptionistBtn = document.getElementById('openAddReceptionist');
+const receptionistModal = document.getElementById('addReceptionistModal');
+const cancelReceptionist = document.getElementById('cancelAddReceptionist');
+const receptionistForm = document.getElementById('receptionistForm');
+const credentialsModal = document.getElementById('credentialsSuccessModal');
+const closeCredentialsBtn = document.getElementById('closeCredentialsModal');
+const copyCredentialsBtn = document.getElementById('copyCredentialsBtn');
+const passwordMatchIndicator = document.getElementById('passwordMatchIndicator');
+
+// Store created receptionist data temporarily (for UI purposes)
+let createdReceptionistData = null;
+
+// Open receptionist modal
+function openReceptionistModal() {
+  receptionistModal.classList.add('show');
+}
+
+// Close receptionist modal
+function closeReceptionistModal() {
+  receptionistModal.classList.remove('show');
+  receptionistForm.reset();
+  passwordMatchIndicator.style.display = 'none';
+}
+
+// Close credentials modal
+function closeCredentials() {
+  credentialsModal.classList.remove('show');
+  createdReceptionistData = null;
+}
+
+// Password match validation
+const recepPassword = document.getElementById('recepPassword');
+const recepConfirmPassword = document.getElementById('recepConfirmPassword');
+
+function checkPasswordMatch() {
+  const password = recepPassword.value;
+  const confirmPassword = recepConfirmPassword.value;
+  
+  if (confirmPassword.length > 0) {
+    if (password === confirmPassword) {
+      passwordMatchIndicator.style.display = 'block';
+      passwordMatchIndicator.textContent = '✓ Passwords match';
+      passwordMatchIndicator.className = 'password-match-indicator match';
+    } else {
+      passwordMatchIndicator.style.display = 'block';
+      passwordMatchIndicator.textContent = '✗ Passwords do not match';
+      passwordMatchIndicator.className = 'password-match-indicator no-match';
+    }
+  } else {
+    passwordMatchIndicator.style.display = 'none';
+  }
+}
+
+recepPassword.addEventListener('input', checkPasswordMatch);
+recepConfirmPassword.addEventListener('input', checkPasswordMatch);
+
+// Handle receptionist form submission
+receptionistForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(receptionistForm);
+  const name = formData.get('name');
+  const email = formData.get('email');
+  const password = formData.get('password');
+  const confirmPassword = formData.get('confirm_password');
+  
+  // Validate passwords match
+  if (password !== confirmPassword) {
+    alert('Passwords do not match!');
+    return;
+  }
+  
+  // TODO: Backend API call to create receptionist account
+  // fetch('/PETVET/api/clinic-manager/create-receptionist.php', {
+  //   method: 'POST',
+  //   body: formData  // Send FormData directly, PHP will receive via $_POST
+  // })
+  // .then(response => response.json())
+  // .then(data => {
+  //   if (data.success) {
+  //     createdReceptionistData = data.receptionist;
+  //     closeReceptionistModal();
+  //     showCredentialsModal(data.receptionist.name, data.receptionist.email, password);
+  //     addReceptionistToTable(data.receptionist.name, data.receptionist.email, password);
+  //   } else {
+  //     alert(data.message || 'Failed to create account');
+  //   }
+  // })
+  // .catch(error => {
+  //   console.error('Error:', error);
+  //   alert('An error occurred. Please try again.');
+  // });
+  
+  // FOR NOW: UI only - simulate success
+  createdReceptionistData = {
+    name: name,
+    email: email,
+    password: password,
+    createdAt: new Date().toISOString()
+  };
+  
+  // Close receptionist modal
+  closeReceptionistModal();
+  
+  // Show credentials modal
+  showCredentialsModal(name, email, password);
+  
+  // Add to staff table as pending
+  addReceptionistToTable(name, email, password);
+});
+
+// Show credentials modal with copy functionality
+function showCredentialsModal(name, email, password) {
+  const clinicName = 'PetVet Clinic'; // TODO: Get from backend/session
+  
+  const credentialsText = `This is your receptionist credentials for ${clinicName}
+
+Username: ${email}
+Password: ${password}
+
+Please change your password after your first login for security purposes.`;
+  
+  document.getElementById('credentialsText').textContent = credentialsText;
+  credentialsModal.classList.add('show');
+}
+
+// Copy credentials to clipboard
+copyCredentialsBtn.addEventListener('click', function() {
+  const credentialsText = document.getElementById('credentialsText').textContent;
+  
+  navigator.clipboard.writeText(credentialsText).then(() => {
+    // Show success feedback
+    const originalHTML = copyCredentialsBtn.innerHTML;
+    copyCredentialsBtn.innerHTML = '<span class="copy-icon">✓</span> Copied to Clipboard!';
+    copyCredentialsBtn.classList.add('copied');
+    copyCredentialsBtn.disabled = true;
+    
+    setTimeout(() => {
+      copyCredentialsBtn.innerHTML = originalHTML;
+      copyCredentialsBtn.classList.remove('copied');
+      copyCredentialsBtn.disabled = false;
+    }, 2500);
+  }).catch(err => {
+    console.error('Failed to copy:', err);
+    alert('Failed to copy credentials. Please copy manually.');
+  });
+});
+
+// Add receptionist to table (pending state)
+function addReceptionistToTable(name, email, password) {
+  const tbody = document.querySelector('.staff-table tbody');
+  
+  // Generate avatar
+  const avatar = staffAvatars[staffAvatarIndex % staffAvatars.length];
+  staffAvatarIndex++;
+  
+  const row = document.createElement('tr');
+  row.className = 'receptionist-pending';
+  row.dataset.email = email;
+  row.dataset.password = password;
+  
+  row.innerHTML = `
+    <td>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <img src="${avatar}" class="avatar" alt="${name}">
+        <span>${name}</span>
+      </div>
+    </td>
+    <td>
+      <span class="role-badge">Receptionist</span>
+      <span class="badge-pending">Pending</span>
+    </td>
+    <td>
+      <div class="contact-info">
+        <span class="contact-email">${email}</span>
+        <span class="contact-phone" style="color: #94a3b8; font-size: 12px;">Account not activated</span>
+      </div>
+    </td>
+    <td class="col-actions">
+      <button class="icon-btn copy-credentials-btn" data-email="${email}" data-password="${password}" title="Copy Credentials">
+        📋
+      </button>
+      <button class="icon-btn staff-delete" data-name="${name}" title="Delete">🗑️</button>
+    </td>
+  `;
+  
+  tbody.insertBefore(row, tbody.firstChild);
+  
+  // Bind copy credentials button
+  bindCopyCredentialsButtons();
+  
+  // Rebind delete buttons
+  bindDeleteButtons();
+}
+
+// Bind copy credentials buttons in table
+function bindCopyCredentialsButtons() {
+  document.querySelectorAll('.copy-credentials-btn').forEach(btn => {
+    btn.onclick = function() {
+      const email = this.dataset.email;
+      const password = this.dataset.password;
+      const row = this.closest('tr');
+      const name = row.querySelector('span').textContent;
+      
+      const clinicName = 'PetVet Clinic'; // TODO: Get from backend
+      
+      const credentialsText = `This is your receptionist credentials for ${clinicName}
+
+Username: ${email}
+Password: ${password}
+
+Please change your password after your first login for security purposes.`;
+      
+      navigator.clipboard.writeText(credentialsText).then(() => {
+        // Visual feedback
+        const originalText = this.textContent;
+        const originalTitle = this.title;
+        
+        this.textContent = '✓';
+        this.title = 'Copied to Clipboard!';
+        this.style.background = '#10b981';
+        this.style.color = 'white';
+        this.disabled = true;
+        
+        // Show tooltip-like message
+        const tooltip = document.createElement('div');
+        tooltip.textContent = 'Copied to Clipboard!';
+        tooltip.style.cssText = `
+          position: absolute;
+          background: #10b981;
+          color: white;
+          padding: 6px 12px;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 600;
+          white-space: nowrap;
+          z-index: 1000;
+          animation: fadeIn 0.2s ease;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        `;
+        
+        const rect = this.getBoundingClientRect();
+        tooltip.style.position = 'fixed';
+        tooltip.style.left = rect.left + 'px';
+        tooltip.style.top = (rect.top - 35) + 'px';
+        
+        document.body.appendChild(tooltip);
+        
+        setTimeout(() => {
+          this.textContent = originalText;
+          this.title = originalTitle;
+          this.style.background = '';
+          this.style.color = '';
+          this.disabled = false;
+          tooltip.remove();
+        }, 2500);
+      }).catch(err => {
+        console.error('Failed to copy:', err);
+        alert('Failed to copy credentials.');
+      });
+    };
+  });
+}
+
+// Event listeners
+addReceptionistBtn.addEventListener('click', openReceptionistModal);
+cancelReceptionist.addEventListener('click', closeReceptionistModal);
+closeCredentialsBtn.addEventListener('click', closeCredentials);
+
+// Close modals on outside click
+receptionistModal.addEventListener('click', function(e) {
+  if (e.target === receptionistModal) {
+    closeReceptionistModal();
+  }
+});
+
+credentialsModal.addEventListener('click', function(e) {
+  if (e.target === credentialsModal) {
+    closeCredentials();
+  }
+});
 </script>
 </body>
 </html>
