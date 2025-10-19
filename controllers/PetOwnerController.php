@@ -10,6 +10,7 @@ require_once __DIR__ . '/../models/PetOwner/LostFoundModel.php';
 require_once __DIR__ . '/../models/PetOwner/ExplorePetsModel.php';
 require_once __DIR__ . '/../models/PetOwner/SellPetsModel.php';
 require_once __DIR__ . '/../models/PetOwner/SettingsModel.php';
+require_once __DIR__ . '/../models/PetOwner/ServicesModel.php';
 
 class PetOwnerController extends BaseController {
 
@@ -116,5 +117,59 @@ class PetOwnerController extends BaseController {
         ];
         
         $this->view('pet-owner', 'settings', $data);
+    }
+
+    public function services() {
+        $servicesModel = new ServicesModel();
+        
+        // Get service type and filters from query params
+        $serviceType = isset($_GET['type']) ? $_GET['type'] : 'trainers';
+        
+        // Build filters array from query params
+        $filters = [];
+        if (isset($_GET['search'])) $filters['search'] = $_GET['search'];
+        if (isset($_GET['city'])) $filters['city'] = $_GET['city'];
+        if (isset($_GET['experience'])) $filters['experience'] = $_GET['experience'];
+        
+        // Service-specific filters
+        if ($serviceType === 'trainers' && isset($_GET['specialization'])) {
+            $filters['specialization'] = $_GET['specialization'];
+        }
+        
+        if ($serviceType === 'trainers' && isset($_GET['training_type'])) {
+            $filters['training_type'] = $_GET['training_type'];
+        }
+        
+        if ($serviceType === 'sitters') {
+            if (isset($_GET['pet_type'])) $filters['pet_type'] = $_GET['pet_type'];
+            if (isset($_GET['home_type'])) $filters['home_type'] = $_GET['home_type'];
+        }
+        
+        if ($serviceType === 'breeders') {
+            if (isset($_GET['breed'])) $filters['breed'] = $_GET['breed'];
+            if (isset($_GET['gender'])) $filters['gender'] = $_GET['gender'];
+        }
+        
+        if ($serviceType === 'groomers') {
+            if (isset($_GET['show'])) $filters['show'] = $_GET['show'];
+            if (isset($_GET['service_type'])) $filters['service_type'] = $_GET['service_type'];
+            if (isset($_GET['specialization'])) $filters['specialization'] = $_GET['specialization'];
+            if (isset($_GET['min_price'])) $filters['min_price'] = $_GET['min_price'];
+            if (isset($_GET['max_price'])) $filters['max_price'] = $_GET['max_price'];
+            if (isset($_GET['groomer_id'])) $filters['groomer_id'] = $_GET['groomer_id'];
+        }
+        
+        // Fetch providers and cities for dropdown
+        $providers = $servicesModel->getServiceProviders($serviceType, $filters);
+        $cities = $servicesModel->getCities($serviceType);
+        
+        $data = [
+            'serviceType' => $serviceType,
+            'providers' => $providers,
+            'cities' => $cities,
+            'filters' => $filters
+        ];
+        
+        $this->view('pet-owner', 'services', $data);
     }
 }

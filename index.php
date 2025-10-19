@@ -62,6 +62,7 @@ switch ($module) {
       case 'my-pets': $c->myPets(); break;
       case 'medical-records': $c->medicalRecords(); break; // <-- Controller renders the view
   case 'appointments': $c->appointments(); break;
+  case 'services': $c->services(); break;
   case 'lost-found': $c->lostFound(); break;
   case 'explore-pets': $c->explorePets(); break;
   case 'sell-pets': $c->sellPets(); break;
