@@ -1,0 +1,6 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#2196F3"/>
+  <text x="400" y="280" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="white" text-anchor="middle">X-Ray Report</text>
+  <text x="400" y="320" font-family="Arial, sans-serif" font-size="20" fill="white" text-anchor="middle">September 15, 2025</text>
+  <text x="400" y="360" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">No abnormalities detected</text>
+</svg>
