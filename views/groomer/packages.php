@@ -29,11 +29,11 @@ $GLOBALS['module'] = 'groomer';
 <?php if (!empty($packages)): ?>
 <?php foreach ($packages as $package): ?>
 <div class="package-card <?php echo $package['available'] ? '' : 'unavailable'; ?>" data-package-id="<?php echo $package['id']; ?>">
-<div class="package-ribbon">
-<span class="discount-badge">Save <?php echo number_format($package['discount_percent'], 1); ?>%</span>
-</div>
 <div class="package-header">
+<div class="package-title-section">
 <h3 class="package-name"><?php echo htmlspecialchars($package['name']); ?></h3>
+<span class="discount-text">Save <?php echo number_format($package['discount_percent'], 1); ?>%</span>
+</div>
 <div class="package-actions">
 <button class="btn-icon edit" title="Edit Package" data-action="edit">✏️</button>
 <button class="btn-icon delete" title="Delete Package" data-action="delete">🗑️</button>

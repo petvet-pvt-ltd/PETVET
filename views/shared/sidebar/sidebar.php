@@ -57,6 +57,9 @@ echo "<!-- activeModule: $activeModule -->";
       <a href="/PETVET/index.php?module=pet-owner&page=appointments" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'appointments.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Appointments</li>
       </a>
+      <a href="/PETVET/index.php?module=pet-owner&page=services" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'services.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/package-box.png" class="icon"> Services</li>
+      </a>
       <a href="/PETVET/index.php?module=pet-owner&page=shop" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'shop.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/shopping-cart.png" class="icon"> Shop</li>
       </a>
