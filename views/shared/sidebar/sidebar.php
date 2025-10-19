@@ -107,9 +107,6 @@ echo "<!-- activeModule: $activeModule -->";
       <a href="/PETVET/index.php?module=admin&page=lost-found" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'lost-found.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/compass.png" class="icon"> Lost & Found</li>
       </a>
-      <a href="/PETVET/index.php?module=admin&page=reports" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'reports.php') ? 'active' : '' ?>">
-        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/reports.png" class="icon"> Reports</li>
-      </a>
       <a href="/PETVET/index.php?module=admin&page=finance-panel" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'finance-panel.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/package-box.png" class="icon"> Finance Panel</li>
       </a>
