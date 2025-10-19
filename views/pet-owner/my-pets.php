@@ -163,7 +163,7 @@ function calculateAge($dob) {
           <!-- ✅ Route through the controller (no direct /views/ link) -->
           <a href="/PETVET/?module=pet-owner&page=medical-records&pet=<?php echo (int)$pet['id']; ?>" class="btn outline">Medical Records</a>
 
-          <a href="../appointments/book.php?pet=<?php echo $pet['id']; ?>" class="btn primary">Book Appointment</a>
+          <a href="#book-appointment?pet=<?php echo $pet['id']; ?>" class="btn primary">Book Appointment</a>
           <button class="btn danger markMissingBtn" data-pet="<?php echo $pet['id']; ?>">Mark as Missing</button>
         </div>
       </article>
@@ -407,87 +407,125 @@ function calculateAge($dob) {
       </header>
 
       <div class="dialog-body" id="appointmentFormContent">
-        <!-- Section A: Appointment Type & Reason -->
+        <!-- Section A: Appointment Type & Symptoms -->
         <div class="form-section">
-          <h4 class="section-title">Appointment Details</h4><br>
+          <h4 class="section-title">Appointment Details</h4>
           <label class="field">
             <span>Appointment Type *</span>
-            <select class="select" name="appointment_type" required>
+            <select class="select" name="appointment_type" id="appointmentType" required>
               <option value="">Select Appointment Type</option>
-              <option>Routine Check-up</option>
-              <option>Vaccination</option>
-              <option>Grooming</option>
-              <option>Dental Cleaning</option>
-              <option>Illness/Injury Consultation</option>
-              <option>Surgery</option>
-              <option>Other</option>
+              <option value="routine">Routine Check-up</option>
+              <option value="vaccination">Vaccination</option>
+              <option value="grooming">Grooming</option>
+              <option value="dental">Dental Cleaning</option>
+              <option value="illness">Illness/Injury Consultation</option>
+              <option value="surgery">Surgery</option>
+              <option value="emergency">Emergency</option>
+              <option value="other">Other</option>
             </select>
-          </label><br>
+          </label>
           <label class="field field-col">
-            <span>Reason for Visit / Symptoms</span>
-            <textarea class="input" name="reason" rows="2" placeholder="Please describe any symptoms or concerns"></textarea>
-          </label><br>
+            <span>Symptoms / Reason for Visit *</span>
+            <textarea class="input" name="symptoms" id="appointmentSymptoms" rows="3" placeholder="Please describe symptoms, concerns, or reason for visit..." required></textarea>
+          </label>
         </div>
 
-        <!-- Section B: Date & Time -->
+        <!-- Section B: Clinic Selection -->
         <div class="form-section">
-          <h4 class="section-title">Date & Time</h4>
+          <h4 class="section-title">Select Clinic</h4>
           <label class="field">
-            <span>Select a Date *</span>
-            <input type="date" class="input" name="date" required>
-          </label><br>
-          <div class="time-slots" id="timeSlotsWrap" style="margin-top:10px;">
-            <!-- JS will generate available time buttons here -->
+            <span>Clinic Location *</span>
+            <select class="select" name="clinic" id="clinicSelect" required>
+              <option value="">Select a Clinic</option>
+              <?php foreach($clinics as $clinic): ?>
+                <option value="<?= $clinic['id'] ?>" data-address="<?= htmlspecialchars($clinic['address']) ?>" data-phone="<?= htmlspecialchars($clinic['phone']) ?>">
+                  <?= htmlspecialchars($clinic['name']) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <div id="clinicInfo" style="display:none;">
+            <p style="margin:0;"><strong id="clinicInfoName"></strong></p>
+            <p style="margin:4px 0 0;">
+              📍 <span id="clinicInfoAddress"></span><br>
+              📞 <span id="clinicInfoPhone"></span>
+            </p>
           </div>
         </div>
 
-        <!-- Section C: Veterinarian -->
-        <div class="form-section">
-          <h4 class="section-title">Veterinarian</h4>
-          <label class="field">
-            <span>Preferred Veterinarian (Optional)</span>
-            <select class="select" name="vet">
-              <option value="">Any Available Vet</option>
-              <option>Dr. Smith</option>
-              <option>Dr. Jones</option>
-            </select>
-          </label><br>
+        <!-- Section C: Veterinarian Selection -->
+        <div class="form-section" id="vetSection" style="display:none;">
+          <h4 class="section-title">Select Veterinarian</h4>
+          <div id="vetsList" class="vets-grid">
+            <!-- Vets will be loaded here dynamically -->
+          </div>
+          <input type="hidden" name="vet_id" id="selectedVetId">
         </div>
 
-        <!-- Section D: Clinic Location -->
-        <div class="form-section">
-          <h4 class="section-title">Clinic Location</h4>
-          <label class="field">
-            <span>Select Clinic Location *</span>
-            <select class="select" name="location" required>
-              <option value="">Select Location</option>
-              <option>Main Clinic</option>
-              <option>Branch A</option>
-              <option>Branch B</option>
-            </select>
-          </label><br>
+        <!-- Section D: Date & Time -->
+        <div class="form-section" id="dateTimeSection" style="display:none;">
+          <h4 class="section-title">Date & Time</h4>
+          <div class="grid-2">
+            <label class="field">
+              <span>Select Date *</span>
+              <input type="date" class="input" name="date" id="appointmentDate" required>
+            </label>
+            <label class="field">
+              <span>Enter Time *</span>
+              <input type="time" class="input" name="time" id="appointmentTime" required>
+            </label>
+          </div>
+          <div id="timeValidation">
+            <span id="timeValidationMessage"></span>
+          </div>
+          <p style="margin:8px 0 0; font-size:11px; color:#64748b;">
+            ⏱️ Default slot duration: 20 minutes
+          </p>
         </div>
 
-        
+        <!-- Important Notice -->
+        <div class="form-section" id="noticeSection" style="display:none;">
+          <div>
+            <p>
+              <strong>⚠️ Important:</strong> If you arrive late to your appointment, it may be cancelled. Please arrive 10 minutes early.
+            </p>
+          </div>
+        </div>
+      </div>
 
       <!-- Confirmation View (hidden initially) -->
       <div class="dialog-body" id="appointmentConfirmation" style="display:none;text-align:center;">
-        <div style="font-size:48px;color:#16a34a;">✔</div>
-        <h3>Appointment Confirmed!</h3>
-        <p id="appointmentSummary"></p>
+        <div style="font-size:64px; margin-bottom:16px;">✅</div>
+        <h3 style="color:#16a34a; margin-bottom:16px;">Appointment Confirmed!</h3>
+        <div id="appointmentSummary" style="text-align:left; background:#f8fafc; padding:20px; border-radius:8px; margin-top:20px;">
+        </div>
+      </div>
+
+      <!-- Review/Confirmation View (before final confirmation) -->
+      <div class="dialog-body" id="appointmentReview" style="display:none;">
+        <div style="text-align:center; margin-bottom:20px;">
+          <div style="font-size:48px; margin-bottom:12px;">📋</div>
+          <h3 style="color:#1e293b; margin-bottom:8px; font-size:20px;">Review Your Appointment</h3>
+          <p style="color:#64748b; font-size:13px; margin:0;">Please review the details before confirming</p>
+        </div>
+        <div id="appointmentReviewSummary" style="background:#f8fafc; padding:16px; border-radius:8px; border:1px solid #e2e8f0;">
+        </div>
       </div>
 
       <footer class="dialog-actions">
-        <button class="btn ghost" value="cancel" id="appointmentCancelBtn">Cancel</button>
-        <button class="btn primary" value="save" id="appointmentConfirmBtn" disabled>Confirm</button>
+        <button class="btn ghost" type="button" value="cancel" id="appointmentCancelBtn">Cancel</button>
+        <button class="btn outline" type="button" id="appointmentBackBtn" style="display:none;">Back</button>
+        <button class="btn primary" type="button" value="save" id="appointmentConfirmBtn" disabled>Confirm Appointment</button>
+        <button class="btn primary" type="button" id="appointmentFinalConfirmBtn" style="display:none;">Yes, Book Appointment</button>
       </footer>
     </form>
   </dialog>
 
 
   <?php
-  // Pass pets array to JS
+  // Pass pets array and clinics to JS
   echo '<script>window.petsData = ' . json_encode($pets) . ';</script>';
+  echo '<script>window.clinicsData = ' . json_encode($clinics) . ';</script>';
   ?>
   <script src="/PETVET/public/js/pet-owner/my-pets.js"></script>
   <script>

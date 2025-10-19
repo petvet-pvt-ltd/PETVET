@@ -48,4 +48,83 @@ class MyPetsModel {
 		];
 		return $pets;
 	}
+
+	public function getClinics() {
+		// Mock clinic data
+		return [
+			[
+				'id' => 1,
+				'name' => 'PetVet Main Clinic',
+				'address' => '123 Main Street, Colombo',
+				'phone' => '011-2345678'
+			],
+			[
+				'id' => 2,
+				'name' => 'PetVet Kandy Branch',
+				'address' => '456 Peradeniya Road, Kandy',
+				'phone' => '081-2234567'
+			],
+			[
+				'id' => 3,
+				'name' => 'PetVet Galle Branch',
+				'address' => '789 Galle Road, Galle',
+				'phone' => '091-2223344'
+			],
+			[
+				'id' => 4,
+				'name' => 'PetVet Negombo Branch',
+				'address' => '321 Beach Road, Negombo',
+				'phone' => '031-2227788'
+			]
+		];
+	}
+
+	public function getVetsByClinic($clinicId) {
+		// Mock vet data by clinic
+		$vets = [
+			1 => [ // Main Clinic
+				['id' => 1, 'name' => 'Dr. Sarah Johnson', 'specialization' => 'General Practice', 'avatar' => 'https://i.pravatar.cc/150?img=1'],
+				['id' => 2, 'name' => 'Dr. Michael Chen', 'specialization' => 'Surgery', 'avatar' => 'https://i.pravatar.cc/150?img=13'],
+				['id' => 3, 'name' => 'Dr. Emily Rodriguez', 'specialization' => 'Exotic Animals', 'avatar' => 'https://i.pravatar.cc/150?img=5'],
+				['id' => 4, 'name' => 'Dr. James Wilson', 'specialization' => 'Cardiology', 'avatar' => 'https://i.pravatar.cc/150?img=12']
+			],
+			2 => [ // Kandy Branch
+				['id' => 5, 'name' => 'Dr. Priya Perera', 'specialization' => 'General Practice', 'avatar' => 'https://i.pravatar.cc/150?img=9'],
+				['id' => 6, 'name' => 'Dr. Nuwan Silva', 'specialization' => 'Dentistry', 'avatar' => 'https://i.pravatar.cc/150?img=14'],
+				['id' => 7, 'name' => 'Dr. Anjali Fernando', 'specialization' => 'Dermatology', 'avatar' => 'https://i.pravatar.cc/150?img=10']
+			],
+			3 => [ // Galle Branch
+				['id' => 8, 'name' => 'Dr. Rajesh Kumar', 'specialization' => 'General Practice', 'avatar' => 'https://i.pravatar.cc/150?img=15'],
+				['id' => 9, 'name' => 'Dr. Lisa Thompson', 'specialization' => 'Orthopedics', 'avatar' => 'https://i.pravatar.cc/150?img=20'],
+				['id' => 10, 'name' => 'Dr. David Lee', 'specialization' => 'Emergency Care', 'avatar' => 'https://i.pravatar.cc/150?img=33']
+			],
+			4 => [ // Negombo Branch
+				['id' => 11, 'name' => 'Dr. Amanda Costa', 'specialization' => 'General Practice', 'avatar' => 'https://i.pravatar.cc/150?img=24'],
+				['id' => 12, 'name' => 'Dr. Robert Brown', 'specialization' => 'Behavior', 'avatar' => 'https://i.pravatar.cc/150?img=52']
+			]
+		];
+
+		return $vets[$clinicId] ?? [];
+	}
+
+	public function getExistingAppointments($date) {
+		// Mock existing appointments for time conflict checking
+		// Returns array of appointments with time slots (in 24-hour format for easier comparison)
+		$appointments = [
+			'2025-10-20' => [
+				['time' => '09:00', 'vet_id' => 1],
+				['time' => '09:30', 'vet_id' => 2],
+				['time' => '10:00', 'vet_id' => 1],
+				['time' => '14:00', 'vet_id' => 3],
+				['time' => '14:30', 'vet_id' => 1],
+			],
+			'2025-10-21' => [
+				['time' => '09:00', 'vet_id' => 2],
+				['time' => '11:00', 'vet_id' => 1],
+				['time' => '15:00', 'vet_id' => 4],
+			]
+		];
+
+		return $appointments[$date] ?? [];
+	}
 }

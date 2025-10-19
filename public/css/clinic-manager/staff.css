@@ -1,0 +1,401 @@
+/* ============================================
+   STAFF PAGE - MODAL STYLES
+   ============================================ */
+
+.staff-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.staff-modal.show {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.staff-modal-dialog {
+  background: white;
+  width: min(540px, 92%);
+  max-height: 90vh;
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: modalSlideIn 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.staff-modal-dialog h3 {
+  margin: 0;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  border-bottom: 2px solid #1e3a8a;
+}
+
+.staff-form {
+  padding: 24px;
+  display: grid;
+  gap: 18px;
+  max-height: calc(90vh - 160px);
+  overflow-y: auto;
+}
+
+.staff-form .row {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.staff-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 600;
+  color: #334155;
+  font-size: 14px;
+}
+
+.staff-form input,
+.staff-form select {
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.staff-form input:focus,
+.staff-form select:focus {
+  outline: none;
+  border-color: #1e40af;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
+.staff-form input::placeholder {
+  color: #94a3b8;
+}
+
+.staff-modal-actions {
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.staff-modal-actions .btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.staff-modal-actions .btn-ghost {
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.staff-modal-actions .btn-ghost:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.staff-modal-actions .btn-primary {
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  color: white;
+  box-shadow: 0 2px 6px rgba(30, 64, 175, 0.3);
+}
+
+.staff-modal-actions .btn-primary:hover {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e3a8a 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.4);
+}
+
+/* Confirm Modal (Status) */
+.cmc-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1100;
+}
+
+.cmc-modal.show {
+  display: flex;
+}
+
+.cmc-modal-dialog {
+  background: white;
+  width: min(420px, 90%);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: modalSlideIn 0.3s ease;
+}
+
+.cmc-modal-dialog h3 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.cmc-modal-dialog p {
+  margin: 0 0 20px 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.cmc-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.cmc-modal-actions .btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.cmc-modal-actions .btn-ghost {
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.cmc-modal-actions .btn-ghost:hover {
+  background: #f1f5f9;
+}
+
+.cmc-modal-actions .btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
+}
+
+.cmc-modal-actions .btn-danger:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .staff-form .row {
+    grid-template-columns: 1fr;
+  }
+  
+  .staff-modal-dialog h3 {
+    font-size: 18px;
+    padding: 16px 20px;
+  }
+  
+  .staff-form {
+    padding: 20px;
+  }
+  
+  .staff-modal-actions {
+    flex-direction: column-reverse;
+  }
+  
+  .staff-modal-actions .btn {
+    width: 100%;
+  }
+}
+
+/* ============================================
+   RECEPTIONIST ACCOUNT CREATION STYLES
+   ============================================ */
+
+.btn-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* Password Match Indicator */
+.password-match-indicator {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: -8px;
+}
+
+.password-match-indicator.match {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.password-match-indicator.no-match {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+/* Credentials Modal */
+.credentials-modal {
+  max-width: 560px;
+}
+
+.credentials-content {
+  padding: 24px;
+}
+
+.success-message {
+  margin: 0 0 20px 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.credentials-box {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.credentials-text {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #1e293b;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.credentials-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-copy {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-copy.copied {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.copy-icon {
+  font-size: 16px;
+}
+
+/* Pending Receptionist Row */
+.receptionist-pending {
+  background: #f8fafc;
+  opacity: 0.8;
+}
+
+.badge-pending {
+  display: inline-block;
+  background: #fef3c7;
+  color: #92400e;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-left: 6px;
+  border: 1px solid #fcd34d;
+}
+
+.copy-credentials-btn {
+  background: #3b82f6;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.copy-credentials-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* Responsive for credentials modal */
+@media (max-width: 640px) {
+  .credentials-actions {
+    flex-direction: column-reverse;
+  }
+  
+  .credentials-actions .btn {
+    width: 100%;
+  }
+  
+  .credentials-box {
+    padding: 16px;
+  }
+  
+  .credentials-text {
+    font-size: 13px;
+  }
+}
