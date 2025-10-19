@@ -125,6 +125,280 @@ function calculateAge($dob) {
         min-width: 100%;
       }
     }
+
+    /* ========================================
+       NOTIFICATION PANEL STYLES (YouTube-style)
+       ======================================== */
+    
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .notification-container {
+      position: relative;
+    }
+
+    /* Bell Button */
+    .notification-bell {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: #0f172a;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .notification-bell:hover {
+      background: #f1f5f9;
+    }
+
+    .notification-bell:active {
+      transform: scale(0.95);
+    }
+
+    /* Red Badge for Unread */
+    .notification-badge {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: #ef4444;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .notification-badge.hidden {
+      display: none;
+    }
+
+    /* Notification Panel */
+    .notification-panel {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 420px;
+      max-height: 600px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+      border: 1px solid #e5e7eb;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.2s ease;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .notification-panel.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    /* Header */
+    .notification-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .notification-header h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .mark-all-read {
+      background: none;
+      border: none;
+      color: #2563eb;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background 0.2s ease;
+    }
+
+    .mark-all-read:hover {
+      background: #eff6ff;
+    }
+
+    /* Notification List */
+    .notification-list {
+      overflow-y: auto;
+      max-height: 480px;
+      flex: 1;
+    }
+
+    .notification-list::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .notification-list::-webkit-scrollbar-track {
+      background: #f9fafb;
+    }
+
+    .notification-list::-webkit-scrollbar-thumb {
+      background: #d1d5db;
+      border-radius: 4px;
+    }
+
+    .notification-list::-webkit-scrollbar-thumb:hover {
+      background: #9ca3af;
+    }
+
+    /* Notification Item */
+    .notification-item {
+      display: flex;
+      gap: 12px;
+      padding: 14px 20px;
+      border-bottom: 1px solid #f3f4f6;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      position: relative;
+    }
+
+    .notification-item:hover {
+      background: #f9fafb;
+    }
+
+    .notification-item.unread {
+      background: #eff6ff;
+    }
+
+    .notification-item.unread::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #2563eb;
+    }
+
+    /* Notification Icons */
+    .notification-icon {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .appointment-icon {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+
+    .sitter-icon {
+      background: #fef3c7;
+      color: #f59e0b;
+    }
+
+    .trainer-icon {
+      background: #e0e7ff;
+      color: #6366f1;
+    }
+
+    .breeder-icon {
+      background: #fce7f3;
+      color: #ec4899;
+    }
+
+    /* Notification Content */
+    .notification-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .notification-text {
+      margin: 0 0 4px 0;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #374151;
+    }
+
+    .notification-text strong {
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .notification-text em {
+      font-style: italic;
+      color: #6b7280;
+    }
+
+    .notification-time {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    /* Footer */
+    .notification-footer {
+      padding: 16px 20px;
+      text-align: center;
+      border-top: 1px solid #e5e7eb;
+      background: #fafbfc;
+    }
+
+    .notification-footer p {
+      margin: 0;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .notification-panel {
+        position: fixed;
+        top: 60px !important;
+        right: 8px;
+        left: 8px;
+        width: auto;
+        max-height: calc(100vh - 80px);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .notification-panel {
+        right: 8px;
+        left: 8px;
+        width: auto;
+      }
+
+      .notification-list {
+        max-height: calc(100vh - 200px);
+      }
+    }
   </style>
 </head>
 <body>
@@ -133,7 +407,135 @@ function calculateAge($dob) {
   <main class="main-content">
     <header class="page-header">
       <h2>My Pets</h2>
-      <button type="button" class="btn primary" id="addPetBtn">+ Add Pet</button>
+      <div class="header-actions">
+        <!-- Notification Bell -->
+        <div class="notification-container">
+          <button type="button" class="notification-bell" id="notificationBell" aria-label="Notifications">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span class="notification-badge" id="notificationBadge">3</span>
+          </button>
+
+          <!-- Notification Panel (YouTube-style) -->
+          <div class="notification-panel" id="notificationPanel">
+            <div class="notification-header">
+              <h3>Notifications</h3>
+              <button class="mark-all-read" id="markAllRead">Mark all as read</button>
+            </div>
+            <div class="notification-list" id="notificationList">
+              <!-- TODO: Backend will populate notifications dynamically -->
+              <!-- Sample notifications for UI demonstration -->
+              
+              <!-- Appointment Notifications -->
+              <div class="notification-item unread" data-type="appointment">
+                <div class="notification-icon appointment-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                </div>
+                <div class="notification-content">
+                  <p class="notification-text">Appointment for <strong>Duke</strong> with <strong>Dr. Peter</strong> has been confirmed for <strong>October 20, 2023, at 10:00 AM</strong></p>
+                  <span class="notification-time">2 hours ago</span>
+                </div>
+              </div>
+
+              <div class="notification-item unread" data-type="appointment">
+                <div class="notification-icon appointment-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                </div>
+                <div class="notification-content">
+                  <p class="notification-text">Appointment declined for <strong>Duke</strong>. Reason: <em>Fully booked on that day</em></p>
+                  <span class="notification-time">5 hours ago</span>
+                </div>
+              </div>
+
+              <!-- Sitter Notifications -->
+              <div class="notification-item unread" data-type="sitter">
+                <div class="notification-icon sitter-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                </div>
+                <div class="notification-content">
+                  <p class="notification-text">Sitter <strong>John</strong> has accepted your request for <strong>Max</strong></p>
+                  <span class="notification-time">1 day ago</span>
+                </div>
+              </div>
+
+              <!-- Trainer Notifications -->
+              <div class="notification-item" data-type="trainer">
+                <div class="notification-icon trainer-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </div>
+                <div class="notification-content">
+                  <p class="notification-text">Trainer <strong>Alex</strong> has accepted your request for <strong>Max</strong></p>
+                  <span class="notification-time">2 days ago</span>
+                </div>
+              </div>
+
+              <div class="notification-item" data-type="trainer">
+                <div class="notification-icon trainer-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </div>
+                <div class="notification-content">
+                  <p class="notification-text">Training Session <strong>5</strong> for <strong>Max</strong> has been completed. Next session is scheduled for <strong>October 20, 2025</strong>.</p>
+                  <span class="notification-time">3 days ago</span>
+                </div>
+              </div>
+
+              <!-- Breeder Notifications -->
+              <div class="notification-item" data-type="breeder">
+                <div class="notification-icon breeder-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                </div>
+                <div class="notification-content">
+                  <p class="notification-text">Breeder <strong>Peter</strong> accepted your request for <strong>Duke</strong>. Breeder's Pet: <strong>Molly</strong></p>
+                  <span class="notification-time">1 week ago</span>
+                </div>
+              </div>
+
+              <div class="notification-item" data-type="breeder">
+                <div class="notification-icon breeder-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                </div>
+                <div class="notification-content">
+                  <p class="notification-text">Breeder <strong>Peter</strong> declined your request. Reason: <em>Not compatible breeds</em></p>
+                  <span class="notification-time">1 week ago</span>
+                </div>
+              </div>
+
+            </div>
+            <div class="notification-footer">
+              <p>You're all caught up!</p>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn primary" id="addPetBtn">+ Add Pet</button>
+      </div>
     </header>
 
     <section class="pets-grid" id="petsGrid">
@@ -529,6 +931,149 @@ function calculateAge($dob) {
   ?>
   <script src="/PETVET/public/js/pet-owner/my-pets.js"></script>
   <script>
+    /* ========================================
+       NOTIFICATION PANEL FUNCTIONALITY
+       ======================================== */
+    (function() {
+      const notificationBell = document.getElementById('notificationBell');
+      const notificationPanel = document.getElementById('notificationPanel');
+      const notificationBadge = document.getElementById('notificationBadge');
+      const markAllReadBtn = document.getElementById('markAllRead');
+      const notificationList = document.getElementById('notificationList');
+
+      // Toggle notification panel
+      notificationBell.addEventListener('click', function(e) {
+        e.stopPropagation();
+        notificationPanel.classList.toggle('show');
+      });
+
+      // Close panel when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!notificationPanel.contains(e.target) && !notificationBell.contains(e.target)) {
+          notificationPanel.classList.remove('show');
+        }
+      });
+
+      // Prevent panel from closing when clicking inside
+      notificationPanel.addEventListener('click', function(e) {
+        e.stopPropagation();
+      });
+
+      // Mark single notification as read when clicked
+      notificationList.addEventListener('click', function(e) {
+        const notificationItem = e.target.closest('.notification-item');
+        if (notificationItem && notificationItem.classList.contains('unread')) {
+          notificationItem.classList.remove('unread');
+          updateBadgeCount();
+          
+          // TODO: Backend - Send AJAX request to mark notification as read
+          // Example:
+          // const notificationId = notificationItem.dataset.id;
+          // fetch('/PETVET/api/notifications/mark-read.php', {
+          //   method: 'POST',
+          //   headers: { 'Content-Type': 'application/json' },
+          //   body: JSON.stringify({ notificationId: notificationId })
+          // });
+        }
+      });
+
+      // Mark all notifications as read
+      markAllReadBtn.addEventListener('click', function() {
+        const unreadNotifications = notificationList.querySelectorAll('.notification-item.unread');
+        unreadNotifications.forEach(notification => {
+          notification.classList.remove('unread');
+        });
+        updateBadgeCount();
+
+        // TODO: Backend - Send AJAX request to mark all notifications as read
+        // fetch('/PETVET/api/notifications/mark-all-read.php', {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' }
+        // });
+      });
+
+      // Update badge count
+      function updateBadgeCount() {
+        const unreadCount = notificationList.querySelectorAll('.notification-item.unread').length;
+        if (unreadCount > 0) {
+          notificationBadge.textContent = unreadCount;
+          notificationBadge.classList.remove('hidden');
+        } else {
+          notificationBadge.classList.add('hidden');
+        }
+      }
+
+      // Initialize badge count on page load
+      updateBadgeCount();
+
+      // TODO: Backend - Fetch notifications from server
+      // This function should be called on page load and periodically to check for new notifications
+      /*
+      function fetchNotifications() {
+        fetch('/PETVET/api/notifications/get-notifications.php')
+          .then(response => response.json())
+          .then(data => {
+            renderNotifications(data.notifications);
+            updateBadgeCount();
+          })
+          .catch(error => console.error('Error fetching notifications:', error));
+      }
+
+      function renderNotifications(notifications) {
+        notificationList.innerHTML = '';
+        
+        notifications.forEach(notification => {
+          const notificationItem = document.createElement('div');
+          notificationItem.className = `notification-item ${notification.is_read ? '' : 'unread'}`;
+          notificationItem.dataset.id = notification.id;
+          notificationItem.dataset.type = notification.type;
+          
+          // Create icon based on notification type
+          let iconSvg = '';
+          let iconClass = '';
+          
+          switch(notification.type) {
+            case 'appointment':
+              iconClass = 'appointment-icon';
+              iconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>';
+              break;
+            case 'sitter':
+              iconClass = 'sitter-icon';
+              iconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>';
+              break;
+            case 'trainer':
+              iconClass = 'trainer-icon';
+              iconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>';
+              break;
+            case 'breeder':
+              iconClass = 'breeder-icon';
+              iconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>';
+              break;
+          }
+          
+          notificationItem.innerHTML = `
+            <div class="notification-icon ${iconClass}">
+              ${iconSvg}
+            </div>
+            <div class="notification-content">
+              <p class="notification-text">${notification.message}</p>
+              <span class="notification-time">${notification.time_ago}</span>
+            </div>
+          `;
+          
+          notificationList.appendChild(notificationItem);
+        });
+      }
+
+      // Fetch notifications on page load
+      fetchNotifications();
+
+      // Poll for new notifications every 30 seconds
+      setInterval(fetchNotifications, 30000);
+      */
+
+    })();
+
     // Prevent background scroll when dialog is open
     (function() {
       const dialogs = document.querySelectorAll('dialog');

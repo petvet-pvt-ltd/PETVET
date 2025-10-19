@@ -1,3 +1,49 @@
+<?php
+// Sample data - Replace with actual database queries
+$pet = [
+  'name' => 'Max',
+  'species' => 'Dog',
+  'breed' => 'Golden Retriever',
+  'age' => '3',
+  'microchip' => true,
+  'vaccinated' => true,
+  'last_vaccination' => 'October 5, 2025',
+  'vet_contact' => 'Dr. Smith - (555) 123-4567',
+  'allergies' => 'Chicken, Dairy',
+  'blood_type' => 'DEA 1.1 Positive'
+];
+
+$clinic_visits = [
+  ['date' => 'October 10, 2025', 'title' => 'Regular Checkup', 'details' => 'All vitals normal. Weight: 32kg'],
+  ['date' => 'September 15, 2025', 'title' => 'Skin Irritation', 'details' => 'Prescribed topical cream for rash']
+];
+
+$vaccinations = [
+  ['pet' => 'Max', 'vaccine' => 'Rabies', 'date' => 'October 5, 2025', 'nextDue' => 'October 5, 2026', 'vet' => 'Dr. Smith'],
+  ['pet' => 'Max', 'vaccine' => 'DHPP', 'date' => 'October 5, 2025', 'nextDue' => 'October 5, 2026', 'vet' => 'Dr. Smith'],
+  ['pet' => 'Max', 'vaccine' => 'Bordetella', 'date' => 'April 10, 2025', 'nextDue' => 'April 10, 2026', 'vet' => 'Dr. Johnson']
+];
+
+$prescriptions = [
+  ['pet' => 'Max', 'medication' => 'Amoxicillin', 'dosage' => '250mg', 'frequency' => 'Twice daily', 'startDate' => 'September 15, 2025', 'endDate' => 'September 25, 2025', 'vet' => 'Dr. Smith'],
+  ['pet' => 'Max', 'medication' => 'Anti-inflammatory Cream', 'dosage' => 'Apply thin layer', 'frequency' => 'Twice daily', 'startDate' => 'September 15, 2025', 'endDate' => 'September 30, 2025', 'vet' => 'Dr. Smith']
+];
+
+$reports = [
+  ['date' => 'October 10, 2025', 'title' => 'Blood Test Results', 'details' => 'All parameters within normal range', 'images' => [
+    '/PETVET/views/shared/images/petser.jpg',
+    '/PETVET/views/shared/images/vet-reg-cover.jpg',
+    '/PETVET/views/shared/images/vet-reg-cover2.jpg'
+  ]],
+  ['date' => 'September 15, 2025', 'title' => 'X-Ray Report', 'details' => 'No abnormalities detected', 'images' => [
+    'https://www.pommri.com/blog/wp-content/uploads/2019/03/hand-xray-177559095.jpg',
+    '/PETVET/views/shared/images/petser.jpg'
+  ]],
+  ['date' => 'August 20, 2025', 'title' => 'Ultrasound Scan', 'details' => 'Abdominal scan completed successfully', 'images' => [
+    '/PETVET/views/shared/images/vet-reg-cover.jpg'
+  ]]
+];
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -52,15 +98,45 @@
       <div class="table-wrapper">
         <table id="vaccinationTable">
           <thead>
-            <tr><th>Vaccine</th><th>Date</th><th>Next Due</th><th>Vet</th></tr>
+            <tr><th>Pet</th><th>Vaccine</th><th>Date</th><th>Next Due</th><th>Vet</th></tr>
           </thead>
           <tbody>
             <?php foreach ($vaccinations as $v): ?>
             <tr>
+              <td><?php echo htmlspecialchars($v['pet']); ?></td>
               <td><?php echo htmlspecialchars($v['vaccine']); ?></td>
               <td><?php echo htmlspecialchars($v['date']); ?></td>
               <td><?php echo htmlspecialchars($v['nextDue']); ?></td>
               <td><?php echo htmlspecialchars($v['vet']); ?></td>
+            </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+  </div>
+
+  <!-- Prescriptions -->
+  <div class="section">
+    <h2>Prescriptions</h2>
+    <?php if (empty($prescriptions)): ?>
+      <p class="empty-state">No prescription records available.</p>
+    <?php else: ?>
+      <div class="table-wrapper">
+        <table id="prescriptionTable">
+          <thead>
+            <tr><th>Pet</th><th>Medication</th><th>Dosage</th><th>Frequency</th><th>Start Date</th><th>End Date</th><th>Vet</th></tr>
+          </thead>
+          <tbody>
+            <?php foreach ($prescriptions as $p): ?>
+            <tr>
+              <td><?php echo htmlspecialchars($p['pet']); ?></td>
+              <td><?php echo htmlspecialchars($p['medication']); ?></td>
+              <td><?php echo htmlspecialchars($p['dosage']); ?></td>
+              <td><?php echo htmlspecialchars($p['frequency']); ?></td>
+              <td><?php echo htmlspecialchars($p['startDate']); ?></td>
+              <td><?php echo htmlspecialchars($p['endDate']); ?></td>
+              <td><?php echo htmlspecialchars($p['vet']); ?></td>
             </tr>
             <?php endforeach; ?>
           </tbody>
@@ -108,11 +184,19 @@
 
   <!-- Preview Modal -->
   <div class="modal-overlay" id="previewModal" hidden>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="previewModalTitle">
+    <div class="modal-card preview-modal" role="dialog" aria-modal="true" aria-labelledby="previewModalTitle">
       <button class="close-btn" onclick="closePreview()" aria-label="Close">×</button>
-      <div class="modal-header"><h3 id="previewModalTitle">Report Preview</h3></div>
-      <div class="modal-body" id="previewContent"></div>
-      <div class="modal-actions"><button class="btn secondary" onclick="closePreview()">Close</button></div>
+      <div class="modal-header">
+        <h3 id="previewModalTitle">Report Preview</h3>
+        <div id="previewImageCounter" style="font-size: 14px; color: #64748b;"></div>
+      </div>
+      <div class="modal-body preview-body">
+        <div id="previewContent"></div>
+      </div>
+      <div class="modal-actions preview-actions" id="previewNavigation">
+        <button class="btn" onclick="prevPreviewImg()" id="prevBtn">Previous</button>
+        <button class="btn" onclick="nextPreviewImg()" id="nextBtn">Next</button>
+      </div>
     </div>
   </div>
 
@@ -157,10 +241,76 @@
 
     // Preview state
     const previewState={images:[],current:0};
-  function previewReport(index){hideOverlay('recordModal'); const reports=<?php echo json_encode($reports); ?>; const report=reports[index]; previewState.images=report.images||[]; previewState.current=0; renderPreviewImage(); showOverlay('previewModal');}
-    function renderPreviewImage(){const content=document.getElementById('previewContent'); if(previewState.images.length){content.innerHTML=`<img src="${previewState.images[previewState.current]}" alt="Report Image" style="max-width:100%;border-radius:12px;">\n<div style="margin-top:12px;display:flex;justify-content:center;gap:14px;flex-wrap:wrap;">\n<button class=\"btn secondary\" onclick=\"prevPreviewImg()\" ${previewState.current===0?'disabled':''}>Prev</button>\n<span style=\"font-size:14px;align-self:center;\">${previewState.current+1} / ${previewState.images.length}</span>\n<button class=\"btn secondary\" onclick=\"nextPreviewImg()\" ${previewState.current===previewState.images.length-1?'disabled':''}>Next</button>\n</div>`;} else {content.innerHTML='<p>No images available</p>';}}
-    function prevPreviewImg(){ if(previewState.current>0){previewState.current--; renderPreviewImage();}}
-    function nextPreviewImg(){ if(previewState.current<previewState.images.length-1){previewState.current++; renderPreviewImage();}}
+    function previewReport(index){
+      hideOverlay('recordModal'); 
+      const reports=<?php echo json_encode($reports); ?>; 
+      const report=reports[index]; 
+      previewState.images=report.images||[]; 
+      previewState.current=0; 
+      renderPreviewImage(); 
+      showOverlay('previewModal');
+    }
+    
+    function renderPreviewImage(){
+      const content=document.getElementById('previewContent'); 
+      const counter=document.getElementById('previewImageCounter');
+      const prevBtn=document.getElementById('prevBtn');
+      const nextBtn=document.getElementById('nextBtn');
+      const navigation=document.getElementById('previewNavigation');
+      
+      if(previewState.images.length){
+        // Update image
+        content.innerHTML=`<img src="${previewState.images[previewState.current]}" alt="Report Image" class="preview-image">`;
+        
+        // Update counter
+        if(previewState.images.length > 1){
+          counter.textContent = `Image ${previewState.current+1} of ${previewState.images.length}`;
+          counter.style.display = 'block';
+        } else {
+          counter.style.display = 'none';
+        }
+        
+        // Update navigation buttons
+        prevBtn.disabled = previewState.current === 0;
+        nextBtn.disabled = previewState.current === previewState.images.length - 1;
+        
+        // Hide navigation if only one image
+        if(previewState.images.length === 1){
+          prevBtn.style.display = 'none';
+          nextBtn.style.display = 'none';
+        } else {
+          prevBtn.style.display = 'inline-block';
+          nextBtn.style.display = 'inline-block';
+        }
+      } else {
+        content.innerHTML='<p style="text-align:center;color:#64748b;">No images available</p>';
+        counter.style.display = 'none';
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+      }
+    }
+    
+    function prevPreviewImg(){ 
+      if(previewState.current>0){
+        previewState.current--; 
+        renderPreviewImage();
+      }
+    }
+    
+    function nextPreviewImg(){ 
+      if(previewState.current<previewState.images.length-1){
+        previewState.current++; 
+        renderPreviewImage();
+      }
+    }
+    
+    // Keyboard navigation for preview
+    window.addEventListener('keydown', function(e){
+      if(!document.getElementById('previewModal').hidden){
+        if(e.key === 'ArrowLeft') prevPreviewImg();
+        if(e.key === 'ArrowRight') nextPreviewImg();
+      }
+    });
 
     // Close on Esc
     window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!document.getElementById('previewModal').hidden) closePreview(); if(!document.getElementById('recordModal').hidden) closeForm();}});
