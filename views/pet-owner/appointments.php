@@ -1,5 +1,5 @@
-<?php /* Pet Owner Appointments - full migrated prototype (UI only) */ ?>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<?php /* Pet Owner Appointments - full migrated prototype */ ?>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="/PETVET/public/css/pet-owner/appointments.css">
 
 <div class="main-content">

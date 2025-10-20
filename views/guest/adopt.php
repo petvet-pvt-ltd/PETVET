@@ -228,8 +228,9 @@
             <input type="text" placeholder="Location " required />
           </div>
           <textarea rows="4" placeholder="Pet description, personality, habits, etc." required></textarea>
-          <label>Upload Photos</label>
-          <input type="file" multiple accept="image/*" />
+          <label>Upload Photos (Max 3)</label>
+          <input type="file" multiple accept="image/*" id="adoptionPhotos" data-max-files="3" />
+          <small class="muted">You can upload up to 3 photos of your pet.</small>
           <h4>Contact Information</h4>
           <div class="grid">
             <input type="text" placeholder="Your Name" required />
@@ -248,6 +249,7 @@
       const openBtn = document.getElementById('openAdoptionFormBtn');
       const modal = document.getElementById('adoptionModal');
       const closeBtn = modal.querySelector('.modal__close');
+      const photosInput = document.getElementById('adoptionPhotos');
 
       const open = () => {
         modal.classList.add('open');
@@ -273,6 +275,17 @@
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && modal.classList.contains('open')) close();
       });
+
+      // Validate max 3 images
+      if (photosInput) {
+        photosInput.addEventListener('change', function() {
+          const maxFiles = parseInt(this.getAttribute('data-max-files')) || 3;
+          if (this.files.length > maxFiles) {
+            alert(`You can only upload up to ${maxFiles} images. Please select fewer files.`);
+            this.value = '';
+          }
+        });
+      }
     })();
   </script>
 

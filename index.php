@@ -10,7 +10,7 @@ function show404($message = null) {
 }
 
 /************************************************************/
-$module = $_GET['module'] ?? 'receptionist'; // default module
+$module = $_GET['module'] ?? 'guest'; // default module
 /************************************************************/
 
 // Landing pages of each user-role

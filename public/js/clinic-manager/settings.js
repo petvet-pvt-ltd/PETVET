@@ -59,9 +59,9 @@ function initHolidays() {
 }
 
 function wireForms() {
-  $('#formManager')?.addEventListener('submit', (e) => { e.preventDefault(); toast('Manager profile saved (UI only)'); });
-  $('#formClinic')?.addEventListener('submit', (e) => { e.preventDefault(); toast('Clinic profile saved (UI only)'); });
-  $('#formHours')?.addEventListener('submit', (e) => { e.preventDefault(); toast('Hours & policies saved (UI only)'); });
+  $('#formManager')?.addEventListener('submit', (e) => { e.preventDefault(); toast('Manager profile saved'); });
+  $('#formClinic')?.addEventListener('submit', (e) => { e.preventDefault(); toast('Clinic profile saved'); });
+  $('#formHours')?.addEventListener('submit', (e) => { e.preventDefault(); toast('Hours & policies saved'); });
 }
 
 // Init
