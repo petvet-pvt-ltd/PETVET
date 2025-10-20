@@ -67,6 +67,8 @@ switch ($module) {
   case 'explore-pets': $c->explorePets(); break;
   case 'sell-pets': $c->sellPets(); break;
   case 'settings': $c->settings(); break;
+  case 'shop': $c->shop(); break;
+  case 'shop-product': $c->shopProduct(); break;
       // other pages-----
       default: show404("This pet owner page doesn't exist."); break;
     }

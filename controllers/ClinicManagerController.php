@@ -72,7 +72,8 @@ class ClinicManagerController extends BaseController {
     public function vets() {
         $model = new VetsModel();
         $data = [
-            'vets' => $model->fetchVetsData()
+            'vets' => $model->fetchVetsData(),
+            'pending' => $model->fetchPendingRequests()
         ];
         $this->view('clinic_manager', 'vets', $data);
     }

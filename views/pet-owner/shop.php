@@ -1,18 +1,53 @@
-<?php /* public guest page */ ?>
-
+<?php /* Pet Owner Shop Page - Uses exact same shop module as guest */ ?>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pet Shop | PetVet</title>
-    <link rel="stylesheet" href="/PETVET/public/css/guest/navbar.css">
     <link rel="stylesheet" href="/PETVET/public/css/guest/shop.css">
-    <meta name="description" content="Best Pet Shop in Sri Lanka - Food, Toys, Accessories, and more for your beloved pets">
-    <meta name="keywords" content="pet shop, dog food, cat toys, pet accessories, pet care">
+    <link rel="stylesheet" href="/PETVET/public/css/cart.css">
 </head>
 <body>
+    <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
+    
+    <div class="main-content">
 
-<?php require_once 'navbar.php' ?>
+<!-- Cart Icon -->
+<div class="cart-icon-wrapper">
+  <button class="cart-icon" onclick="toggleCart()" aria-label="Shopping Cart">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+    </svg>
+    <span class="cart-badge" id="cartBadge">0</span>
+  </button>
+  
+  <div class="cart-dropdown" id="cartDropdown">
+    <div class="cart-header">
+      <h3>Shopping Cart</h3>
+      <button class="cart-close" onclick="toggleCart()" aria-label="Close Cart">&times;</button>
+    </div>
+    
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty">
+        <div class="cart-empty-icon">🛒</div>
+        <p>Your cart is empty</p>
+        <p style="font-size: 0.85rem; color: #9ca3af; margin-top: 0.5rem;">Add items from the shop to get started</p>
+      </div>
+    </div>
+    
+    <div class="cart-footer" id="cartFooter" style="display: none;">
+      <div class="cart-total">
+        <span class="cart-total-label">Total:</span>
+        <span class="cart-total-value" id="cartTotal">Rs. 0</span>
+      </div>
+      <div class="cart-actions">
+        <button class="btn-cart btn-checkout" onclick="checkout()">Proceed to Checkout</button>
+        <button class="btn-cart" onclick="clearCart()">Clear Cart</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Banner Image -->
 <div class="shop-banner">
@@ -98,7 +133,7 @@
           <span class="sold-info"><?php echo $product['sold']; ?> sold</span>
         </div>
         <div class="product-actions">
-          <button class="add-to-cart" data-product-id="<?php echo $product['id']; ?>">🛒 Add to Cart</button>
+          <button class="add-to-cart" data-product-id="<?php echo $product['id']; ?>">Add to Cart</button>
         </div>
       </div>
     </div>
@@ -145,7 +180,23 @@
 <!-- Scroll to Top Button -->
 <button class="scroll-to-top" id="scrollToTop" title="Back to top">↑</button>
 
-<script src="/PETVET/public/js/guest/shop.js"></script>
-</body>
+    </div> <!-- End main-content -->
 
+<script src="/PETVET/public/js/pet-owner/shop.js"></script>
+<script>
+// Override module for pet-owner
+document.querySelectorAll('.product-card').forEach(card => {
+    card.addEventListener('click', function(e) {
+        if (e.target.closest('button') || e.target.closest('a')) {
+            return;
+        }
+        const productId = this.dataset.productId;
+        if (productId) {
+            window.location.href = `/PETVET/index.php?module=pet-owner&page=shop-product&id=${productId}`;
+        }
+    });
+});
+</script>
+<script src="/PETVET/public/js/cart.js"></script>
+</body>
 </html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart Test Page</title>
+    <link rel="stylesheet" href="/PETVET/public/css/cart.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 2rem;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+        }
+        h1 {
+            color: #2563eb;
+            margin-bottom: 2rem;
+        }
+        .test-products {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .test-product {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            background: white;
+        }
+        .test-product img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 4px;
+            background: #f3f4f6;
+        }
+        .test-product h3 {
+            margin: 1rem 0 0.5rem 0;
+            font-size: 1rem;
+        }
+        .test-product .price {
+            color: #2563eb;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+        .test-product button {
+            width: 100%;
+            padding: 0.75rem;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .test-product button:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Cart Icon -->
+    <div class="cart-icon-wrapper">
+        <button class="cart-icon" onclick="toggleCart()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 2L7.17 6M9 2h6m0 0l1.83 4M9 2v4m6-4v4m-6 0H3.34a1 1 0 00-.95 1.32l2.31 7.36A2 2 0 005.66 16H18.34a2 2 0 001.96-1.32l2.31-7.36a1 1 0 00-.95-1.32H15M9 6h6m-9 14a1 1 0 100-2 1 1 0 000 2zm10 0a1 1 0 100-2 1 1 0 000 2z"/>
+            </svg>
+            <span class="cart-badge" id="cartBadge">0</span>
+        </button>
+        
+        <div class="cart-dropdown" id="cartDropdown">
+            <div class="cart-header">
+                <h3>Shopping Cart</h3>
+                <button class="cart-close" onclick="toggleCart()">&times;</button>
+            </div>
+            
+            <div class="cart-items" id="cartItems">
+                <div class="cart-empty">
+                    <div class="cart-empty-icon">🛒</div>
+                    <p>Your cart is empty</p>
+                    <p style="font-size: 0.85rem; color: #9ca3af; margin-top: 0.5rem;">Add items from the shop to get started</p>
+                </div>
+            </div>
+            
+            <div class="cart-footer" id="cartFooter" style="display: none;">
+                <div class="cart-total">
+                    <span class="cart-total-label">Total:</span>
+                    <span class="cart-total-value" id="cartTotal">Rs. 0</span>
+                </div>
+                <div class="cart-actions">
+                    <button class="btn-cart btn-checkout" onclick="checkout()">Proceed to Checkout</button>
+                    <button class="btn-cart" onclick="clearCart()">Clear Cart</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h1>🛒 Shopping Cart Test Page</h1>
+        <p>The cart now comes pre-loaded with 4 demo items. Click the cart icon (top-right) to view. You can also add more items below or clear the cart.</p>
+
+        <div class="test-products">
+            <!-- Product 1 -->
+            <div class="test-product">
+                <img src="/PETVET/public/images/products/dog-food.jpg" alt="Premium Dog Food">
+                <h3>Premium Dog Food</h3>
+                <div class="price">Rs. 2,500</div>
+                <button onclick="addToCart(1, 'Premium Dog Food', 2500, '/PETVET/public/images/products/dog-food.jpg', 1)">
+                    Add to Cart
+                </button>
+            </div>
+
+            <!-- Product 2 -->
+            <div class="test-product">
+                <img src="/PETVET/public/images/products/cat-toy.jpg" alt="Cat Toy Set">
+                <h3>Cat Toy Set</h3>
+                <div class="price">Rs. 850</div>
+                <button onclick="addToCart(5, 'Cat Toy Set', 850, '/PETVET/public/images/products/cat-toy.jpg', 1)">
+                    Add to Cart
+                </button>
+            </div>
+
+            <!-- Product 3 -->
+            <div class="test-product">
+                <img src="/PETVET/public/images/products/grooming-kit.jpg" alt="Pet Grooming Kit">
+                <h3>Pet Grooming Kit</h3>
+                <div class="price">Rs. 3,200</div>
+                <button onclick="addToCart(10, 'Pet Grooming Kit', 3200, '/PETVET/public/images/products/grooming-kit.jpg', 1)">
+                    Add to Cart
+                </button>
+            </div>
+
+            <!-- Product 4 -->
+            <div class="test-product">
+                <img src="/PETVET/public/images/products/pet-bed.jpg" alt="Luxury Pet Bed">
+                <h3>Luxury Pet Bed</h3>
+                <div class="price">Rs. 4,500</div>
+                <button onclick="addToCart(15, 'Luxury Pet Bed', 4500, '/PETVET/public/images/products/pet-bed.jpg', 1)">
+                    Add to Cart
+                </button>
+            </div>
+
+            <!-- Product 5 -->
+            <div class="test-product">
+                <img src="/PETVET/public/images/products/vitamin.jpg" alt="Pet Vitamins">
+                <h3>Pet Vitamins</h3>
+                <div class="price">Rs. 1,250</div>
+                <button onclick="addToCart(8, 'Pet Vitamins', 1250, '/PETVET/public/images/products/vitamin.jpg', 1)">
+                    Add to Cart
+                </button>
+            </div>
+
+            <!-- Product 6 -->
+            <div class="test-product">
+                <img src="/PETVET/public/images/products/leash.jpg" alt="Premium Leash">
+                <h3>Premium Leash</h3>
+                <div class="price">Rs. 950</div>
+                <button onclick="addToCart(12, 'Premium Leash', 950, '/PETVET/public/images/products/leash.jpg', 1)">
+                    Add to Cart
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/PETVET/public/js/cart.js"></script>
+</body>
+</html>

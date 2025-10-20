@@ -108,5 +108,58 @@ class ClinicData {
         }
         return $schedule;
     }
+
+    /**
+     * Returns pending veterinarian registration requests
+     */
+    public static function getPendingVetRequests(): array {
+        return [
+            [
+                'id' => 1,
+                'name' => 'Dr. Emily Carter',
+                'photo' => 'https://i.pravatar.cc/64?img=47',
+                'specialization' => 'Dermatology',
+                'license' => 'LIC-2024-4521',
+                'experience' => '5 years experience',
+                'email' => 'emily.carter@email.com',
+                'phone' => '077 123 4567',
+                'docs' => [
+                    ['label' => 'License Certificate', 'url' => '#'],
+                    ['label' => 'Resume', 'url' => '#'],
+                    ['label' => 'Degree', 'url' => '#']
+                ]
+            ],
+            [
+                'id' => 2,
+                'name' => 'Dr. Michael Zhang',
+                'photo' => 'https://i.pravatar.cc/64?img=33',
+                'specialization' => 'Radiology',
+                'license' => 'LIC-2024-7832',
+                'experience' => '8 years experience',
+                'email' => 'michael.zhang@email.com',
+                'phone' => '071 987 6543',
+                'docs' => [
+                    ['label' => 'License Certificate', 'url' => '#'],
+                    ['label' => 'Resume', 'url' => '#'],
+                    ['label' => 'Work References', 'url' => '#']
+                ]
+            ],
+            [
+                'id' => 3,
+                'name' => 'Dr. Sarah Johnson',
+                'photo' => 'https://i.pravatar.cc/64?img=45',
+                'specialization' => 'Surgery',
+                'license' => 'LIC-2024-9156',
+                'experience' => '12 years experience',
+                'email' => 'sarah.j@email.com',
+                'phone' => '076 555 1234',
+                'docs' => [
+                    ['label' => 'License Certificate', 'url' => '#'],
+                    ['label' => 'Resume', 'url' => '#'],
+                    ['label' => 'Specialization Certificate', 'url' => '#']
+                ]
+            ]
+        ];
+    }
 }
 ?>

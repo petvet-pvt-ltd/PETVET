@@ -17,17 +17,22 @@ function initializeProductPage() {
 // Enhanced quantity controls with validation
 function setupQuantityControls() {
     const qtyInput = document.getElementById('quantity');
-    const minusBtn = document.querySelector('.qty-btn[onclick*="-1"]');
-    const plusBtn = document.querySelector('.qty-btn[onclick*="1"]');
+    const container = document.querySelector('.quantity-box');
     
-    if (qtyInput) {
-        // Remove inline onclick handlers and add proper event listeners
-        document.querySelectorAll('.qty-btn').forEach(btn => {
+    if (qtyInput && container) {
+        // Remove inline onclick handlers and add proper event listeners in a robust way
+        const buttons = Array.from(container.querySelectorAll('.qty-btn'));
+        buttons.forEach(btn => {
             btn.removeAttribute('onclick');
+            // Ensure it's not a submit button in case inside a form
+            if (!btn.getAttribute('type')) btn.setAttribute('type', 'button');
         });
-        
-        minusBtn?.addEventListener('click', () => changeQty(-1));
-        plusBtn?.addEventListener('click', () => changeQty(1));
+
+        const minusBtn = buttons[0];
+        const plusBtn = buttons[buttons.length - 1];
+
+        if (minusBtn) minusBtn.addEventListener('click', () => window.changeQty(-1));
+        if (plusBtn && plusBtn !== minusBtn) plusBtn.addEventListener('click', () => window.changeQty(1));
         
         // Input validation
         qtyInput.addEventListener('input', function() {
@@ -50,7 +55,8 @@ function setupQuantityControls() {
     }
 }
 
-function changeQty(delta) {
+// Make changeQty globally accessible for inline onclick handlers
+window.changeQty = function(delta) {
     const qtyInput = document.getElementById('quantity');
     if (!qtyInput) return;
     
