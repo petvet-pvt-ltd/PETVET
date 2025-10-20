@@ -1,6 +1,16 @@
 <?php /* Lost & Found - now consolidated without partials */ ?>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<link rel="stylesheet" href="/PETVET/public/css/pet-owner/lost-found.css">
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lost & Found | PetVet</title>
+    <link rel="stylesheet" href="/PETVET/public/css/guest/navbar.css">
+    <link rel="stylesheet" href="/PETVET/public/css/guest/lost-found.css">
+</head>
+<body>
+
+<?php require_once 'navbar.php' ?>
 
 <div class="main-content">
 <?php
@@ -24,7 +34,7 @@ function lf_fmtDate($ymd){
 		<h2>Lost &amp; Found</h2>
 		<p class="lf-sub">Report missing pets or browse found pets in your community.</p>
 	</div>
-	<div style="display:flex;gap:12px;">
+	<div style="display:none;gap:12px;">
 		<button type="button" class="btn secondary" id="myListingsBtn">My Listings</button>
 		<button type="button" class="btn primary" id="openReport">+ Report Pet</button>
 	</div>
@@ -333,3 +343,6 @@ function lf_fmtDate($ymd){
 
 </div>
 <script src="/PETVET/public/js/pet-owner/lost-found.js"></script>
+
+</body>
+</html>

@@ -198,13 +198,15 @@ switch ($module) {
     break;
 
   case 'guest':
-    // Handle shop pages through GuestController, others directly
-    if ($page === 'shop' || $page === 'shop-product') {
+    // Handle pages through GuestController that need data, others directly
+    if ($page === 'shop' || $page === 'shop-product' || $page === 'explore-pets' || $page === 'lost-found') {
       require_once __DIR__ . '/controllers/GuestController.php';
       $c = new GuestController();
       switch ($page) {
         case 'shop': $c->shop(); break;
         case 'shop-product': $c->shopProduct(); break;
+        case 'explore-pets': $c->explorePets(); break;
+        case 'lost-found': $c->lostFound(); break;
         default: show404("This guest page doesn't exist."); break;
       }
     } else {
