@@ -39,10 +39,27 @@ $availableSpecies = $availableSpecies ?? [];
   </section>
 
   <section id="listingsGrid" class="grid">
-  <?php foreach($pets as $pet): $seller=$sellers[$pet['seller_id']] ?? ['name'=>'Unknown','location'=>'']; ?>
+  <?php foreach($pets as $pet): 
+    $seller=$sellers[$pet['seller_id']] ?? ['name'=>'Unknown','location'=>'','phone'=>'','phone2'=>'','email'=>''];
+    $images = $pet['images'] ?? [];
+  ?>
     <article class="card" data-species="<?= htmlspecialchars($pet['species']) ?>" data-price="<?= (int)$pet['price'] ?>">
       <div class="media">
-        <img src="<?= htmlspecialchars($pet['images'][0]) ?>" alt="<?= htmlspecialchars($pet['name']) ?>">
+        <?php if(!empty($images)): ?>
+          <img src="<?= htmlspecialchars($images[0]) ?>" alt="<?= htmlspecialchars($pet['name']) ?>" class="carousel-image" data-index="0">
+          <?php if(count($images) > 1): ?>
+            <?php foreach(array_slice($images, 1) as $idx => $image): ?>
+              <img src="<?= htmlspecialchars($image) ?>" alt="Photo <?= $idx + 2 ?>" class="carousel-image" style="display:none;" data-index="<?= $idx + 1 ?>">
+            <?php endforeach; ?>
+            <button class="carousel-nav prev" data-direction="prev"></button>
+            <button class="carousel-nav next" data-direction="next"></button>
+            <div class="carousel-indicators">
+              <?php foreach($images as $idx => $image): ?>
+                <button class="carousel-indicator <?= $idx === 0 ? 'active' : '' ?>" data-index="<?= $idx ?>"></button>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
+        <?php endif; ?>
         <span class="price">Rs <?= number_format($pet['price']) ?></span>
       </div>
       <div class="body">
@@ -61,55 +78,76 @@ $availableSpecies = $availableSpecies ?? [];
       </div>
       <div class="actions-row">
         <button class="btn ghost view" data-id="<?= $pet['id'] ?>">View Details</button>
-        <button class="btn buy call" data-id="<?= $pet['id'] ?>">Call</button>
+        <button class="btn buy contact-seller-btn" 
+          data-id="<?= $pet['id'] ?>"
+          data-name="<?= htmlspecialchars($seller['name']) ?>"
+          data-phone="<?= htmlspecialchars($seller['phone'] ?? '') ?>"
+          data-phone2="<?= htmlspecialchars($seller['phone2'] ?? '') ?>"
+          data-email="<?= htmlspecialchars($seller['email'] ?? '') ?>">
+          Contact Seller
+        </button>
       </div>
     </article>
   <?php endforeach; ?>
   </section>
 
   <!-- Sell Pet -->
-  <div class="modal" id="sellModal" aria-hidden="true">
-    <div class="modal-dialog">
-      <header class="modal-header">
-        <h3>Sell a Pet</h3>
-        <button class="icon-btn close" data-close="sellModal" aria-label="Close">×</button>
-      </header>
-      <div class="modal-body">
-        <form id="sellForm">
-          <div class="form-grid">
-            <label>Pet Name<input type="text" name="name" required></label>
-            <label>Species
-              <select name="species" required>
-                <option>Dog</option><option>Cat</option><option>Bird</option><option>Other</option>
-              </select>
-            </label>
-            <label>Breed<input type="text" name="breed" required></label>
-            <label>Age<input type="text" name="age" placeholder="e.g., 2y" required></label>
-            <label>Gender
-              <select name="gender"><option>Male</option><option>Female</option></select>
-            </label>
-            <label>Price (Rs)<input type="number" name="price" min="0" step="500" required></label>
-            <label class="full">Health Badges
-              <div class="checks">
-                <label><input type="checkbox" name="badges[]" value="Vaccinated"> Vaccinated</label>
-                <label><input type="checkbox" name="badges[]" value="Microchipped"> Microchipped</label>
-              </div>
-            </label>
-            <label class="full">Short Description<textarea name="desc" rows="3" required></textarea></label>
-            <label class="full">Photos 
-              <input type="file" name="images[]" id="sellImages" accept="image/*" multiple required>
-              <small class="muted">You can upload multiple photos. First image will be used as the listing cover.</small>
-              <div id="sellImagePreviews" class="image-previews" aria-hidden="true"></div>
-              <!-- For demo: we keep a hidden single image field for backward compatibility; JS will populate it with the first selected image -->
-              <input type="hidden" name="image" id="sellImageFallback">
-            </label>
-          </div>
-          <div class="modal-actions">
-            <button type="button" class="btn outline" data-close="sellModal">Cancel</button>
-            <button type="submit" class="btn primary">Publish Listing</button>
-          </div>
-        </form>
-      </div>
+  <div class="modal-overlay" id="sellModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sellTitle">
+      <h3 id="sellTitle">Sell a Pet</h3>
+      <form id="sellForm" autocomplete="off">
+        <div class="form-grid">
+          <label>Pet Name<input type="text" name="name" required placeholder="e.g., Rocky, Bella"></label>
+          <label>Species
+            <select name="species" required>
+              <option value="">Select...</option>
+              <option>Dog</option>
+              <option>Cat</option>
+              <option>Bird</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label>Breed<input type="text" name="breed" required placeholder="e.g., Golden Retriever"></label>
+          <label>Age<input type="text" name="age" placeholder="e.g., 2 years" required></label>
+          <label>Gender
+            <select name="gender" required>
+              <option value="">Select...</option>
+              <option>Male</option>
+              <option>Female</option>
+            </select>
+          </label>
+          <label>Price (Rs)<input type="number" name="price" min="0" step="500" required placeholder="e.g., 50000"></label>
+          <label class="full">Location<input type="text" name="location" required placeholder="e.g., Colombo 07"></label>
+          <label class="full">Description<textarea name="desc" rows="3" required placeholder="Tell potential buyers about this pet's personality, behavior, health..."></textarea></label>
+          <label class="full">
+            <span style="font-weight:600;margin-bottom:6px;display:block;">Health Badges</span>
+            <div class="checks">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                <input type="checkbox" name="badges[]" value="Vaccinated">
+                <span>Vaccinated</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                <input type="checkbox" name="badges[]" value="Microchipped">
+                <span>Microchipped</span>
+              </label>
+            </div>
+          </label>
+          <label>Primary Phone<input type="tel" name="phone" placeholder="+94 77 123 4567" required></label>
+          <label>Secondary Phone (Optional)<input type="tel" name="phone2" placeholder="+94 76 555 1212"></label>
+          <label class="full">Email (Optional)<input type="email" name="email" placeholder="your.email@example.com"></label>
+          <label class="full">Photos (Max 3)
+            <input type="file" name="images[]" id="sellImages" accept="image/*" multiple required data-max-files="3">
+            <small style="display:block;color:var(--muted);margin-top:6px;">Upload up to 3 photos. First image will be the listing cover.</small>
+            <div id="sellImagePreviews" style="margin-top:12px;display:none;display:flex;gap:10px;flex-wrap:wrap;"></div>
+            <input type="hidden" name="image" id="sellImageFallback">
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn ghost" id="cancelSell">Cancel</button>
+          <button type="submit" class="btn primary">Publish Listing</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -121,40 +159,9 @@ $availableSpecies = $availableSpecies ?? [];
         <button class="icon-btn close" data-close="myListingsModal" aria-label="Close">×</button>
       </header>
       <div class="modal-body">
-        <?php if(empty($myListings)): ?>
-          <p class="empty">You don’t have any listings yet. Click <strong>Sell a Pet</strong> to post one.</p>
-        <?php else: ?>
-          <div class="listings-table" id="myListingsWrap">
-            <?php foreach($myListings as $p):
-              $loc = $sellers[$p['seller_id']]['location'] ?? '';
-            ?>
-              <div class="listing-row" data-id="<?= $p['id'] ?>">
-                <img src="<?= htmlspecialchars($p['images'][0]) ?>" alt="">
-                <div class="listing-info">
-                  <h4><?= htmlspecialchars($p['name']) ?></h4>
-                  <p><?= htmlspecialchars($p['species']) ?> • Rs <?= number_format($p['price']) ?></p>
-                  <span class="muted"><?= htmlspecialchars($p['breed']) ?> • <?= htmlspecialchars($p['age']) ?> • <?= htmlspecialchars($p['gender']) ?> • <?= htmlspecialchars($loc) ?></span>
-                </div>
-                <div class="listing-actions">
-                  <!-- data-* provided so your JS can prefill the Edit form -->
-                  <button
-                    class="btn sm outline edit"
-                    data-id="<?= $p['id'] ?>"
-                    data-name="<?= htmlspecialchars($p['name']) ?>"
-                    data-species="<?= htmlspecialchars($p['species']) ?>"
-                    data-breed="<?= htmlspecialchars($p['breed']) ?>"
-                    data-age="<?= htmlspecialchars($p['age']) ?>"
-                    data-gender="<?= htmlspecialchars($p['gender']) ?>"
-                    data-price="<?= (int)$p['price'] ?>"
-                    data-desc="<?= htmlspecialchars($p['desc']) ?>"
-                    data-location="<?= htmlspecialchars($loc) ?>"
-                  >Edit</button>
-                  <button class="btn sm danger remove" data-id="<?= $p['id'] ?>">Remove</button>
-                </div>
-              </div>
-            <?php endforeach; ?>
-          </div>
-        <?php endif; ?>
+        <div class="listings-grid" id="myListingsContent">
+          <!-- JavaScript will populate this dynamically -->
+        </div>
       </div>
     </div>
   </div>
@@ -184,13 +191,20 @@ $availableSpecies = $availableSpecies ?? [];
             <label>Price (Rs)<input type="number" name="price" min="0" step="500" required></label>
             <label class="full">Description<textarea name="desc" rows="3"></textarea></label>
             <label class="full">Location<input type="text" name="location" required></label>
-            <!-- Edit photos: allow adding/removing multiple images -->
-            <label class="full">Photos
-              <div class="muted">Manage listing photos. You can add new photos or remove existing ones.</div>
-              <input type="file" name="editImages[]" id="editImages" accept="image/*" multiple>
-              <small class="muted">Add new photos to include in the listing. You can also remove existing photos below.</small>
-              <div id="editImagePreviews" class="image-previews" aria-hidden="true"></div>
-              <!-- Existing images (JSON) will be stored here for demo use; JS keeps this in sync -->
+            <label>Primary Phone<input type="tel" name="phone" placeholder="+94 77 123 4567" required></label>
+            <label>Secondary Phone (Optional)<input type="tel" name="phone2" placeholder="+94 76 555 1212"></label>
+            <label class="full">Email (Optional)<input type="email" name="email" placeholder="your.email@example.com"></label>
+            
+            <!-- Existing Photos Preview -->
+            <label class="full">Current Photos
+              <div id="editExistingPhotos" class="edit-photos-preview"></div>
+            </label>
+            
+            <!-- Add New Photos -->
+            <label class="full">Add New Photos (Max 3 total)
+              <input type="file" name="editImages[]" id="editImages" accept="image/*" multiple data-max-files="3">
+              <small class="muted">You can add new photos or remove existing ones above.</small>
+              <div id="editImagePreviews" class="image-previews" style="margin-top:12px;"></div>
               <input type="hidden" name="existingImages" id="existingImages">
             </label>
           </div>
@@ -211,6 +225,31 @@ $availableSpecies = $availableSpecies ?? [];
         <button class="icon-btn close" data-close="detailsModal" aria-label="Close">×</button>
       </header>
       <div class="modal-body" id="detailsBody"></div>
+    </div>
+  </div>
+
+  <!-- Contact Seller Modal -->
+  <div class="modal-overlay contact-modal-overlay" id="contactModal" style="display:none;">
+    <div class="contact-modal-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="margin:0;">Contact Seller</h3>
+        <button class="modal-close-btn" id="closeContact">&times;</button>
+      </div>
+      <div id="contactContent"></div>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Dialog -->
+  <div class="modal-overlay contact-modal-overlay" id="confirmDialog" style="display:none;">
+    <div class="confirm-dialog">
+      <h3>Confirm Delete</h3>
+      <p class="confirm-message">
+        Are you sure you want to delete the listing for <span class="confirm-highlight" id="confirmPetName"></span>? This action cannot be undone.
+      </p>
+      <div class="confirm-actions">
+        <button class="btn outline" id="cancelConfirm">Cancel</button>
+        <button class="btn danger" id="confirmDelete">Delete</button>
+      </div>
     </div>
   </div>
 </div>

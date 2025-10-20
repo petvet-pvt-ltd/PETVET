@@ -1,0 +1,166 @@
+MODAL UPDATES FOR EXPLORE-PETS.PHP
+
+==== MY LISTINGS MODAL ====
+Replace lines 194-240 with:
+
+  <!-- My Listings -->
+  <div class="modal-overlay" id="myListingsModal" hidden>
+    <div class="modal listings-modal" role="dialog" aria-modal="true" aria-labelledby="myListingsTitle">
+      <h3 id="myListingsTitle">My Listings</h3>
+      <div class="listings-grid" id="myListingsContent">
+        <?php if(empty($myListings)): ?>
+          <div class="empty-state">
+            <h4>No listings yet</h4>
+            <p>Click <strong>Sell a Pet</strong> to create your first listing.</p>
+          </div>
+        <?php else: ?>
+          <?php foreach($myListings as $p):
+            $loc = $sellers[$p['seller_id']]['location'] ?? '';
+            $images = $p['images'] ?? [];
+          ?>
+            <div class="listing-item" data-id="<?= $p['id'] ?>">
+              <?php if(!empty($images)): ?>
+                <img src="<?= htmlspecialchars($images[0]) ?>" class="listing-thumb" alt="<?= htmlspecialchars($p['name']) ?>">
+              <?php else: ?>
+                <div class="listing-thumb-fallback"><?= strtoupper(substr($p['species'],0,1)) ?></div>
+              <?php endif; ?>
+              <div class="listing-details">
+                <h4 class="listing-title"><?= htmlspecialchars($p['name']) ?></h4>
+                <div class="listing-meta"><?= htmlspecialchars($p['species']) ?> • Rs <?= number_format($p['price']) ?></div>
+                <div class="listing-meta small"><?= htmlspecialchars($p['breed']) ?> • <?= htmlspecialchars($p['age']) ?> • <?= htmlspecialchars($p['gender']) ?></div>
+                <span class="listing-badge price">Rs <?= number_format($p['price']) ?></span>
+              </div>
+              <div class="listing-actions">
+                <button
+                  class="btn outline edit-listing-btn"
+                  data-id="<?= $p['id'] ?>"
+                  data-name="<?= htmlspecialchars($p['name']) ?>"
+                  data-species="<?= htmlspecialchars($p['species']) ?>"
+                  data-breed="<?= htmlspecialchars($p['breed']) ?>"
+                  data-age="<?= htmlspecialchars($p['age']) ?>"
+                  data-gender="<?= htmlspecialchars($p['gender']) ?>"
+                  data-price="<?= (int)$p['price'] ?>"
+                  data-desc="<?= htmlspecialchars($p['desc']) ?>"
+                  data-location="<?= htmlspecialchars($loc) ?>"
+                >Edit</button>
+                <button class="btn danger delete-listing-btn" 
+                  data-id="<?= $p['id'] ?>" 
+                  data-name="<?= htmlspecialchars($p['name']) ?>">Delete</button>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </div>
+      <button class="btn ghost modal-close-x" id="closeMyListings">&times;</button>
+    </div>
+  </div>
+
+==== EDIT LISTING MODAL ====
+Replace lines 242-286 with:
+
+  <!-- Edit Listing -->
+  <div class="modal-overlay" id="editListingModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+      <h3 id="editTitle">Edit Listing</h3>
+      <form id="editForm">
+        <input type="hidden" name="id">
+
+        <!-- Pet Information -->
+        <div class="form-section">
+          <h4 class="section-title">Pet Information</h4>
+          <div class="row">
+            <label class="field flex-2">Pet Name
+              <input type="text" name="name" placeholder="e.g., Rocky, Bella" required>
+            </label>
+            <label class="field">Species
+              <select name="species" required>
+                <option value="">Select Species</option>
+                <option>Dog</option>
+                <option>Cat</option>
+                <option>Bird</option>
+                <option>Other</option>
+              </select>
+            </label>
+          </div>
+          <div class="row">
+            <label class="field">Breed
+              <input type="text" name="breed" placeholder="e.g., Golden Retriever" required>
+            </label>
+            <label class="field">Age
+              <input type="text" name="age" placeholder="e.g., 2 years, 6 months" required>
+            </label>
+            <label class="field">Gender
+              <select name="gender" required>
+                <option value="">Select</option>
+                <option>Male</option>
+                <option>Female</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <!-- Health & Details -->
+        <div class="form-section">
+          <h4 class="section-title">Health & Details</h4>
+          <label class="field">Price (Rs)
+            <input type="number" name="price" min="0" step="500" placeholder="e.g., 50000" required>
+          </label>
+          <label class="field">Description
+            <textarea name="desc" rows="3" placeholder="Describe your pet's personality, health, training status..."></textarea>
+          </label>
+          <label class="field">Location
+            <input type="text" name="location" placeholder="e.g., Colombo 07" required>
+          </label>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="form-section">
+          <h4 class="section-title">Contact Information</h4>
+          <div class="row">
+            <label class="field">Primary Phone
+              <input type="tel" name="phone" placeholder="+94 77 123 4567" required>
+            </label>
+            <label class="field">Secondary Phone (Optional)
+              <input type="tel" name="phone2" placeholder="+94 76 555 1212">
+            </label>
+          </div>
+          <label class="field">Email (Optional)
+            <input type="email" name="email" placeholder="your.email@example.com">
+          </label>
+        </div>
+
+        <!-- Photos Section -->
+        <div class="form-section">
+          <h4 class="section-title">Photos (Max 3)</h4>
+          <label class="field">
+            <input type="file" name="editImages[]" id="editImages" accept="image/*" multiple data-max-files="3">
+            <small class="help-text">Add or replace photos. First image will be the listing cover.</small>
+            <div id="editImagePreviews" style="margin-top:12px;display:none;display:flex;gap:10px;flex-wrap:wrap;"></div>
+            <input type="hidden" name="existingImages" id="existingImages">
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn ghost" id="cancelEdit">Cancel</button>
+          <button type="submit" class="btn primary">Save Changes</button>
+        </div>
+      </form>
+      <button class="btn ghost modal-close-x" id="closeEditModal">&times;</button>
+    </div>
+  </div>
+
+CHANGES SUMMARY:
+1. My Listings Modal:
+   - Changed from .modal to .modal-overlay with hidden attribute
+   - Replaced .listing-row with .listing-item card style
+   - Changed button classes: .edit → .edit-listing-btn, .remove → .delete-listing-btn
+   - Added modal-close-x button with ID closeMyListings
+   - Enhanced empty state
+
+2. Edit Listing Modal:
+   - Changed from .modal to .modal-overlay with hidden attribute
+   - Added form-section organization matching Sell Pet modal
+   - Added section-title headings for each group
+   - Enhanced field structure with .field class
+   - Changed button IDs: data-close → specific IDs (cancelEdit, closeEditModal)
+   - Better placeholders and help text

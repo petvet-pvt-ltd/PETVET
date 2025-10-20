@@ -1,0 +1,70 @@
+<!-- ============================================ -->
+<!-- UPDATED MODALS FOR EXPLORE-PETS.PHP -->
+<!-- Replace lines 194-286 with this content -->
+<!-- ============================================ -->
+
+  <!-- My Listings Modal -->
+  <div class="modal" id="myListingsModal" aria-hidden="true">
+    <div class="modal-dialog wide">
+      <header class="modal-header">
+        <h3>My Listings</h3>
+        <button class="icon-btn close" data-close="myListingsModal" aria-label="Close">×</button>
+      </header>
+      <div class="modal-body">
+        <div class="listings-grid" id="myListingsContent">
+          <!-- JavaScript will populate this dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Listing Modal -->
+  <div class="modal" id="editListingModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <header class="modal-header">
+        <h3>Edit Listing</h3>
+        <button class="icon-btn close" data-close="editListingModal" aria-label="Close">×</button>
+      </header>
+      <div class="modal-body">
+        <form id="editForm">
+          <input type="hidden" name="id">
+          <div class="form-grid">
+            <label>Pet Name<input type="text" name="name" required></label>
+            <label>Species
+              <select name="species">
+                <option>Dog</option><option>Cat</option><option>Bird</option><option>Other</option>
+              </select>
+            </label>
+            <label>Breed<input type="text" name="breed" required></label>
+            <label>Age<input type="text" name="age" required></label>
+            <label>Gender
+              <select name="gender"><option>Male</option><option>Female</option></select>
+            </label>
+            <label>Price (Rs)<input type="number" name="price" min="0" step="500" required></label>
+            <label class="full">Description<textarea name="desc" rows="3"></textarea></label>
+            <label class="full">Location<input type="text" name="location" required></label>
+            <label>Primary Phone<input type="tel" name="phone" placeholder="+94 77 123 4567" required></label>
+            <label>Secondary Phone (Optional)<input type="tel" name="phone2" placeholder="+94 76 555 1212"></label>
+            <label class="full">Email (Optional)<input type="email" name="email" placeholder="your.email@example.com"></label>
+            
+            <!-- Existing Photos Preview -->
+            <label class="full">Current Photos
+              <div id="editExistingPhotos" class="edit-photos-preview"></div>
+            </label>
+            
+            <!-- Add New Photos -->
+            <label class="full">Add New Photos (Max 3 total)
+              <input type="file" name="editImages[]" id="editImages" accept="image/*" multiple data-max-files="3">
+              <small class="muted">You can add new photos or remove existing ones above.</small>
+              <div id="editImagePreviews" class="image-previews" style="margin-top:12px;"></div>
+              <input type="hidden" name="existingImages" id="existingImages">
+            </label>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn outline" data-close="editListingModal">Cancel</button>
+            <button type="submit" class="btn primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>

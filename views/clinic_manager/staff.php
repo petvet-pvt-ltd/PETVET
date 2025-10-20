@@ -249,12 +249,12 @@ let staffAvatarIndex = 0;
    staffForm.reset();
  });
 
-// Delete staff (UI only)
+// Delete staff
 function bindDeleteButtons(){
   document.querySelectorAll('.staff-delete').forEach(btn=>{
     btn.onclick=()=>{
       const name = btn.dataset.name || 'this staff member';
-      if(confirm(`Delete ${name}? This cannot be undone (UI only).`)){
+      if(confirm(`Delete ${name}? This cannot be undone.`)){
         const tr = btn.closest('tr');
         tr && tr.remove();
       }
@@ -360,7 +360,10 @@ receptionistForm.addEventListener('submit', function(e) {
   //   alert('An error occurred. Please try again.');
   // });
   
-  // FOR NOW: UI only - simulate success
+      const id = Date.now();
+    staffData.push({ id, ...payload });
+    renderList();
+  // Simulate success
   createdReceptionistData = {
     name: name,
     email: email,

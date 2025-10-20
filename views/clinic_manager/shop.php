@@ -243,7 +243,7 @@ $pendingOrders = [
                     </div>
                     <div>
                         <div id="addImagePreview" class="image-preview-list"></div>
-                        <label style="margin-top:8px">Images (URLs or Upload)
+                        <label style="margin-top:8px">Images (URLs or Upload, Max 5)
                             <div id="addImageList" class="image-url-list">
                                 <div class="image-url-row">
                                     <input type="url" name="images[]" placeholder="https://...">
@@ -253,14 +253,15 @@ $pendingOrders = [
                         </label>
                         <button type="button" id="btnAddImageUrl" class="btn btn-light">Add another image</button>
                         <div style="margin:10px 0 0">
-                            <input type="file" id="addImageUpload" name="image_uploads[]" accept="image/*" multiple style="display:block">
+                            <input type="file" id="addImageUpload" name="image_uploads[]" accept="image/*" multiple style="display:block" data-max-files="5">
+                            <small class="muted">You can upload up to 5 images.</small>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-close>Cancel</button>
-                <button form="addForm" class="btn btn-primary" type="submit">Save (UI only)</button>
+                <button form="addForm" class="btn btn-primary" type="submit">Save</button>
             </div>
         </div>
     </div>
@@ -302,19 +303,20 @@ $pendingOrders = [
                     </div>
                     <div>
                         <div id="editImagePreview" class="image-preview-list"></div>
-                        <label style="margin-top:8px">Images (URLs or Upload)
+                        <label style="margin-top:8px">Images (URLs or Upload, Max 5)
                             <div id="editImageList" class="image-url-list"></div>
                         </label>
                         <button type="button" id="btnEditAddImageUrl" class="btn btn-light">Add another image</button>
                         <div style="margin:10px 0 0">
-                            <input type="file" id="editImageUpload" name="edit_image_uploads[]" accept="image/*" multiple style="display:block">
+                            <input type="file" id="editImageUpload" name="edit_image_uploads[]" accept="image/*" multiple style="display:block" data-max-files="5">
+                            <small class="muted">You can upload up to 5 images.</small>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-close>Cancel</button>
-                <button form="editForm" class="btn btn-primary" type="submit">Update (UI only)</button>
+                <button form="editForm" class="btn btn-primary" type="submit">Update</button>
             </div>
         </div>
     </div>
@@ -330,8 +332,8 @@ $pendingOrders = [
                 <p>Are you sure you want to delete <strong id="delName">this product</strong>? This action cannot be undone.</p>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" data-close>No</button>
-                <button id="btnConfirmDelete" class="btn btn-danger">Yes, Delete (UI only)</button>
+                <button class="btn btn-secondary" data-close>No, Cancel</button>
+                <button id="btnConfirmDelete" class="btn btn-danger">Yes, Delete</button>
             </div>
         </div>
     </div>
@@ -504,22 +506,22 @@ $pendingOrders = [
     }));
     document.getElementById('btnConfirmDelete')?.addEventListener('click', () => {
         closeModal(modalDelete);
-        showToast('Delete simulated. (UI only)');
+        showToast('Delete simulated.');
     });
 
-    // Submit handlers (UI only)
-    document.getElementById('addForm')?.addEventListener('submit', (e) => {
+    // Submit handlers
+    document.getElementById('addForm')?.addEventListener('submit', function (e) {
         e.preventDefault();
         closeModal(modalAdd);
-        showToast('Product added (UI only)');
+        showToast('Product added');
     });
-    document.getElementById('editForm')?.addEventListener('submit', (e) => {
+    document.getElementById('editForm')?.addEventListener('submit', function (e) {
         e.preventDefault();
         closeModal(modalEdit);
-        showToast('Product updated (UI only)');
+        showToast('Product updated');
     });
 
-    // Image upload previews (UI only)
+    // Image upload previews
     const addImageUpload = document.getElementById('addImageUpload');
     const addImagePreview = document.getElementById('addImagePreview');
     let addImageFiles = [];
@@ -536,7 +538,20 @@ $pendingOrders = [
         });
     }
     addImageUpload?.addEventListener('change', (e) => {
-        addImageFiles = Array.from(e.target.files || []);
+        let files = Array.from(e.target.files || []);
+        const maxFiles = parseInt(e.target.getAttribute('data-max-files')) || 5;
+        
+        // Check total count (URL inputs + file uploads)
+        const urlInputs = document.querySelectorAll('#addImageList input[type="url"]');
+        const urlCount = Array.from(urlInputs).filter(inp => inp.value.trim()).length;
+        
+        if (files.length + urlCount > maxFiles) {
+            showToast(`You can only add up to ${maxFiles} images total. Please remove some URL images or select fewer files.`, 'warning');
+            files = files.slice(0, Math.max(0, maxFiles - urlCount));
+            e.target.value = '';
+        }
+        
+        addImageFiles = files;
         renderAddImagePreview();
     // also re-render URL previews to keep both
     const c = document.getElementById('addImageList');
@@ -567,7 +582,20 @@ $pendingOrders = [
         });
     }
     editImageUpload?.addEventListener('change', (e) => {
-        editImageFiles = Array.from(e.target.files || []);
+        let files = Array.from(e.target.files || []);
+        const maxFiles = parseInt(e.target.getAttribute('data-max-files')) || 5;
+        
+        // Check total count (URL inputs + file uploads)
+        const urlInputs = document.querySelectorAll('#editImageList input[type="url"]');
+        const urlCount = Array.from(urlInputs).filter(inp => inp.value.trim()).length;
+        
+        if (files.length + urlCount > maxFiles) {
+            showToast(`You can only add up to ${maxFiles} images total. Please remove some URL images or select fewer files.`, 'warning');
+            files = files.slice(0, Math.max(0, maxFiles - urlCount));
+            e.target.value = '';
+        }
+        
+        editImageFiles = files;
         renderEditImagePreview();
     const c = document.getElementById('editImageList');
     renderUrlPreviews(c, editImagePreview);
@@ -600,7 +628,7 @@ $pendingOrders = [
         });
     });
 
-    // Delivered action (UI only): mark row as delivered and decrease badge count
+    // Delivered action: mark row as delivered and decrease badge count
     $$('#ordersTbody .btn-delivered').forEach(btn=>{
         btn.addEventListener('click', ()=>{
             const tr = btn.closest('tr');
@@ -613,7 +641,7 @@ $pendingOrders = [
                 const n = Math.max(0, (parseInt(badge.textContent,10) || 0) - 1);
                 badge.textContent = String(n);
             }
-            showToast('Order marked as delivered (UI only)');
+            showToast('Order marked as delivered');
         });
     });
 

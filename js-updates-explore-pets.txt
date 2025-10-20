@@ -1,0 +1,290 @@
+// ============================================
+// JAVASCRIPT UPDATES FOR EXPLORE-PETS.JS
+// Add these functions and update existing code
+// ============================================
+
+// ADD THIS AFTER LINE 15 (after btnMyListings click handler):
+
+// Load and render My Listings dynamically
+function loadMyListings() {
+	const STORAGE_KEY = 'explorePetsMyListings';
+	const VERSION_KEY = 'explorePetsVersion';
+	const CURRENT_VERSION = '2.0'; // Version with images support
+	
+	// Version check - clear old data if version changed
+	const storedVersion = localStorage.getItem(VERSION_KEY);
+	if (storedVersion !== CURRENT_VERSION) {
+		localStorage.removeItem(STORAGE_KEY);
+		localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
+	}
+	
+	const stored = localStorage.getItem(STORAGE_KEY);
+	const listings = stored ? JSON.parse(stored) : [];
+	
+	renderMyListings(listings);
+	return listings;
+}
+
+function renderMyListings(listings) {
+	const container = qs('#myListingsContent');
+	if (!container) return;
+	
+	if (listings.length === 0) {
+		container.innerHTML = `
+			<div class="empty" style="padding:40px;text-align:center;grid-column:1/-1;">
+				<h4 style="color:var(--muted);margin-bottom:8px;">No listings yet</h4>
+				<p style="color:var(--muted);">Click <strong style="color:var(--primary);">Sell a Pet</strong> to create your first listing.</p>
+			</div>
+		`;
+		return;
+	}
+	
+	container.innerHTML = listings.map(listing => {
+		const mainImage = listing.images && listing.images.length > 0 ? listing.images[0] : '';
+		return `
+			<div class="listing-item" data-id="${listing.id}">
+				<img src="${mainImage}" alt="${listing.name}" class="listing-thumb">
+				<div class="listing-details">
+					<h4 class="listing-title">${listing.name}</h4>
+					<div class="listing-meta">${listing.species} • ${listing.breed}</div>
+					<div class="listing-meta small">${listing.age} • ${listing.gender}</div>
+					<span class="listing-badge price">Rs ${Number(listing.price).toLocaleString()}</span>
+				</div>
+				<div class="listing-actions">
+					<button class="btn outline edit-listing-btn" 
+						data-id="${listing.id}"
+						data-listing='${JSON.stringify(listing)}'>Edit</button>
+					<button class="btn danger delete-listing-btn" 
+						data-id="${listing.id}"
+						data-name="${listing.name}">Delete</button>
+				</div>
+			</div>
+		`;
+	}).join('');
+}
+
+function saveMyListings(listings) {
+	localStorage.setItem('explorePetsMyListings', JSON.stringify(listings));
+}
+
+// UPDATE THE btnMyListings CLICK HANDLER (replace line 15-16):
+qs('#btnMyListings')?.addEventListener('click',()=>{
+	loadMyListings();
+	openModal('myListingsModal');
+});
+
+// ============================================
+// UPDATE EVENT DELEGATION FOR MY LISTINGS
+// Replace the myListingsWrap event listener (lines 352-377) with this:
+// ============================================
+
+const myListingsContent = qs('#myListingsContent');
+myListingsContent?.addEventListener('click', e => {
+	// Handle Delete button
+	if(e.target.classList.contains('delete-listing-btn')){
+		const id = e.target.dataset.id;
+		const name = e.target.dataset.name;
+		
+		currentDeleteId = id;
+		confirmPetName.textContent = name;
+		confirmDialog.style.display = 'flex';
+	}
+	
+	// Handle Edit button
+	if(e.target.classList.contains('edit-listing-btn')){
+		const btn = e.target;
+		const listing = JSON.parse(btn.dataset.listing);
+		
+		const editForm = qs('#editForm');
+		if(!editForm) return;
+		
+		// Fill form fields
+		editForm.querySelector('[name="id"]').value = listing.id;
+		editForm.querySelector('[name="name"]').value = listing.name;
+		editForm.querySelector('[name="species"]').value = listing.species;
+		editForm.querySelector('[name="breed"]').value = listing.breed;
+		editForm.querySelector('[name="age"]').value = listing.age;
+		editForm.querySelector('[name="gender"]').value = listing.gender;
+		editForm.querySelector('[name="price"]').value = listing.price;
+		editForm.querySelector('[name="desc"]').value = listing.desc || '';
+		editForm.querySelector('[name="location"]').value = listing.location;
+		editForm.querySelector('[name="phone"]').value = listing.phone || '';
+		editForm.querySelector('[name="phone2"]').value = listing.phone2 || '';
+		editForm.querySelector('[name="email"]').value = listing.email || '';
+		
+		// Show existing photos
+		const existingPhotosDiv = qs('#editExistingPhotos');
+		const existingImagesInput = qs('#existingImages');
+		
+		if (existingPhotosDiv && listing.images && listing.images.length > 0) {
+			existingPhotosDiv.innerHTML = listing.images.map((img, idx) => `
+				<div class="photo-preview-item" style="position:relative;display:inline-block;margin:4px;">
+					<img src="${img}" alt="Photo ${idx+1}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:2px solid var(--primary);">
+					<button type="button" class="remove-photo-btn" data-index="${idx}" 
+						style="position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;
+						background:var(--danger);color:white;border:none;cursor:pointer;font-weight:bold;">×</button>
+				</div>
+			`).join('');
+			
+			existingImagesInput.value = JSON.stringify(listing.images);
+			
+			// Handle photo removal
+			existingPhotosDiv.querySelectorAll('.remove-photo-btn').forEach(btn => {
+				btn.addEventListener('click', () => {
+					const index = parseInt(btn.dataset.index);
+					const currentImages = JSON.parse(existingImagesInput.value);
+					currentImages.splice(index, 1);
+					existingImagesInput.value = JSON.stringify(currentImages);
+					btn.closest('.photo-preview-item').remove();
+				});
+			});
+		} else if (existingPhotosDiv) {
+			existingPhotosDiv.innerHTML = '<p style="color:var(--muted);">No photos yet</p>';
+			existingImagesInput.value = '[]';
+		}
+		
+		// Clear new photo previews
+		qs('#editImagePreviews').innerHTML = '';
+		qs('#editImages').value = '';
+		
+		closeModal('myListingsModal');
+		openModal('editListingModal');
+	}
+});
+
+// ============================================
+// UPDATE CONFIRM DELETE (line 30-41)
+// Replace confirmDeleteBtn click handler with:
+// ============================================
+
+confirmDeleteBtn?.addEventListener('click', () => {
+	if(currentDeleteId !== null){
+		const listings = loadMyListings();
+		const updatedListings = listings.filter(l => l.id !== currentDeleteId);
+		saveMyListings(updatedListings);
+		renderMyListings(updatedListings);
+		
+		confirmDialog.style.display = 'none';
+		currentDeleteId = null;
+	}
+});
+
+// ============================================
+// UPDATE SELL FORM SUBMISSION (add after line ~240)
+// Add this to save new listings to localStorage:
+// ============================================
+
+const sellForm = qs('#sellForm');
+sellForm?.addEventListener('submit', e => {
+	e.preventDefault();
+	const fd = new FormData(sellForm);
+	
+	// Create new listing object
+	const newListing = {
+		id: Date.now().toString(),
+		name: fd.get('name'),
+		species: fd.get('species'),
+		breed: fd.get('breed'),
+		age: fd.get('age'),
+		gender: fd.get('gender'),
+		price: fd.get('price'),
+		desc: fd.get('desc'),
+		location: fd.get('location'),
+		phone: fd.get('phone'),
+		phone2: fd.get('phone2'),
+		email: fd.get('email'),
+		images: [] // Will be populated with base64 or uploaded URLs
+	};
+	
+	// Handle image files (convert to base64 for demo)
+	const imageFiles = fd.getAll('images[]');
+	const promises = Array.from(imageFiles).map(file => {
+		return new Promise(resolve => {
+			const reader = new FileReader();
+			reader.onload = e => resolve(e.target.result);
+			reader.readAsDataURL(file);
+		});
+	});
+	
+	Promise.all(promises).then(images => {
+		newListing.images = images;
+		
+		const listings = loadMyListings();
+		listings.unshift(newListing);
+		saveMyListings(listings);
+		
+		sellForm.reset();
+		qs('#sellImagePreviews').innerHTML = '';
+		closeModal('sellModal');
+		alert('Pet listed successfully!');
+	});
+});
+
+// ============================================
+// UPDATE EDIT FORM SUBMISSION (replace lines 381-395)
+// ============================================
+
+const editForm = qs('#editForm');
+editForm?.addEventListener('submit', e => {
+	e.preventDefault();
+	const fd = new FormData(editForm);
+	const id = fd.get('id');
+	
+	const listings = loadMyListings();
+	const listingIndex = listings.findIndex(l => l.id === id);
+	
+	if (listingIndex === -1) {
+		alert('Listing not found.');
+		return;
+	}
+	
+	// Get existing images from hidden input
+	const existingImages = JSON.parse(qs('#existingImages').value || '[]');
+	
+	// Handle new image files
+	const newImageFiles = fd.getAll('editImages[]');
+	const imagePromises = Array.from(newImageFiles).map(file => {
+		return new Promise(resolve => {
+			const reader = new FileReader();
+			reader.onload = e => resolve(e.target.result);
+			reader.readAsDataURL(file);
+		});
+	});
+	
+	Promise.all(imagePromises).then(newImages => {
+		// Combine existing and new images (max 3)
+		const allImages = [...existingImages, ...newImages].slice(0, 3);
+		
+		// Update listing
+		listings[listingIndex] = {
+			...listings[listingIndex],
+			name: fd.get('name'),
+			species: fd.get('species'),
+			breed: fd.get('breed'),
+			age: fd.get('age'),
+			gender: fd.get('gender'),
+			price: fd.get('price'),
+			desc: fd.get('desc'),
+			location: fd.get('location'),
+			phone: fd.get('phone'),
+			phone2: fd.get('phone2'),
+			email: fd.get('email'),
+			images: allImages
+		};
+		
+		saveMyListings(listings);
+		
+		closeModal('editListingModal');
+		openModal('myListingsModal');
+		loadMyListings(); // Refresh the display
+		alert('Listing updated successfully!');
+	});
+});
+
+// ============================================
+// ADD AT THE END (before the closing }); )
+// Initialize on page load:
+// ============================================
+
+// Load My Listings on page load (prepares data)
+loadMyListings();

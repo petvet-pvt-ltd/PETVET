@@ -14,7 +14,11 @@ class LostFoundModel extends BaseModel {
                 'breed' => 'Golden Retriever',
                 'age' => '3y',
                 'color' => 'Golden',
-                'photo' => 'https://images.pexels.com/photos/356378/pexels-photo-356378.jpeg?auto=format%2Ccompress&cs=tinysrgb&dpr=1&w=500',
+                'photo' => [
+                    'https://images.pexels.com/photos/356378/pexels-photo-356378.jpeg?auto=format%2Ccompress&cs=tinysrgb&dpr=1&w=500',
+                    'https://images.pexels.com/photos/1805164/pexels-photo-1805164.jpeg?auto=format%2Ccompress&cs=tinysrgb&dpr=1&w=500',
+                    'https://images.pexels.com/photos/2253275/pexels-photo-2253275.jpeg?auto=format%2Ccompress&cs=tinysrgb&dpr=1&w=500'
+                ],
                 'last_seen' => 'Madison St., Colombo 06',
                 'date' => '2025-10-10',
                 'notes' => 'Friendly, wears a red collar. Microchipped.',
@@ -32,14 +36,18 @@ class LostFoundModel extends BaseModel {
                 'breed' => 'Siamese',
                 'age' => '2y',
                 'color' => 'Cream/Seal',
-                'photo' => 'https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=300&auto=format&fit=crop',
+                'photo' => [
+                    'https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=300&auto=format&fit=crop',
+                    'https://images.unsplash.com/photo-1573865526739-10c1dd7aa123?q=80&w=300&auto=format&fit=crop'
+                ],
                 'last_seen' => 'Flower Rd., Colombo 07',
                 'date' => '2025-10-08',
                 'notes' => 'Needs special diet. Very shy.',
                 'contact' => [
                     'name' => 'Nimali',
                     'email' => 'nimali@example.com',
-                    'phone' => '+94 76 555 1212'
+                    'phone' => '+94 76 555 1212',
+                    'phone2' => '+94 76 555 1213'
                 ]
             ],
             [
@@ -50,14 +58,19 @@ class LostFoundModel extends BaseModel {
                 'breed' => 'Rottweiler',
                 'age' => 'Unknown',
                 'color' => 'Black/Brown',
-                'photo' => 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?q=80&w=300&auto=format&fit=crop',
+                'photo' => [
+                    'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?q=80&w=300&auto=format&fit=crop',
+                    'https://images.unsplash.com/photo-1567752881298-894bb81f9379?q=80&w=300&auto=format&fit=crop',
+                    'https://images.unsplash.com/photo-1568572933382-74d440642117?q=80&w=300&auto=format&fit=crop'
+                ],
                 'last_seen' => 'Near Green Valley Park, Colombo 04',
                 'date' => '2025-10-09',
                 'notes' => 'Very tame. Responds to whistling.',
                 'contact' => [
                     'name' => 'Tharindu',
                     'email' => 'tharu@example.com',
-                    'phone' => '+94 71 987 2345'
+                    'phone' => '+94 71 987 2345',
+                    'phone2' => '+94 71 987 2346'
                 ]
             ],
             [
