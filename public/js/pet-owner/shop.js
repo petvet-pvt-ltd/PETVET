@@ -1,4 +1,5 @@
-// Enhanced Shop Page JavaScript with animations and interactions
+// Pet Owner Shop Page JavaScript - Routes to pet-owner module
+// Based on guest shop.js with module routing fix
 
 // DOM Content Loaded Event
 document.addEventListener('DOMContentLoaded', function() {
@@ -142,7 +143,7 @@ function filterProducts(category) {
     });
 }
 
-// Enhanced product card click handlers
+// Enhanced product card click handlers - ROUTES TO PET-OWNER MODULE
 function setupProductCardClickHandlers() {
     document.querySelectorAll('.product-card').forEach(card => {
         card.addEventListener('click', function(e) {
@@ -153,8 +154,8 @@ function setupProductCardClickHandlers() {
             
             const productId = this.dataset.productId;
             if (productId) {
-                // Navigate immediately without loading states that persist
-                window.location.href = `/PETVET/index.php?module=guest&page=shop-product&id=${productId}`;
+                // Navigate to pet-owner module (NOT guest)
+                window.location.href = `/PETVET/index.php?module=pet-owner&page=shop-product&id=${productId}`;
             }
         });
         
@@ -293,16 +294,6 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// Search functionality (if search input exists)
-function setupSearch() {
-    const searchInput = document.getElementById('productSearch');
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            applyAllFilters();
-        });
-    }
-}
-
 // Setup search and filter functionality
 function setupSearchAndFilters() {
     const searchInput = document.getElementById('productSearch');
@@ -424,7 +415,6 @@ function applyAllFilters() {
     }
 }
 
-// Check if price is in selected range
 // Sort products
 function sortProducts(products, sortBy) {
     const productGrid = document.getElementById('productGrid');

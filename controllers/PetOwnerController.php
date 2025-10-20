@@ -11,6 +11,7 @@ require_once __DIR__ . '/../models/PetOwner/ExplorePetsModel.php';
 require_once __DIR__ . '/../models/PetOwner/SellPetsModel.php';
 require_once __DIR__ . '/../models/PetOwner/SettingsModel.php';
 require_once __DIR__ . '/../models/PetOwner/ServicesModel.php';
+require_once __DIR__ . '/../models/PetOwner/ShopModel.php';
 
 class PetOwnerController extends BaseController {
 
@@ -173,6 +174,44 @@ class PetOwnerController extends BaseController {
             'filters' => $filters
         ];
         
+                
         $this->view('pet-owner', 'services', $data);
+    }
+
+    public function shop() {
+        $shopModel = new PetOwnerShopModel();
+        
+        $data = [
+            'categories' => $shopModel->getCategories(),
+            'products' => $shopModel->getAllProducts()
+        ];
+        
+        $this->view('pet-owner', 'shop', $data);
+    }
+
+    public function shopProduct() {
+        $productId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        
+        if ($productId <= 0) {
+            header("Location: /PETVET/?module=pet-owner&page=shop");
+            exit;
+        }
+        
+        $shopModel = new PetOwnerShopModel();
+        $product = $shopModel->getProductById($productId);
+        
+        if (!$product) {
+            header("Location: /PETVET/?module=pet-owner&page=shop");
+            exit;
+        }
+        
+        $relatedProducts = $shopModel->getRelatedProducts($productId, $product['category'], 4);
+        
+        $data = [
+            'product' => $product,
+            'relatedProducts' => $relatedProducts
+        ];
+        
+        $this->view('pet-owner', 'shop-product', $data);
     }
 }

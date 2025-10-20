@@ -5,5 +5,9 @@ class VetsModel extends BaseModel {
     public function fetchVetsData(): array {
         return ClinicData::getVets();
     }
+    
+    public function fetchPendingRequests(): array {
+        return ClinicData::getPendingVetRequests();
+    }
 }
 ?>

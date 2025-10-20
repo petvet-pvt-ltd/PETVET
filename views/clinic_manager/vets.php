@@ -97,9 +97,6 @@ $on_duty_today = array_column(array_filter($vets, fn($v)=>in_array($today, $v['o
       <button class="btn pending-requests" id="openDrawer">
         🔔 Pending Requests <span class="badge" style="background: #dc2626; color: white; margin-left: 8px;"><?= count($pending ?? []) ?></span>
       </button>
-      <button class="btn btn-primary">
-        ➕ Add Veterinarian
-      </button>
     </div>
   </header>
 

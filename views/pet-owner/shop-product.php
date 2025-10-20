@@ -1,12 +1,12 @@
-<?php /* public guest shop product page */ ?>
-
+<?php /* Pet Owner Shop Product Page */ ?>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details | PetVet</title>
-    <link rel="stylesheet" href="/PETVET/public/css/guest/navbar.css">
     <link rel="stylesheet" href="/PETVET/public/css/guest/shop.css">
+    <link rel="stylesheet" href="/PETVET/public/css/cart.css">
     <style>
         .product-details {
             display: flex;
@@ -40,7 +40,7 @@
         .product-info .price {
             font-size: 1.5rem;
             font-weight: bold;
-            color: #e74c3c;
+            color: #2563eb;
             margin-bottom: 1rem;
         }
         
@@ -68,7 +68,7 @@
         }
         
         .qty-btn {
-            background: #3498db;
+            background: #2563eb;
             color: white;
             border: none;
             width: 40px;
@@ -79,7 +79,7 @@
         }
         
         .qty-btn:hover {
-            background: #2980b9;
+            background: #1d4ed8;
         }
         
         #quantity {
@@ -91,22 +91,29 @@
         }
         
         .add-to-cart {
-            background: #e74c3c;
+            background: #2563eb;
             color: white;
             border: none;
             padding: 1rem 2rem;
             font-size: 1.1rem;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: background 0.2s;
         }
         
         .add-to-cart:hover {
-            background: #c0392b;
+            background: #1d4ed8;
         }
         
         .products {
             margin-top: 3rem;
+            padding: 0 1rem;
+        }
+        
+        .products h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #1e293b;
         }
         
         @media (max-width: 768px) {
@@ -118,8 +125,45 @@
 </head>
 
 <body>
-
-<?php require_once 'navbar.php'; ?>
+    <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
+    
+    <!-- Cart Icon -->
+    <div class="cart-icon-wrapper">
+      <button class="cart-icon" onclick="toggleCart()" aria-label="Shopping Cart">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+        </svg>
+        <span class="cart-badge" id="cartBadge">0</span>
+      </button>
+      
+      <div class="cart-dropdown" id="cartDropdown">
+        <div class="cart-header">
+          <h3>Shopping Cart</h3>
+          <button class="cart-close" onclick="toggleCart()" aria-label="Close Cart">&times;</button>
+        </div>
+        
+        <div class="cart-items" id="cartItems">
+          <div class="cart-empty">
+            <div class="cart-empty-icon">🛒</div>
+            <p>Your cart is empty</p>
+            <p style="font-size: 0.85rem; color: #9ca3af; margin-top: 0.5rem;">Add items from the shop to get started</p>
+          </div>
+        </div>
+        
+        <div class="cart-footer" id="cartFooter" style="display: none;">
+          <div class="cart-total">
+            <span class="cart-total-label">Total:</span>
+            <span class="cart-total-value" id="cartTotal">Rs. 0</span>
+          </div>
+          <div class="cart-actions">
+            <button class="btn-cart btn-checkout" onclick="checkout()">Proceed to Checkout</button>
+            <button class="btn-cart" onclick="clearCart()">Clear Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="main-content">
 
 <!-- Product Details Section -->
 <section class="product-details">
@@ -143,7 +187,13 @@
            </div>
         </div>
 
-        <button class="add-to-cart">Add to Cart</button>
+        <button class="add-to-cart" 
+                data-product-id="<?php echo $product['id']; ?>"
+                data-product-name="<?php echo htmlspecialchars($product['name']); ?>"
+                data-product-price="<?php echo $product['price']; ?>"
+                data-product-image="<?php echo htmlspecialchars($product['image']); ?>">
+            Add to Cart
+        </button>
     </div>
 </section>
 
@@ -180,6 +230,9 @@
   </div>
 </footer>
 
+    </div> <!-- End main-content -->
+
+<script src="/PETVET/public/js/cart.js"></script>
 <script src="/PETVET/public/js/guest/shop-product.js"></script>
 </body>
 </html>
