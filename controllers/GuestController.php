@@ -1,12 +1,18 @@
 <?php
 require_once __DIR__ . '/BaseController.php';
 require_once __DIR__ . '/../models/Guest/GuestShopModel.php';
+require_once __DIR__ . '/../models/Guest/GuestExplorePetsModel.php';
+require_once __DIR__ . '/../models/Guest/GuestLostFoundModel.php';
 
 class GuestController extends BaseController {
     private $shopModel;
+    private $explorePetsModel;
+    private $lostFoundModel;
 
     public function __construct() {
         $this->shopModel = new GuestShopModel();
+        $this->explorePetsModel = new GuestExplorePetsModel();
+        $this->lostFoundModel = new GuestLostFoundModel();
     }
 
     public function shop() {
@@ -34,6 +40,28 @@ class GuestController extends BaseController {
             'product' => $product,
             'relatedProducts' => $relatedProducts,
             'productId' => $productId
+        ]);
+    }
+
+    public function explorePets() {
+        $sellers = $this->explorePetsModel->getAllSellers();
+        $pets = $this->explorePetsModel->getAllPets();
+        
+        $this->guestView('explore-pets', [
+            'sellers' => $sellers,
+            'pets' => $pets
+        ]);
+    }
+
+    public function lostFound() {
+        $reports = $this->lostFoundModel->getAllReports();
+        $lostReports = $this->lostFoundModel->getLostReports();
+        $foundReports = $this->lostFoundModel->getFoundReports();
+        
+        $this->guestView('lost-found', [
+            'reports' => $reports,
+            'lostReports' => $lostReports,
+            'foundReports' => $foundReports
         ]);
     }
 
