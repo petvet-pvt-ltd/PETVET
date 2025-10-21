@@ -127,11 +127,15 @@
   const roleOptions = $$('.role-option');
   const roleForm = $('#formRole');
   const roleMap = {
-    'pet-owner': '/PETVET/index.php?module=pet-owner&page=my-pets',
+    'pet_owner': '/PETVET/index.php?module=pet-owner&page=my-pets',
     'trainer': '/PETVET/index.php?module=trainer&page=dashboard',
     'sitter': '/PETVET/index.php?module=sitter&page=dashboard',
     'breeder': '/PETVET/index.php?module=breeder&page=dashboard',
-    'groomer': '/PETVET/index.php?module=groomer&page=services'
+    'groomer': '/PETVET/index.php?module=groomer&page=services',
+    'vet': '/PETVET/index.php?module=vet&page=dashboard',
+    'clinic_manager': '/PETVET/index.php?module=clinic-manager&page=overview',
+    'receptionist': '/PETVET/index.php?module=receptionist&page=dashboard',
+    'admin': '/PETVET/index.php?module=admin&page=dashboard'
   };
   
   roleOptions.forEach(opt=>{
@@ -146,15 +150,35 @@
   });
   
   if(roleForm){
-    roleForm.addEventListener('submit', e=>{
+    roleForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const selected = roleForm.querySelector('input[name="active_role"]:checked');
       if(selected){
         const roleValue = selected.value;
         const redirectUrl = roleMap[roleValue];
         if(redirectUrl){
-          showToast('Switching to ' + roleValue.replace('-', ' ') + '...');
-          setTimeout(()=>{ window.location.href = redirectUrl; }, 800);
+          try {
+            showToast('Switching to ' + roleValue.replace('_', ' ') + '...');
+            
+            // Call API to switch role in session
+            const response = await fetch('/PETVET/api/switch-role.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ role: roleValue })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+              // Redirect to the new role's dashboard
+              window.location.href = redirectUrl;
+            } else {
+              showToast(result.message || 'Failed to switch role', 'error');
+            }
+          } catch (error) {
+            showToast('Error switching role', 'error');
+            console.error('Role switch error:', error);
+          }
         }
       }
     });

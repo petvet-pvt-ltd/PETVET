@@ -107,13 +107,6 @@
   // Role switching functionality
   const roleOptions = $$('.role-option');
   const roleForm = $('#formRole');
-  const roleMap = {
-    'pet-owner': '/PETVET/index.php?module=pet-owner&page=my-pets',
-    'trainer': '/PETVET/index.php?module=trainer&page=dashboard',
-    'sitter': '/PETVET/index.php?module=sitter&page=dashboard',
-    'breeder': '/PETVET/index.php?module=breeder&page=dashboard',
-    'groomer': '/PETVET/index.php?module=groomer&page=services'
-  };
   
   roleOptions.forEach(opt=>{
     const radio = opt.querySelector('input[type=radio]');
@@ -127,15 +120,44 @@
   });
   
   if(roleForm){
-    roleForm.addEventListener('submit', e=>{
+    roleForm.addEventListener('submit', async e=>{
       e.preventDefault();
       const selected = roleForm.querySelector('input[name="active_role"]:checked');
       if(selected){
         const roleValue = selected.value;
-        const redirectUrl = roleMap[roleValue];
-        if(redirectUrl){
-          showToast('Switching to ' + roleValue.replace('-', ' ') + '...');
-          setTimeout(()=>{ window.location.href = redirectUrl; }, 800);
+        
+        // Show loading state
+        const submitBtn = roleForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Switching...';
+        
+        try {
+          // Call API to switch role
+          const response = await fetch('/PETVET/api/switch-role.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ role: roleValue })
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            showToast('Role switched successfully!');
+            setTimeout(() => {
+              window.location.href = result.redirect;
+            }, 500);
+          } else {
+            showToast(result.message || 'Failed to switch role', 'error');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+          }
+        } catch (error) {
+          showToast('An error occurred. Please try again.', 'error');
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
         }
       }
     });
