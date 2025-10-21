@@ -214,6 +214,100 @@ body, html {
   position: relative;
 }
 
+/* Product Carousel */
+.product-carousel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.product-carousel .carousel-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.product-carousel .carousel-img.active {
+  opacity: 1;
+}
+
+.product-carousel .carousel-prev,
+.product-carousel .carousel-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.product-carousel .carousel-prev:hover,
+.product-carousel .carousel-next:hover {
+  background: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.product-carousel .carousel-prev:active,
+.product-carousel .carousel-next:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.product-carousel .carousel-prev {
+  left: 8px;
+}
+
+.product-carousel .carousel-next {
+  right: 8px;
+}
+
+.product-carousel .carousel-dots {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+
+.product-carousel .carousel-dots .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.product-carousel .carousel-dots .dot.active {
+  background: white;
+  width: 10px;
+  height: 10px;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+}
+
+.product-carousel .carousel-dots .dot:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scale(1.2);
+}
+
 /* Fallback for broken/missing images */
 .product-image-container img[src=""],
 .product-image-container img:not([src]),
@@ -320,11 +414,18 @@ body, html {
   border-radius: 8px;
   background: transparent;
   text-align: center;
+  display: inline-block;
 }
 
 .quick-view:hover {
   background: #2563eb;
   color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.quick-view:active {
+  transform: translateY(0);
 }
 
 /* Footer */

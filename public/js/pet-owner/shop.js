@@ -11,6 +11,7 @@ function initializeShop() {
     resetPageStates();
     
     // Initialize all features
+    setupProductCarousels();
     setupAddToCartButtons();
     setupCategoryFiltering();
     setupProductCardClickHandlers();
@@ -19,6 +20,46 @@ function initializeShop() {
     setupImageLazyLoading();
     setupImageFallbacks();
     setupSearchAndFilters();
+}
+
+// Product Image Carousel
+function setupProductCarousels() {
+    document.querySelectorAll('.product-carousel').forEach(carousel => {
+        const images = carousel.querySelectorAll('.carousel-img');
+        const dots = carousel.querySelectorAll('.dot');
+        const prevBtn = carousel.querySelector('.carousel-prev');
+        const nextBtn = carousel.querySelector('.carousel-next');
+        let currentIndex = 0;
+        
+        function showImage(index) {
+            images.forEach((img, i) => {
+                img.classList.toggle('active', i === index);
+            });
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+            currentIndex = index;
+        }
+        
+        prevBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const newIndex = (currentIndex - 1 + images.length) % images.length;
+            showImage(newIndex);
+        });
+        
+        nextBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const newIndex = (currentIndex + 1) % images.length;
+            showImage(newIndex);
+        });
+        
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showImage(index);
+            });
+        });
+    });
 }
 
 // Reset any persistent states from previous visits

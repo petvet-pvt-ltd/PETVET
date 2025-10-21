@@ -43,17 +43,24 @@ body{
 .actions{display:flex;gap:10px}
 
 /* Buttons */
-.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:#ffffff;color:var(--text);padding:10px 14px;border-radius:8px;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,0.04)}
-.btn:hover{background:#f1f5ff}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:#ffffff;color:var(--text);padding:10px 14px;border-radius:8px;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,0.04);transition:all 0.2s ease}
+.btn:hover{background:#f1f5ff;transform:translateY(-1px);box-shadow:0 4px 8px rgba(15,23,42,0.08)}
+.btn:active{transform:translateY(0);box-shadow:0 1px 2px rgba(15,23,42,0.04)}
 .btn-primary{background:linear-gradient(135deg,#10b981,#22c55e);color:#fff;border-color:#bdeccf}
-.btn-primary:hover{filter:brightness(1.03)}
+.btn-primary:hover{background:linear-gradient(135deg,#059669,#16a34a);transform:translateY(-2px);box-shadow:0 6px 16px rgba(16,185,129,0.3)}
+.btn-primary:active{transform:translateY(0);box-shadow:0 2px 4px rgba(16,185,129,0.2)}
 .btn-secondary{background:#f8fafc}
+.btn-secondary:hover{background:#e2e8f0}
 .btn-light{background:#f8fafc}
+.btn-light:hover{background:#e2e8f0}
 .btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-color:#f5c2c7}
+.btn-danger:hover{background:linear-gradient(135deg,#dc2626,#b91c1c);transform:translateY(-2px);box-shadow:0 6px 16px rgba(239,68,68,0.3)}
+.btn-danger:active{transform:translateY(0);box-shadow:0 2px 4px rgba(239,68,68,0.2)}
 .icon{font-size:16px}
 .badge{background:#eef2ff;border:1px solid #dbe4ff;color:#1e3a8a;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700}
-.icon-btn{border:none;background:transparent;color:var(--text);cursor:pointer}
-.icon-btn:hover{opacity:.8}
+.icon-btn{border:none;background:transparent;color:var(--text);cursor:pointer;transition:all 0.2s ease}
+.icon-btn:hover{opacity:.7;transform:scale(1.05)}
+.icon-btn:active{transform:scale(0.95)}
 
 /* Grid */
 .products-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
@@ -61,16 +68,19 @@ body{
 @media (max-width: 680px){.products-grid{grid-template-columns:1fr}}
 
 /* Card */
-.product-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+.product-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(15,23,42,.06);transition:all 0.3s ease}
+.product-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(15,23,42,.12)}
 .product-card .gallery{position:relative;background:#f8fafc}
 .product-card .main-img{width:100%;height:220px;object-fit:cover;display:block}
-.product-card .nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(15,23,42,.45);border:none;color:#fff;font-size:20px;width:36px;height:36px;border-radius:999px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.product-card .nav:hover{background:rgba(0,0,0,.65)}
+.product-card .nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(15,23,42,.45);border:none;color:#fff;font-size:20px;width:36px;height:36px;border-radius:999px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease}
+.product-card .nav:hover{background:rgba(0,0,0,.75);transform:translateY(-50%) scale(1.1)}
+.product-card .nav:active{transform:translateY(-50%) scale(0.95)}
 .product-card .prev{left:8px}
 .product-card .next{right:8px}
 .product-card .thumbs{display:flex;gap:8px;padding:8px;border-top:1px solid var(--border);overflow-x:auto;background:#f8fafc}
-.product-card .thumb{width:56px;height:56px;object-fit:cover;border-radius:8px;opacity:.9;border:1px solid #e5e7eb;cursor:pointer;background:#fff}
-.product-card .thumb.active{opacity:1;border-color:#22c55e}
+.product-card .thumb{width:56px;height:56px;object-fit:cover;border-radius:8px;opacity:.9;border:1px solid #e5e7eb;cursor:pointer;background:#fff;transition:all 0.2s ease}
+.product-card .thumb:hover{opacity:1;transform:scale(1.05);border-color:#22c55e}
+.product-card .thumb.active{opacity:1;border-color:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,0.2)}
 .product-card .info{padding:12px 14px;background:#fff}
 .product-card .top-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .product-card .title{margin:0;font-size:18px}
@@ -79,6 +89,9 @@ body{
 .product-card .meta{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px}
 .product-card .price{color:#047857;font-weight:800}
 .card-actions{display:flex;gap:8px}
+.card-actions button{transition:all 0.2s ease}
+.card-actions button:hover{transform:translateY(-1px)}
+.card-actions button:active{transform:translateY(0)}
 
 /* Modal */
 .modal{position:fixed;inset:0;background:rgba(15,23,42,.25);backdrop-filter:saturate(140%) blur(2px);display:none;align-items:flex-start;justify-content:center;padding:24px 16px 16px;z-index:2000}
@@ -97,7 +110,9 @@ body{
 @keyframes modalIn{from{opacity:0;transform:translateY(-10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes fadeInOverlay{from{background:rgba(15,23,42,0)}to{background:rgba(15,23,42,.25)}}
 
-.btn-success{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:1px solid #bdeccf}
+.btn-success{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:1px solid #bdeccf;transition:all 0.2s ease}
+.btn-success:hover{background:linear-gradient(135deg,#15803d,#16a34a);transform:translateY(-2px);box-shadow:0 6px 16px rgba(34,197,94,0.3)}
+.btn-success:active{transform:translateY(0);box-shadow:0 2px 4px rgba(34,197,94,0.2)}
 
 /* Table */
 .table-wrap{max-height:60vh;overflow:auto;border:1px solid var(--border);border-radius:10px;background:#fff}
@@ -118,14 +133,19 @@ input[type="text"], input[type="number"], input[type="url"], textarea, select{
 textarea{resize:vertical}
 .image-url-list{display:flex;flex-direction:column;gap:8px}
 .image-url-row{display:flex;gap:8px}
-.image-url-row .remove-url{color:#b91c1c}
+.image-url-row .remove-url{color:#b91c1c;cursor:pointer;transition:all 0.2s ease}
+.image-url-row .remove-url:hover{color:#dc2626;transform:scale(1.1)}
+.image-url-row .remove-url:active{transform:scale(0.9)}
 
 /* Toast */
-.toast{position:fixed;bottom:20px;right:20px;background:#ffffff;border:1px solid var(--border);padding:10px 14px;border-radius:8px;opacity:0;transform:translateY(8px);transition:all .2s ease;z-index:60;box-shadow:0 4px 10px rgba(15,23,42,.1)}
+.toast{position:fixed;bottom:20px;right:20px;background:#ffffff;border:1px solid var(--border);padding:10px 14px;border-radius:8px;opacity:0;transform:translateY(8px);transition:all .2s ease;z-index:9999;box-shadow:0 4px 10px rgba(15,23,42,.1)}
 .toast.show{opacity:1;transform:translateY(0)}
 
 /* Image preview (uploads) */
 .image-preview-list{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
 .image-preview-item{position:relative;display:inline-block}
-.image-preview-item img{width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--border);background:#fff}
-.image-preview-item .remove-preview{position:absolute;top:-8px;right:-8px;background:#fff;border:1px solid var(--border);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:#b91c1c;font-weight:700;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.image-preview-item img{width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--border);background:#fff;transition:all 0.2s ease}
+.image-preview-item:hover img{transform:scale(1.05);box-shadow:0 2px 8px rgba(15,23,42,0.1)}
+.image-preview-item .remove-preview{position:absolute;top:-8px;right:-8px;background:#fff;border:1px solid var(--border);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:#b91c1c;font-weight:700;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.08);transition:all 0.2s ease}
+.image-preview-item .remove-preview:hover{background:#fee2e2;border-color:#ef4444;transform:scale(1.15)}
+.image-preview-item .remove-preview:active{transform:scale(0.95)}
