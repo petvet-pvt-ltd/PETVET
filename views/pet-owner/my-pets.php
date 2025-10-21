@@ -405,6 +405,11 @@ function calculateAge($dob) {
   <?php //require_once '../sidebar.php'; ?>
 
   <main class="main-content">
+    <?php 
+    // Include user welcome header
+    include __DIR__ . '/../shared/components/user-welcome-header.php'; 
+    ?>
+    
     <header class="page-header">
       <h2>My Pets</h2>
       <div class="header-actions">

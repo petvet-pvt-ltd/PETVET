@@ -1,3 +1,11 @@
+<?php
+/**
+ * DEPRECATED: Vet registration is now part of multi-role registration
+ * Please use: /PETVET/index.php?module=guest&page=register
+ */
+header('Location: /PETVET/index.php?module=guest&page=register');
+exit;
+?>
 <!DOCTYPE html>
 <html lang="en">
 

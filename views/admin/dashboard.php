@@ -12,34 +12,11 @@ $totalClinics = isset($totalClinics) ? $totalClinics : 45;
 <link rel="stylesheet" href="/PETVET/public/css/admin/dashboard.css">
 
 <div class="main-content">
-  <header class="topbar">
-    <div class="topbar-left">
-      <h2>Dashboard Overview</h2>
-      <p class="breadcrumb">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:4px">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Admin / Dashboard
-      </p>
-    </div>
-    <div class="actions">
-      <button class="icon-btn refresh-btn" title="Refresh Data">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M21 2v6h-6M3 22v-6h6M21 8a10 10 0 0 0-17-4.5M3 16a10 10 0 0 0 17 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-      <button class="icon-btn export-btn" title="Export Report">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-      <div class="profile">
-        <div class="circle">AJ</div>
-        <span>Admin User</span>
-      </div>
-    </div>
-  </header>
-
+  <?php 
+  // Include user welcome header
+  include __DIR__ . '/../shared/components/user-welcome-header.php'; 
+  ?>
+  
   <section class="overview">
     <!-- Enhanced Stat Cards -->
     <div class="dashboard-top-cards">

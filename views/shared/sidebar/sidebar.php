@@ -2,6 +2,10 @@
 <?php
 // Sidebar stylesheet for inclusion in main page head
 echo '<link rel="stylesheet" href="/PETVET/public/css/sidebar/sidebar.css">';
+
+// Include auth helper for authentication check
+require_once __DIR__ . '/../../../config/auth_helper.php';
+
 $activeModule = isset($module) ? $module : (isset($GLOBALS['module']) ? $GLOBALS['module'] : null);
 echo "<!-- activeModule: $activeModule -->";
 ?>
@@ -241,7 +245,7 @@ echo "<!-- activeModule: $activeModule -->";
   <?php else: ?>
     <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/account-settings.png" class="icon"> Settings</li>
   <?php endif; ?>
-  <a href="/PETVET/db/logout.php"><li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/logout.png" class="icon"> Logout</li></a>
+  <a href="/PETVET/logout.php"><li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/logout.png" class="icon"> Logout</li></a>
   </ul>
 </div>
 

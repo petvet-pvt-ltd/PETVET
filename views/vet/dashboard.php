@@ -20,11 +20,11 @@ $data = $dashboardData; // This comes from the controller
   <?php include 'views/shared/sidebar/sidebar.php'; ?>
   
   <div class="main-content">
-    <header class="dashboard-header">
-      <h2>Welcome, Dr. <?php echo htmlspecialchars(isset($_SESSION['user_name']) ? $_SESSION['user_name'] : 'Smith'); ?></h2>
-      <div class="date"><?php echo date("l, F j, Y", strtotime('2025-10-12')); ?></div>
-    </header>
-
+    <?php 
+    // Include user welcome header
+    include __DIR__ . '/../shared/components/user-welcome-header.php'; 
+    ?>
+    
     <div class="cards">
       <div class="card">
         <h3 id="kpi-today">—</h3>
