@@ -15,6 +15,7 @@ $GLOBALS['module'] = 'trainer';
 <body>
 <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
 <main class="main-content">
+<?php include __DIR__ . '/../shared/components/user-welcome-header.php'; ?>
 <div class="dashboard-header">
 <h1>Welcome, Pet Trainer!</h1>
 <p>Manage your training sessions</p>

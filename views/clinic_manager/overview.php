@@ -28,14 +28,12 @@ $today = date('l, F j, Y');
 </head>
 <body>
   <main class="main-content">
+    <?php 
+    // Include user welcome header
+    include __DIR__ . '/../shared/components/user-welcome-header.php'; 
+    ?>
+    
     <div class="page-frame">
-      <!-- Header -->
-      <header class="cm-header">
-        <h1>Welcome, Clinic Manager</h1>
-        <p>Today is <?php echo htmlspecialchars($today); ?></p>
-      </header>
-
-      <!-- Two-column layout -->
       <section class="cm-layout">
         <!-- LEFT: KPIs + Appointments -->
         <div class="left-col">

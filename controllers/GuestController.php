@@ -3,16 +3,19 @@ require_once __DIR__ . '/BaseController.php';
 require_once __DIR__ . '/../models/Guest/GuestShopModel.php';
 require_once __DIR__ . '/../models/Guest/GuestExplorePetsModel.php';
 require_once __DIR__ . '/../models/Guest/GuestLostFoundModel.php';
+require_once __DIR__ . '/../models/RegistrationModel.php';
 
 class GuestController extends BaseController {
     private $shopModel;
     private $explorePetsModel;
     private $lostFoundModel;
+    private $registrationModel;
 
     public function __construct() {
         $this->shopModel = new GuestShopModel();
         $this->explorePetsModel = new GuestExplorePetsModel();
         $this->lostFoundModel = new GuestLostFoundModel();
+        $this->registrationModel = new RegistrationModel();
     }
 
     public function shop() {
@@ -63,6 +66,19 @@ class GuestController extends BaseController {
             'lostReports' => $lostReports,
             'foundReports' => $foundReports
         ]);
+    }
+
+    public function register() {
+        // If it's a POST request, handle registration
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_once __DIR__ . '/../controllers/RegistrationController.php';
+            $registrationController = new RegistrationController();
+            $registrationController->register();
+        } else {
+            // Otherwise, just show the registration form
+            // The form file has its own auth check and will handle the display
+            include __DIR__ . '/../views/guest/register.php';
+        }
     }
 
     // Modified view method for guest pages (no sidebar)

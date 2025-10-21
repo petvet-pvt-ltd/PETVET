@@ -16,6 +16,7 @@ $GLOBALS['module'] = 'groomer';
 <body>
 <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
 <main class="main-content">
+<?php include __DIR__ . '/../shared/components/user-welcome-header.php'; ?>
 <div class="page-wrap">
 <div class="services-header">
 <div>
