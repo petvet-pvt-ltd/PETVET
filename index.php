@@ -1,6 +1,12 @@
 <?php
+// Start session at the very beginning
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once __DIR__ . '/config/config.php';  // Include global configuration
 require_once __DIR__ . '/config/connect.php';
+require_once __DIR__ . '/config/auth_helper.php';  // Include authentication helpers
 
 // Function to display 404 error page
 function show404($message = null) {
@@ -11,6 +17,61 @@ function show404($message = null) {
 
 /************************************************************/
 $module = $_GET['module'] ?? 'guest'; // default module
+/************************************************************/
+
+// Define which modules require authentication and their required roles
+$moduleRoleMap = [
+    'admin' => 'admin',
+    'vet' => 'vet',
+    'clinic-manager' => 'clinic_manager',
+    'receptionist' => 'receptionist',
+    'trainer' => 'trainer',
+    'sitter' => 'sitter',
+    'breeder' => 'breeder',
+    'groomer' => 'groomer',
+    'pet-owner' => 'pet_owner',
+    'guest' => null, // null means no authentication required
+];
+
+// Check if module exists
+if (!array_key_exists($module, $moduleRoleMap)) {
+    show404("The requested module doesn't exist.");
+}
+
+// Check authentication and authorization
+$requiredRole = $moduleRoleMap[$module];
+
+if ($requiredRole !== null) {
+    // Module requires authentication
+    if (!isLoggedIn()) {
+        // Not logged in - redirect to login
+        $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+        header('Location: /PETVET/index.php?module=guest&page=login');
+        exit;
+    }
+    
+    // Check if user has the required role
+    if (!hasRole($requiredRole)) {
+        // User doesn't have permission - redirect to their dashboard
+        $userRole = currentRole();
+        $redirects = [
+            'admin' => '/PETVET/index.php?module=admin&page=dashboard',
+            'vet' => '/PETVET/index.php?module=vet&page=dashboard',
+            'clinic_manager' => '/PETVET/index.php?module=clinic-manager&page=overview',
+            'receptionist' => '/PETVET/index.php?module=receptionist&page=dashboard',
+            'trainer' => '/PETVET/index.php?module=trainer&page=dashboard',
+            'sitter' => '/PETVET/index.php?module=sitter&page=dashboard',
+            'breeder' => '/PETVET/index.php?module=breeder&page=dashboard',
+            'groomer' => '/PETVET/index.php?module=groomer&page=services',
+            'pet_owner' => '/PETVET/index.php?module=pet-owner&page=my-pets',
+        ];
+        
+        $redirect = $redirects[$userRole] ?? '/PETVET/index.php?module=guest&page=home';
+        header('Location: ' . $redirect);
+        exit;
+    }
+}
+
 /************************************************************/
 
 // Landing pages of each user-role
@@ -198,8 +259,13 @@ switch ($module) {
     break;
 
   case 'guest':
+    // Redirect if already logged in (except for logout action)
+    if (isLoggedIn() && $page !== 'logout') {
+        redirectToDashboard();
+    }
+    
     // Handle pages through GuestController that need data, others directly
-    if ($page === 'shop' || $page === 'shop-product' || $page === 'explore-pets' || $page === 'lost-found') {
+    if ($page === 'shop' || $page === 'shop-product' || $page === 'explore-pets' || $page === 'lost-found' || $page === 'register') {
       require_once __DIR__ . '/controllers/GuestController.php';
       $c = new GuestController();
       switch ($page) {
@@ -207,6 +273,7 @@ switch ($module) {
         case 'shop-product': $c->shopProduct(); break;
         case 'explore-pets': $c->explorePets(); break;
         case 'lost-found': $c->lostFound(); break;
+        case 'register': $c->register(); break;
         default: show404("This guest page doesn't exist."); break;
       }
     } else {

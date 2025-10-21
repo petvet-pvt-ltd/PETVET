@@ -1,5 +1,5 @@
 <?php
-session_start();
+// Session is already started in index.php
 $_SESSION['current_role'] = 'breeder';
 $pageTitle = "Available Pets";
 $currentPage = "available-pets";

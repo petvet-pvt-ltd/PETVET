@@ -152,23 +152,53 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Role form submission - NO CONFIRMATION for groomer
     const roleForm = document.getElementById('formRole');
+    const roleMap = {
+        'pet_owner': '/PETVET/index.php?module=pet-owner&page=my-pets',
+        'trainer': '/PETVET/index.php?module=trainer&page=dashboard',
+        'sitter': '/PETVET/index.php?module=sitter&page=dashboard',
+        'breeder': '/PETVET/index.php?module=breeder&page=dashboard',
+        'groomer': '/PETVET/index.php?module=groomer&page=services',
+        'vet': '/PETVET/index.php?module=vet&page=dashboard',
+        'clinic_manager': '/PETVET/index.php?module=clinic-manager&page=overview',
+        'receptionist': '/PETVET/index.php?module=receptionist&page=dashboard',
+        'admin': '/PETVET/index.php?module=admin&page=dashboard'
+    };
+    
     if (roleForm) {
-        roleForm.addEventListener('submit', function(e) {
+        roleForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const selectedRole = this.querySelector('input[name="active_role"]:checked');
             if (selectedRole) {
                 const roleName = selectedRole.nextElementSibling.querySelector('.role-name').textContent;
                 const roleValue = selectedRole.value;
+                const redirectUrl = roleMap[roleValue];
                 
-                // No confirmation dialog - switch immediately
-                console.log('Switching to role:', roleValue);
-                showToast(`Switching to ${roleName}...`);
-                
-                // Redirect immediately
-                setTimeout(() => {
-                    window.location.href = `/PETVET/index.php?module=${roleValue}`;
-                }, 800);
+                if (redirectUrl) {
+                    try {
+                        console.log('Switching to role:', roleValue);
+                        showToast(`Switching to ${roleName}...`);
+                        
+                        // Call API to switch role in session
+                        const response = await fetch('/PETVET/api/switch-role.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ role: roleValue })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            // Redirect to the new role's dashboard
+                            window.location.href = redirectUrl;
+                        } else {
+                            showToast(result.message || 'Failed to switch role', 'error');
+                        }
+                    } catch (error) {
+                        showToast('Error switching role', 'error');
+                        console.error('Role switch error:', error);
+                    }
+                }
             }
         });
     }

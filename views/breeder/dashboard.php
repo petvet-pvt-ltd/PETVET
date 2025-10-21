@@ -25,6 +25,7 @@ $pageTitle = "Dashboard";
     <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
 
     <main class="main-content">
+        <?php include __DIR__ . '/../shared/components/user-welcome-header.php'; ?>
         <!-- Dashboard Header -->
         <div class="dashboard-header">
             <h1>Welcome, Pet Breeder!</h1>

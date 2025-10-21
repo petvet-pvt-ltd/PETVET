@@ -1,10 +1,11 @@
 <?php
-/**
- * DEPRECATED: This file has been moved to the routing system
- * Please use: /PETVET/index.php?module=guest&page=register
- */
-header('Location: /PETVET/index.php?module=guest&page=register');
-exit;
+/* Registration page */
+require_once __DIR__ . '/../../config/auth_helper.php';
+
+// If already logged in, redirect to dashboard
+if (isLoggedIn()) {
+    redirectToDashboard();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -619,7 +620,7 @@ exit;
       </div>
 
       <!-- Form -->
-      <form class="form-content" action="registration_process.php" method="post" enctype="multipart/form-data">
+      <form class="form-content" action="/PETVET/index.php?module=guest&page=register" method="post" enctype="multipart/form-data">
         
         <!-- Step 1: Basic Information -->
         <div class="step active" id="step-1">
@@ -780,9 +781,63 @@ exit;
       }
     };
 
+    // Check email availability via API
+    async function checkEmailAvailability(email) {
+      try {
+        const response = await fetch('/PETVET/api/check-email.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email })
+        });
+        
+        const result = await response.json();
+        return result;
+      } catch (error) {
+        console.error('Email check error:', error);
+        return { error: 'Could not verify email' };
+      }
+    }
+
     // Step navigation
-    function nextStep() {
-      if (currentStep === 1 && !validateStep1()) return;
+    async function nextStep() {
+      if (currentStep === 1) {
+        if (!validateStep1()) return;
+        
+        // Check email availability before proceeding
+        const emailInput = document.getElementById('email');
+        const email = emailInput.value.trim();
+        
+        if (email) {
+          // Show loading state
+          const nextBtn = document.getElementById('nextBtn');
+          const originalText = nextBtn.textContent;
+          nextBtn.disabled = true;
+          nextBtn.textContent = 'Checking email...';
+          
+          const emailCheck = await checkEmailAvailability(email);
+          
+          // Restore button
+          nextBtn.disabled = false;
+          nextBtn.textContent = originalText;
+          
+          if (emailCheck.exists) {
+            // Email is already taken
+            const errorEl = document.getElementById('email-error');
+            emailInput.classList.add('error');
+            emailInput.classList.remove('success');
+            errorEl.textContent = 'This email is already registered. Please use a different email or login.';
+            errorEl.style.display = 'block';
+            return;
+          } else if (emailCheck.available) {
+            // Email is available - continue
+            emailInput.classList.remove('error');
+            emailInput.classList.add('success');
+            const errorEl = document.getElementById('email-error');
+            errorEl.style.display = 'none';
+          }
+        }
+      }
+      
       if (currentStep === 2 && !validateStep2()) return;
       
       if (currentStep === 2) {
@@ -928,14 +983,11 @@ exit;
             <div class="form-group">
               <div class="form-row">
                 <input type="text" class="form-input" name="trainer_specialization" placeholder="Specialization (e.g., Obedience, Agility)" required>
-                <input type="number" class="form-input" name="trainer_experience" placeholder="Years of Experience" required>
+                <input type="number" class="form-input" name="trainer_experience" placeholder="Years of Experience" min="0" step="1" required>
               </div>
             </div>
             <div class="form-group">
-              <div class="form-row">
-                <input type="number" class="form-input" name="trainer_hourly_rate" placeholder="Hourly Rate ($)" step="0.01">
-                <input type="text" class="form-input" name="trainer_service_area" placeholder="Service Area">
-              </div>
+              <input type="text" class="form-input" name="trainer_service_area" placeholder="Service Area" style="width: 100%;">
             </div>
             <div class="form-group">
               <textarea class="form-textarea" name="trainer_certifications" placeholder="Certifications and qualifications"></textarea>
@@ -959,7 +1011,7 @@ exit;
             </div>
             <div class="form-group">
               <div class="form-row">
-                <input type="number" class="form-input" name="groomer_experience" placeholder="Years of Experience" required>
+                <input type="number" class="form-input" name="groomer_experience" placeholder="Years of Experience" min="0" step="1" required>
                 <input type="text" class="form-input" name="groomer_business_name" placeholder="Business Name">
               </div>
             </div>
@@ -970,12 +1022,12 @@ exit;
               <textarea class="form-textarea" name="groomer_pricing" placeholder="Pricing structure and rates"></textarea>
             </div>
             <div class="form-group">
-              <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #374151;">Business License (PDF, Required) <span style="color: #ef4444;">*</span>:</label>
+              <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #374151;">Business License (PDF, Optional):</label>
               <div class="file-upload-area" onclick="document.getElementById('groomer_license').click()">
                 <div class="file-upload-icon">📄</div>
                 <div class="file-upload-text">Click to upload business license</div>
                 <div class="file-upload-subtext">PDF files only, max 5MB</div>
-                <input type="file" id="groomer_license" name="groomer_license" accept=".pdf" required style="display: none;">
+                <input type="file" id="groomer_license" name="groomer_license" accept=".pdf" style="display: none;">
               </div>
             </div>
           </div>
@@ -998,10 +1050,7 @@ exit;
               </div>
             </div>
             <div class="form-group">
-              <div class="form-row">
-                <input type="number" class="form-input" name="sitter_max_pets" placeholder="Maximum pets at once" required>
-                <input type="number" class="form-input" name="sitter_experience" placeholder="Years of Experience">
-              </div>
+              <input type="number" class="form-input" name="sitter_experience" placeholder="Years of Experience" min="0" step="1" style="width: 100%;">
             </div>
             <div class="form-group">
               <textarea class="form-textarea" name="sitter_pet_types" placeholder="Types of pets you can care for" required></textarea>
@@ -1022,7 +1071,7 @@ exit;
             <div class="form-group">
               <div class="form-row">
                 <input type="text" class="form-input" name="breeder_breeds" placeholder="Breeds you specialize in" required>
-                <input type="number" class="form-input" name="breeder_experience" placeholder="Years of Breeding Experience" required>
+                <input type="number" class="form-input" name="breeder_experience" placeholder="Years of Breeding Experience" min="0" step="1" required>
               </div>
             </div>
             <div class="form-group">
@@ -1032,12 +1081,12 @@ exit;
               <textarea class="form-textarea" name="breeder_philosophy" placeholder="Breeding philosophy and approach"></textarea>
             </div>
             <div class="form-group">
-              <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #374151;">Breeding License (PDF, Required) <span style="color: #ef4444;">*</span>:</label>
+              <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #374151;">Breeding License (PDF, Optional):</label>
               <div class="file-upload-area" onclick="document.getElementById('breeder_license').click()">
                 <div class="file-upload-icon">📄</div>
                 <div class="file-upload-text">Click to upload breeding license</div>
                 <div class="file-upload-subtext">PDF files only, max 5MB</div>
-                <input type="file" id="breeder_license" name="breeder_license" accept=".pdf" required style="display: none;">
+                <input type="file" id="breeder_license" name="breeder_license" accept=".pdf" style="display: none;">
               </div>
             </div>
           </div>
