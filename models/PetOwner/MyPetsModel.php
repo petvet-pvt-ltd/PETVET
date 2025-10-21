@@ -1,51 +1,59 @@
 <?php
+require_once __DIR__ . '/PetProfileModel.php';
+
 class MyPetsModel {
+	private $petProfileModel;
+	
+	public function __construct() {
+		$this->petProfileModel = new PetProfileModel();
+	}
+	
 	public function fetchPets() {
-		// Using remote placeholder images (royalty-free Unsplash / Bing) so cards always show photos.
-		$pets = [
-			[
-				'id' => 1,
-				'name' => 'Rocky',
-				'species' => 'Dog',
-				'breed' => 'Golden Retriever',
-				'sex' => 'Male',
-				'date_of_birth' => '2022-04-15',
-				'weight' => '30.5',
-				'color' => 'Golden',
-				'allergies' => 'None',
-				'notes' => 'Loves people. No known allergies.',
-				'photo' => 'https://images.unsplash.com/photo-1552053831-71594a27632d?q=80&w=800&auto=format&fit=crop',
-				'owner' => 'John Doe'
-			],
-			[
-				'id' => 2,
-				'name' => 'Whiskers',
-				'species' => 'Cat',
-				'breed' => 'Siamese',
-				'sex' => 'Female',
-				'date_of_birth' => '2023-01-10',
-				'weight' => '4.2',
-				'color' => 'Cream with brown points',
-				'allergies' => 'Fish',
-				'notes' => 'Very playful. Needs special diet.',
-				'photo' => 'https://images.unsplash.com/photo-1543852786-1cf6624b9987?q=80&w=800&auto=format&fit=crop',
-				'owner' => 'Jane Smith'
-			],
-			[
-				'id' => 3,
-				'name' => 'Tweety',
-				'species' => 'Bird',
-				'breed' => 'Canary',
-				'sex' => 'Unknown',
-				'date_of_birth' => '2024-06-01',
-				'weight' => '0.03',
-				'color' => 'Yellow',
-				'allergies' => 'None',
-				'notes' => 'Sings every morning.',
-				'photo' => 'https://thvnext.bing.com/th/id/OIP.ikE0KSiA5itZmKSZ4koCqAHaFj?w=600&h=450&c=7&r=0&o=5&dpr=1.3&pid=1.7',
-				'owner' => 'Alice Brown'
-			]
-		];
+		// Get user ID from session
+		$userId = $_SESSION['user_id'] ?? null;
+		
+		if (!$userId) {
+			return [];
+		}
+		
+		// Fetch pets from database
+		$petsFromDb = $this->petProfileModel->getUserPets($userId);
+		
+		// Transform database pets to match existing UI structure
+		$pets = [];
+		foreach ($petsFromDb as $p) {
+			// Use photo_url if available, otherwise use placeholder based on species
+			$photo = $p['photo_url'];
+			if (!$photo) {
+				// Default placeholder images based on species
+				$placeholders = [
+					'Dog' => 'https://images.unsplash.com/photo-1552053831-71594a27632d?q=80&w=800&auto=format&fit=crop',
+					'Cat' => 'https://images.unsplash.com/photo-1543852786-1cf6624b9987?q=80&w=800&auto=format&fit=crop',
+					'Bird' => 'https://thvnext.bing.com/th/id/OIP.ikE0KSiA5itZmKSZ4koCqAHaFj?w=600&h=450&c=7&r=0&o=5&dpr=1.3&pid=1.7',
+					'Rabbit' => 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?q=80&w=800&auto=format&fit=crop',
+					'Hamster' => 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?q=80&w=800&auto=format&fit=crop',
+					'Guinea Pig' => 'https://images.unsplash.com/photo-1548681528-6a5c45b66b42?q=80&w=800&auto=format&fit=crop',
+					'Fish' => 'https://images.unsplash.com/photo-1524704654690-b56c05c78a00?q=80&w=800&auto=format&fit=crop',
+					'Turtle' => 'https://images.unsplash.com/photo-1437622368342-7a3d73a34c8f?q=80&w=800&auto=format&fit=crop'
+				];
+				$photo = $placeholders[$p['species']] ?? 'https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?q=80&w=800&auto=format&fit=crop';
+			}
+			
+			$pets[] = [
+				'id' => $p['id'],
+				'name' => $p['name'],
+				'species' => $p['species'],
+				'breed' => $p['breed'] ?? 'Unknown',
+				'sex' => $p['sex'] ?? 'Unknown',
+				'date_of_birth' => $p['date_of_birth'] ?? '',
+				'weight' => $p['weight'] ?? '0',
+				'color' => $p['color'] ?? '',
+				'allergies' => $p['allergies'] ?? 'None',
+				'notes' => $p['notes'] ?? '',
+				'photo' => $photo
+			];
+		}
+		
 		return $pets;
 	}
 

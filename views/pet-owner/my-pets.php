@@ -17,6 +17,292 @@ function calculateAge($dob) {
   <title>My Pets</title>
   <link rel="stylesheet" href="/PETVET/public/css/pet-owner/my-pets.css">
   <style>
+    /* Pet Delete Button - Top Right Corner */
+    .pet-hero {
+      position: relative;
+    }
+    
+    .pet-delete-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(239, 68, 68, 0.9);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    
+    .pet-card:hover .pet-delete-btn {
+      opacity: 1;
+      transform: scale(1);
+    }
+    
+    .pet-delete-btn:hover {
+      background: rgba(220, 38, 38, 1);
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+    }
+    
+    .pet-delete-btn:active {
+      transform: scale(0.95);
+    }
+    
+    /* Mobile - always show delete button */
+    @media (max-width: 768px) {
+      .pet-delete-btn {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    
+    /* ========================================
+       DELETE CONFIRMATION DIALOG STYLES
+       ======================================== */
+    
+    #deletePetDialog {
+      background: transparent;
+      border: none;
+      padding: 0;
+    }
+    
+    #deletePetDialog::backdrop {
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+    }
+    
+    .delete-confirm-card {
+      max-width: 480px;
+      border-radius: 16px !important;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideInScale 0.3s ease-out;
+      border: none;
+      background: white;
+    }
+    
+    @keyframes slideInScale {
+      from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+    
+    .delete-confirm-card .dialog-header {
+      text-align: center;
+      padding: 32px 24px 20px;
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      border-bottom: none;
+    }
+    
+    .delete-icon-wrapper {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 16px;
+      background: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(239, 68, 68, 0.2);
+    }
+    
+    .delete-icon {
+      color: #ef4444;
+      animation: wiggle 0.5s ease-in-out;
+    }
+    
+    @keyframes wiggle {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-5deg); }
+      75% { transform: rotate(5deg); }
+    }
+    
+    .delete-confirm-card .dialog-header h3 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      font-weight: 700;
+      color: #991b1b;
+    }
+    
+    .delete-confirm-card .dialog-header .dialog-subtitle {
+      margin: 0;
+      font-size: 15px;
+      color: #7f1d1d;
+      line-height: 1.5;
+    }
+    
+    .delete-confirm-card .dialog-header .dialog-subtitle strong {
+      color: #991b1b;
+      font-weight: 600;
+    }
+    
+    .delete-confirm-card .dialog-body {
+      padding: 24px;
+    }
+    
+    .warning-box {
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    
+    .warning-box svg {
+      flex-shrink: 0;
+      color: #ef4444;
+      margin-top: 2px;
+    }
+    
+    .warning-title {
+      margin: 0 0 4px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #991b1b;
+    }
+    
+    .warning-text {
+      margin: 0;
+      font-size: 13px;
+      color: #6b7280;
+      line-height: 1.5;
+    }
+    
+    .delete-confirm-card .dialog-actions {
+      padding: 20px 24px 24px;
+      gap: 12px;
+      background: #fafafa;
+    }
+    
+    .btn.danger {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 140px;
+    }
+    
+    .btn.danger:hover {
+      background: #dc2626;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn.danger:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+    }
+    
+    /* Mobile Responsive for Delete Dialog */
+    @media (max-width: 768px) {
+      .delete-confirm-card {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        margin: 10px;
+        border-radius: 12px !important;
+      }
+      
+      .delete-icon-wrapper {
+        width: 70px;
+        height: 70px;
+      }
+      
+      .delete-icon {
+        width: 40px;
+        height: 40px;
+      }
+      
+      .delete-confirm-card .dialog-header {
+        padding: 24px 16px 16px;
+      }
+      
+      .delete-confirm-card .dialog-header h3 {
+        font-size: 20px;
+      }
+      
+      .delete-confirm-card .dialog-body {
+        padding: 16px;
+      }
+      
+      .warning-box {
+        padding: 0;
+        gap: 10px;
+      }
+      
+      .delete-confirm-card .dialog-actions {
+        flex-direction: column-reverse;
+        padding: 16px;
+      }
+      
+      .delete-confirm-card .dialog-actions .btn {
+        width: 100%;
+        min-width: 100%;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .delete-confirm-card {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: auto !important;
+        max-height: 90vh !important;
+        margin: 0 !important;
+        border-radius: 16px 16px 0 0 !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        top: auto !important;
+        left: 0 !important;
+        right: 0 !important;
+        animation: slideUpMobile 0.3s ease-out;
+      }
+      
+      @keyframes slideUpMobile {
+        from {
+          transform: translateY(100%);
+        }
+        to {
+          transform: translateY(0);
+        }
+      }
+      
+      .delete-confirm-card .dialog-header h3 {
+        font-size: 18px;
+      }
+      
+      .delete-confirm-card .dialog-header .dialog-subtitle {
+        font-size: 14px;
+      }
+      
+      .warning-title {
+        font-size: 13px;
+      }
+      
+      .warning-text {
+        font-size: 12px;
+      }
+    }
+    
     /* Prevent background scroll when dialog is open */
     body.dialog-open {
       overflow: hidden !important;
@@ -545,9 +831,17 @@ function calculateAge($dob) {
 
     <section class="pets-grid" id="petsGrid">
       <?php foreach ($pets as $pet): ?>
-      <article class="pet-card">
+      <article class="pet-card" data-pet-id="<?php echo $pet['id']; ?>">
         <div class="pet-hero">
           <img src="<?php echo $pet['photo']; ?>" alt="<?php echo $pet['name']; ?>">
+          <button class="pet-delete-btn" data-pet-id="<?php echo $pet['id']; ?>" data-pet-name="<?php echo htmlspecialchars($pet['name']); ?>" title="Delete Pet">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </button>
         </div>
         <div class="pet-body">
           <div class="pet-title">
@@ -580,7 +874,7 @@ function calculateAge($dob) {
 
   <!-- Add Pet Dialog -->
   <dialog id="addPetDialog" class="dialog">
-    <form method="dialog" class="dialog-card">
+    <form method="dialog" class="dialog-card" id="addPetForm" enctype="multipart/form-data">
       <header class="dialog-header">
         <h3>Add New Pet</h3>
         <p class="dialog-subtitle">Fill in your pet's details</p>
@@ -591,25 +885,30 @@ function calculateAge($dob) {
           <div class="grid-2">
             <label class="field">
               <span>Name *</span>
-              <input type="text" class="input" required placeholder="e.g. Buddy">
+              <input type="text" class="input" name="name" required placeholder="e.g. Buddy">
             </label>
             <label class="field">
               <span>Species *</span>
-              <select class="select" required>
+              <select class="select" name="species" required>
                 <option value="">Select species</option>
                 <option>Dog</option>
                 <option>Cat</option>
                 <option>Bird</option>
+                <option>Rabbit</option>
+                <option>Hamster</option>
+                <option>Guinea Pig</option>
+                <option>Fish</option>
+                <option>Turtle</option>
                 <option>Other</option>
               </select>
             </label>
             <label class="field">
               <span>Breed</span>
-              <input type="text" class="input" placeholder="e.g. Labrador">
+              <input type="text" class="input" name="breed" placeholder="e.g. Labrador">
             </label>
             <label class="field">
               <span>Sex</span>
-              <select class="select">
+              <select class="select" name="sex">
                 <option value="">Select sex</option>
                 <option>Male</option>
                 <option>Female</option>
@@ -618,11 +917,11 @@ function calculateAge($dob) {
             </label>
             <label class="field">
               <span>Date of Birth</span>
-              <input type="date" class="input">
+              <input type="date" class="input" name="date_of_birth">
             </label>
             <label class="field">
               <span>Weight (kg)</span>
-              <input type="number" step="0.01" class="input" placeholder="e.g. 12.5">
+              <input type="number" step="0.01" class="input" name="weight" placeholder="e.g. 12.5">
             </label>
           </div>
         </div>
@@ -632,7 +931,7 @@ function calculateAge($dob) {
           <div class="grid-2">
             <label class="field field-col">
               <span>Color/Markings</span>
-              <textarea class="input" rows="2" placeholder="e.g. Brown with white paws"></textarea>
+              <textarea class="input" name="color" rows="2" placeholder="e.g. Brown with white paws"></textarea>
             </label>
           </div>
         </div>
@@ -642,11 +941,11 @@ function calculateAge($dob) {
           <div class="grid-2">
             <label class="field field-col">
               <span>Allergies</span>
-              <textarea class="input" rows="2" placeholder="List any known allergies"></textarea>
+              <textarea class="input" name="allergies" rows="2" placeholder="List any known allergies"></textarea>
             </label>
             <label class="field field-col">
               <span>Additional Notes</span>
-              <textarea class="input" rows="2" placeholder="Temperament, special needs, etc."></textarea>
+              <textarea class="input" name="notes" rows="2" placeholder="Temperament, special needs, etc."></textarea>
             </label>
           </div>
         </div>
@@ -655,13 +954,13 @@ function calculateAge($dob) {
           <h4 class="section-title">Pet Photo</h4>
           <label class="field field-col">
             <span>Upload Photo</span>
-            <input type="file" accept="image/*" class="input">
+            <input type="file" accept="image/*" class="input" name="pet_photo" id="addPetPhoto">
           </label>
         </div>
       </div>
       <footer class="dialog-actions">
-        <button class="btn ghost" value="cancel">Cancel</button>
-        <button class="btn primary" value="save">Save Pet</button>
+        <button class="btn ghost" type="button" value="cancel">Cancel</button>
+        <button class="btn primary" type="submit" value="save">Save Pet</button>
       </footer>
     </form>
   </dialog>
@@ -669,6 +968,7 @@ function calculateAge($dob) {
   <!-- Pet Profile Dialog -->
   <dialog id="petProfileDialog" class="dialog">
     <form method="dialog" class="dialog-card" id="petProfileForm" enctype="multipart/form-data">
+      <input type="hidden" name="id" id="editPetId">
       <header class="dialog-header">
         <h3>Edit Pet Profile</h3>
         <p class="dialog-subtitle">View and edit your pet's details</p>
@@ -679,7 +979,7 @@ function calculateAge($dob) {
             <img id="petProfileImg" src="../../images/sample-dog.jpg" alt="Pet Photo" style="width:110px;height:110px;object-fit:cover;border-radius:50%;border:2px solid #e5e7eb;box-shadow:0 2px 8px rgba(37,99,235,.10);background:#f5f7fb;">
           </div>
           <label class="btn ghost" style="margin-bottom:10px;cursor:pointer;">
-            <input type="file" id="petProfileImgInput" accept="image/*" style="display:none;">
+            <input type="file" name="pet_photo" id="petProfileImgInput" accept="image/*" style="display:none;">
             <span>Change Photo</span>
           </label>
         </div>
@@ -697,6 +997,11 @@ function calculateAge($dob) {
                 <option>Dog</option>
                 <option>Cat</option>
                 <option>Bird</option>
+                <option>Rabbit</option>
+                <option>Hamster</option>
+                <option>Guinea Pig</option>
+                <option>Fish</option>
+                <option>Turtle</option>
                 <option>Other</option>
               </select>
             </label>
@@ -745,17 +1050,10 @@ function calculateAge($dob) {
             </label>
           </div>
         </div>
-        <div class="form-section">
-          <h4 class="section-title">Pet Photo</h4>
-          <label class="field field-col">
-            <span>Upload Photo</span>
-            <input type="file" accept="image/*" class="input" id="petProfileImgInput2">
-          </label>
-        </div>
       </div>
       <footer class="dialog-actions">
-        <button class="btn ghost" value="cancel">Cancel</button>
-        <button class="btn primary" value="save">Save Changes</button>
+        <button class="btn ghost" type="button" value="cancel">Cancel</button>
+        <button class="btn primary" type="submit" value="save">Save Changes</button>
       </footer>
     </form>
   </dialog>
@@ -802,6 +1100,41 @@ function calculateAge($dob) {
         <button class="btn primary" value="submit">Report</button>
       </footer>
     </form>
+  </dialog>
+  
+  <!-- Delete Pet Confirmation Dialog -->
+  <dialog id="deletePetDialog" class="dialog">
+    <div class="dialog-card delete-confirm-card">
+      <header class="dialog-header">
+        <div class="delete-icon-wrapper">
+          <svg class="delete-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+        </div>
+        <h3>Delete Pet Profile?</h3>
+        <p class="dialog-subtitle">Are you sure you want to delete <strong id="deletePetName">this pet</strong>?</p>
+      </header>
+      <div class="dialog-body">
+        <div class="warning-box">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <div>
+            <p class="warning-title">This action cannot be undone</p>
+            <p class="warning-text">The pet profile and all associated data will be permanently deleted from the system.</p>
+          </div>
+        </div>
+      </div>
+      <footer class="dialog-actions">
+        <button class="btn ghost" type="button" value="cancel">Cancel</button>
+        <button class="btn danger" type="button" id="confirmDeletePetBtn">Delete Forever</button>
+      </footer>
+    </div>
   </dialog>
   
     <!-- Book Appointment Dialog -->
@@ -924,6 +1257,30 @@ function calculateAge($dob) {
         <button class="btn outline" type="button" id="appointmentBackBtn" style="display:none;">Back</button>
         <button class="btn primary" type="button" value="save" id="appointmentConfirmBtn" disabled>Confirm Appointment</button>
         <button class="btn primary" type="button" id="appointmentFinalConfirmBtn" style="display:none;">Yes, Book Appointment</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Delete Pet Confirmation Dialog -->
+  <dialog id="deletePetDialog" class="dialog">
+    <form method="dialog" class="dialog-card">
+      <header class="dialog-header">
+        <h3>Delete Pet Profile</h3>
+        <p class="dialog-subtitle">This action cannot be undone</p>
+      </header>
+      <div class="dialog-body">
+        <p style="margin: 0 0 16px; color: #374151; font-size: 15px;">
+          Are you sure you want to delete <strong id="deletePetName"></strong>'s profile?
+        </p>
+        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px;">
+          <p style="margin: 0; color: #991b1b; font-size: 14px;">
+            <strong>⚠️ Warning:</strong> This will permanently delete all pet information including medical records and appointment history.
+          </p>
+        </div>
+      </div>
+      <footer class="dialog-actions">
+        <button class="btn ghost" value="cancel">Cancel</button>
+        <button class="btn danger" id="confirmDeletePetBtn" value="confirm" type="button">Delete Pet</button>
       </footer>
     </form>
   </dialog>

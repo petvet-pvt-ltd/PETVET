@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ----- Add Pet -----
   const addPetBtn = document.getElementById("addPetBtn");
   const addPetDialog = document.getElementById("addPetDialog");
+  const addPetForm = document.getElementById("addPetForm");
 
   if (addPetBtn && addPetDialog) {
     addPetBtn.addEventListener("click", () => openDialog("addPetDialog"));
@@ -24,11 +25,45 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Handle add pet form submission
+  if (addPetForm) {
+    addPetForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(addPetForm);
+
+      try {
+        const response = await fetch('/PETVET/api/pet-owner/pets/add.php', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showToast('Pet added successfully!');
+          closeDialog("addPetDialog");
+          
+          // Reload page to show new pet
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        } else {
+          showToast('Error: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Add pet error:', error);
+        showToast('Error adding pet');
+      }
+    });
+  }
+
   // ----- Pet Profile -----
   const petProfileDialog = document.getElementById("petProfileDialog");
   const petProfileForm = document.getElementById("petProfileForm");
   const petProfileImg = document.getElementById("petProfileImg");
   const petProfileImgInput = document.getElementById("petProfileImgInput");
+  const editPetId = document.getElementById("editPetId");
 
   document.querySelectorAll(".pet-actions .btn[href*='pet-profile']").forEach(btn => {
     btn.addEventListener("click", e => {
@@ -38,6 +73,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const pet = window.petsData.find(p => p.id == petId);
 
       if (pet && petProfileForm) {
+        // Set pet ID for update
+        editPetId.value = pet.id;
+        
         // Fill form with pet data
         for (let field in pet) {
           if (petProfileForm[field]) petProfileForm[field].value = pet[field];
@@ -65,6 +103,39 @@ document.addEventListener("DOMContentLoaded", () => {
         const reader = new FileReader();
         reader.onload = ev => { petProfileImg.src = ev.target.result; };
         reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  // Handle edit pet form submission
+  if (petProfileForm) {
+    petProfileForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(petProfileForm);
+
+      try {
+        const response = await fetch('/PETVET/api/pet-owner/pets/update.php', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showToast('Pet profile updated successfully!');
+          closeDialog("petProfileDialog");
+          
+          // Reload page to show updated pet
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        } else {
+          showToast('Error: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Update pet error:', error);
+        showToast('Error updating pet profile');
       }
     });
   }
@@ -579,5 +650,155 @@ document.addEventListener("DOMContentLoaded", () => {
       resetAppointmentForm();
       bookDialog.close();
     });
+  }
+
+  // ----- Delete Pet -----
+  const deletePetDialog = document.getElementById("deletePetDialog");
+  const deletePetNameEl = document.getElementById("deletePetName");
+  const confirmDeletePetBtn = document.getElementById("confirmDeletePetBtn");
+  let currentDeletePetId = null;
+
+  // Open delete confirmation dialog
+  document.addEventListener("click", (e) => {
+    if (e.target.closest(".pet-delete-btn")) {
+      const btn = e.target.closest(".pet-delete-btn");
+      currentDeletePetId = parseInt(btn.dataset.petId);
+      const petName = btn.dataset.petName;
+      
+      if (deletePetNameEl) {
+        deletePetNameEl.textContent = petName;
+      }
+      
+      openDialog("deletePetDialog");
+    }
+  });
+
+  // Cancel delete
+  if (deletePetDialog) {
+    deletePetDialog.querySelectorAll("button[value='cancel']").forEach(btn => {
+      btn.addEventListener("click", () => {
+        currentDeletePetId = null;
+        closeDialog("deletePetDialog");
+      });
+    });
+    
+    // Close on backdrop click
+    deletePetDialog.addEventListener("click", (e) => {
+      if (e.target === deletePetDialog) {
+        currentDeletePetId = null;
+        closeDialog("deletePetDialog");
+      }
+    });
+  }
+
+  // Confirm delete
+  if (confirmDeletePetBtn) {
+    confirmDeletePetBtn.addEventListener("click", async () => {
+      if (!currentDeletePetId) return;
+
+      try {
+        const formData = new FormData();
+        formData.append('id', currentDeletePetId);
+
+        const response = await fetch('/PETVET/api/pet-owner/pets/delete.php', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Remove pet card from UI
+          const petCard = document.querySelector(`.pet-card[data-pet-id="${currentDeletePetId}"]`);
+          if (petCard) {
+            petCard.style.transition = 'all 0.3s ease';
+            petCard.style.opacity = '0';
+            petCard.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+              petCard.remove();
+              
+              // Check if no pets left
+              const petsGrid = document.getElementById('petsGrid');
+              if (petsGrid && petsGrid.children.length === 0) {
+                petsGrid.innerHTML = `
+                  <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
+                    <p style="font-size: 48px; margin: 0 0 16px;">🐾</p>
+                    <h3 style="color: #6b7280; font-weight: 500; margin: 0 0 8px;">No pets yet</h3>
+                    <p style="color: #9ca3af; margin: 0;">Click "+ Add Pet" to add your first pet</p>
+                  </div>
+                `;
+              }
+            }, 300);
+          }
+
+          closeDialog("deletePetDialog");
+          currentDeletePetId = null;
+
+          // Show success message
+          showToast('Pet profile deleted successfully');
+        } else {
+          showToast('Error: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        showToast('Error deleting pet profile');
+      }
+    });
+  }
+
+  // Toast notification helper
+  function showToast(message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f2937;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      font-size: 14px;
+      font-weight: 500;
+      animation: slideUp 0.3s ease;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.animation = 'slideDown 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, 2000);
+  }
+
+  // Add keyframes for toast animation
+  if (!document.getElementById('toast-animations')) {
+    const style = document.createElement('style');
+    style.id = 'toast-animations';
+    style.textContent = `
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateX(-50%) translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+      }
+      @keyframes slideDown {
+        from {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+        to {
+          opacity: 0;
+          transform: translateX(-50%) translateY(20px);
+        }
+      }
+    `;
+    document.head.appendChild(style);
   }
 });
