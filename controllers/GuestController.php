@@ -22,6 +22,12 @@ class GuestController extends BaseController {
         $products = $this->shopModel->getAllProducts();
         $categories = $this->shopModel->getCategories();
         
+        // Add multiple images to each product
+        foreach ($products as &$product) {
+            $images = $this->shopModel->getProductImages($product['id']);
+            $product['images'] = !empty($images) ? $images : [$product['image']];
+        }
+        
         $this->guestView('shop', [
             'products' => $products,
             'categories' => $categories
@@ -37,6 +43,15 @@ class GuestController extends BaseController {
             // Redirect to shop if product not found
             $this->redirect('/PETVET/index.php?module=guest&page=shop');
             return;
+        }
+        
+        // Add multiple images to product and related products
+        $images = $this->shopModel->getProductImages($productId);
+        $product['images'] = !empty($images) ? $images : [$product['image']];
+        
+        foreach ($relatedProducts as &$related) {
+            $relImages = $this->shopModel->getProductImages($related['id']);
+            $related['images'] = !empty($relImages) ? $relImages : [$related['image']];
         }
 
         $this->guestView('shop-product', [

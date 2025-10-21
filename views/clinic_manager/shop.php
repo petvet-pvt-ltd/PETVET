@@ -1,57 +1,54 @@
 <?php
+// Session is already started by index.php - don't start again
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Check if user is logged in as clinic manager
+// The system uses 'current_role' not 'role'
+$userRole = $_SESSION['current_role'] ?? $_SESSION['role'] ?? null;
+
+if (!isset($_SESSION['user_id']) || $userRole !== 'clinic_manager') {
+    // Redirect to login or show error
+    header('Location: /PETVET/index.php');
+    exit;
+}
+
 $currentPage = basename($_SERVER['PHP_SELF']);
 
-// Simulated products array
-$products = [
-    [
-        'id' => 1,
-        'title' => 'Dog Food Premium',
-        'category' => 'Food',
-        'stock' => 25,
-        'price' => 3500,
-        'description' => 'High quality dog food for all breeds.',
-        'images' => [
-            'https://bestcarepetshop.lk/web/image/product.product/21628/image_1024/%5BPC03007%5D%20Purina%20Pro%20Plan%20Adult%20Medium%20Breed%20Essential%20Health%203Kg%20%282%29%2C%20Rs%2010%2C900.00?unique=07c8065',
-            'https://bestcarepetshop.lk/web/image/product.image/311/image_1024/Purina%20Pro%20Plan%20Adult%20Medium%20Breed%20Essential%20Health%203Kg?unique=1d70473',
-            'https://bestcarepetshop.lk/web/image/product.image/313/image_1024/Purina%20Pro%20Plan%20Adult%20Medium%20Breed%20Essential%20Health%203Kg?unique=1d70473',
-            'https://bestcarepetshop.lk/web/image/product.image/314/image_1024/Purina%20Pro%20Plan%20Adult%20Medium%20Breed%20Essential%20Health%203Kg?unique=1d70473'
-        ]
-    ],
-    [
-        'id' => 2,
-        'title' => 'Cat Toy Mouse',
-        'category' => 'Toys',
-        'stock' => 60,
-        'price' => 700,
-        'description' => 'Fun mouse toy for cats.',
-        'images' => [
-            'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=facearea&w=400&q=80'
-        ]
-    ],
-    [
-        'id' => 3,
-        'title' => 'Flea & Tick Shampoo',
-        'category' => 'Grooming',
-        'stock' => 12,
-        'price' => 2450,
-        'description' => 'Medicated shampoo to remove fleas and ticks safely.',
-        'images' => [
-            'https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1200&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1587300003388-59208cc962cb?q=80&w=1200&auto=format&fit=crop'
-        ]
-    ],
-    [
-        'id' => 4,
-        'title' => 'Puppy Collar Set',
-        'category' => 'Accessories',
-        'stock' => 40,
-        'price' => 1200,
-        'description' => 'Adjustable soft collar set for puppies in multiple colors.',
-        'images' => [
-            'https://images.unsplash.com/photo-1525253013412-55c1a69a5738?q=80&w=1200&auto=format&fit=crop'
-        ]
-    ],
-];
+// Load products from database
+require_once __DIR__ . '/../../models/ProductModel.php';
+
+$productModel = new ProductModel();
+$productsFromDb = $productModel->getAllProducts(true); // Include inactive products for management
+
+// Transform database products to match existing UI structure
+$products = [];
+foreach ($productsFromDb as $p) {
+    // Get all images for this product
+    $productImages = $productModel->getProductImages($p['id']);
+    $images = [];
+    foreach ($productImages as $img) {
+        $images[] = $img['image_url'];
+    }
+    
+    // Fallback to default image if no images exist
+    if (empty($images)) {
+        $images = ['https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?q=80&w=400&auto=format&fit=crop'];
+    }
+    
+    $products[] = [
+        'id' => $p['id'],
+        'title' => $p['name'],
+        'category' => ucfirst($p['category']),
+        'stock' => $p['stock'],
+        'price' => $p['price'],
+        'description' => $p['description'],
+        'seller' => $p['seller'] ?? 'PetVet Store',
+        'is_active' => $p['is_active'],
+        'images' => $images
+    ];
+}
 
 // Simulated pending orders
 $pendingOrders = [
@@ -222,11 +219,13 @@ $pendingOrders = [
                         </label>
                         <label>Category
                             <select name="category" required>
-                                <option value="Food">Food</option>
-                                <option value="Toys">Toys</option>
-                                <option value="Grooming">Grooming</option>
-                                <option value="Accessories">Accessories</option>
-                                <option value="Medicine">Medicine</option>
+                                <option value="">-- Select Category --</option>
+                                <option value="food">Food & Treats</option>
+                                <option value="toys">Toys & Games</option>
+                                <option value="litter">Litter & Training</option>
+                                <option value="accessories">Accessories & Supplies</option>
+                                <option value="grooming">Grooming & Health</option>
+                                <option value="medicine">Medicine & Health</option>
                             </select>
                         </label>
                     </div>
@@ -242,26 +241,17 @@ $pendingOrders = [
                         </label>
                     </div>
                     <div>
-                        <div id="addImagePreview" class="image-preview-list"></div>
-                        <label style="margin-top:8px">Images (URLs or Upload, Max 5)
-                            <div id="addImageList" class="image-url-list">
-                                <div class="image-url-row">
-                                    <input type="url" name="images[]" placeholder="https://...">
-                                    <button type="button" class="icon-btn remove-url" title="Remove">−</button>
-                                </div>
-                            </div>
+                        <label>Product Images (Up to 5)
+                            <input type="file" id="addImageUpload" name="product_images[]" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" multiple style="display:block; width:100%; padding:10px; border:2px dashed #ccc; border-radius:8px;">
+                            <small class="muted">Upload up to 5 images (JPG, PNG, GIF, or WebP, max 5MB each)</small>
                         </label>
-                        <button type="button" id="btnAddImageUrl" class="btn btn-light">Add another image</button>
-                        <div style="margin:10px 0 0">
-                            <input type="file" id="addImageUpload" name="image_uploads[]" accept="image/*" multiple style="display:block" data-max-files="5">
-                            <small class="muted">You can upload up to 5 images.</small>
-                        </div>
+                        <div id="addImagePreview" class="image-preview-list" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:10px;"></div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-close>Cancel</button>
-                <button form="addForm" class="btn btn-primary" type="submit">Save</button>
+                <button form="addForm" class="btn btn-primary" type="submit" id="btnSaveAdd">Save</button>
             </div>
         </div>
     </div>
@@ -282,11 +272,13 @@ $pendingOrders = [
                         </label>
                         <label>Category
                             <select name="category" required>
-                                <option value="Food">Food</option>
-                                <option value="Toys">Toys</option>
-                                <option value="Grooming">Grooming</option>
-                                <option value="Accessories">Accessories</option>
-                                <option value="Medicine">Medicine</option>
+                                <option value="">-- Select Category --</option>
+                                <option value="food">Food & Treats</option>
+                                <option value="toys">Toys & Games</option>
+                                <option value="litter">Litter & Training</option>
+                                <option value="accessories">Accessories & Supplies</option>
+                                <option value="grooming">Grooming & Health</option>
+                                <option value="medicine">Medicine & Health</option>
                             </select>
                         </label>
                     </div>
@@ -302,15 +294,13 @@ $pendingOrders = [
                         </label>
                     </div>
                     <div>
-                        <div id="editImagePreview" class="image-preview-list"></div>
-                        <label style="margin-top:8px">Images (URLs or Upload, Max 5)
-                            <div id="editImageList" class="image-url-list"></div>
+                        <div id="editCurrentImages" style="margin-bottom:15px;"></div>
+                        <label>Add More Images (Up to 5 total)
+                            <input type="file" id="editImageUpload" name="product_images[]" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" multiple style="display:block; width:100%; padding:10px; border:2px dashed #ccc; border-radius:8px;">
+                            <small class="muted">Upload additional images (JPG, PNG, GIF, or WebP, max 5MB each)</small>
                         </label>
-                        <button type="button" id="btnEditAddImageUrl" class="btn btn-light">Add another image</button>
-                        <div style="margin:10px 0 0">
-                            <input type="file" id="editImageUpload" name="edit_image_uploads[]" accept="image/*" multiple style="display:block" data-max-files="5">
-                            <small class="muted">You can upload up to 5 images.</small>
-                        </div>
+                        <div id="editImagePreview" class="image-preview-list" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:10px;"></div>
+                        <input type="hidden" id="deletedImages" name="deleted_images" value="">
                     </div>
                 </form>
             </div>
@@ -344,6 +334,9 @@ $pendingOrders = [
     // Pass PHP arrays to JS for UI-only interactions
     const PRODUCTS = <?php echo json_encode($products, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
     const PENDING_ORDERS = <?php echo json_encode($pendingOrders, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+
+    console.log('PRODUCTS loaded:', PRODUCTS.length, 'products');
+    console.log('First product:', PRODUCTS[0]);
 
     // Helpers
     const $ = (s, r = document) => r.querySelector(s);
@@ -390,6 +383,7 @@ $pendingOrders = [
         container.appendChild(row);
     };
     const bindUrlList = (container) => {
+        if (!container) return; // Add null check
         container.addEventListener('click', (e) => {
             if (e.target.classList.contains('remove-url')) {
                 const row = e.target.closest('.image-url-row');
@@ -465,148 +459,317 @@ $pendingOrders = [
     initGalleries();
 
     // Edit button -> open modal with prefilled data
-    $$('.btn-edit').forEach(btn => btn.addEventListener('click', () => {
-        const id = Number(btn.dataset.id);
-        const p = PRODUCTS.find(x => x.id === id);
-        if (!p) return;
-        const f = document.getElementById('editForm');
-        f.id.value = p.id;
-        f.title.value = p.title;
-        f.category.value = p.category;
-        f.description.value = p.description;
-        f.stock.value = p.stock;
-        f.price.value = p.price;
-        const list = document.getElementById('editImageList');
-        list.innerHTML = '';
-        (p.images || []).forEach((url) => {
-            const row = document.createElement('div');
-            row.className = 'image-url-row';
-            row.innerHTML = `<input type="url" name="images[]" value="${url}">` +
-                            '<button type="button" class="icon-btn remove-url" title="Remove">−</button>';
-            list.appendChild(row);
+    const editButtons = $$('.btn-edit');
+    console.log('Found edit buttons:', editButtons.length);
+    
+    editButtons.forEach(btn => {
+        console.log('Binding edit button for product ID:', btn.dataset.id);
+        btn.addEventListener('click', () => {
+            const id = Number(btn.dataset.id);
+            console.log('Edit button clicked for ID:', id);
+            
+            const p = PRODUCTS.find(x => x.id === id);
+            if (!p) {
+                console.error('Product not found:', id);
+                console.log('Available product IDs:', PRODUCTS.map(x => x.id));
+                return;
+            }
+            
+            console.log('Edit product:', p);
+            
+            const f = document.getElementById('editForm');
+            f.id.value = p.id;
+            f.title.value = p.title;
+            f.category.value = p.category.toLowerCase(); // Convert to lowercase for dropdown
+            f.description.value = p.description;
+            f.stock.value = p.stock;
+            f.price.value = p.price;
+            
+            // Show current images with delete buttons
+            const currentImagesDiv = document.getElementById('editCurrentImages');
+            deletedImagesList = []; // Reset deleted list
+            document.getElementById('deletedImages').value = '';
+            
+            if (currentImagesDiv && p.images && p.images.length > 0) {
+                currentImagesDiv.innerHTML = '<strong style="display:block; margin-bottom:10px;">Current Images:</strong>';
+                const imagesContainer = document.createElement('div');
+                imagesContainer.style.cssText = 'display:flex; flex-wrap:wrap; gap:10px;';
+                
+                p.images.forEach((img, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'current-image-item';
+                    div.dataset.imageUrl = img;
+                    div.dataset.imageIndex = idx;
+                    div.style.cssText = 'position:relative; width:100px; height:100px;';
+                    div.innerHTML = `
+                        <img src="${img}" alt="Current ${idx+1}" style="width:100%; height:100%; object-fit:cover; border-radius:8px; border:2px solid #ddd;">
+                        <button type="button" class="remove-current-image" data-index="${idx}" style="position:absolute; top:-5px; right:-5px; width:24px; height:24px; border-radius:50%; background:#f44336; color:white; border:2px solid white; cursor:pointer; font-size:16px; line-height:1; padding:0; display:flex; align-items:center; justify-content:center;">×</button>
+                        <span style="position:absolute; bottom:2px; left:2px; background:rgba(0,0,0,0.6); color:white; padding:2px 6px; border-radius:4px; font-size:11px;">${idx+1}</span>
+                    `;
+                    imagesContainer.appendChild(div);
+                });
+                
+                currentImagesDiv.appendChild(imagesContainer);
+                
+                // Add event listeners for delete buttons
+                currentImagesDiv.querySelectorAll('.remove-current-image').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const imageUrl = btn.closest('.current-image-item').dataset.imageUrl;
+                        const imageIndex = btn.closest('.current-image-item').dataset.imageIndex;
+                        
+                        // Mark for deletion
+                        deletedImagesList.push(imageUrl);
+                        document.getElementById('deletedImages').value = JSON.stringify(deletedImagesList);
+                        
+                        // Visual feedback
+                        const item = btn.closest('.current-image-item');
+                        item.style.opacity = '0.3';
+                        item.style.pointerEvents = 'none';
+                        btn.textContent = '✓';
+                        btn.style.background = '#999';
+                        
+                        console.log('Marked for deletion:', imageUrl);
+                    });
+                });
+            } else {
+                currentImagesDiv.innerHTML = '<p style="color:#666; font-style:italic;">No images</p>';
+            }
+            
+            // Reset file input
+            const editImageUploadEl = document.getElementById('editImageUpload');
+            if (editImageUploadEl) editImageUploadEl.value = '';
+            
+            const editPreview = document.getElementById('editImagePreview');
+            if (editPreview) editPreview.innerHTML = '';
+            
+            console.log('Opening modal...');
+            openModal(modalEdit);
         });
-        if (!p.images || p.images.length === 0) addUrlRow(list);
-        // reset edit uploads preview each time
-        if (window.editImageFiles) { window.editImageFiles = []; }
-        const editImageUploadEl = document.getElementById('editImageUpload');
-        if (editImageUploadEl) editImageUploadEl.value = '';
-    if (typeof renderEditImagePreview === 'function') renderEditImagePreview();
-    // render URL previews for existing URLs
-    renderUrlPreviews(list, document.getElementById('editImagePreview'));
-        openModal(modalEdit);
-    }));
+    });
 
     // Delete button -> confirm modal
     let deleteTarget = null;
-    $$('.btn-delete').forEach(btn => btn.addEventListener('click', () => {
-        const id = Number(btn.dataset.id);
-        deleteTarget = PRODUCTS.find(x => x.id === id) || null;
-        $('#delName').textContent = deleteTarget ? deleteTarget.title : 'this product';
-        openModal(modalDelete);
-    }));
-    document.getElementById('btnConfirmDelete')?.addEventListener('click', () => {
-        closeModal(modalDelete);
-        showToast('Delete simulated.');
+    const deleteButtons = $$('.btn-delete');
+    console.log('Found delete buttons:', deleteButtons.length);
+    
+    deleteButtons.forEach(btn => {
+        console.log('Binding delete button for product ID:', btn.dataset.id);
+        btn.addEventListener('click', () => {
+            const id = Number(btn.dataset.id);
+            console.log('Delete button clicked for ID:', id);
+            
+            deleteTarget = PRODUCTS.find(x => x.id === id) || null;
+            console.log('Delete target:', deleteTarget);
+            
+            $('#delName').textContent = deleteTarget ? deleteTarget.title : 'this product';
+            
+            console.log('Opening delete modal...');
+            openModal(modalDelete);
+        });
+    });
+    
+    document.getElementById('btnConfirmDelete')?.addEventListener('click', async () => {
+        if (!deleteTarget) {
+            console.error('No delete target');
+            return;
+        }
+        
+        console.log('Deleting product:', deleteTarget);
+        
+        const formData = new FormData();
+        formData.append('id', deleteTarget.id);
+        
+        console.log('Sending to API...');
+        
+        try {
+            // Use permanent delete - removes from database and deletes image file
+            const response = await fetch('/PETVET/api/products/permanent-delete.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            console.log('Response status:', response.status);
+            
+            const result = await response.json();
+            
+            console.log('API response:', result);
+            
+            if (result.success) {
+                closeModal(modalDelete);
+                showToast('Product permanently deleted');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                closeModal(modalDelete);
+                showToast('Error: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            closeModal(modalDelete);
+            showToast('Error: ' + error.message);
+        }
     });
 
     // Submit handlers
-    document.getElementById('addForm')?.addEventListener('submit', function (e) {
+    document.getElementById('addForm')?.addEventListener('submit', async function (e) {
         e.preventDefault();
-        closeModal(modalAdd);
-        showToast('Product added');
+        
+        console.log('Add form submitted');
+        
+        const formData = new FormData(this);
+        
+        // Rename title to name for API
+        const title = formData.get('title');
+        formData.set('name', title);
+        formData.delete('title');
+        
+        // Handle multiple image uploads
+        const fileInput = document.getElementById('addImageUpload');
+        if (fileInput && fileInput.files.length > 0) {
+            // Remove the old name and add files with new name
+            formData.delete('product_images[]');
+            Array.from(fileInput.files).forEach((file, index) => {
+                formData.append('product_images[]', file);
+            });
+            console.log('Image files:', fileInput.files.length);
+        }
+        
+        console.log('Sending to API...');
+        
+        try {
+            const response = await fetch('/PETVET/api/products/add.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            console.log('Response status:', response.status);
+            
+            const result = await response.json();
+            
+            console.log('API response:', result);
+            
+            if (result.success) {
+                closeModal(modalAdd);
+                showToast('Product added successfully');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('Error: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            showToast('Error: ' + error.message);
+        }
     });
-    document.getElementById('editForm')?.addEventListener('submit', function (e) {
+    
+    document.getElementById('editForm')?.addEventListener('submit', async function (e) {
         e.preventDefault();
-        closeModal(modalEdit);
-        showToast('Product updated');
+        
+        console.log('Edit form submitted');
+        
+        const formData = new FormData(this);
+        
+        // Rename title to name for API
+        const title = formData.get('title');
+        formData.set('name', title);
+        formData.delete('title');
+        
+        // Handle multiple new image uploads
+        const fileInput = document.getElementById('editImageUpload');
+        if (fileInput && fileInput.files.length > 0) {
+            formData.delete('product_images[]');
+            Array.from(fileInput.files).forEach((file, index) => {
+                formData.append('product_images[]', file);
+            });
+            console.log('New image files:', fileInput.files.length);
+        }
+        
+        // Add deleted images list
+        formData.set('deleted_images', document.getElementById('deletedImages').value || '[]');
+        
+        console.log('Product ID:', formData.get('id'));
+        console.log('Deleted images:', formData.get('deleted_images'));
+        console.log('Sending to API...');
+        
+        try {
+            const response = await fetch('/PETVET/api/products/update.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            console.log('Response status:', response.status);
+            
+            const result = await response.json();
+            
+            console.log('API response:', result);
+            
+            if (result.success) {
+                closeModal(modalEdit);
+                showToast('Product updated successfully');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('Error: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            showToast('Error: ' + error.message);
+        }
     });
 
-    // Image upload previews
+    // Add form image preview
     const addImageUpload = document.getElementById('addImageUpload');
     const addImagePreview = document.getElementById('addImagePreview');
-    let addImageFiles = [];
-    function renderAddImagePreview() {
+    
+    addImageUpload?.addEventListener('change', (e) => {
         if (!addImagePreview) return;
         addImagePreview.innerHTML = '';
-        addImageFiles.forEach((file, idx) => {
+        
+        const files = Array.from(e.target.files || []);
+        
+        if (files.length > 5) {
+            showToast('Maximum 5 images allowed');
+            e.target.value = '';
+            return;
+        }
+        
+        files.forEach((file, index) => {
             const url = URL.createObjectURL(file);
             const div = document.createElement('div');
-            div.className = 'image-preview-item';
-            div.innerHTML = `<img src="${url}" alt="uploaded">` +
-                            `<span class="remove-preview" data-i="${idx}">×</span>`;
+            div.style.cssText = 'position:relative; width:100px; height:100px;';
+            div.innerHTML = `
+                <img src="${url}" alt="Preview ${index+1}" style="width:100%; height:100%; object-fit:cover; border-radius:8px; border:2px solid #ddd;">
+                <span style="position:absolute; top:2px; right:2px; background:rgba(0,0,0,0.6); color:white; padding:2px 6px; border-radius:4px; font-size:11px;">${index+1}</span>
+            `;
             addImagePreview.appendChild(div);
         });
-    }
-    addImageUpload?.addEventListener('change', (e) => {
-        let files = Array.from(e.target.files || []);
-        const maxFiles = parseInt(e.target.getAttribute('data-max-files')) || 5;
-        
-        // Check total count (URL inputs + file uploads)
-        const urlInputs = document.querySelectorAll('#addImageList input[type="url"]');
-        const urlCount = Array.from(urlInputs).filter(inp => inp.value.trim()).length;
-        
-        if (files.length + urlCount > maxFiles) {
-            showToast(`You can only add up to ${maxFiles} images total. Please remove some URL images or select fewer files.`, 'warning');
-            files = files.slice(0, Math.max(0, maxFiles - urlCount));
-            e.target.value = '';
-        }
-        
-        addImageFiles = files;
-        renderAddImagePreview();
-    // also re-render URL previews to keep both
-    const c = document.getElementById('addImageList');
-    renderUrlPreviews(c, addImagePreview);
     });
-    addImagePreview?.addEventListener('click', (e) => {
-        if (e.target.classList.contains('remove-preview')) {
-            const idx = Number(e.target.dataset.i);
-            addImageFiles.splice(idx, 1);
-            renderAddImagePreview();
-            if (addImageUpload) addImageUpload.value = '';
-        }
-    });
-
+    
+    // Edit form image preview
     const editImageUpload = document.getElementById('editImageUpload');
     const editImagePreview = document.getElementById('editImagePreview');
-    let editImageFiles = [];
-    function renderEditImagePreview() {
+    let deletedImagesList = [];
+    
+    editImageUpload?.addEventListener('change', (e) => {
         if (!editImagePreview) return;
         editImagePreview.innerHTML = '';
-        editImageFiles.forEach((file, idx) => {
+        
+        const files = Array.from(e.target.files || []);
+        const currentCount = document.querySelectorAll('#editCurrentImages .current-image-item').length - deletedImagesList.length;
+        
+        if (currentCount + files.length > 5) {
+            showToast(`Maximum 5 images total. You can add ${5 - currentCount} more image(s).`);
+            e.target.value = '';
+            return;
+        }
+        
+        files.forEach((file, index) => {
             const url = URL.createObjectURL(file);
             const div = document.createElement('div');
-            div.className = 'image-preview-item';
-            div.innerHTML = `<img src="${url}" alt="uploaded">` +
-                            `<span class="remove-preview" data-i="${idx}">×</span>`;
+            div.style.cssText = 'position:relative; width:100px; height:100px;';
+            div.innerHTML = `
+                <img src="${url}" alt="New ${index+1}" style="width:100%; height:100%; object-fit:cover; border-radius:8px; border:2px solid #4CAF50;">
+                <span style="position:absolute; top:2px; right:2px; background:rgba(76,175,80,0.9); color:white; padding:2px 6px; border-radius:4px; font-size:11px;">NEW</span>
+            `;
             editImagePreview.appendChild(div);
         });
-    }
-    editImageUpload?.addEventListener('change', (e) => {
-        let files = Array.from(e.target.files || []);
-        const maxFiles = parseInt(e.target.getAttribute('data-max-files')) || 5;
-        
-        // Check total count (URL inputs + file uploads)
-        const urlInputs = document.querySelectorAll('#editImageList input[type="url"]');
-        const urlCount = Array.from(urlInputs).filter(inp => inp.value.trim()).length;
-        
-        if (files.length + urlCount > maxFiles) {
-            showToast(`You can only add up to ${maxFiles} images total. Please remove some URL images or select fewer files.`, 'warning');
-            files = files.slice(0, Math.max(0, maxFiles - urlCount));
-            e.target.value = '';
-        }
-        
-        editImageFiles = files;
-        renderEditImagePreview();
-    const c = document.getElementById('editImageList');
-    renderUrlPreviews(c, editImagePreview);
-    });
-    editImagePreview?.addEventListener('click', (e) => {
-        if (e.target.classList.contains('remove-preview')) {
-            const idx = Number(e.target.dataset.i);
-            editImageFiles.splice(idx, 1);
-            renderEditImagePreview();
-            if (editImageUpload) editImageUpload.value = '';
-        }
     });
 
     // Clear previews when closing modals

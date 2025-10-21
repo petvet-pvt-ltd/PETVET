@@ -88,7 +88,24 @@
   <div class="product-grid" id="productGrid">
     <?php foreach($products as $product): ?>
     <div class="product-card" data-category="<?php echo htmlspecialchars($product['category']); ?>" data-product-id="<?php echo $product['id']; ?>" data-price="<?php echo $product['price']; ?>" data-name="<?php echo htmlspecialchars(strtolower($product['name'])); ?>" data-stock="<?php echo $product['stock']; ?>">
-      <img src="<?php echo htmlspecialchars($product['image']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+      <div class="product-image-container">
+        <?php if (!empty($product['images']) && count($product['images']) > 1): ?>
+          <div class="product-carousel" data-current="0">
+            <?php foreach ($product['images'] as $idx => $img): ?>
+              <img class="carousel-img <?php echo $idx === 0 ? 'active' : ''; ?>" src="<?php echo htmlspecialchars($img); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+            <?php endforeach; ?>
+            <button class="carousel-prev">❮</button>
+            <button class="carousel-next">❯</button>
+            <div class="carousel-dots">
+              <?php foreach ($product['images'] as $idx => $img): ?>
+                <span class="dot <?php echo $idx === 0 ? 'active' : ''; ?>" data-index="<?php echo $idx; ?>"></span>
+              <?php endforeach; ?>
+            </div>
+          </div>
+        <?php else: ?>
+          <img src="<?php echo htmlspecialchars($product['images'][0] ?? $product['image']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+        <?php endif; ?>
+      </div>
       <div class="product-info">
         <h3><?php echo htmlspecialchars($product['name']); ?></h3>
         <p class="seller">🏪 <?php echo htmlspecialchars($product['seller']); ?></p>

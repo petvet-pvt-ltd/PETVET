@@ -181,9 +181,17 @@ class PetOwnerController extends BaseController {
     public function shop() {
         $shopModel = new PetOwnerShopModel();
         
+        $products = $shopModel->getAllProducts();
+        
+        // Add multiple images to each product
+        foreach ($products as &$product) {
+            $images = $shopModel->getProductImages($product['id']);
+            $product['images'] = !empty($images) ? $images : [$product['image']];
+        }
+        
         $data = [
             'categories' => $shopModel->getCategories(),
-            'products' => $shopModel->getAllProducts()
+            'products' => $products
         ];
         
         $this->view('pet-owner', 'shop', $data);
@@ -205,7 +213,17 @@ class PetOwnerController extends BaseController {
             exit;
         }
         
+        // Add multiple images to product
+        $images = $shopModel->getProductImages($productId);
+        $product['images'] = !empty($images) ? $images : [$product['image']];
+        
         $relatedProducts = $shopModel->getRelatedProducts($productId, $product['category'], 4);
+        
+        // Add multiple images to related products
+        foreach ($relatedProducts as &$related) {
+            $relImages = $shopModel->getProductImages($related['id']);
+            $related['images'] = !empty($relImages) ? $relImages : [$related['image']];
+        }
         
         $data = [
             'product' => $product,
