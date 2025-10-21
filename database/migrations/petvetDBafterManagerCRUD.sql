@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 21, 2025 at 12:29 PM
+-- Generation Time: Oct 21, 2025 at 06:07 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -124,7 +124,16 @@ INSERT INTO `audit_logs` (`id`, `user_id`, `action`, `ip_address`, `user_agent`,
 (76, 12, 'role_switch', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0', '{\"new_role\":\"breeder\"}', '2025-10-21 10:03:28'),
 (77, 12, 'role_switch', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0', '{\"new_role\":\"groomer\"}', '2025-10-21 10:03:43'),
 (78, 12, 'logout', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0', '[]', '2025-10-21 10:04:08'),
-(79, 11, 'role_switch', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0', '{\"new_role\":\"trainer\"}', '2025-10-21 10:06:07');
+(79, 11, 'role_switch', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0', '{\"new_role\":\"trainer\"}', '2025-10-21 10:06:07'),
+(80, 11, 'logout', '::1', 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/17.5 Mobile/15A5370a Safari/602.1', '[]', '2025-10-21 10:41:09'),
+(81, 4, 'login', '::1', 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/17.5 Mobile/15A5370a Safari/602.1', '[]', '2025-10-21 10:41:17'),
+(82, 4, 'logout', '::1', 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/17.5 Mobile/15A5370a Safari/602.1', '[]', '2025-10-21 12:41:13'),
+(83, 9, 'login', '::1', 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/17.5 Mobile/15A5370a Safari/602.1', '[]', '2025-10-21 12:41:22'),
+(84, 9, 'logout', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0', '[]', '2025-10-21 13:23:03'),
+(85, 9, 'login', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0', '[]', '2025-10-21 13:23:25'),
+(86, 2, 'login', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', '[]', '2025-10-21 14:04:56'),
+(87, 2, 'logout', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', '[]', '2025-10-21 14:05:21'),
+(88, 2, 'login', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', '[]', '2025-10-21 14:07:37');
 
 -- --------------------------------------------------------
 
@@ -216,7 +225,13 @@ INSERT INTO `login_attempts` (`id`, `email`, `ip_address`, `attempted_at`, `succ
 (54, 'peterpoker@gmail.com', '::1', '2025-10-21 09:19:38', 1),
 (55, 'allinone@gmail.com', '::1', '2025-10-21 09:53:52', 1),
 (56, 'allinone@gmail.com', '::1', '2025-10-21 09:59:48', 1),
-(57, 'amindasithummal@gmail.com', '::1', '2025-10-21 10:03:11', 1);
+(57, 'amindasithummal@gmail.com', '::1', '2025-10-21 10:03:11', 1),
+(58, 'trainer@gmail.com', '::1', '2025-10-21 10:41:17', 1),
+(59, 'manager@gmail.com', '::1', '2025-10-21 12:41:22', 1),
+(60, 'manager@gmail.com', '::1', '2025-10-21 13:23:14', 0),
+(61, 'manager@gmail.com', '::1', '2025-10-21 13:23:25', 1),
+(62, 'petowner@gmail.com', '::1', '2025-10-21 14:04:56', 1),
+(63, 'petowner@gmail.com', '::1', '2025-10-21 14:07:37', 1);
 
 -- --------------------------------------------------------
 
@@ -258,6 +273,70 @@ INSERT INTO `pet_owner_profiles` (`id`, `user_id`, `preferred_vet_id`, `emergenc
 (1, 10, NULL, NULL, NULL, NULL, '2025-10-21 09:18:56', '2025-10-21 09:18:56'),
 (2, 11, NULL, NULL, NULL, NULL, '2025-10-21 09:53:06', '2025-10-21 09:53:06'),
 (3, 12, NULL, NULL, NULL, NULL, '2025-10-21 10:02:35', '2025-10-21 10:02:35');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `products`
+--
+
+CREATE TABLE `products` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `price` decimal(10,2) NOT NULL,
+  `category` enum('food','toys','litter','grooming','accessories','medicine') NOT NULL,
+  `image_url` varchar(500) DEFAULT NULL,
+  `stock` int(11) DEFAULT 0,
+  `seller` varchar(255) DEFAULT 'PetVet Official Store',
+  `sold` int(11) DEFAULT 0,
+  `is_active` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `products`
+--
+
+INSERT INTO `products` (`id`, `name`, `description`, `price`, `category`, `image_url`, `stock`, `seller`, `sold`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Denta Fun Veggie Jaw Bone', 'A healthy, delicious treat for your dog. Made from natural ingredients to support dental health while satisfying chewing needs. Composition sweet potato meal, pea starch, vegetable by-products, minerals, yeast, cellulose, oils and fats, rosemary | gluten-free formula | vegetarian | no added sugar', 500.00, 'food', '/PETVET/views/shared/images/fproduct1.png', 25, 'PetVet Official Store', 340, 1, '2025-10-21 12:48:40', '2025-10-21 12:48:40'),
+(2, 'Trixie Litter Scoop', 'High-quality litter scoop made from durable materials. Perfect for easy and hygienic litter box maintenance. Features comfortable grip handle and efficient scooping design.', 900.00, 'litter', '/PETVET/views/shared/images/fproduct2.png', 15, 'Trixie Official', 185, 1, '2025-10-21 12:48:40', '2025-10-21 12:48:40'),
+(3, 'Dog Toy Tug Rope', 'Interactive rope toy perfect for playing tug-of-war with your dog. Made from durable cotton fibers that help clean teeth during play. Great for bonding and exercise.', 2100.00, 'toys', '/PETVET/views/shared/images/fproduct3.png', 8, 'PlayTime Pets', 95, 1, '2025-10-21 12:48:40', '2025-10-21 12:48:40'),
+(4, 'Trixie Aloe Vera Shampoo', 'Gentle pet shampoo enriched with Aloe Vera for sensitive skin. Cleanses thoroughly while moisturizing and soothing your pet\'s coat. Suitable for regular use.', 1900.00, 'grooming', '/PETVET/views/shared/images/fproduct4.png', 12, 'Trixie Official', 220, 1, '2025-10-21 12:48:40', '2025-10-21 12:48:40'),
+(11, 'Wired Controller', 'xbox 360 wired controller', 3500.00, 'toys', '/PETVET/public/images/products/product_1761054589_68f78f7db824b_0.jpg', 20, 'PetVet Store', 0, 1, '2025-10-21 13:49:49', '2025-10-21 13:49:49'),
+(12, 'Malu Tankiya Painting', 'Masterpiece done by yomal kannangara', 10000000.00, 'accessories', '/PETVET/public/images/products/product_1761057139_68f7997329b0e_1.png', 1, 'PetVet Store', 0, 1, '2025-10-21 14:32:19', '2025-10-21 14:32:35');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `product_images`
+--
+
+CREATE TABLE `product_images` (
+  `id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `image_url` varchar(500) NOT NULL,
+  `display_order` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `product_images`
+--
+
+INSERT INTO `product_images` (`id`, `product_id`, `image_url`, `display_order`, `created_at`) VALUES
+(1, 1, '/PETVET/views/shared/images/fproduct1.png', 0, '2025-10-21 13:42:05'),
+(2, 2, '/PETVET/views/shared/images/fproduct2.png', 0, '2025-10-21 13:42:05'),
+(3, 3, '/PETVET/views/shared/images/fproduct3.png', 0, '2025-10-21 13:42:05'),
+(4, 4, '/PETVET/views/shared/images/fproduct4.png', 0, '2025-10-21 13:42:05'),
+(8, 11, '/PETVET/public/images/products/product_1761054589_68f78f7db824b_0.jpg', 0, '2025-10-21 13:49:49'),
+(9, 11, '/PETVET/public/images/products/product_1761054589_68f78f7db8625_1.jpg', 1, '2025-10-21 13:49:49'),
+(10, 11, '/PETVET/public/images/products/product_1761054589_68f78f7db8814_2.jpg', 2, '2025-10-21 13:49:49'),
+(11, 11, '/PETVET/public/images/products/product_1761054589_68f78f7db89c9_3.jpg', 3, '2025-10-21 13:49:49'),
+(12, 11, '/PETVET/public/images/products/product_1761054589_68f78f7db8bfd_4.jpg', 4, '2025-10-21 13:49:49'),
+(14, 12, '/PETVET/public/images/products/product_1761057139_68f7997329b0e_1.png', 1, '2025-10-21 14:32:19'),
+(15, 12, '/PETVET/public/images/products/product_1761057155_68f79983b721d_0.jpg', 2, '2025-10-21 14:32:35');
 
 -- --------------------------------------------------------
 
@@ -396,14 +475,14 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `email`, `password`, `first_name`, `last_name`, `phone`, `address`, `avatar`, `email_verified`, `email_verification_token`, `is_active`, `is_blocked`, `last_login`, `created_at`, `updated_at`) VALUES
 (1, 'admin@gmail.com', '$2y$10$BINhO08G1d0W.jnwQ/xHDeDz.B9uzRxfgo9.osphNDGYUPYlESdHi', 'System', 'Administrator', NULL, NULL, NULL, 1, NULL, 1, 0, '2025-10-21 08:46:26', '2025-10-21 06:59:16', '2025-10-21 08:46:26'),
-(2, 'petowner@gmail.com', '$2y$10$BINhO08G1d0W.jnwQ/xHDeDz.B9uzRxfgo9.osphNDGYUPYlESdHi', 'John', 'Doe', '0771234567', NULL, NULL, 1, NULL, 1, 0, '2025-10-21 09:09:30', '2025-10-21 06:59:16', '2025-10-21 09:09:30'),
+(2, 'petowner@gmail.com', '$2y$10$BINhO08G1d0W.jnwQ/xHDeDz.B9uzRxfgo9.osphNDGYUPYlESdHi', 'John', 'Doe', '0771234567', NULL, NULL, 1, NULL, 1, 0, '2025-10-21 14:07:37', '2025-10-21 06:59:16', '2025-10-21 14:07:37'),
 (3, 'vet@gmail.com', '$2y$10$BINhO08G1d0W.jnwQ/xHDeDz.B9uzRxfgo9.osphNDGYUPYlESdHi', 'Sarah', 'Johnson', '0777654321', NULL, NULL, 1, NULL, 1, 0, '2025-10-21 09:14:10', '2025-10-21 06:59:16', '2025-10-21 09:14:10'),
-(4, 'trainer@gmail.com', '$2y$10$BINhO08G1d0W.jnwQ/xHDeDz.B9uzRxfgo9.osphNDGYUPYlESdHi', 'Tom', 'Trainer', '0771234567', '123 Trainer St, Colombo', NULL, 1, NULL, 1, 0, '2025-10-21 08:44:35', '2025-10-21 07:42:28', '2025-10-21 08:44:35'),
+(4, 'trainer@gmail.com', '$2y$10$BINhO08G1d0W.jnwQ/xHDeDz.B9uzRxfgo9.osphNDGYUPYlESdHi', 'Tom', 'Trainer', '0771234567', '123 Trainer St, Colombo', NULL, 1, NULL, 1, 0, '2025-10-21 10:41:17', '2025-10-21 07:42:28', '2025-10-21 10:41:17'),
 (5, 'sitter@gmail.com', '$2y$10$BINhO08G1d0W.jnwQ/xHDeDz.B9uzRxfgo9.osphNDGYUPYlESdHi', 'Sam', 'Sitter', '0772234567', '456 Sitter Ave, Kandy', NULL, 1, NULL, 1, 0, '2025-10-21 09:13:20', '2025-10-21 07:42:28', '2025-10-21 09:13:20'),
 (6, 'breeder@gmail.com', '$2y$10$BINhO08G1d0W.jnwQ/xHDeDz.B9uzRxfgo9.osphNDGYUPYlESdHi', 'Bob', 'Breeder', '0773234567', '789 Breeder Rd, Galle', NULL, 1, NULL, 1, 0, '2025-10-21 08:28:56', '2025-10-21 07:42:28', '2025-10-21 08:28:56'),
 (7, 'groomer@gmail.com', '$2y$10$BINhO08G1d0W.jnwQ/xHDeDz.B9uzRxfgo9.osphNDGYUPYlESdHi', 'Grace', 'Groomer', '0774234567', '321 Groomer Lane, Negombo', NULL, 1, NULL, 1, 0, '2025-10-21 08:29:22', '2025-10-21 07:42:28', '2025-10-21 08:29:22'),
 (8, 'recep@gmail.com', '$2y$10$BINhO08G1d0W.jnwQ/xHDeDz.B9uzRxfgo9.osphNDGYUPYlESdHi', 'Rita', 'Receptionist', '0775234567', '654 Clinic St, Colombo 7', NULL, 1, NULL, 1, 0, '2025-10-21 09:12:23', '2025-10-21 07:42:28', '2025-10-21 09:12:23'),
-(9, 'manager@gmail.com', '$2y$10$BINhO08G1d0W.jnwQ/xHDeDz.B9uzRxfgo9.osphNDGYUPYlESdHi', 'Mike', 'Manager', '0776234567', '888 Clinic Ave, Colombo', NULL, 1, NULL, 1, 0, '2025-10-21 08:28:10', '2025-10-21 08:17:00', '2025-10-21 08:28:10'),
+(9, 'manager@gmail.com', '$2y$10$BINhO08G1d0W.jnwQ/xHDeDz.B9uzRxfgo9.osphNDGYUPYlESdHi', 'Mike', 'Manager', '0776234567', '888 Clinic Ave, Colombo', NULL, 1, NULL, 1, 0, '2025-10-21 13:23:25', '2025-10-21 08:17:00', '2025-10-21 13:23:25'),
 (10, 'peterpoker@gmail.com', '$2y$10$oul5xyrLiqPgJdW1AfdYdu0hdvnu6BDzPSVtT7hacTk9W8v4Kwm5e', 'Hesara', 'Liyanage', '0775983002', '145/2/1', NULL, 1, NULL, 1, 0, '2025-10-21 09:19:38', '2025-10-21 09:18:56', '2025-10-21 09:19:38'),
 (11, 'allinone@gmail.com', '$2y$10$B.T98na4LBqC/JOSsTVqPOP64wmqXUVCDk1fd5hxVczwC9HPDJGCq', 'Hesara', 'Liyanage', '0775983002', '145/2/1', NULL, 1, NULL, 1, 0, '2025-10-21 09:59:48', '2025-10-21 09:53:06', '2025-10-21 09:59:48'),
 (12, 'amindasithummal@gmail.com', '$2y$10$1Rsugbt18Haag0Ctp9U91.OGY2.VCDiXnde4h5/Zd8yiDL27rjnhi', 'aminda', 'sithummal', '0701101519', 'addlsdksl', NULL, 1, NULL, 1, 0, '2025-10-21 10:03:11', '2025-10-21 10:02:35', '2025-10-21 10:03:11');
@@ -541,6 +620,22 @@ ALTER TABLE `pet_owner_profiles`
   ADD KEY `idx_user` (`user_id`);
 
 --
+-- Indexes for table `products`
+--
+ALTER TABLE `products`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_category` (`category`),
+  ADD KEY `idx_is_active` (`is_active`);
+
+--
+-- Indexes for table `product_images`
+--
+ALTER TABLE `product_images`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_product_id` (`product_id`),
+  ADD KEY `idx_display_order` (`display_order`);
+
+--
 -- Indexes for table `roles`
 --
 ALTER TABLE `roles`
@@ -616,7 +711,7 @@ ALTER TABLE `vet_profiles`
 -- AUTO_INCREMENT for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=89;
 
 --
 -- AUTO_INCREMENT for table `clinics`
@@ -634,7 +729,7 @@ ALTER TABLE `clinic_manager_profiles`
 -- AUTO_INCREMENT for table `login_attempts`
 --
 ALTER TABLE `login_attempts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64;
 
 --
 -- AUTO_INCREMENT for table `password_resets`
@@ -647,6 +742,18 @@ ALTER TABLE `password_resets`
 --
 ALTER TABLE `pet_owner_profiles`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `products`
+--
+ALTER TABLE `products`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+--
+-- AUTO_INCREMENT for table `product_images`
+--
+ALTER TABLE `product_images`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `roles`
@@ -718,6 +825,12 @@ ALTER TABLE `password_resets`
 --
 ALTER TABLE `pet_owner_profiles`
   ADD CONSTRAINT `pet_owner_profiles_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `product_images`
+--
+ALTER TABLE `product_images`
+  ADD CONSTRAINT `product_images_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `role_verification_documents`

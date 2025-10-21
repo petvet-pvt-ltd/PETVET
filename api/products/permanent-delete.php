@@ -3,10 +3,15 @@ session_start();
 require_once __DIR__ . '/../../config/connect.php';
 require_once __DIR__ . '/../../models/ProductModel.php';
 
+// Prevent any output before JSON
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
 header('Content-Type: application/json');
 
 // Check if user is logged in and is clinic manager
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'clinic_manager') {
+$userRole = $_SESSION['current_role'] ?? $_SESSION['role'] ?? null;
+if (!isset($_SESSION['user_id']) || $userRole !== 'clinic_manager') {
     echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
     exit;
 }

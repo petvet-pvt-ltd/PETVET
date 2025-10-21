@@ -3,6 +3,10 @@ session_start();
 require_once __DIR__ . '/../../config/connect.php';
 require_once __DIR__ . '/../../models/ProductModel.php';
 
+// Prevent any output before JSON
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
 header('Content-Type: application/json');
 
 // Check if user is logged in and is clinic manager
