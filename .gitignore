@@ -25,10 +25,14 @@ access.log
 tmp/
 temp/
 
-# Database
-*.sql
+# Database - Only ignore large binary database files
 *.db
 *.sqlite
+*.mwb
+*.mwb.bak
+
+# Allow SQL files (migrations, schemas, etc.)
+# SQL files are tracked in git
 
 # Environment files
 .env
