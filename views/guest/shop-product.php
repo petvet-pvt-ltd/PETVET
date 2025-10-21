@@ -18,12 +18,114 @@
         
         .product-image {
             flex: 1;
+            max-width: 450px;
         }
         
         .product-image img {
             width: 100%;
-            height: auto;
+            max-height: 400px;
+            object-fit: cover;
             border-radius: 8px;
+        }
+        
+        /* Product Detail Carousel */
+        .product-detail-carousel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .main-image-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            height: 400px;
+            overflow: hidden;
+            border-radius: 12px;
+            background: #f1f5f9;
+            margin: 0 auto;
+        }
+        
+        .main-carousel-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .main-carousel-img.active {
+            opacity: 1;
+        }
+        
+        .detail-carousel-prev,
+        .detail-carousel-next {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            z-index: 2;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .detail-carousel-prev:hover,
+        .detail-carousel-next:hover {
+            background: white;
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+        
+        .detail-carousel-prev:active,
+        .detail-carousel-next:active {
+            transform: translateY(-50%) scale(0.95);
+        }
+        
+        .detail-carousel-prev {
+            left: 15px;
+        }
+        
+        .detail-carousel-next {
+            right: 15px;
+        }
+        
+        .thumbnail-strip {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .thumbnail-img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+            opacity: 0.6;
+        }
+        
+        .thumbnail-img:hover {
+            opacity: 1;
+            border-color: #cbd5e1;
+            transform: scale(1.05);
+        }
+        
+        .thumbnail-img.active {
+            opacity: 1;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+            transform: scale(1.05);
         }
         
         .product-info {
@@ -124,7 +226,24 @@
 <!-- Product Details Section -->
 <section class="product-details">
     <div class="product-image">
-        <img src="<?php echo htmlspecialchars($product['image']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+        <?php if (!empty($product['images']) && count($product['images']) > 1): ?>
+            <div class="product-detail-carousel">
+                <div class="main-image-wrapper">
+                    <?php foreach ($product['images'] as $idx => $img): ?>
+                        <img class="main-carousel-img <?php echo $idx === 0 ? 'active' : ''; ?>" src="<?php echo htmlspecialchars($img); ?>" alt="<?php echo htmlspecialchars($product['name']); ?> - Image <?php echo $idx + 1; ?>">
+                    <?php endforeach; ?>
+                    <button class="detail-carousel-prev">❮</button>
+                    <button class="detail-carousel-next">❯</button>
+                </div>
+                <div class="thumbnail-strip">
+                    <?php foreach ($product['images'] as $idx => $img): ?>
+                        <img class="thumbnail-img <?php echo $idx === 0 ? 'active' : ''; ?>" src="<?php echo htmlspecialchars($img); ?>" alt="Thumbnail <?php echo $idx + 1; ?>" data-index="<?php echo $idx; ?>">
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php else: ?>
+            <img src="<?php echo htmlspecialchars($product['images'][0] ?? $product['image']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+        <?php endif; ?>
     </div>
 
     <div class="product-info">
@@ -183,3 +302,23 @@
 <script src="/PETVET/public/js/guest/shop-product.js"></script>
 </body>
 </html>
+<script>
+// Product Detail Carousel
+document.addEventListener('DOMContentLoaded', function() {
+    const carousel = document.querySelector('.product-detail-carousel');
+    if (!carousel) return;
+    const mainImages = carousel.querySelectorAll('.main-carousel-img');
+    const thumbnails = carousel.querySelectorAll('.thumbnail-img');
+    const prevBtn = carousel.querySelector('.detail-carousel-prev');
+    const nextBtn = carousel.querySelector('.detail-carousel-next');
+    let currentIndex = 0;
+    function showImage(index) {
+        mainImages.forEach((img, i) => { img.classList.toggle('active', i === index); });
+        thumbnails.forEach((thumb, i) => { thumb.classList.toggle('active', i === index); });
+        currentIndex = index;
+    }
+    prevBtn?.addEventListener('click', () => { showImage((currentIndex - 1 + mainImages.length) % mainImages.length); });
+    nextBtn?.addEventListener('click', () => { showImage((currentIndex + 1) % mainImages.length); });
+    thumbnails.forEach((thumb, index) => { thumb.addEventListener('click', () => { showImage(index); }); });
+});
+</script>
