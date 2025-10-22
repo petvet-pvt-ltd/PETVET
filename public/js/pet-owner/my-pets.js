@@ -223,9 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       header.textContent = `Book Appointment for ${currentPet.name}`;
       petInfo.textContent = `${currentPet.name} • ${currentPet.breed} • ${calculateAge(currentPet.date_of_birth)}y`;
-      healthNotes.textContent = currentPet.allergies && currentPet.allergies !== "None"
-        ? `⚠️ Allergy: ${currentPet.allergies}`
-        : "";
+      healthNotes.textContent = "";
 
       // Reset form
       resetAppointmentForm();

@@ -1156,7 +1156,6 @@ function calculateAge($dob) {
               <option value="">Select Appointment Type</option>
               <option value="routine">Routine Check-up</option>
               <option value="vaccination">Vaccination</option>
-              <option value="grooming">Grooming</option>
               <option value="dental">Dental Cleaning</option>
               <option value="illness">Illness/Injury Consultation</option>
               <option value="surgery">Surgery</option>

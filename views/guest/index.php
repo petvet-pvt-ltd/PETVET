@@ -81,7 +81,7 @@ require_once 'redirectorToLoggedUser.php';
           less on administrative tasks.
         </p>
         <div class="button-wrapper">
-          <button class="join-btn" onclick="window.location.href='register/vet-reg.php'">Join as a veterinarian</button>
+          <button class="join-btn" onclick="window.location.href='/PETVET/index.php?module=guest&page=vet-register'">Join as a veterinarian</button>
         </div>
       </div>
     </div>
@@ -151,7 +151,7 @@ require_once 'redirectorToLoggedUser.php';
           in one secure, HIPAA-compliant solution.
         </p>
         <div class="button-wrapper">
-          <button class="partner-btn" onclick="window.location.href='register/clinic-manager-reg.php'">Partner with us</button>
+          <button class="partner-btn" onclick="window.location.href='/PETVET/index.php?module=guest&page=clinic-manager-register'">Partner with us</button>
         </div>
       </div>
     </div>

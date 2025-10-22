@@ -26,9 +26,9 @@
           <h1 class="hero-title">Care. Connect. Cure.</h1>
           <p class="hero-subtitle">All-in-one platform for pet owners, vets, and clinics to keep pets healthier and happier.</p>
           <div class="cta-group">
-            <button class="btn primary" onclick="window.location.href='/PETVET/register/multi-step-registration.php'">I’m a Pet Owner</button>
-            <button class="btn success" onclick="window.location.href='/PETVET/register/vet-reg.php'">I’m a Veterinarian</button>
-            <button class="btn pink" onclick="window.location.href='/PETVET/register/clinic-manager-reg.php'">I manage a Clinic</button>
+            <button class="btn primary" onclick="window.location.href='/PETVET/register/multi-step-registration.php'">I'm a Pet Owner</button>
+            <button class="btn success" onclick="window.location.href='/PETVET/index.php?module=guest&page=vet-register'">I'm a Veterinarian</button>
+            <button class="btn pink" onclick="window.location.href='/PETVET/index.php?module=guest&page=clinic-manager-register'">I manage a Clinic</button>
           </div>
         </div>
       </div>
@@ -96,7 +96,7 @@
           less on administrative tasks.
         </p>
         <div class="button-wrapper">
-          <button class="join-btn" onclick="window.location.href='/PETVET/register/vet-reg.php'">Join as a veterinarian</button>
+          <button class="join-btn" onclick="window.location.href='/PETVET/index.php?module=guest&page=vet-register'">Join as a veterinarian</button>
         </div>
       </div>
     </div>
@@ -166,7 +166,7 @@
           in one secure, HIPAA-compliant solution.
         </p>
         <div class="button-wrapper">
-          <button class="partner-btn" onclick="window.location.href='/PETVET/register/clinic-manager-reg.php'">Partner with us</button>
+          <button class="partner-btn" onclick="window.location.href='/PETVET/index.php?module=guest&page=clinic-manager-register'">Partner with us</button>
         </div>
       </div>
     </div>
