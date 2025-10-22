@@ -97,19 +97,26 @@ $total_staff = count($staff);
   <thead><tr><th>Name</th><th>Role</th><th>Contact</th><th class="col-actions">Actions</th></tr></thead>
         <tbody>
         <?php if($filtered): foreach($filtered as $s): ?>
-          <tr>
+          <tr data-staff-id="<?= $s['id'] ?>">
             <td>
-              <div class="cell-user">
-                <img class="avatar-sm" src="<?= htmlspecialchars($s['photo']) ?>" alt="">
-                <span class="link"><?= htmlspecialchars($s['name']) ?></span>
-              </div>
+              <span class="link"><?= htmlspecialchars($s['name']) ?></span>
             </td>
             <td><?= htmlspecialchars($s['role']) ?></td>
             <td><div><?= htmlspecialchars($s['phone']) ?></div><div class="muted"><?= htmlspecialchars($s['email']) ?></div></td>
             <td>
               <div class="row-actions">
-                <button class="action-btn" title="Edit">✏️</button>
-                <button class="action-btn staff-delete" data-name="<?= htmlspecialchars($s['name']) ?>" title="Delete">🗑️</button>
+                <button class="action-btn staff-edit" 
+                        data-id="<?= $s['id'] ?>" 
+                        data-name="<?= htmlspecialchars($s['name']) ?>" 
+                        data-role="<?= htmlspecialchars($s['role']) ?>" 
+                        data-email="<?= htmlspecialchars($s['email']) ?>" 
+                        data-phone="<?= htmlspecialchars($s['phone']) ?>"
+                        data-status="<?= htmlspecialchars($s['status']) ?>"
+                        title="Edit">✏️</button>
+                <button class="action-btn staff-delete" 
+                        data-id="<?= $s['id'] ?>" 
+                        data-name="<?= htmlspecialchars($s['name']) ?>" 
+                        title="Delete">🗑️</button>
               </div>
             </td>
           </tr>
@@ -139,10 +146,41 @@ $total_staff = count($staff);
         <label>Email<input type="email" name="email" required></label>
         <label>Phone<input name="phone" required></label>
       </div>
-  <!-- status removed for staff -->
       <div class="staff-modal-actions">
         <button type="button" class="btn btn-ghost" id="cancelAddStaff">Cancel</button>
         <button type="submit" class="btn btn-primary">Add Staff</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Edit Staff -->
+<div id="editStaffModal" class="staff-modal" role="dialog" aria-modal="true" aria-labelledby="editStaffTitle">
+  <div class="staff-modal-dialog">
+    <h3 id="editStaffTitle">Edit Staff Member</h3>
+    <form id="editStaffForm" class="staff-form">
+      <input type="hidden" name="id" id="editStaffId">
+      <div class="row">
+        <label>Full Name<input name="name" id="editStaffName" required></label>
+        <label>Role<select name="role" id="editStaffRole" required>
+          <option value="Veterinary Assistant">Veterinary Assistant</option>
+          <option value="Front Desk">Front Desk</option>
+          <option value="Support Staff">Support Staff</option>
+        </select></label>
+      </div>
+      <div class="row">
+        <label>Email<input type="email" name="email" id="editStaffEmail" required></label>
+        <label>Phone<input name="phone" id="editStaffPhone" required></label>
+      </div>
+      <div class="row">
+        <label>Status<select name="status" id="editStaffStatus" required>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select></label>
+      </div>
+      <div class="staff-modal-actions">
+        <button type="button" class="btn btn-ghost" id="cancelEditStaff">Cancel</button>
+        <button type="submit" class="btn btn-primary">Update Staff</button>
       </div>
     </form>
   </div>
@@ -212,55 +250,185 @@ $total_staff = count($staff);
 </div>
 
 <script>
+// ============================================
+// ADD STAFF MEMBER
+// ============================================
 const addBtn = document.getElementById('openAddStaff');
 const addModal = document.getElementById('addStaffModal');
 const cancelAdd = document.getElementById('cancelAddStaff');
 const staffForm = document.getElementById('staffForm');
-function openAdd(){addModal.classList.add('show');}
-function closeAdd(){addModal.classList.remove('show');}
-addBtn.addEventListener('click',openAdd);cancelAdd.addEventListener('click',closeAdd);
-addModal.addEventListener('click',e=>{if(e.target===addModal) closeAdd();});
-// Avatar pool for newly added staff (cycled)
-const staffAvatars = [
-  'https://i.pravatar.cc/64?img=21',
-  'https://i.pravatar.cc/64?img=32',
-  'https://i.pravatar.cc/64?img=55',
-  'https://i.pravatar.cc/64?img=47',
-  'https://i.pravatar.cc/64?img=11',
-  'https://i.pravatar.cc/64?img=48'
-];
-let staffAvatarIndex = 0;
- 
- staffForm.addEventListener('submit',e=>{
-   e.preventDefault();
-   const data = Object.fromEntries(new FormData(staffForm).entries());
-  const avatar = staffAvatars[staffAvatarIndex % staffAvatars.length];
-   staffAvatarIndex++;
-   const tbody = document.querySelector('.cmc-table tbody');
-   const tr = document.createElement('tr');
-  tr.innerHTML = `<td><div class=\"cell-user\"><img class=\"avatar-sm\" src=\"${avatar}\" alt=\"\"><span class=\"link\">${data.name}</span></div></td>`+
-     `<td>${data.role}</td>`+
-     `<td><div>${data.phone}</div><div class=\"muted\">${data.email}</div></td>`+
-     `<td><div class=\"row-actions\"><button class=\"action-btn\" title=\"Edit\">✏️</button>`+
-     `<button class=\"action-btn staff-delete\" data-name=\"${data.name}\" title=\"Delete\">🗑️</button></div></td>`;
-   tbody.appendChild(tr);
-   bindDeleteButtons();
-   closeAdd();
-   staffForm.reset();
- });
 
-// Delete staff
-function bindDeleteButtons(){
-  document.querySelectorAll('.staff-delete').forEach(btn=>{
-    btn.onclick=()=>{
-      const name = btn.dataset.name || 'this staff member';
-      if(confirm(`Delete ${name}? This cannot be undone.`)){
-        const tr = btn.closest('tr');
-        tr && tr.remove();
-      }
+function openAdd() {
+  addModal.classList.add('show');
+}
+
+function closeAdd() {
+  addModal.classList.remove('show');
+  staffForm.reset();
+}
+
+addBtn.addEventListener('click', openAdd);
+cancelAdd.addEventListener('click', closeAdd);
+addModal.addEventListener('click', e => {
+  if (e.target === addModal) closeAdd();
+});
+
+// Handle add staff form submission
+staffForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const formData = new FormData(staffForm);
+  const data = Object.fromEntries(formData.entries());
+  
+  try {
+    const response = await fetch('/PETVET/api/clinic-manager/staff.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Show success message
+      alert('Staff member added successfully!');
+      
+      // Reload page to show new staff member
+      window.location.reload();
+    } else {
+      alert('Error: ' + (result.message || 'Failed to add staff member'));
+    }
+  } catch (error) {
+    console.error('Error adding staff:', error);
+    alert('An error occurred. Please try again.');
+  }
+});
+
+// ============================================
+// EDIT STAFF MEMBER
+// ============================================
+const editModal = document.getElementById('editStaffModal');
+const cancelEdit = document.getElementById('cancelEditStaff');
+const editStaffForm = document.getElementById('editStaffForm');
+
+function openEdit(staffData) {
+  document.getElementById('editStaffId').value = staffData.id;
+  document.getElementById('editStaffName').value = staffData.name;
+  document.getElementById('editStaffRole').value = staffData.role;
+  document.getElementById('editStaffEmail').value = staffData.email;
+  document.getElementById('editStaffPhone').value = staffData.phone;
+  document.getElementById('editStaffStatus').value = staffData.status;
+  
+  editModal.classList.add('show');
+}
+
+function closeEdit() {
+  editModal.classList.remove('show');
+  editStaffForm.reset();
+}
+
+cancelEdit.addEventListener('click', closeEdit);
+editModal.addEventListener('click', e => {
+  if (e.target === editModal) closeEdit();
+});
+
+// Handle edit staff form submission
+editStaffForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const formData = new FormData(editStaffForm);
+  const data = Object.fromEntries(formData.entries());
+  
+  try {
+    const response = await fetch('/PETVET/api/clinic-manager/staff.php', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Show success message
+      alert('Staff member updated successfully!');
+      
+      // Reload page to show updated staff member
+      window.location.reload();
+    } else {
+      alert('Error: ' + (result.message || 'Failed to update staff member'));
+    }
+  } catch (error) {
+    console.error('Error updating staff:', error);
+    alert('An error occurred. Please try again.');
+  }
+});
+
+// Bind edit buttons
+function bindEditButtons() {
+  document.querySelectorAll('.staff-edit').forEach(btn => {
+    btn.onclick = () => {
+      const staffData = {
+        id: btn.dataset.id,
+        name: btn.dataset.name,
+        role: btn.dataset.role,
+        email: btn.dataset.email,
+        phone: btn.dataset.phone,
+        status: btn.dataset.status
+      };
+      openEdit(staffData);
     };
   });
 }
+
+// ============================================
+// DELETE STAFF MEMBER
+// ============================================
+async function deleteStaff(id, name) {
+  if (!confirm(`Delete ${name}? This cannot be undone.`)) {
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/PETVET/api/clinic-manager/staff.php?id=${id}`, {
+      method: 'DELETE'
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert('Staff member deleted successfully!');
+      
+      // Remove the row from the table
+      const row = document.querySelector(`tr[data-staff-id="${id}"]`);
+      if (row) {
+        row.remove();
+      }
+    } else {
+      alert('Error: ' + (result.message || 'Failed to delete staff member'));
+    }
+  } catch (error) {
+    console.error('Error deleting staff:', error);
+    alert('An error occurred. Please try again.');
+  }
+}
+
+// Bind delete buttons
+function bindDeleteButtons() {
+  document.querySelectorAll('.staff-delete').forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.dataset.id;
+      const name = btn.dataset.name || 'this staff member';
+      deleteStaff(id, name);
+    };
+  });
+}
+
+// Initialize button bindings
+bindEditButtons();
 bindDeleteButtons();
 
 // ============================================
@@ -422,10 +590,6 @@ copyCredentialsBtn.addEventListener('click', function() {
 function addReceptionistToTable(name, email, password) {
   const tbody = document.querySelector('.staff-table tbody');
   
-  // Generate avatar
-  const avatar = staffAvatars[staffAvatarIndex % staffAvatars.length];
-  staffAvatarIndex++;
-  
   const row = document.createElement('tr');
   row.className = 'receptionist-pending';
   row.dataset.email = email;
@@ -433,10 +597,7 @@ function addReceptionistToTable(name, email, password) {
   
   row.innerHTML = `
     <td>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <img src="${avatar}" class="avatar" alt="${name}">
-        <span>${name}</span>
-      </div>
+      <span>${name}</span>
     </td>
     <td>
       <span class="role-badge">Receptionist</span>

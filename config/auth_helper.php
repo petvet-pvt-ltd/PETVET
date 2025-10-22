@@ -40,6 +40,11 @@ function currentRole(): ?string {
     return auth()->getCurrentRole();
 }
 
+// Alias for currentRole() - for backward compatibility
+function getUserRole(): ?string {
+    return currentRole();
+}
+
 // Check if user has role
 function hasRole(string $roleName): bool {
     return auth()->hasRole($roleName);
