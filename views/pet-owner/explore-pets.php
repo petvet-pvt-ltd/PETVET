@@ -97,7 +97,11 @@ $availableSpecies = $availableSpecies ?? [];
       <h3 id="sellTitle">Sell a Pet</h3>
       <form id="sellForm" autocomplete="off">
         <div class="form-grid">
-          <label>Pet Name<input type="text" name="name" required placeholder="e.g., Rocky, Bella"></label>
+          <label>Pet Name
+            <input type="text" name="name" id="sellPetName" required placeholder="e.g., Rocky, Bella" 
+              pattern="^[A-Za-z\s]+$" title="Name should only contain letters and spaces" autocomplete="off">
+            <small class="field-hint">Only letters and spaces allowed</small>
+          </label>
           <label>Species
             <select name="species" required>
               <option value="">Select...</option>
@@ -107,8 +111,16 @@ $availableSpecies = $availableSpecies ?? [];
               <option>Other</option>
             </select>
           </label>
-          <label>Breed<input type="text" name="breed" required placeholder="e.g., Golden Retriever"></label>
-          <label>Age<input type="text" name="age" placeholder="e.g., 2 years" required></label>
+          <label>Breed
+            <input type="text" name="breed" id="sellBreed" required placeholder="e.g., Golden Retriever"
+              pattern="^[A-Za-z\s]+$" title="Breed should only contain letters and spaces" autocomplete="off">
+            <small class="field-hint">Only letters and spaces allowed</small>
+          </label>
+          <label>Age
+            <input type="number" name="age" id="sellAge" placeholder="e.g., 2" required 
+              min="0" max="99" title="Age must be between 0 and 99" autocomplete="off">
+            <small class="field-hint">Age must be less than 100</small>
+          </label>
           <label>Gender
             <select name="gender" required>
               <option value="">Select...</option>
@@ -116,7 +128,10 @@ $availableSpecies = $availableSpecies ?? [];
               <option>Female</option>
             </select>
           </label>
-          <label>Price (Rs)<input type="number" name="price" min="0" step="500" required placeholder="e.g., 50000"></label>
+          <label>Price (Rs)
+            <input type="number" name="price" id="sellPrice" min="0" step="500" required placeholder="e.g., 50000" autocomplete="off">
+            <small class="field-hint">Enter price in Sri Lankan Rupees</small>
+          </label>
           <label class="full">Location<input type="text" name="location" required placeholder="e.g., Colombo 07"></label>
           <label class="full">Description<textarea name="desc" rows="3" required placeholder="Tell potential buyers about this pet's personality, behavior, health..."></textarea></label>
           <label class="full">
@@ -132,7 +147,11 @@ $availableSpecies = $availableSpecies ?? [];
               </label>
             </div>
           </label>
-          <label>Primary Phone<input type="tel" name="phone" placeholder="+94 77 123 4567" required></label>
+          <label>Primary Phone
+            <input type="tel" name="phone" id="sellPhone" placeholder="0771234567" required 
+              pattern="^[0-9]{10}$" title="Phone must be 10 digits" maxlength="10" autocomplete="off">
+            <small class="field-hint">Must be 10 digits, numbers only</small>
+          </label>
           <label>Secondary Phone (Optional)<input type="tel" name="phone2" placeholder="+94 76 555 1212"></label>
           <label class="full">Email (Optional)<input type="email" name="email" placeholder="your.email@example.com"></label>
           <label class="full">Photos (Max 3)
@@ -176,21 +195,40 @@ $availableSpecies = $availableSpecies ?? [];
         <form id="editForm">
           <input type="hidden" name="id">
           <div class="form-grid">
-            <label>Pet Name<input type="text" name="name" required></label>
+            <label>Pet Name
+              <input type="text" name="name" id="editPetName" required 
+                pattern="^[A-Za-z\s]+$" title="Name should only contain letters and spaces" autocomplete="off">
+              <small class="field-hint">Only letters and spaces allowed</small>
+            </label>
             <label>Species
               <select name="species">
                 <option>Dog</option><option>Cat</option><option>Bird</option><option>Other</option>
               </select>
             </label>
-            <label>Breed<input type="text" name="breed" required></label>
-            <label>Age<input type="text" name="age" required></label>
+            <label>Breed
+              <input type="text" name="breed" id="editBreed" required
+                pattern="^[A-Za-z\s]+$" title="Breed should only contain letters and spaces" autocomplete="off">
+              <small class="field-hint">Only letters and spaces allowed</small>
+            </label>
+            <label>Age
+              <input type="number" name="age" id="editAge" required 
+                min="0" max="99" title="Age must be between 0 and 99" autocomplete="off">
+              <small class="field-hint">Age must be less than 100</small>
+            </label>
             <label>Gender
               <select name="gender"><option>Male</option><option>Female</option></select>
             </label>
-            <label>Price (Rs)<input type="number" name="price" min="0" step="500" required></label>
+            <label>Price (Rs)
+              <input type="number" name="price" id="editPrice" min="0" step="500" required autocomplete="off">
+              <small class="field-hint">Enter price in Sri Lankan Rupees</small>
+            </label>
             <label class="full">Description<textarea name="desc" rows="3"></textarea></label>
             <label class="full">Location<input type="text" name="location" required></label>
-            <label>Primary Phone<input type="tel" name="phone" placeholder="+94 77 123 4567" required></label>
+            <label>Primary Phone
+              <input type="tel" name="phone" id="editPhone" placeholder="0771234567" required 
+                pattern="^[0-9]{10}$" title="Phone must be 10 digits" maxlength="10" autocomplete="off">
+              <small class="field-hint">Must be 10 digits, numbers only</small>
+            </label>
             <label>Secondary Phone (Optional)<input type="tel" name="phone2" placeholder="+94 76 555 1212"></label>
             <label class="full">Email (Optional)<input type="email" name="email" placeholder="your.email@example.com"></label>
             

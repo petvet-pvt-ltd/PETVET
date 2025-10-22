@@ -383,7 +383,11 @@ document.addEventListener('DOMContentLoaded', () => {
 				files = files.slice(0, maxFiles);
 			}
 			
-			if (files.length === 0) { sellImagePreviews.setAttribute('aria-hidden','true'); sellImageFallback.value = ''; return; }
+			if (files.length === 0) { 
+				sellImagePreviews.setAttribute('aria-hidden','true'); 
+				if (sellImageFallback) sellImageFallback.value = ''; 
+				return; 
+			}
 			sellImagePreviews.removeAttribute('aria-hidden');
 			files.forEach((f, idx) => {
 				const url = URL.createObjectURL(f);
@@ -392,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				sellImagePreviews.appendChild(img);
 				img.onload = () => URL.revokeObjectURL(url);
 			});
-			if (files[0]) {
+			if (files[0] && sellImageFallback) {
 				const firstUrl = URL.createObjectURL(files[0]);
 				sellImageFallback.value = firstUrl;
 				setTimeout(() => URL.revokeObjectURL(firstUrl), 2000);
@@ -400,8 +404,270 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	}
 
+	// ========== FORM VALIDATION FOR SELL PET MODAL ==========
+	const sellPetName = qs('#sellPetName');
+	const sellBreed = qs('#sellBreed');
+	const sellAge = qs('#sellAge');
+	const sellPhone = qs('#sellPhone');
+	const sellPrice = qs('#sellPrice');
+
+	// Helper functions for validation feedback
+	const addErrorState = (field, message) => {
+		if (!field) return;
+		field.style.borderColor = '#ef4444';
+		field.style.backgroundColor = '#fef2f2';
+		field.classList.add('error');
+		const hint = field.nextElementSibling;
+		if (hint && hint.classList.contains('field-hint')) {
+			hint.style.color = '#ef4444';
+			hint.style.fontWeight = '500';
+			hint.textContent = message;
+		}
+	};
+
+	const removeErrorState = (field, defaultMessage) => {
+		if (!field) return;
+		field.style.borderColor = '';
+		field.style.backgroundColor = '';
+		field.classList.remove('error');
+		const hint = field.nextElementSibling;
+		if (hint && hint.classList.contains('field-hint')) {
+			hint.style.color = '#64748b';
+			hint.style.fontWeight = '400';
+			hint.textContent = defaultMessage;
+		}
+	};
+
+	// Pet Name validation (letters and spaces only)
+	if (sellPetName) {
+		sellPetName.addEventListener('input', e => {
+			const original = e.target.value;
+			const cleaned = original.replace(/[^A-Za-z\s]/g, '');
+			e.target.value = cleaned;
+			
+			if (original !== cleaned) {
+				addErrorState(sellPetName, '❌ Only letters and spaces allowed');
+			} else if (cleaned.trim().length > 0) {
+				removeErrorState(sellPetName, '✓ Valid name');
+			} else {
+				removeErrorState(sellPetName, 'Only letters and spaces allowed');
+			}
+		});
+
+		sellPetName.addEventListener('paste', e => {
+			e.preventDefault();
+			const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+			const cleaned = pastedText.replace(/[^A-Za-z\s]/g, '');
+			document.execCommand('insertText', false, cleaned);
+			if (pastedText !== cleaned) {
+				addErrorState(sellPetName, '❌ Invalid characters removed');
+				setTimeout(() => removeErrorState(sellPetName, 'Only letters and spaces allowed'), 2000);
+			}
+		});
+	}
+
+	// Breed validation (letters and spaces only)
+	if (sellBreed) {
+		sellBreed.addEventListener('input', e => {
+			const original = e.target.value;
+			const cleaned = original.replace(/[^A-Za-z\s]/g, '');
+			e.target.value = cleaned;
+			
+			if (original !== cleaned) {
+				addErrorState(sellBreed, '❌ Only letters and spaces allowed');
+			} else if (cleaned.trim().length > 0) {
+				removeErrorState(sellBreed, '✓ Valid breed');
+			} else {
+				removeErrorState(sellBreed, 'Only letters and spaces allowed');
+			}
+		});
+
+		sellBreed.addEventListener('paste', e => {
+			e.preventDefault();
+			const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+			const cleaned = pastedText.replace(/[^A-Za-z\s]/g, '');
+			document.execCommand('insertText', false, cleaned);
+			if (pastedText !== cleaned) {
+				addErrorState(sellBreed, '❌ Invalid characters removed');
+				setTimeout(() => removeErrorState(sellBreed, 'Only letters and spaces allowed'), 2000);
+			}
+		});
+	}
+
+	// Age validation (numbers only, 0-99)
+	if (sellAge) {
+		sellAge.addEventListener('input', e => {
+			const original = e.target.value;
+			const cleaned = original.replace(/[^0-9]/g, '');
+			let numValue = parseInt(cleaned);
+			
+			if (original !== cleaned && original.length > 0) {
+				addErrorState(sellAge, '❌ Only numbers allowed (0-99)');
+				e.target.value = cleaned;
+				return;
+			}
+			
+			if (numValue > 99) {
+				numValue = 99;
+				e.target.value = numValue;
+				addErrorState(sellAge, '❌ Age must be less than 100');
+			} else if (numValue < 0) {
+				numValue = 0;
+				e.target.value = numValue;
+			} else if (cleaned.length > 0) {
+				e.target.value = numValue;
+				removeErrorState(sellAge, '✓ Valid age');
+			} else {
+				e.target.value = '';
+				removeErrorState(sellAge, 'Age must be less than 100');
+			}
+		});
+
+		sellAge.addEventListener('keydown', e => {
+			if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-' || e.key === '.') {
+				e.preventDefault();
+				addErrorState(sellAge, '❌ Only numbers 0-9 allowed');
+				setTimeout(() => removeErrorState(sellAge, 'Age must be less than 100'), 1500);
+			}
+		});
+
+		sellAge.addEventListener('paste', e => {
+			e.preventDefault();
+			const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+			const cleaned = pastedText.replace(/[^0-9]/g, '');
+			let numValue = parseInt(cleaned);
+			if (pastedText !== cleaned) {
+				addErrorState(sellAge, '❌ Invalid characters removed');
+				setTimeout(() => removeErrorState(sellAge, 'Age must be less than 100'), 2000);
+			}
+			if (numValue > 99) numValue = 99;
+			if (numValue < 0) numValue = 0;
+			sellAge.value = isNaN(numValue) ? '' : numValue;
+		});
+	}
+
+	// Phone validation (10 digits only)
+	if (sellPhone) {
+		sellPhone.addEventListener('input', e => {
+			const original = e.target.value;
+			const cleaned = original.replace(/[^0-9]/g, '').slice(0, 10);
+			e.target.value = cleaned;
+			
+			if (original !== cleaned && original.length > 0) {
+				addErrorState(sellPhone, '❌ Only numbers allowed');
+			} else if (cleaned.length === 10) {
+				removeErrorState(sellPhone, '✓ Valid phone number');
+			} else if (cleaned.length > 0) {
+				addErrorState(sellPhone, `⚠️ ${10 - cleaned.length} more digit(s) needed`);
+			} else {
+				removeErrorState(sellPhone, 'Must be 10 digits, numbers only');
+			}
+		});
+
+		sellPhone.addEventListener('keydown', e => {
+			if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-' || e.key === '.') {
+				e.preventDefault();
+				addErrorState(sellPhone, '❌ Only numbers 0-9 allowed');
+				setTimeout(() => {
+					if (sellPhone.value.length === 10) {
+						removeErrorState(sellPhone, '✓ Valid phone number');
+					} else {
+						removeErrorState(sellPhone, 'Must be 10 digits, numbers only');
+					}
+				}, 1500);
+			}
+		});
+
+		sellPhone.addEventListener('paste', e => {
+			e.preventDefault();
+			const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+			const cleaned = pastedText.replace(/[^0-9]/g, '').slice(0, 10);
+			document.execCommand('insertText', false, cleaned);
+			if (pastedText.replace(/[^0-9]/g, '') !== cleaned || pastedText !== cleaned) {
+				addErrorState(sellPhone, '❌ Invalid characters removed');
+				setTimeout(() => {
+					if (cleaned.length === 10) {
+						removeErrorState(sellPhone, '✓ Valid phone number');
+					} else {
+						removeErrorState(sellPhone, 'Must be 10 digits, numbers only');
+					}
+				}, 2000);
+			}
+		});
+	}
+
+	// Price validation (positive numbers only)
+	if (sellPrice) {
+		sellPrice.addEventListener('input', e => {
+			const value = parseFloat(e.target.value);
+			if (e.target.value && (isNaN(value) || value < 0)) {
+				e.target.value = 0;
+				addErrorState(sellPrice, '❌ Price cannot be negative');
+			} else if (value >= 0) {
+				removeErrorState(sellPrice, '✓ Valid price');
+			} else {
+				removeErrorState(sellPrice, 'Enter price in Sri Lankan Rupees');
+			}
+		});
+
+		sellPrice.addEventListener('keydown', e => {
+			if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+				e.preventDefault();
+				addErrorState(sellPrice, '❌ Only positive numbers allowed');
+				setTimeout(() => removeErrorState(sellPrice, 'Enter price in Sri Lankan Rupees'), 1500);
+			}
+		});
+	}
+	// ========== END FORM VALIDATION ==========
+
 	sellForm?.addEventListener('submit', async e => {
 		e.preventDefault();
+		
+		// Additional validation before submit
+		let hasErrors = false;
+		const errors = [];
+
+		if (sellPetName && (!sellPetName.value.trim() || !/^[A-Za-z\s]+$/.test(sellPetName.value.trim()))) {
+			addErrorState(sellPetName, '❌ Name should only contain letters and spaces');
+			errors.push('Pet name is invalid');
+			hasErrors = true;
+		}
+
+		if (sellBreed && (!sellBreed.value.trim() || !/^[A-Za-z\s]+$/.test(sellBreed.value.trim()))) {
+			addErrorState(sellBreed, '❌ Breed should only contain letters and spaces');
+			errors.push('Breed is invalid');
+			hasErrors = true;
+		}
+
+		if (sellAge) {
+			const ageValue = parseInt(sellAge.value);
+			if (isNaN(ageValue) || ageValue < 0 || ageValue > 99) {
+				addErrorState(sellAge, '❌ Age must be between 0 and 99');
+				errors.push('Age must be between 0 and 99');
+				hasErrors = true;
+			}
+		}
+
+		if (sellPhone && !/^[0-9]{10}$/.test(sellPhone.value)) {
+			addErrorState(sellPhone, '❌ Phone must be exactly 10 digits');
+			errors.push('Phone number must be exactly 10 digits');
+			hasErrors = true;
+		}
+
+		if (sellPrice) {
+			const priceValue = parseFloat(sellPrice.value);
+			if (isNaN(priceValue) || priceValue < 0) {
+				addErrorState(sellPrice, '❌ Price must be a positive number');
+				errors.push('Price is invalid');
+				hasErrors = true;
+			}
+		}
+
+		if (hasErrors) {
+			alert('⚠️ Please fix the following errors:\n\n' + errors.join('\n'));
+			return;
+		}
+
 		const fd = new FormData(sellForm);
 		
 		// Show loading state
@@ -569,10 +835,245 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	});
 
+	// ========== FORM VALIDATION FOR EDIT LISTING MODAL ==========
+	const editPetName = qs('#editPetName');
+	const editBreed = qs('#editBreed');
+	const editAge = qs('#editAge');
+	const editPhone = qs('#editPhone');
+	const editPrice = qs('#editPrice');
+
+	// Pet Name validation (letters and spaces only)
+	if (editPetName) {
+		editPetName.addEventListener('input', e => {
+			const original = e.target.value;
+			const cleaned = original.replace(/[^A-Za-z\s]/g, '');
+			e.target.value = cleaned;
+			
+			if (original !== cleaned) {
+				addErrorState(editPetName, '❌ Only letters and spaces allowed');
+			} else if (cleaned.trim().length > 0) {
+				removeErrorState(editPetName, '✓ Valid name');
+			} else {
+				removeErrorState(editPetName, 'Only letters and spaces allowed');
+			}
+		});
+
+		editPetName.addEventListener('paste', e => {
+			e.preventDefault();
+			const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+			const cleaned = pastedText.replace(/[^A-Za-z\s]/g, '');
+			document.execCommand('insertText', false, cleaned);
+			if (pastedText !== cleaned) {
+				addErrorState(editPetName, '❌ Invalid characters removed');
+				setTimeout(() => removeErrorState(editPetName, 'Only letters and spaces allowed'), 2000);
+			}
+		});
+	}
+
+	// Breed validation (letters and spaces only)
+	if (editBreed) {
+		editBreed.addEventListener('input', e => {
+			const original = e.target.value;
+			const cleaned = original.replace(/[^A-Za-z\s]/g, '');
+			e.target.value = cleaned;
+			
+			if (original !== cleaned) {
+				addErrorState(editBreed, '❌ Only letters and spaces allowed');
+			} else if (cleaned.trim().length > 0) {
+				removeErrorState(editBreed, '✓ Valid breed');
+			} else {
+				removeErrorState(editBreed, 'Only letters and spaces allowed');
+			}
+		});
+
+		editBreed.addEventListener('paste', e => {
+			e.preventDefault();
+			const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+			const cleaned = pastedText.replace(/[^A-Za-z\s]/g, '');
+			document.execCommand('insertText', false, cleaned);
+			if (pastedText !== cleaned) {
+				addErrorState(editBreed, '❌ Invalid characters removed');
+				setTimeout(() => removeErrorState(editBreed, 'Only letters and spaces allowed'), 2000);
+			}
+		});
+	}
+
+	// Age validation (numbers only, 0-99)
+	if (editAge) {
+		editAge.addEventListener('input', e => {
+			const original = e.target.value;
+			const cleaned = original.replace(/[^0-9]/g, '');
+			let numValue = parseInt(cleaned);
+			
+			if (original !== cleaned && original.length > 0) {
+				addErrorState(editAge, '❌ Only numbers allowed (0-99)');
+				e.target.value = cleaned;
+				return;
+			}
+			
+			if (numValue > 99) {
+				numValue = 99;
+				e.target.value = numValue;
+				addErrorState(editAge, '❌ Age must be less than 100');
+			} else if (numValue < 0) {
+				numValue = 0;
+				e.target.value = numValue;
+			} else if (cleaned.length > 0) {
+				e.target.value = numValue;
+				removeErrorState(editAge, '✓ Valid age');
+			} else {
+				e.target.value = '';
+				removeErrorState(editAge, 'Age must be less than 100');
+			}
+		});
+
+		editAge.addEventListener('keydown', e => {
+			if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-' || e.key === '.') {
+				e.preventDefault();
+				addErrorState(editAge, '❌ Only numbers 0-9 allowed');
+				setTimeout(() => removeErrorState(editAge, 'Age must be less than 100'), 1500);
+			}
+		});
+
+		editAge.addEventListener('paste', e => {
+			e.preventDefault();
+			const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+			const cleaned = pastedText.replace(/[^0-9]/g, '');
+			let numValue = parseInt(cleaned);
+			if (pastedText !== cleaned) {
+				addErrorState(editAge, '❌ Invalid characters removed');
+				setTimeout(() => removeErrorState(editAge, 'Age must be less than 100'), 2000);
+			}
+			if (numValue > 99) numValue = 99;
+			if (numValue < 0) numValue = 0;
+			editAge.value = isNaN(numValue) ? '' : numValue;
+		});
+	}
+
+	// Phone validation (10 digits only)
+	if (editPhone) {
+		editPhone.addEventListener('input', e => {
+			const original = e.target.value;
+			const cleaned = original.replace(/[^0-9]/g, '').slice(0, 10);
+			e.target.value = cleaned;
+			
+			if (original !== cleaned && original.length > 0) {
+				addErrorState(editPhone, '❌ Only numbers allowed');
+			} else if (cleaned.length === 10) {
+				removeErrorState(editPhone, '✓ Valid phone number');
+			} else if (cleaned.length > 0) {
+				addErrorState(editPhone, `⚠️ ${10 - cleaned.length} more digit(s) needed`);
+			} else {
+				removeErrorState(editPhone, 'Must be 10 digits, numbers only');
+			}
+		});
+
+		editPhone.addEventListener('keydown', e => {
+			if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-' || e.key === '.') {
+				e.preventDefault();
+				addErrorState(editPhone, '❌ Only numbers 0-9 allowed');
+				setTimeout(() => {
+					if (editPhone.value.length === 10) {
+						removeErrorState(editPhone, '✓ Valid phone number');
+					} else {
+						removeErrorState(editPhone, 'Must be 10 digits, numbers only');
+					}
+				}, 1500);
+			}
+		});
+
+		editPhone.addEventListener('paste', e => {
+			e.preventDefault();
+			const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+			const cleaned = pastedText.replace(/[^0-9]/g, '').slice(0, 10);
+			document.execCommand('insertText', false, cleaned);
+			if (pastedText.replace(/[^0-9]/g, '') !== cleaned || pastedText !== cleaned) {
+				addErrorState(editPhone, '❌ Invalid characters removed');
+				setTimeout(() => {
+					if (cleaned.length === 10) {
+						removeErrorState(editPhone, '✓ Valid phone number');
+					} else {
+						removeErrorState(editPhone, 'Must be 10 digits, numbers only');
+					}
+				}, 2000);
+			}
+		});
+	}
+
+	// Price validation (positive numbers only)
+	if (editPrice) {
+		editPrice.addEventListener('input', e => {
+			const value = parseFloat(e.target.value);
+			if (e.target.value && (isNaN(value) || value < 0)) {
+				e.target.value = 0;
+				addErrorState(editPrice, '❌ Price cannot be negative');
+			} else if (value >= 0) {
+				removeErrorState(editPrice, '✓ Valid price');
+			} else {
+				removeErrorState(editPrice, 'Enter price in Sri Lankan Rupees');
+			}
+		});
+
+		editPrice.addEventListener('keydown', e => {
+			if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+				e.preventDefault();
+				addErrorState(editPrice, '❌ Only positive numbers allowed');
+				setTimeout(() => removeErrorState(editPrice, 'Enter price in Sri Lankan Rupees'), 1500);
+			}
+		});
+	}
+	// ========== END EDIT FORM VALIDATION ==========
+
 	// Edit form submission
 	const editForm = qs('#editForm');
 	editForm?.addEventListener('submit', async e => {
 		e.preventDefault();
+		
+		// Additional validation before submit
+		let hasErrors = false;
+		const errors = [];
+
+		if (editPetName && (!editPetName.value.trim() || !/^[A-Za-z\s]+$/.test(editPetName.value.trim()))) {
+			addErrorState(editPetName, '❌ Name should only contain letters and spaces');
+			errors.push('Pet name is invalid');
+			hasErrors = true;
+		}
+
+		if (editBreed && (!editBreed.value.trim() || !/^[A-Za-z\s]+$/.test(editBreed.value.trim()))) {
+			addErrorState(editBreed, '❌ Breed should only contain letters and spaces');
+			errors.push('Breed is invalid');
+			hasErrors = true;
+		}
+
+		if (editAge) {
+			const ageValue = parseInt(editAge.value);
+			if (isNaN(ageValue) || ageValue < 0 || ageValue > 99) {
+				addErrorState(editAge, '❌ Age must be between 0 and 99');
+				errors.push('Age must be between 0 and 99');
+				hasErrors = true;
+			}
+		}
+
+		if (editPhone && !/^[0-9]{10}$/.test(editPhone.value)) {
+			addErrorState(editPhone, '❌ Phone must be exactly 10 digits');
+			errors.push('Phone number must be exactly 10 digits');
+			hasErrors = true;
+		}
+
+		if (editPrice) {
+			const priceValue = parseFloat(editPrice.value);
+			if (isNaN(priceValue) || priceValue < 0) {
+				addErrorState(editPrice, '❌ Price must be a positive number');
+				errors.push('Price is invalid');
+				hasErrors = true;
+			}
+		}
+
+		if (hasErrors) {
+			alert('⚠️ Please fix the following errors:\n\n' + errors.join('\n'));
+			return;
+		}
+
 		const fd = new FormData(editForm);
 		
 		// Show loading state

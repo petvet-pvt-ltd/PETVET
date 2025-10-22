@@ -9,40 +9,70 @@ $GLOBALS['module'] = 'vet'; // Set global module for sidebar
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Medical Records</title>
-  <link rel="stylesheet" href="/PETVET/public/css/vet/dashboard.css">
+  <title>Medical Records | Veterinarian</title>
+  <link rel="stylesheet" href="/PETVET/public/css/vet/enhanced-vet.css">
 </head>
 <body>
   <?php include 'views/shared/sidebar/sidebar.php'; ?>
   
   <div class="main-content">
-    <header class="dashboard-header"><h2>Medical Records</h2></header>
+    <?php 
+    // Include user welcome header
+    include __DIR__ . '/../shared/components/user-welcome-header.php'; 
+    ?>
+    
+    <div class="page-frame">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Medical Records</h1>
+          <p class="page-subtitle">Manage patient medical history and records</p>
+        </div>
+      </div>
 
-    <!-- Form (visible only when from=ongoing) -->
-    <section id="formSection" style="display:none">
-      <h3>Add Medical Record</h3>
-      <form id="medicalRecordForm">
-        <div class="form-row">
-          <label>Appointment ID<input name="appointmentId" readonly></label>
-          <label>Pet name<input name="petName" readonly></label>
-          <label>Owner<input name="ownerName" readonly></label>
-        </div>
-        <div class="form-row">
-          <label>Symptoms<textarea name="symptoms" rows="2" required></textarea></label>
-          <label>Diagnosis<textarea name="diagnosis" rows="2" required></textarea></label>
-        </div>
-        <div class="form-row">
-          <label>Treatment<textarea name="treatment" rows="2" required></textarea></label>
-        </div>
-        <button class="btn navy" type="submit">Save Record</button>
-      </form>
-    </section>
+      <!-- Form (visible only when from=ongoing) -->
+      <section id="formSection" class="form-section" style="display:none">
+        <h3>Add Medical Record</h3>
+        <form id="medicalRecordForm">
+          <div class="form-row">
+            <label>
+              Appointment ID
+              <input name="appointmentId" readonly>
+            </label>
+            <label>
+              Pet Name
+              <input name="petName" readonly>
+            </label>
+            <label>
+              Owner
+              <input name="ownerName" readonly>
+            </label>
+          </div>
+          <div class="form-row">
+            <label>
+              Symptoms
+              <textarea name="symptoms" rows="3" required placeholder="Describe the symptoms observed..."></textarea>
+            </label>
+            <label>
+              Diagnosis
+              <textarea name="diagnosis" rows="3" required placeholder="Enter your diagnosis..."></textarea>
+            </label>
+          </div>
+          <div class="form-row">
+            <label>
+              Treatment
+              <textarea name="treatment" rows="3" required placeholder="Describe the treatment plan..."></textarea>
+            </label>
+          </div>
+          <button class="btn primary" type="submit">💾 Save Record</button>
+        </form>
+      </section>
 
-    <section>
-      <h3>Records</h3>
-      <input id="searchBar" placeholder="Search records...">
-      <div id="recordsContainer"></div>
-    </section>
+      <section>
+        <h3>Medical Records</h3>
+        <input id="searchBar" placeholder="Search records by pet, owner, or diagnosis...">
+        <div id="recordsContainer" class="table-wrap"></div>
+      </section>
+    </div>
   </div>
 
   <script>
