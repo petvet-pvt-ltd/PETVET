@@ -108,6 +108,12 @@ class RegistrationModel {
             case 'breeder':
                 return $this->createBreederProfile($userId, $roleData, $files);
             
+            case 'vet':
+                return $this->createVetProfile($userId, $roleData, $files);
+            
+            case 'clinic_manager':
+                return $this->createClinicManagerProfile($userId, $roleData, $files);
+            
             default:
                 return true;
         }
@@ -270,6 +276,95 @@ class RegistrationModel {
             
         } catch (PDOException $e) {
             error_log("Create breeder profile error: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Create veterinarian profile
+     */
+    private function createVetProfile($userId, $data, $files) {
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO vet_profiles 
+                (user_id, clinic_id, license_number, specialization, years_experience, available, created_at)
+                VALUES (?, ?, ?, ?, ?, 1, NOW())
+            ");
+            
+            $clinicId = !empty($data['clinic_id']) ? $data['clinic_id'] : null;
+            $licenseNumber = $data['license_number'] ?? 'PENDING';
+            $specialization = $data['specialization'] ?? '';
+            $experience = $data['experience'] ?? 0;
+            
+            $stmt->execute([
+                $userId,
+                $clinicId,
+                $licenseNumber,
+                $specialization,
+                $experience
+            ]);
+            
+            // Save medical license document if provided
+            if (!empty($files)) {
+                $this->saveVerificationDocument($userId, 'vet', $files);
+            }
+            
+            return true;
+            
+        } catch (PDOException $e) {
+            error_log("Create vet profile error: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Create clinic manager profile
+     */
+    private function createClinicManagerProfile($userId, $data, $files) {
+        try {
+            $this->db->beginTransaction();
+            
+            // First, create the clinic
+            $stmt = $this->db->prepare("
+                INSERT INTO clinics 
+                (clinic_name, clinic_address, district, clinic_phone, clinic_email, license_document, verification_status, is_active, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, 'approved', 1, NOW())
+            ");
+            
+            $licenseDocument = null;
+            if (!empty($files)) {
+                $licenseDocument = $this->saveVerificationDocument($userId, 'clinic_manager', $files);
+            }
+            
+            $stmt->execute([
+                $data['clinic_name'] ?? '',
+                $data['clinic_address'] ?? '',
+                $data['district'] ?? '',
+                $data['clinic_phone'] ?? '',
+                $data['clinic_email'] ?? '',
+                $licenseDocument
+            ]);
+            
+            $clinicId = $this->db->lastInsertId();
+            
+            // Then, create the clinic manager profile
+            $stmt = $this->db->prepare("
+                INSERT INTO clinic_manager_profiles 
+                (user_id, clinic_id, position, created_at)
+                VALUES (?, ?, 'Manager', NOW())
+            ");
+            
+            $stmt->execute([
+                $userId,
+                $clinicId
+            ]);
+            
+            $this->db->commit();
+            return true;
+            
+        } catch (PDOException $e) {
+            $this->db->rollBack();
+            error_log("Create clinic manager profile error: " . $e->getMessage());
             return false;
         }
     }

@@ -96,6 +96,46 @@ class GuestController extends BaseController {
         }
     }
 
+    public function vetRegister() {
+        // Debug logging to custom file
+        $debug = "=== VET REGISTER CALLED ===\n";
+        $debug .= "Time: " . date('Y-m-d H:i:s') . "\n";
+        $debug .= "Method: " . $_SERVER['REQUEST_METHOD'] . "\n";
+        $debug .= "POST data: " . print_r($_POST, true) . "\n";
+        file_put_contents(__DIR__ . '/../vet-debug.log', $debug, FILE_APPEND);
+        
+        error_log("=== VET REGISTER METHOD CALLED ===");
+        error_log("Request method: " . $_SERVER['REQUEST_METHOD']);
+        error_log("POST data: " . print_r($_POST, true));
+        
+        // If it's a POST request, handle veterinarian registration
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            file_put_contents(__DIR__ . '/../vet-debug.log', "Processing POST request\n", FILE_APPEND);
+            error_log("Processing vet registration POST request");
+            require_once __DIR__ . '/../controllers/RegistrationController.php';
+            $registrationController = new RegistrationController();
+            $registrationController->register();
+        } else {
+            file_put_contents(__DIR__ . '/../vet-debug.log', "Showing form (GET)\n", FILE_APPEND);
+            error_log("Showing vet registration form (GET request)");
+            // Otherwise, just show the vet registration form
+            // The form file has its own auth check and will handle the display
+            include __DIR__ . '/../views/guest/vet-register.php';
+        }
+    }
+
+    public function clinicManagerRegister() {
+        // If it's a POST request, handle clinic manager registration
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_once __DIR__ . '/../controllers/RegistrationController.php';
+            $registrationController = new RegistrationController();
+            $registrationController->register();
+        } else {
+            // Otherwise, just show the clinic manager registration form
+            include __DIR__ . '/../views/guest/clinic-manager-register.php';
+        }
+    }
+
     // Modified view method for guest pages (no sidebar)
     protected function guestView(string $name, array $data = []) {
         extract($data);

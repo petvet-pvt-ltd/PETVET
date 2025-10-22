@@ -265,7 +265,7 @@ switch ($module) {
     }
     
     // Handle pages through GuestController that need data, others directly
-    if ($page === 'shop' || $page === 'shop-product' || $page === 'explore-pets' || $page === 'lost-found' || $page === 'register') {
+    if ($page === 'shop' || $page === 'shop-product' || $page === 'explore-pets' || $page === 'lost-found' || $page === 'register' || $page === 'vet-register' || $page === 'clinic-manager-register') {
       require_once __DIR__ . '/controllers/GuestController.php';
       $c = new GuestController();
       switch ($page) {
@@ -274,6 +274,8 @@ switch ($module) {
         case 'explore-pets': $c->explorePets(); break;
         case 'lost-found': $c->lostFound(); break;
         case 'register': $c->register(); break;
+        case 'vet-register': $c->vetRegister(); break;
+        case 'clinic-manager-register': $c->clinicManagerRegister(); break;
         default: show404("This guest page doesn't exist."); break;
       }
     } else {

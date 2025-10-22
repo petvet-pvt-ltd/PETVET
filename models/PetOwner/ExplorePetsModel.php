@@ -4,142 +4,118 @@ require_once __DIR__ . '/../BaseModel.php';
 class ExplorePetsModel extends BaseModel {
     
     public function getAllSellers() {
-        return [
-            1 => ['id' => 1, 'name' => 'You', 'location' => 'Colombo', 'phone' => '+94 77 123 4567', 'phone2' => '+94 77 123 4568', 'email' => 'you@example.com'],
-            2 => ['id' => 2, 'name' => 'Kasun Perera', 'location' => 'Kandy', 'phone' => '+94 77 987 6543', 'phone2' => '', 'email' => 'kasun.perera@petvet.lk'],
-            3 => ['id' => 3, 'name' => 'Nirmala Silva', 'location' => 'Galle', 'phone' => '+94 76 555 1212', 'phone2' => '+94 76 555 1213', 'email' => 'nirmala@example.com'],
-            4 => ['id' => 4, 'name' => 'Ravi Fernando', 'location' => 'Negombo', 'phone' => '+94 75 888 9999', 'phone2' => '', 'email' => 'ravi@example.com'],
-            5 => ['id' => 5, 'name' => 'Priya Rajapaksha', 'location' => 'Matara', 'phone' => '+94 78 222 3333', 'phone2' => '', 'email' => 'priya@example.com'],
-            6 => ['id' => 6, 'name' => 'Chaminda Wickrama', 'location' => 'Kurunegala', 'phone' => '+94 71 444 5555', 'phone2' => '', 'email' => 'chaminda@example.com']
-        ];
+        global $conn;
+        
+        // Fetch sellers (users) who have approved listings
+        $sql = "SELECT DISTINCT 
+                    u.id, 
+                    CONCAT(u.first_name, ' ', u.last_name) as name,
+                    l.location,
+                    l.phone,
+                    l.phone2,
+                    l.email
+                FROM users u
+                INNER JOIN sell_pet_listings l ON u.id = l.user_id
+                WHERE l.status = 'approved'";
+        
+        $result = mysqli_query($conn, $sql);
+        
+        if (!$result) {
+            error_log("ExplorePetsModel getAllSellers error: " . mysqli_error($conn));
+            return [];
+        }
+        
+        $sellers = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            $sellers[$row['id']] = [
+                'id' => $row['id'],
+                'name' => $row['name'],
+                'location' => $row['location'] ?? '',
+                'phone' => $row['phone'] ?? '',
+                'phone2' => $row['phone2'] ?? '',
+                'email' => $row['email'] ?? ''
+            ];
+        }
+        
+        return $sellers;
     }
     
     public function getAllPets() {
-        return [
-            [
-                'id' => 101,
-                'name' => 'Rocky',
-                'species' => 'Dog',
-                'breed' => 'Golden Retriever',
-                'age' => '3y',
-                'gender' => 'Male',
-                'badges' => ['Vaccinated', 'Microchipped'],
-                'price' => 95000,
-                'desc' => 'Friendly and well-trained. Great with kids and other pets.',
-                'images' => [
-                    'https://images.unsplash.com/photo-1552053831-71594a27632d?q=80&w=1400&auto=format&fit=crop',
-                    'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?q=80&w=1400&auto=format&fit=crop',
-                    'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?q=80&w=1400&auto=format&fit=crop'
-                ],
-                'seller_id' => 2,
-                'date_posted' => '2025-10-05'
-            ],
-            [
-                'id' => 102,
-                'name' => 'Whiskers',
-                'species' => 'Cat',
-                'breed' => 'Siamese',
-                'age' => '2y',
-                'gender' => 'Female',
-                'badges' => ['Vaccinated'],
-                'price' => 45000,
-                'desc' => 'Playful, litter-trained, prefers quiet home environment.',
-                'images' => [
-                    'https://images.unsplash.com/photo-1543852786-1cf6624b9987?q=80&w=1400&auto=format&fit=crop',
-                    'https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=1400&auto=format&fit=crop'
-                ],
-                'seller_id' => 3,
-                'date_posted' => '2025-10-07'
-            ],
-            [
-                'id' => 103,
-                'name' => 'Tweety',
-                'species' => 'Bird',
-                'breed' => 'Canary',
-                'age' => '1y',
-                'gender' => 'Female',
-                'badges' => ['Microchipped'],
-                'price' => 12000,
-                'desc' => 'Sings every morning. Healthy and very active.',
-                'images' => ['https://images.unsplash.com/photo-1452570053594-1b985d6ea890?q=80&w=1400&auto=format&fit=crop'],
-                'seller_id' => 2,
-                'date_posted' => '2025-10-08'
-            ],
-            [
-                'id' => 104,
-                'name' => 'Bruno',
-                'species' => 'Dog',
-                'breed' => 'Beagle',
-                'age' => '1y',
-                'gender' => 'Male',
-                'badges' => ['Vaccinated'],
-                'price' => 80000,
-                'desc' => 'Curious and energetic. Loves walks and playing fetch.',
-                'images' => [
-                    'https://images.unsplash.com/photo-1543466835-00a7907e9de1?q=80&w=1400&auto=format&fit=crop',
-                    'https://images.unsplash.com/photo-1505628346881-b72b27e84530?q=80&w=1400&auto=format&fit=crop',
-                    'https://images.unsplash.com/photo-1517849845537-4d257902454a?q=80&w=1400&auto=format&fit=crop'
-                ],
-                'seller_id' => 1,
-                'date_posted' => '2025-10-09'
-            ],
-            [
-                'id' => 105,
-                'name' => 'Luna',
-                'species' => 'Cat',
-                'breed' => 'Persian',
-                'age' => '1.5y',
-                'gender' => 'Female',
-                'badges' => ['Vaccinated', 'Microchipped'],
-                'price' => 65000,
-                'desc' => 'Beautiful Persian cat with long fluffy fur. Very gentle.',
-                'images' => ['https://images.unsplash.com/photo-1513245543132-31f507417b26?q=80&w=1400&auto=format&fit=crop'],
-                'seller_id' => 4,
-                'date_posted' => '2025-10-06'
-            ],
-            [
-                'id' => 106,
-                'name' => 'Max',
-                'species' => 'Dog',
-                'breed' => 'Labrador',
-                'age' => '2y',
-                'gender' => 'Male',
-                'badges' => ['Vaccinated', 'Microchipped'],
-                'price' => 85000,
-                'desc' => 'Loyal Labrador, perfect family dog. Loves swimming.',
-                'images' => ['https://images.unsplash.com/photo-1601758228041-f3b2795255f1?q=80&w=1400&auto=format&fit=crop'],
-                'seller_id' => 5,
-                'date_posted' => '2025-10-04'
-            ],
-            [
-                'id' => 107,
-                'name' => 'Charlie',
-                'species' => 'Bird',
-                'breed' => 'Cockatiel',
-                'age' => '6m',
-                'gender' => 'Male',
-                'badges' => ['Vaccinated'],
-                'price' => 18000,
-                'desc' => 'Young cockatiel with beautiful crest. Can whistle tunes.',
-                'images' => ['https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=1400&auto=format&fit=crop'],
-                'seller_id' => 6,
-                'date_posted' => '2025-10-10'
-            ],
-            [
-                'id' => 108,
-                'name' => 'Bella',
-                'species' => 'Dog',
-                'breed' => 'Poodle',
-                'age' => '4y',
-                'gender' => 'Female',
-                'badges' => ['Vaccinated', 'Microchipped'],
-                'price' => 70000,
-                'desc' => 'Smart and hypoallergenic. Great for families with allergies.',
-                'images' => ['https://images.unsplash.com/photo-1616190264687-b7ebf7aa3fa7?q=80&w=1400&auto=format&fit=crop'],
-                'seller_id' => 3,
-                'date_posted' => '2025-10-03'
-            ]
-        ];
+        global $conn;
+        
+        // Fetch only approved listings from database
+        $sql = "SELECT 
+                    l.id, 
+                    l.name, 
+                    l.species, 
+                    l.breed, 
+                    l.age, 
+                    l.gender, 
+                    l.price, 
+                    l.description as `desc`, 
+                    l.location,
+                    l.user_id as seller_id,
+                    l.created_at as date_posted,
+                    CONCAT(u.first_name, ' ', u.last_name) as seller_name,
+                    u.email as seller_email
+                FROM sell_pet_listings l
+                LEFT JOIN users u ON l.user_id = u.id
+                WHERE l.status = 'approved'
+                ORDER BY l.created_at DESC";
+        
+        $result = mysqli_query($conn, $sql);
+        
+        if (!$result) {
+            error_log("ExplorePetsModel getAllPets error: " . mysqli_error($conn));
+            return [];
+        }
+        
+        $pets = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            // Get images for this listing
+            $imgSql = "SELECT image_url FROM sell_pet_listing_images 
+                       WHERE listing_id = ? ORDER BY display_order ASC";
+            $imgStmt = mysqli_prepare($conn, $imgSql);
+            mysqli_stmt_bind_param($imgStmt, 'i', $row['id']);
+            mysqli_stmt_execute($imgStmt);
+            $imgResult = mysqli_stmt_get_result($imgStmt);
+            
+            $images = [];
+            while ($imgRow = mysqli_fetch_assoc($imgResult)) {
+                $images[] = $imgRow['image_url'];
+            }
+            
+            // Get badges for this listing
+            $badgeSql = "SELECT badge FROM sell_pet_listing_badges 
+                         WHERE listing_id = ?";
+            $badgeStmt = mysqli_prepare($conn, $badgeSql);
+            mysqli_stmt_bind_param($badgeStmt, 'i', $row['id']);
+            mysqli_stmt_execute($badgeStmt);
+            $badgeResult = mysqli_stmt_get_result($badgeStmt);
+            
+            $badges = [];
+            while ($badgeRow = mysqli_fetch_assoc($badgeResult)) {
+                $badges[] = $badgeRow['badge'];
+            }
+            
+            // Format data to match the expected structure
+            $pets[] = [
+                'id' => $row['id'],
+                'name' => $row['name'],
+                'species' => $row['species'],
+                'breed' => $row['breed'],
+                'age' => $row['age'] . 'y',
+                'gender' => $row['gender'],
+                'badges' => $badges,
+                'price' => $row['price'],
+                'desc' => $row['desc'] ?? '',
+                'images' => $images,
+                'seller_id' => $row['seller_id'],
+                'date_posted' => $row['date_posted']
+            ];
+        }
+        
+        return $pets;
     }
     
     public function getPetsByUserId($userId) {

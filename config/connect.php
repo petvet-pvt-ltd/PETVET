@@ -37,6 +37,16 @@ function db(): PDO {
     return $pdo;
 }
 
+// MySQLi connection for legacy compatibility and models
+$conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+if (!$conn) {
+    error_log("MySQLi connection failed: " . mysqli_connect_error());
+    die("Database connection failed. Please check your configuration.");
+}
+
+mysqli_set_charset($conn, DB_CHARSET);
+
 // Legacy compatibility (for old code that might use these)
 $server_name = DB_HOST;
 $server_user = DB_USER;

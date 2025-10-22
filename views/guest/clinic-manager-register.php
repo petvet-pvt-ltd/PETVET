@@ -1,10 +1,11 @@
 <?php
-/**
- * DEPRECATED: Clinic Manager registration now uses MVC routing
- * Please use: /PETVET/index.php?module=guest&page=clinic-manager-register
- */
-header('Location: /PETVET/index.php?module=guest&page=clinic-manager-register');
-exit;
+// Check if user is already logged in
+require_once __DIR__ . '/../../config/auth_helper.php';
+if (isLoggedIn()) {
+    $role = getUserRole();
+    header("Location: /PETVET/index.php?module=$role&page=dashboard");
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -12,7 +13,7 @@ exit;
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clinic Manager Register</title>
+  <title>Clinic Manager Registration - PetVet</title>
   <link rel="stylesheet" href="/PETVET/public/css/guest/clinic-manager-reg.css">
 </head>
 
@@ -28,9 +29,23 @@ exit;
         <h2>Clinic Manager Registration</h2>
         <p>Please fill out the form to create an account.</p>
 
-        <form id="clinicManagerForm" action="" method="post" enctype="multipart/form-data" novalidate>
+        <?php
+        // Display registration errors if any
+        if (isset($_SESSION['registration_errors'])) {
+            echo '<div class="alert alert-error" style="background-color: #fee2e2; border: 1px solid #ef4444; color: #991b1b; padding: 12px; border-radius: 6px; margin-bottom: 15px;">';
+            foreach ($_SESSION['registration_errors'] as $error) {
+                echo '<p style="margin: 0;">' . htmlspecialchars($error) . '</p>';
+            }
+            echo '</div>';
+            unset($_SESSION['registration_errors']);
+        }
+        ?>
 
-          <!-- Step 1 -->
+        <form id="clinicManagerForm" action="/PETVET/index.php?module=guest&page=clinic-manager-register" method="post" enctype="multipart/form-data" novalidate>
+          <!-- Hidden field to specify role -->
+          <input type="hidden" name="roles[]" value="clinic_manager">
+
+          <!-- Step 1: Personal Information -->
           <div id="step-1" class="form-step active-step">
             <div>
               <input type="text" id="fname" name="fname" placeholder="First Name" required>
@@ -56,10 +71,10 @@ exit;
               <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required>
               <span class="error-msg" id="confirm_password-error"></span>
             </div>
-            <button type="button" onclick="nextStep()">Next</button>
+            <button type="button" id="nextBtn" onclick="nextStep()">Next</button>
           </div>
 
-          <!-- Step 2 -->
+          <!-- Step 2: Clinic Information -->
           <div id="step-2" class="form-step">
             <div>
               <input type="text" id="clinic_name" name="clinic_name" placeholder="Clinic Name" required>
@@ -126,6 +141,7 @@ exit;
               <button type="button" onclick="prevStep()">Back</button>
               <button type="submit">Register</button>
             </div>
+          </div>
         </form>
       </div>
     </div>
@@ -187,10 +203,12 @@ exit;
       const isValid = validationRules[id].validate(value);
       if (!isValid) {
         error.textContent = validationRules[id].message;
+        // Don't change display, just set text - CSS will handle visibility
         input.style.borderColor = "#ef4444";
         return false;
       } else {
         error.textContent = "";
+        // Don't change display, just clear text - CSS will handle visibility
         input.style.borderColor = "#10b981";
         return true;
       }
@@ -208,14 +226,79 @@ exit;
         .every(Boolean);
     }
 
-    function nextStep() {
-      if (validateStep1()) {
-        step1.classList.remove("active-step");
-        step2.classList.add("active-step");
+    // Check email availability via API
+    async function checkEmailAvailability(email) {
+      try {
+        const response = await fetch('/PETVET/api/check-email.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email })
+        });
+        
+        const result = await response.json();
+        return result;
+      } catch (error) {
+        console.error('Email check error:', error);
+        return { error: 'Could not verify email' };
       }
     }
 
+    async function nextStep() {
+      if (!validateStep1()) return;
+      
+      // Check email availability before proceeding
+      const emailInput = document.getElementById('email');
+      const email = emailInput.value.trim();
+      
+      if (email) {
+        // Show loading state
+        const nextBtn = document.getElementById('nextBtn');
+        const originalText = nextBtn.textContent;
+        nextBtn.disabled = true;
+        nextBtn.textContent = 'Checking email...';
+        
+        const emailCheck = await checkEmailAvailability(email);
+        
+        // Restore button
+        nextBtn.disabled = false;
+        nextBtn.textContent = originalText;
+        
+        if (emailCheck.exists) {
+          // Email is already taken
+          const errorEl = document.getElementById('email-error');
+          emailInput.classList.add('error');
+          emailInput.classList.remove('success');
+          errorEl.textContent = 'This email is already registered. Please use a different email or login.';
+          // Don't change display - CSS handles it
+          return;
+        } else if (emailCheck.available) {
+          // Email is available - continue
+          emailInput.classList.remove('error');
+          emailInput.classList.add('success');
+          const errorEl = document.getElementById('email-error');
+          errorEl.textContent = '';
+          // Don't change display - CSS handles it
+        }
+      }
+      
+      // Disable required validation on step 1 fields
+      document.querySelectorAll('#step-1 input[required]').forEach(input => {
+        input.removeAttribute('required');
+      });
+      
+      step1.classList.remove("active-step");
+      step2.classList.add("active-step");
+    }
+
     function prevStep() {
+      // Re-enable required validation on step 1 fields
+      document.getElementById('fname').setAttribute('required', '');
+      document.getElementById('lname').setAttribute('required', '');
+      document.getElementById('email').setAttribute('required', '');
+      document.getElementById('phone').setAttribute('required', '');
+      document.getElementById('password').setAttribute('required', '');
+      document.getElementById('confirm_password').setAttribute('required', '');
+      
       step2.classList.remove("active-step");
       step1.classList.add("active-step");
     }

@@ -1,9 +1,9 @@
 <?php
 /**
- * DEPRECATED: Vet registration is now part of multi-role registration
- * Please use: /PETVET/index.php?module=guest&page=register
+ * DEPRECATED: Vet registration now uses MVC routing
+ * Please use: /PETVET/index.php?module=guest&page=vet-register
  */
-header('Location: /PETVET/index.php?module=guest&page=register');
+header('Location: /PETVET/index.php?module=guest&page=vet-register');
 exit;
 ?>
 <!DOCTYPE html>

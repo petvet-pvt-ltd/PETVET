@@ -76,16 +76,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login-submit'])) {
       color: #363;
       border: 1px solid #cfc;
     }
+    
+    /* Home Button Styles */
+    .home-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: #fff;
+      color: #333;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+    
+    .home-btn:hover {
+      background: #f8f9fa;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+    }
+    
+    .home-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+    
+    @media (max-width: 768px) {
+      .home-btn {
+        top: 15px;
+        left: 15px;
+        padding: 8px 16px;
+        font-size: 13px;
+      }
+      
+      .home-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+    }
   </style>
 </head>
 
 <body>
+  <!-- Home Button -->
+  <a href="/PETVET/index.php?module=guest&page=home" class="home-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+      <polyline points="9 22 9 12 15 12 15 22"></polyline>
+    </svg>
+    Home
+  </a>
+  
   <div class="auth-wrapper">
     <aside class="auth-hero">
       <div class="hero-overlay"></div>
       <div class="hero-content">
         <h2>Your pet's health, managed beautifully.</h2>
-        <p>Book appointments, view records, and connect with top vets in one place.</p>
+        <p>Book appointments, view records, and connect with top vets and other pet services in one place.</p>
       </div>
     </aside>
     <main class="auth-panel">
@@ -117,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login-submit'])) {
           </div>
           <button name="login-submit" type="submit" class="primary-btn">Login</button>
         </form>
-        <div class="signup">Don't have an account? <a href="/PETVET/register/client-reg.php">Sign up</a></div>
+        <div class="signup">Don't have an account? <a href="/PETVET/index.php?module=guest&page=register">Sign up</a></div>
       </div>
     </main>
   </div>

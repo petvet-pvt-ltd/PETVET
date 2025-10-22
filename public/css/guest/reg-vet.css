@@ -100,18 +100,22 @@ form input {
 
 form div {
   margin-bottom: 23px;
+  position: relative; /* Fix for floating error messages */
 }
 
 form #step-2 div {
   margin-bottom: 14.5px;
+  position: relative; /* Fix for floating error messages */
 }
 
-/* Error Message */
+/* Error Message - Fixed position */
 .error-msg {
-  position: absolute;
+  position: relative; /* Changed from absolute to relative */
   font-size: 0.85rem;
   color: #ef4444;
   display: block;
+  margin-top: 4px;
+  min-height: 18px; /* Reserve space to prevent layout shift */
 }
 
 form input:focus {
@@ -166,16 +170,53 @@ form button:hover {
 
   form .button-group {
     flex-direction: column;
+    gap: 10px;
   }
 
   form .button-group button {
     width: 100%;
   }
+
+  form input,
+  form select,
+  form textarea {
+    font-size: 15px;
+    padding: 12px;
+    width: 100%;
+  }
+
+  button {
+    padding: 12px;
+    font-size: 15px;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
 }
 
 @media (max-width: 400px) {
   .card-image { flex-basis: 140px; height: 140px; }
-  .form-container { max-height: calc(100vh - 155px); }
+  .form-container { 
+    max-height: calc(100vh - 155px); 
+    padding: 20px 15px;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+  }
+
+  form input,
+  form select,
+  form textarea {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  button {
+    padding: 10px;
+    font-size: 14px;
+  }
 }
 
 /* Multi-step form logic */

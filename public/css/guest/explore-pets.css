@@ -20,9 +20,9 @@
   --gradient-card:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 *{box-sizing:border-box}
-body.market{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--text);background:var(--bg)}
+body{margin:0;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;color:var(--text);background:var(--bg)}
 .main-content{padding:24px 28px 40px}
-@media (max-width:900px){body:not(.active-sidebar) .main-content,body.active-sidebar .main-content{margin-left:0;padding:18px 22px 42px;padding-top:80px}}
+@media (max-width:900px){body:not(.active-sidebar) .main-content,body.active-sidebar .main-content{margin-left:0;padding:18px 22px 42px}}
 .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
 .page-header h2{margin:0 0 4px;font-size:26px}.subtitle{margin:0;color:var(--muted);font-size:14px}.actions{display:flex;gap:10px}
 .btn{appearance:none;border:none;border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer;transition:.2s ease;box-shadow:none}

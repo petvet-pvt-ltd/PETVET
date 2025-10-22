@@ -102,11 +102,20 @@ class RegistrationController {
      * Validate form input
      */
     private function validateInput() {
-        $required = ['fname', 'lname', 'email', 'password', 'confirm_password', 'address'];
+        // Base required fields
+        $required = ['fname', 'lname', 'email', 'password', 'confirm_password'];
+        
+        // Add role-specific required fields
+        $roles = $_POST['roles'] ?? [];
+        
+        // For regular registration, require address
+        if (!in_array('vet', $roles) && !in_array('clinic_manager', $roles)) {
+            $required[] = 'address';
+        }
         
         foreach ($required as $field) {
             if (empty($_POST[$field])) {
-                $this->errors[] = "Please fill in all required fields";
+                $this->errors[] = "Please fill in all required fields ($field missing)";
                 return false;
             }
         }
@@ -148,7 +157,7 @@ class RegistrationController {
             'first_name' => htmlspecialchars(trim($_POST['fname'])),
             'last_name' => htmlspecialchars(trim($_POST['lname'])),
             'phone' => htmlspecialchars(trim($_POST['phone'] ?? '')),
-            'address' => htmlspecialchars(trim($_POST['address']))
+            'address' => htmlspecialchars(trim($_POST['address'] ?? '')) // Make optional for vet/clinic_manager
         ];
     }
     
@@ -215,6 +224,27 @@ class RegistrationController {
             ];
         }
         
+        // Veterinarian
+        if (in_array('vet', $_POST['roles'] ?? [])) {
+            $roleData['vet'] = [
+                'specialization' => $_POST['vet_specialization'] ?? '',
+                'experience' => $_POST['vet_experience'] ?? 0,
+                'clinic_id' => $_POST['vet_clinic_id'] ?? null,
+                'license_number' => $_POST['vet_license_number'] ?? ''
+            ];
+        }
+        
+        // Clinic Manager
+        if (in_array('clinic_manager', $_POST['roles'] ?? [])) {
+            $roleData['clinic_manager'] = [
+                'clinic_name' => $_POST['clinic_name'] ?? '',
+                'clinic_address' => $_POST['clinic_address'] ?? '',
+                'district' => $_POST['district'] ?? '',
+                'clinic_phone' => $_POST['clinic_phone'] ?? '',
+                'clinic_email' => $_POST['clinic_email'] ?? ''
+            ];
+        }
+        
         return $roleData;
     }
     
@@ -272,7 +302,21 @@ class RegistrationController {
     private function redirectWithErrors() {
         $_SESSION['registration_errors'] = $this->errors;
         $_SESSION['registration_data'] = $_POST;
-        header('Location: /PETVET/index.php?module=guest&page=register&error=1');
+        
+        // Determine which registration page to redirect to based on the role
+        $roles = $_POST['roles'] ?? [];
+        
+        if (in_array('vet', $roles) && count($roles) === 1) {
+            // Single vet registration
+            header('Location: /PETVET/index.php?module=guest&page=vet-register&error=1');
+        } elseif (in_array('clinic_manager', $roles) && count($roles) === 1) {
+            // Single clinic manager registration
+            header('Location: /PETVET/index.php?module=guest&page=clinic-manager-register&error=1');
+        } else {
+            // Multi-role registration or default
+            header('Location: /PETVET/index.php?module=guest&page=register&error=1');
+        }
+        
         exit;
     }
 }

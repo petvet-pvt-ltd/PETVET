@@ -136,10 +136,9 @@ $availableSpecies = $availableSpecies ?? [];
           <label>Secondary Phone (Optional)<input type="tel" name="phone2" placeholder="+94 76 555 1212"></label>
           <label class="full">Email (Optional)<input type="email" name="email" placeholder="your.email@example.com"></label>
           <label class="full">Photos (Max 3)
-            <input type="file" name="images[]" id="sellImages" accept="image/*" multiple required data-max-files="3">
+            <input type="file" name="images[]" id="sellImages" accept="image/*" multiple data-max-files="3">
             <small style="display:block;color:var(--muted);margin-top:6px;">Upload up to 3 photos. First image will be the listing cover.</small>
             <div id="sellImagePreviews" style="margin-top:12px;display:none;display:flex;gap:10px;flex-wrap:wrap;"></div>
-            <input type="hidden" name="image" id="sellImageFallback">
           </label>
         </div>
 

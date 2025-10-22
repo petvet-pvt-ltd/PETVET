@@ -70,18 +70,20 @@ body {
 /* Form Container */
 .form-container {
   flex: 1;
-  padding: 40px 30px;
+  padding: 30px 30px; /* Reduced top/bottom padding from 40px */
+  overflow-y: auto; /* Make scrollable */
+  max-height: 680px; /* Match card height */
 }
 
 .form-container h2 {
-  margin-bottom: 10px;
+  margin-bottom: 8px; /* Reduced from 10px */
   color: #111827;
 }
 
 .form-container p {
   font-size: 0.9rem;
   color: #6b7280;
-  margin-bottom: 10px;
+  margin-bottom: 15px; /* Reduced from 10px to balance header spacing */
 }
 
 /* Input Fields */
@@ -99,14 +101,15 @@ form input[type="file"] {
 
 /* Field containers */
 form div {
-  margin-bottom: 25px;
-  position: relative;
+  margin-bottom: 15px; /* Reduced from 25px */
+  position: relative; /* Fix for floating error messages */
 }
 
 /* Spacing for step 2 controls */
 form .step-2 div,
 form .step-2 select {
-  margin-bottom: 20px;
+  margin-bottom: 15px; /* Reduced from 20px */
+  position: relative; /* Fix for floating error messages */
 }
 
 /* Focus styling */
@@ -118,12 +121,20 @@ form input[type="file"]:focus {
   background-color: #fff;
 }
 
-/* Error Message */
+/* Error Message - Fixed position */
 .error-msg {
-  position: absolute;
+  position: relative; /* Changed from absolute to relative */
   font-size: 0.85rem;
   color: #ef4444;
   display: block;
+  margin-top: 4px;
+  height: 20px; /* Fixed height to prevent layout shift */
+  line-height: 20px;
+  visibility: visible; /* Always visible but empty when no error */
+}
+
+.error-msg:empty {
+  visibility: hidden; /* Hide when empty but still take up space */
 }
 
 /* Label styling */
@@ -143,7 +154,7 @@ form .checkbox-wrapper {
   font-size: 0.95rem;
   color: #374151;
   margin-top: 5px;
-  margin-bottom: 25px;
+  margin-bottom: 15px; /* Reduced from 25px */
 }
 
 form input[type="checkbox"] {
@@ -162,7 +173,7 @@ form button {
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  margin-top: 10px;
+  margin-top: 5px; /* Reduced from 10px */
 }
 
 form button:hover {
@@ -217,27 +228,63 @@ form .button-group button {
 
   form .button-group {
     flex-direction: column;
+    gap: 10px;
   }
 
   form .button-group button {
     width: 100%;
   }
+
+  form input,
+  form select,
+  form textarea {
+    font-size: 15px;
+    padding: 12px;
+    width: 100%;
+  }
+
+  button {
+    padding: 12px;
+    font-size: 15px;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
 }
 
 @media (max-width: 400px) {
   .card-image { flex-basis: 140px; height: 140px; }
-  .form-container { max-height: calc(100vh - 155px); }
+  .form-container { 
+    max-height: calc(100vh - 155px);
+    padding: 20px 15px;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+  }
+
+  form input,
+  form select,
+  form textarea {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  button {
+    padding: 10px;
+    font-size: 14px;
+  }
 }
 
-
 #district{
-  margin-bottom: 25px;
+  margin-bottom: 15px; /* Reduced from 25px */
 }
 
 #step-1 div{
-  margin-bottom: 30px;
+  margin-bottom: 15px; /* Reduced from 30px */
 }
 
 #step-1 > div:first-of-type {
-  margin-top: 30px;
+  margin-top: 15px; /* Reduced from 30px */
 }
