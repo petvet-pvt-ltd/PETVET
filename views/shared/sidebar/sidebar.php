@@ -105,7 +105,7 @@ echo "<!-- activeModule: $activeModule -->";
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/staff.png" class="icon"> Manage Users</li>
       </a>
       <!-- Appointments and Medical Records intentionally hidden for admin -->
-      <a href="/PETVET/index.php?module=admin&page=pet-listings" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'pet-listings.php') ? 'active' : '' ?>">
+      <a href="/PETVET/index.php?module=admin&page=pet-listings" class="<?= (isset($GLOBALS['currentPage']) && ($GLOBALS['currentPage'] == 'pet-listings.php' || $GLOBALS['currentPage'] == 'pet-listings-modern.php')) ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/pets.png" class="icon"> Pet Listings</li>
       </a>
       <a href="/PETVET/index.php?module=admin&page=lost-found" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'lost-found.php') ? 'active' : '' ?>">

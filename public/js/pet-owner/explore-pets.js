@@ -29,47 +29,29 @@ document.addEventListener('DOMContentLoaded', () => {
 	qsa('.modal, .modal-overlay').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) closeModal(m.id); }));
 	document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ qsa('.modal.show, .modal-overlay[aria-hidden="false"]').forEach(m=>closeModal(m.id)); }});
 
-	// Load and render My Listings dynamically
+	// Load and render My Listings from database
+	async function fetchMyListings() {
+		try {
+			const response = await fetch('/PETVET/api/sell-pet-listings/get-my-listings.php');
+			const data = await response.json();
+			
+			if (data.success) {
+				renderMyListings(data.listings);
+				return data.listings;
+			} else {
+				console.error('Failed to fetch listings:', data.message);
+				renderMyListings([]);
+				return [];
+			}
+		} catch (error) {
+			console.error('Error fetching listings:', error);
+			renderMyListings([]);
+			return [];
+		}
+	}
+	
 	function loadMyListings() {
-		const STORAGE_KEY = 'explorePetsMyListings';
-		const VERSION_KEY = 'explorePetsVersion';
-		const CURRENT_VERSION = '2.0';
-		
-		const storedVersion = localStorage.getItem(VERSION_KEY);
-		if (storedVersion !== CURRENT_VERSION) {
-			localStorage.removeItem(STORAGE_KEY);
-			localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
-		}
-		
-		const stored = localStorage.getItem(STORAGE_KEY);
-		let listings = stored ? JSON.parse(stored) : [];
-		
-		// Add demo listing if empty (first time user)
-		if (listings.length === 0) {
-			listings = [{
-				id: 'demo-' + Date.now(),
-				name: 'Max',
-				species: 'Dog',
-				breed: 'Golden Retriever',
-				age: '2 years',
-				gender: 'Male',
-				price: '75000',
-				desc: 'Friendly and well-trained Golden Retriever. Great with kids and other pets. Up to date on all vaccinations.',
-				location: 'Colombo 07',
-				phone: '+94 77 123 4567',
-				phone2: '+94 76 555 8888',
-				email: 'owner@example.com',
-				images: [
-					'/PETVET/public/images/pets/dog1.jpg',
-					'/PETVET/public/images/pets/dog2.jpg',
-					'/PETVET/public/images/pets/dog3.jpg'
-				]
-			}];
-			saveMyListings(listings);
-		}
-		
-		renderMyListings(listings);
-		return listings;
+		fetchMyListings();
 	}
 
 	function renderMyListings(listings) {
@@ -88,6 +70,10 @@ document.addEventListener('DOMContentLoaded', () => {
 		
 		container.innerHTML = listings.map(listing => {
 			const mainImage = listing.images && listing.images.length > 0 ? listing.images[0] : '/PETVET/public/images/placeholder-pet.jpg';
+			const statusBadge = listing.status === 'pending' ? '<span class="status-badge pending">Pending Approval</span>' :
+			                     listing.status === 'approved' ? '<span class="status-badge approved">Approved</span>' :
+			                     listing.status === 'rejected' ? '<span class="status-badge rejected">Rejected</span>' :
+			                     '<span class="status-badge sold">Sold</span>';
 			return `
 				<div class="listing-item" data-id="${listing.id}">
 					<img src="${mainImage}" alt="${listing.name}" class="listing-thumb">
@@ -96,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
 						<div class="listing-meta">${listing.species} • ${listing.breed}</div>
 						<div class="listing-meta small">${listing.age} • ${listing.gender}</div>
 						<span class="listing-badge price">Rs ${Number(listing.price).toLocaleString()}</span>
+						${statusBadge}
 					</div>
 					<div class="listing-actions">
 						<button class="btn outline edit-listing-btn" 
@@ -110,14 +97,10 @@ document.addEventListener('DOMContentLoaded', () => {
 		}).join('');
 	}
 
-	function saveMyListings(listings) {
-		localStorage.setItem('explorePetsMyListings', JSON.stringify(listings));
-	}
-
 	// Buttons
 	qs('#btnSellPet')?.addEventListener('click',()=>openModal('sellModal'));
-	qs('#btnMyListings')?.addEventListener('click',()=>{
-		loadMyListings();
+	qs('#btnMyListings')?.addEventListener('click', async ()=>{
+		await fetchMyListings();
 		openModal('myListingsModal');
 	});
 	
@@ -145,15 +128,39 @@ document.addEventListener('DOMContentLoaded', () => {
 	cancelConfirmBtn?.addEventListener('click', () => { confirmDialog.style.display = 'none'; });
 	confirmDialog?.addEventListener('click', e => { if(e.target === confirmDialog) confirmDialog.style.display = 'none'; });
 	
-	confirmDeleteBtn?.addEventListener('click', () => {
+	confirmDeleteBtn?.addEventListener('click', async () => {
 		if(currentDeleteId !== null){
-			const listings = loadMyListings();
-			const updatedListings = listings.filter(l => l.id !== currentDeleteId);
-			saveMyListings(updatedListings);
-			renderMyListings(updatedListings);
+			const submitBtn = confirmDeleteBtn;
+			const originalText = submitBtn.textContent;
+			submitBtn.textContent = 'Deleting...';
+			submitBtn.disabled = true;
 			
-			confirmDialog.style.display = 'none';
-			currentDeleteId = null;
+			try {
+				const fd = new FormData();
+				fd.append('id', currentDeleteId);
+				
+				const response = await fetch('/PETVET/api/sell-pet-listings/delete.php', {
+					method: 'POST',
+					body: fd
+				});
+				
+				const data = await response.json();
+				
+				if (data.success) {
+					alert(data.message || 'Listing deleted successfully');
+					confirmDialog.style.display = 'none';
+					currentDeleteId = null;
+					await fetchMyListings(); // Refresh the list
+				} else {
+					alert(data.message || 'Failed to delete listing');
+				}
+			} catch (error) {
+				console.error('Error deleting listing:', error);
+				alert('An error occurred while deleting the listing');
+			} finally {
+				submitBtn.textContent = originalText;
+				submitBtn.disabled = false;
+			}
 		}
 	});
 
@@ -393,70 +400,46 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	}
 
-	sellForm?.addEventListener('submit', e => {
+	sellForm?.addEventListener('submit', async e => {
 		e.preventDefault();
 		const fd = new FormData(sellForm);
-		const badges = fd.getAll('badges[]');
-		const species = fd.get('species');
-		const price = fd.get('price');
-		const phone = fd.get('phone');
-		const phone2 = fd.get('phone2');
-		const email = fd.get('email');
 		
-		// Create new listing object for localStorage
-		const newListing = {
-			id: Date.now().toString(),
-			name: fd.get('name'),
-			species: fd.get('species'),
-			breed: fd.get('breed'),
-			age: fd.get('age'),
-			gender: fd.get('gender'),
-			price: fd.get('price'),
-			desc: fd.get('desc'),
-			location: fd.get('location'),
-			phone: phone,
-			phone2: phone2,
-			email: email,
-			images: []
-		};
+		// Show loading state
+		const submitBtn = sellForm.querySelector('button[type="submit"]');
+		const originalText = submitBtn.textContent;
+		submitBtn.textContent = 'Publishing...';
+		submitBtn.disabled = true;
 		
-		let imageUrls = [];
-		const files = Array.from(sellImagesInput?.files || []);
-		
-		// Convert images to base64 and save to localStorage
-		if (files.length) {
-			const imagePromises = files.map(file => {
-				return new Promise(resolve => {
-					const reader = new FileReader();
-					reader.onload = e => resolve(e.target.result);
-					reader.readAsDataURL(file);
-				});
+		try {
+			const response = await fetch('/PETVET/api/sell-pet-listings/add.php', {
+				method: 'POST',
+				body: fd
 			});
 			
-			Promise.all(imagePromises).then(base64Images => {
-				newListing.images = base64Images;
-				imageUrls = base64Images;
+			const data = await response.json();
+			
+			if (data.success) {
+				alert(data.message || 'Listing published successfully! It will be visible after admin approval.');
+				closeModal('sellModal');
+				sellForm.reset();
+				sellImagePreviews.innerHTML = '';
+				sellImagePreviews.setAttribute('aria-hidden','true');
 				
-				// Save to localStorage
-				const listings = loadMyListings();
-				listings.unshift(newListing);
-				saveMyListings(listings);
-				
-				// Continue with display logic
-				addListingToDisplay(fd, badges, species, price, phone, phone2, email, imageUrls);
-			});
-		} else if (fd.get('image')) {
-			imageUrls = [fd.get('image')];
-			newListing.images = imageUrls;
-			const listings = loadMyListings();
-			listings.unshift(newListing);
-			saveMyListings(listings);
-			addListingToDisplay(fd, badges, species, price, phone, phone2, email, imageUrls);
-		} else {
-			const listings = loadMyListings();
-			listings.unshift(newListing);
-			saveMyListings(listings);
-			addListingToDisplay(fd, badges, species, price, phone, phone2, email, imageUrls);
+				// Reload my listings
+				await fetchMyListings();
+			} else {
+				// Show the actual error message from the server
+				const errorMsg = data.message || 'Failed to publish listing';
+				const debugInfo = data.error ? `\n\nDebug: ${data.error}` : '';
+				alert(errorMsg + debugInfo);
+				console.error('Server error:', data);
+			}
+		} catch (error) {
+			console.error('Error publishing listing:', error);
+			alert('An error occurred while publishing the listing. Please check the console for details.');
+		} finally {
+			submitBtn.textContent = originalText;
+			submitBtn.disabled = false;
 		}
 	});
 	
@@ -588,60 +571,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	// Edit form submission
 	const editForm = qs('#editForm');
-	editForm?.addEventListener('submit', e => {
+	editForm?.addEventListener('submit', async e => {
 		e.preventDefault();
 		const fd = new FormData(editForm);
-		const id = fd.get('id');
 		
-		const listings = loadMyListings();
-		const listingIndex = listings.findIndex(l => l.id === id);
+		// Show loading state
+		const submitBtn = editForm.querySelector('button[type="submit"]');
+		const originalText = submitBtn.textContent;
+		submitBtn.textContent = 'Saving...';
+		submitBtn.disabled = true;
 		
-		if (listingIndex === -1) {
-			alert('Listing not found.');
-			return;
-		}
-		
-		// Get existing images from hidden input
-		const existingImages = JSON.parse(qs('#existingImages').value || '[]');
-		
-		// Handle new image files
-		const newImageFiles = fd.getAll('editImages[]');
-		const imagePromises = Array.from(newImageFiles).filter(f => f.size > 0).map(file => {
-			return new Promise(resolve => {
-				const reader = new FileReader();
-				reader.onload = e => resolve(e.target.result);
-				reader.readAsDataURL(file);
+		try {
+			const response = await fetch('/PETVET/api/sell-pet-listings/update.php', {
+				method: 'POST',
+				body: fd
 			});
-		});
-		
-		Promise.all(imagePromises).then(newImages => {
-			// Combine existing and new images (max 3)
-			const allImages = [...existingImages, ...newImages].slice(0, 3);
 			
-			// Update listing
-			listings[listingIndex] = {
-				...listings[listingIndex],
-				name: fd.get('name'),
-				species: fd.get('species'),
-				breed: fd.get('breed'),
-				age: fd.get('age'),
-				gender: fd.get('gender'),
-				price: fd.get('price'),
-				desc: fd.get('desc'),
-				location: fd.get('location'),
-				phone: fd.get('phone'),
-				phone2: fd.get('phone2'),
-				email: fd.get('email'),
-				images: allImages
-			};
+			const data = await response.json();
 			
-			saveMyListings(listings);
-			
-			closeModal('editListingModal');
-			openModal('myListingsModal');
-			loadMyListings(); // Refresh the display
-			alert('Listing updated successfully!');
-		});
+			if (data.success) {
+				alert(data.message || 'Listing updated successfully!');
+				closeModal('editListingModal');
+				openModal('myListingsModal');
+				await fetchMyListings(); // Refresh the display
+			} else {
+				alert(data.message || 'Failed to update listing');
+			}
+		} catch (error) {
+			console.error('Error updating listing:', error);
+			alert('An error occurred while updating the listing');
+		} finally {
+			submitBtn.textContent = originalText;
+			submitBtn.disabled = false;
+		}
 	});
 
 	// Initialize carousels and contact buttons on page load

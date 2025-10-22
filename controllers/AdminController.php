@@ -41,7 +41,7 @@ class AdminController extends BaseController {
 
     // These views have static content, no models needed
     public function petListings() {
-        $this->view('admin', 'pet-listings');
+        $this->view('admin', 'pet-listings-modern');
     }
 
     public function settings() {
