@@ -50,6 +50,7 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
                     foreach ($appointments[$todayStr] as $appt):
             ?>
                 <div class="event"
+                     data-id="<?= $appt['id'] ?>"
                      data-pet="<?= htmlspecialchars($appt['pet']) ?>"
                      data-client="<?= htmlspecialchars($appt['client']) ?>"
                      data-vet="<?= htmlspecialchars($appt['vet']) ?>"
@@ -85,6 +86,7 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
             <?php if (!empty($appointments[$dateStr])): ?>
                 <?php foreach ($appointments[$dateStr] as $appt): ?>
                     <div class="event"
+                         data-id="<?= $appt['id'] ?>"
                          data-pet="<?= htmlspecialchars($appt['pet']) ?>"
                          data-client="<?= htmlspecialchars($appt['client']) ?>"
                          data-vet="<?= htmlspecialchars($appt['vet']) ?>"
@@ -118,6 +120,7 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
                     <?php if (!empty($appointments[$dateStr])): ?>
                         <?php foreach ($appointments[$dateStr] as $appt): ?>
                             <div class="event"
+                                 data-id="<?= $appt['id'] ?>"
                                  data-pet="<?= htmlspecialchars($appt['pet']) ?>"
                                  data-client="<?= htmlspecialchars($appt['client']) ?>"
                                  data-vet="<?= htmlspecialchars($appt['vet']) ?>"

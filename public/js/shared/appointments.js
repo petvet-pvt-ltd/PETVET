@@ -36,11 +36,15 @@
     
     // Modal functionality
     window.openDetailsFromEl = function(element) {
+        const appointmentId = element.getAttribute('data-id');
         const pet = element.getAttribute('data-pet');
         const client = element.getAttribute('data-client');
         const vet = element.getAttribute('data-vet');
         const date = element.getAttribute('data-date');
         const time = element.getAttribute('data-time');
+        
+        // Store appointment ID globally for cancel/reschedule
+        window.currentAppointmentId = appointmentId;
         
         // Populate modal fields
         const modal = document.getElementById('detailsModal');
@@ -258,13 +262,36 @@
                                </div>`;
         
         showConfirmation('Cancel Appointment', confirmMessage, function() {
-            // Execute cancellation
-            showNotification(`Appointment for ${petName} (${clientName}) on ${appointmentDate} at ${appointmentTime} has been cancelled.`, 'Appointment Cancelled', 'warning');
-            closeModal('detailsModal');
+            // Execute cancellation via API
+            if (!window.currentAppointmentId) {
+                showNotification('Error: Appointment ID not found', 'Error', 'error');
+                return;
+            }
             
-            setTimeout(() => {
-                window.location.reload();
-            }, 2000);
+            fetch('/PETVET/api/appointments/cancel.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ appointment_id: window.currentAppointmentId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(`Appointment for ${petName} (${clientName}) on ${appointmentDate} at ${appointmentTime} has been cancelled.`, 'Appointment Cancelled', 'warning');
+                    closeModal('detailsModal');
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showNotification('Failed to cancel appointment: ' + (data.error || 'Unknown error'), 'Error', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Cancel error:', error);
+                showNotification('An error occurred while cancelling the appointment', 'Error', 'error');
+            });
         }, 'Cancel Appointment', 'btn-danger');
     };
     

@@ -223,6 +223,19 @@ $availableSpecies = $availableSpecies ?? [];
               <small class="field-hint">Enter price in Sri Lankan Rupees</small>
             </label>
             <label class="full">Description<textarea name="desc" rows="3"></textarea></label>
+            <label class="full">
+              <span style="font-weight:600;margin-bottom:6px;display:block;">Health Badges</span>
+              <div class="checks">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                  <input type="checkbox" name="badges[]" value="Vaccinated" id="editVaccinated">
+                  <span>Vaccinated</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                  <input type="checkbox" name="badges[]" value="Microchipped" id="editMicrochipped">
+                  <span>Microchipped</span>
+                </label>
+              </div>
+            </label>
             <label class="full">Location<input type="text" name="location" required></label>
             <label>Primary Phone
               <input type="tel" name="phone" id="editPhone" placeholder="0771234567" required 

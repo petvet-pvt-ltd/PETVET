@@ -777,27 +777,48 @@ document.addEventListener('DOMContentLoaded', () => {
 		
 		// Handle Edit button
 		if(e.target.classList.contains('edit-listing-btn')){
-			const btn = e.target;
-			const listing = JSON.parse(btn.dataset.listing.replace(/&apos;/g, "'"));
-			
-			const editForm = qs('#editForm');
-			if(!editForm) return;
-			
-			// Fill form fields
-			editForm.querySelector('[name="id"]').value = listing.id;
-			editForm.querySelector('[name="name"]').value = listing.name;
-			editForm.querySelector('[name="species"]').value = listing.species;
-			editForm.querySelector('[name="breed"]').value = listing.breed;
-			editForm.querySelector('[name="age"]').value = listing.age;
-			editForm.querySelector('[name="gender"]').value = listing.gender;
-			editForm.querySelector('[name="price"]').value = listing.price;
-			editForm.querySelector('[name="desc"]').value = listing.desc || '';
-			editForm.querySelector('[name="location"]').value = listing.location;
-			editForm.querySelector('[name="phone"]').value = listing.phone || '';
-			editForm.querySelector('[name="phone2"]').value = listing.phone2 || '';
-			editForm.querySelector('[name="email"]').value = listing.email || '';
-			
-			// Show existing photos
+		const btn = e.target;
+		const listing = JSON.parse(btn.dataset.listing.replace(/&apos;/g, "'"));
+		
+		const editForm = qs('#editForm');
+		if(!editForm) return;
+		
+		// Fill form fields
+		editForm.querySelector('[name="id"]').value = listing.id;
+		editForm.querySelector('[name="name"]').value = listing.name;
+		editForm.querySelector('[name="species"]').value = listing.species;
+		editForm.querySelector('[name="breed"]').value = listing.breed;
+		editForm.querySelector('[name="age"]').value = listing.age;
+		editForm.querySelector('[name="gender"]').value = listing.gender;
+		editForm.querySelector('[name="price"]').value = listing.price;
+		// Map 'description' to 'desc' field
+		editForm.querySelector('[name="desc"]').value = listing.description || listing.desc || '';
+		editForm.querySelector('[name="location"]').value = listing.location;
+		editForm.querySelector('[name="phone"]').value = listing.phone || '';
+		editForm.querySelector('[name="phone2"]').value = listing.phone2 || '';
+		editForm.querySelector('[name="email"]').value = listing.email || '';
+		
+		// Handle health badges (Vaccinated and Microchipped)
+		const vaccinatedCheckbox = qs('#editVaccinated');
+		const microchippedCheckbox = qs('#editMicrochipped');
+		
+		// Reset checkboxes first
+		if (vaccinatedCheckbox) vaccinatedCheckbox.checked = false;
+		if (microchippedCheckbox) microchippedCheckbox.checked = false;
+		
+		// Set checkboxes based on listing badges
+		if (listing.badges && Array.isArray(listing.badges)) {
+			listing.badges.forEach(badgeObj => {
+				const badge = typeof badgeObj === 'string' ? badgeObj : badgeObj.badge;
+				if (badge === 'Vaccinated' && vaccinatedCheckbox) {
+					vaccinatedCheckbox.checked = true;
+				} else if (badge === 'Microchipped' && microchippedCheckbox) {
+					microchippedCheckbox.checked = true;
+				}
+			});
+		}
+		
+		// Show existing photos
 			const existingPhotosDiv = qs('#editExistingPhotos');
 			const existingImagesInput = qs('#existingImages');
 			

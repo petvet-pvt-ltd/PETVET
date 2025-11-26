@@ -58,33 +58,30 @@ class MyPetsModel {
 	}
 
 	public function getClinics() {
-		// Mock clinic data
-		return [
-			[
-				'id' => 1,
-				'name' => 'PetVet Main Clinic',
-				'address' => '123 Main Street, Colombo',
-				'phone' => '011-2345678'
-			],
-			[
-				'id' => 2,
-				'name' => 'PetVet Kandy Branch',
-				'address' => '456 Peradeniya Road, Kandy',
-				'phone' => '081-2234567'
-			],
-			[
-				'id' => 3,
-				'name' => 'PetVet Galle Branch',
-				'address' => '789 Galle Road, Galle',
-				'phone' => '091-2223344'
-			],
-			[
-				'id' => 4,
-				'name' => 'PetVet Negombo Branch',
-				'address' => '321 Beach Road, Negombo',
-				'phone' => '031-2227788'
-			]
-		];
+		// Fetch real clinics from database
+		try {
+			require_once __DIR__ . '/../../config/connect.php';
+			$db = db();
+			
+			$query = "
+				SELECT 
+					id, 
+					clinic_name as name, 
+					clinic_address as address, 
+					clinic_phone as phone
+				FROM clinics 
+				WHERE is_active = 1 
+				ORDER BY clinic_name
+			";
+			
+			$stmt = $db->prepare($query);
+			$stmt->execute();
+			return $stmt->fetchAll(PDO::FETCH_ASSOC);
+			
+		} catch (Exception $e) {
+			error_log("Error fetching clinics: " . $e->getMessage());
+			return [];
+		}
 	}
 
 	public function getVetsByClinic($clinicId) {

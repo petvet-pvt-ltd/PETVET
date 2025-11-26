@@ -43,7 +43,7 @@ if (isLoggedIn()) {
     }
 
     .left-panel {
-      background: linear-gradient(45deg, #265B7F, #BCE3F5);
+      background: linear-gradient(45deg, #1a4059, #265B7F);
       color: white;
       padding: 40px;
       display: flex;
@@ -83,11 +83,6 @@ if (isLoggedIn()) {
       gap: 10px;
     }
 
-    .logo::before {
-      content: '🐾';
-      font-size: 1.2em;
-    }
-
     .welcome-text h2 {
       font-size: 1.8em;
       margin-bottom: 15px;
@@ -114,12 +109,28 @@ if (isLoggedIn()) {
       backdrop-filter: blur(10px);
       transition: all 0.3s ease;
       font-weight: 550;
+      z-index: 10;
     }
 
     .back-home:hover {
       background: #315cfd;
       color: white;
       transform: translateY(-2px);
+    }
+
+    .left-content {
+      position: relative;
+      z-index: 2;
+      margin-top: 60px;
+    }
+
+    .logo {
+      font-size: 2.5em;
+      font-weight: bold;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     .right-panel {
@@ -714,13 +725,6 @@ if (isLoggedIn()) {
               <div class="role-description">I breed and sell pets professionally</div>
               <input type="checkbox" id="role_breeder" name="roles[]" value="breeder">
             </div>
-            
-            <div class="role-card" onclick="toggleRole('vet')">
-              <div class="role-icon">🩺</div>
-              <div class="role-title">Veterinarian</div>
-              <div class="role-description">I provide professional veterinary medical services</div>
-              <input type="checkbox" id="role_vet" name="roles[]" value="vet">
-            </div>
           </div>
         </div>
 
@@ -1094,40 +1098,6 @@ if (isLoggedIn()) {
                 <div class="file-upload-text">Click to upload breeding license</div>
                 <div class="file-upload-subtext">PDF files only, max 5MB</div>
                 <input type="file" id="breeder_license" name="breeder_license" accept=".pdf" style="display: none;">
-              </div>
-            </div>
-          </div>
-        `,
-        
-        vet: `
-          <div class="role-form">
-            <div class="role-form-title">
-              🩺 Veterinarian Information
-            </div>
-            <div class="form-group">
-              <div class="form-row">
-                <input type="text" class="form-input" name="vet_specialization" placeholder="Specialization (e.g., Surgery, Internal Medicine)" required>
-                <input type="number" class="form-input" name="vet_experience" placeholder="Years of Experience" min="0" step="1" required>
-              </div>
-            </div>
-            <div class="form-group">
-              <select class="form-select" name="vet_clinic_id" required style="width: 100%;">
-                <option value="">Select Vet Clinic</option>
-                <option value="1">Happy Paws Veterinary Clinic</option>
-                <option value="2">Pet Care Medical Center</option>
-                <option value="3">Animal Health Clinic</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <input type="text" class="form-input" name="vet_license_number" placeholder="Medical License Number" required style="width: 100%;">
-            </div>
-            <div class="form-group">
-              <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #374151;">Medical License Document (PDF, Required):</label>
-              <div class="file-upload-area" onclick="document.getElementById('vet_license').click()">
-                <div class="file-upload-icon">📄</div>
-                <div class="file-upload-text">Click to upload medical license</div>
-                <div class="file-upload-subtext">PDF files only, max 5MB</div>
-                <input type="file" id="vet_license" name="vet_license" accept=".pdf" style="display: none;" required>
               </div>
             </div>
           </div>

@@ -222,6 +222,11 @@ function confirmAccept(appointmentId) {
             card.remove();
             updatePendingCount();
             showSuccessNotification(`Appointment for ${petName} has been accepted!`);
+            
+            // Reload page to show appointment in calendar
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
           }, 300);
         }, 500);
       } else {

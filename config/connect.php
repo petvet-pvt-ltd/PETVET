@@ -5,10 +5,17 @@
  */
 
 // Database credentials
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');  // Change if you set a password
-define('DB_NAME', 'petvet');
+// define('DB_HOST', 'localhost');
+// define('DB_USER', 'root');
+// define('DB_PASS', '');  // Change if you set a password
+// define('DB_NAME', 'petvet');
+// define('DB_CHARSET', 'utf8mb4');
+
+// Database credentials
+define('DB_HOST', 'btfrleeonbksuwewbmxg-mysql.services.clever-cloud.com');
+define('DB_USER', 'uns4jebox1gqsa9u');
+define('DB_PASS', '6kCJ4Bt0iVoWlIPLuYL8');  // Change if you set a password
+define('DB_NAME', 'btfrleeonbksuwewbmxg');
 define('DB_CHARSET', 'utf8mb4');
 
 /**

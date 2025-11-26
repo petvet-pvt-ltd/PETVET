@@ -124,29 +124,36 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="firstName">First Name</label>
-            <input type="text" id="firstName" name="firstName" class="form-input" value="Jane" required>
+            <input type="text" id="firstName" name="firstName" class="form-input" value="<?= htmlspecialchars($userData['first_name'] ?? '') ?>" required>
           </div>
           <div class="form-group">
             <label class="form-label" for="lastName">Last Name</label>
-            <input type="text" id="lastName" name="lastName" class="form-input" value="Smith" required>
+            <input type="text" id="lastName" name="lastName" class="form-input" value="<?= htmlspecialchars($userData['last_name'] ?? '') ?>" required>
           </div>
         </div>
         
         <div class="form-group">
           <label class="form-label" for="email">Email Address</label>
-          <input type="email" id="email" name="email" class="form-input" value="jane.smith@clinic.com" required>
+          <input type="email" id="email" name="email" class="form-input" value="<?= htmlspecialchars($userData['email'] ?? '') ?>" required>
         </div>
         
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="phone">Phone Number</label>
-            <input type="tel" id="phone" name="phone" class="form-input" value="0712345678">
+            <input type="tel" id="phone" name="phone" class="form-input" value="<?= htmlspecialchars($userData['phone'] ?? '') ?>">
           </div>
           <div class="form-group">
             <label class="form-label" for="position">Position</label>
-            <input type="text" id="position" name="position" class="form-input" value="Front Desk Receptionist" readonly>
+            <input type="text" id="position" name="position" class="form-input" value="Receptionist" readonly>
           </div>
         </div>
+        
+        <?php if (!empty($clinicData)): ?>
+        <div class="form-group">
+          <label class="form-label" for="clinic">Assigned Clinic</label>
+          <input type="text" id="clinic" name="clinic" class="form-input" value="<?= htmlspecialchars($clinicData['clinic_name'] ?? '') ?>" readonly>
+        </div>
+        <?php endif; ?>
         
         <div class="form-group">
           <button type="submit" class="btn btn-primary">Update Profile</button>

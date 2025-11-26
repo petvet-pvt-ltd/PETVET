@@ -127,110 +127,138 @@ class ReceptionistController extends BaseController {
     
     public function dashboard() {
         try {
-            // Get all appointments
-            $appointments = $this->appointmentsModel->fetchAppointments();
-            $today = date('Y-m-d');
-            $todayAppointments = $appointments[$today] ?? [];
+            require_once __DIR__ . '/../models/SharedAppointmentsModel.php';
+            $sharedModel = new SharedAppointmentsModel();
             
-            // Count pending appointments (appointments with status != Completed)
-            $pendingCount = 0;
-            foreach ($appointments as $date => $dayAppointments) {
-                foreach ($dayAppointments as $appt) {
-                    if (isset($appt['status']) && $appt['status'] !== 'Completed') {
-                        $pendingCount++;
-                    }
+            $today = date('Y-m-d');
+            
+            // Get pending appointments count
+            $pendingAppointments = $sharedModel->getPendingAppointments();
+            $pendingCount = count($pendingAppointments);
+            
+            // Get user info
+            $userId = currentUserId();
+            $userName = '';
+            $clinicName = '';
+            
+            if ($userId) {
+                $pdo = db();
+                
+                // Get user name
+                $userStmt = $pdo->prepare("SELECT first_name, last_name FROM users WHERE id = ?");
+                $userStmt->execute([$userId]);
+                $user = $userStmt->fetch(PDO::FETCH_ASSOC);
+                if ($user) {
+                    $userName = $user['first_name'] . ' ' . $user['last_name'];
+                }
+                
+                // Get clinic name
+                $clinicStmt = $pdo->prepare("
+                    SELECT c.clinic_name 
+                    FROM clinic_staff cs
+                    JOIN clinics c ON cs.clinic_id = c.id
+                    WHERE cs.user_id = ?
+                ");
+                $clinicStmt->execute([$userId]);
+                $clinic = $clinicStmt->fetch(PDO::FETCH_ASSOC);
+                if ($clinic) {
+                    $clinicName = $clinic['clinic_name'];
                 }
             }
             
             // Get ongoing appointments (appointments happening right now)
-            $vets = [
-                1 => 'Dr. Robert Fox',
-                2 => 'Theresa Webb',
-                3 => 'Marvin McKinney',
-                4 => 'Dr. Kathryn Murphy'
-            ];
-            
             $currentTime = time();
             $currentHour = (int)date('H', $currentTime);
             $currentMinute = (int)date('i', $currentTime);
+            $currentTimeMinutes = $currentHour * 60 + $currentMinute;
             
             $ongoingAppointments = [];
             
-            // Check each vet for current appointments
-            foreach ($vets as $vetId => $vetName) {
-                $foundAppointment = false;
+            // Get receptionist's clinic ID
+            $clinicFilter = "";
+            $params = [$today];
+            
+            if ($userId) {
+                $pdo = db();
+                $checkClinic = $pdo->prepare("SELECT clinic_id FROM clinic_staff WHERE user_id = ?");
+                $checkClinic->execute([$userId]);
+                $clinicId = $checkClinic->fetchColumn();
                 
-                foreach ($todayAppointments as $appt) {
-                    if ($appt['vet_id'] == $vetId && $appt['status'] === 'Confirmed') {
-                        // Parse appointment time
-                        list($apptHour, $apptMinute) = explode(':', $appt['time']);
-                        $apptHour = (int)$apptHour;
-                        $apptMinute = (int)$apptMinute;
-                        
-                        // Calculate if appointment is ongoing (within 20 minutes window)
-                        $apptStart = $apptHour * 60 + $apptMinute;
-                        $apptEnd = $apptStart + 20; // 20 minute slots
-                        $currentTimeMinutes = $currentHour * 60 + $currentMinute;
-                        
-                        if ($currentTimeMinutes >= $apptStart && $currentTimeMinutes <= $apptEnd) {
-                            $endHour = floor($apptEnd / 60);
-                            $endMinute = $apptEnd % 60;
-                            
-                            $ongoingAppointments[] = [
-                                'hasAppointment' => true,
-                                'vet' => $vetName,
-                                'animal' => $appt['animal'],
-                                'client' => $appt['client'],
-                                'type' => $appt['type'],
-                                'time_range' => sprintf('%02d:%02d - %02d:%02d', $apptHour, $apptMinute, $endHour, $endMinute),
-                                'pet' => $appt['pet']
-                            ];
-                            $foundAppointment = true;
-                            break;
-                        }
-                    }
+                if ($clinicId) {
+                    $clinicFilter = " AND a.clinic_id = ?";
+                    $params[] = $clinicId;
                 }
+            }
+            
+            // Get today's approved appointments
+            $query = "
+                SELECT 
+                    a.id,
+                    a.appointment_time,
+                    a.duration_minutes,
+                    a.appointment_type,
+                    p.name as pet,
+                    p.species as animal,
+                    CONCAT(u.first_name, ' ', u.last_name) as client,
+                    COALESCE(CONCAT(v.first_name, ' ', v.last_name), 'Any Available Vet') as vet
+                FROM appointments a
+                JOIN pets p ON a.pet_id = p.id
+                JOIN users u ON a.pet_owner_id = u.id
+                LEFT JOIN users v ON a.vet_id = v.id
+                WHERE a.appointment_date = ? 
+                AND a.status = 'approved' $clinicFilter
+                ORDER BY a.appointment_time
+            ";
+            
+            $pdo = db();
+            $stmt = $pdo->prepare($query);
+            $stmt->execute($params);
+            $todayAppointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Find ongoing appointments
+            foreach ($todayAppointments as $appt) {
+                $apptTime = strtotime($appt['appointment_time']);
+                $apptHour = (int)date('H', $apptTime);
+                $apptMinute = (int)date('i', $apptTime);
+                $duration = $appt['duration_minutes'] ?? 20;
                 
-                // If no ongoing appointment found, add "No current appointment"
-                if (!$foundAppointment) {
+                $apptStart = $apptHour * 60 + $apptMinute;
+                $apptEnd = $apptStart + $duration;
+                
+                if ($currentTimeMinutes >= $apptStart && $currentTimeMinutes <= $apptEnd) {
+                    $endHour = floor($apptEnd / 60);
+                    $endMinute = $apptEnd % 60;
+                    
                     $ongoingAppointments[] = [
-                        'hasAppointment' => false,
-                        'vet' => $vetName,
-                        'animal' => '',
-                        'client' => '',
-                        'type' => '',
-                        'time_range' => '',
-                        'pet' => ''
+                        'hasAppointment' => true,
+                        'vet' => $appt['vet'],
+                        'animal' => $appt['animal'],
+                        'client' => $appt['client'],
+                        'type' => $appt['appointment_type'],
+                        'time_range' => sprintf('%02d:%02d - %02d:%02d', $apptHour, $apptMinute, $endHour, $endMinute),
+                        'pet' => $appt['pet']
                     ];
                 }
             }
             
-            // Count ongoing appointments
-            $ongoingCount = 0;
-            foreach ($ongoingAppointments as $appt) {
-                if ($appt['hasAppointment']) {
-                    $ongoingCount++;
-                }
-            }
+            $ongoingCount = count($ongoingAppointments);
             
             // Get upcoming appointments for TODAY only (after current time)
             $upcomingAppointments = [];
-            $currentTimeTimestamp = $currentTime;
             
-            // Only check today's appointments
             foreach ($todayAppointments as $appt) {
-                $apptDateTime = strtotime($today . ' ' . $appt['time']);
+                $apptTime = strtotime($today . ' ' . $appt['appointment_time']);
                 
-                // Only include future appointments with Confirmed status
-                if ($apptDateTime > $currentTimeTimestamp && $appt['status'] === 'Confirmed') {
+                // Only include future appointments
+                if ($apptTime > $currentTime) {
                     $upcomingAppointments[] = [
                         'date' => $today,
-                        'time' => $appt['time'],
+                        'time' => $appt['appointment_time'],
                         'pet' => $appt['pet'],
                         'client' => $appt['client'],
                         'vet' => $appt['vet'],
-                        'type' => $appt['type'],
-                        'timestamp' => $apptDateTime
+                        'type' => $appt['appointment_type'],
+                        'timestamp' => $apptTime
                     ];
                 }
             }
@@ -244,7 +272,9 @@ class ReceptionistController extends BaseController {
                 'pendingCount' => $pendingCount,
                 'ongoingCount' => $ongoingCount,
                 'ongoingAppointments' => $ongoingAppointments,
-                'upcomingAppointments' => $upcomingAppointments
+                'upcomingAppointments' => $upcomingAppointments,
+                'userName' => $userName,
+                'clinicName' => $clinicName
             ]);
             
         } catch (Exception $e) {
@@ -254,7 +284,37 @@ class ReceptionistController extends BaseController {
     
     public function settings() {
         try {
-            $this->view('receptionist', 'settings', []);
+            $userId = currentUserId();
+            $userData = [];
+            $clinicData = [];
+            
+            if ($userId) {
+                $pdo = db();
+                
+                // Get user data
+                $userStmt = $pdo->prepare("
+                    SELECT id, first_name, last_name, email, phone, address
+                    FROM users 
+                    WHERE id = ?
+                ");
+                $userStmt->execute([$userId]);
+                $userData = $userStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+                
+                // Get clinic data
+                $clinicStmt = $pdo->prepare("
+                    SELECT c.id, c.clinic_name, c.clinic_address, c.clinic_phone, c.clinic_email
+                    FROM clinic_staff cs
+                    JOIN clinics c ON cs.clinic_id = c.id
+                    WHERE cs.user_id = ?
+                ");
+                $clinicStmt->execute([$userId]);
+                $clinicData = $clinicStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            }
+            
+            $this->view('receptionist', 'settings', [
+                'userData' => $userData,
+                'clinicData' => $clinicData
+            ]);
             
         } catch (Exception $e) {
             echo "Error: " . $e->getMessage();

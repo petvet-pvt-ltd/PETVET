@@ -794,14 +794,17 @@ body, html {
 .search-box {
   flex: 1;
   min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
 .search-box input {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
   border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 0.95rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
   background: white;
   transition: all 0.2s ease;
 }
@@ -874,7 +877,7 @@ body, html {
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
-.price-filter label, .sort-control label {
+.price-filter label, .sort-control label, .search-box label {
   font-size: 0.85rem;
   font-weight: 600;
   color: #1e293b;

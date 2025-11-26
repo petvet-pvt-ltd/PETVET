@@ -80,90 +80,6 @@ function updateStats() {
   // document.getElementById('pendingPayments').textContent = 'LKR ' + pendingPayments.toLocaleString();
 }
 
-// Revenue vs Expenses Chart
-function drawRevenueExpensesChart() {
-  const container = document.getElementById('revenueExpensesChart');
-  if (!container) return;
-  
-  const width = container.clientWidth;
-  const height = 250;
-  const padding = 40;
-  
-  // Sample data for the month (30 days)
-  const revenueData = generateSampleData(30, 10000, 25000);
-  const expensesData = generateSampleData(30, 3000, 12000);
-  
-  const maxValue = Math.max(...revenueData, ...expensesData);
-  const minValue = 0;
-  const range = maxValue - minValue;
-  
-  // Create SVG
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('width', width);
-  svg.setAttribute('height', height);
-  svg.style.overflow = 'visible';
-  
-  // Grid lines
-  for (let i = 0; i <= 5; i++) {
-    const y = padding + (height - 2 * padding) * i / 5;
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', padding);
-    line.setAttribute('y1', y);
-    line.setAttribute('x2', width - padding);
-    line.setAttribute('y2', y);
-    line.setAttribute('stroke', '#f1f5f9');
-    line.setAttribute('stroke-width', '1');
-    svg.appendChild(line);
-  }
-  
-  // Draw lines
-  drawLine(svg, revenueData, '#3b82f6', width, height, padding, minValue, range);
-  drawLine(svg, expensesData, '#ef4444', width, height, padding, minValue, range);
-  
-  container.appendChild(svg);
-}
-
-function drawLine(svg, data, color, width, height, padding, minValue, range) {
-  const chartWidth = width - 2 * padding;
-  const chartHeight = height - 2 * padding;
-  const stepX = chartWidth / (data.length - 1);
-  
-  let pathD = '';
-  
-  data.forEach((value, index) => {
-    const x = padding + index * stepX;
-    const y = height - padding - ((value - minValue) / range) * chartHeight;
-    
-    if (index === 0) {
-      pathD += `M ${x} ${y}`;
-    } else {
-      pathD += ` L ${x} ${y}`;
-    }
-  });
-  
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  path.setAttribute('d', pathD);
-  path.setAttribute('stroke', color);
-  path.setAttribute('stroke-width', '3');
-  path.setAttribute('fill', 'none');
-  path.setAttribute('stroke-linecap', 'round');
-  path.setAttribute('stroke-linejoin', 'round');
-  svg.appendChild(path);
-}
-
-function generateSampleData(points, min, max) {
-  const data = [];
-  let current = (min + max) / 2;
-  
-  for (let i = 0; i < points; i++) {
-    const change = (Math.random() - 0.5) * (max - min) * 0.3;
-    current = Math.max(min, Math.min(max, current + change));
-    data.push(Math.round(current));
-  }
-  
-  return data;
-}
-
 // Month filter
 document.getElementById('monthFilter').addEventListener('change', function() {
   console.log('Month filter changed to:', this.value);
@@ -649,19 +565,5 @@ function showNotification(message, type = 'info') {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-  drawRevenueExpensesChart();
   updateStats();
-  
-  // Redraw chart on window resize
-  let resizeTimeout;
-  window.addEventListener('resize', function() {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(function() {
-      const container = document.getElementById('revenueExpensesChart');
-      if (container) {
-        container.innerHTML = '';
-        drawRevenueExpensesChart();
-      }
-    }, 250);
-  });
 });

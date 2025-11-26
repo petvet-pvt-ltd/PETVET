@@ -73,6 +73,34 @@ body {
 .form-container {
   flex: 1;
   padding: 40px 30px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Custom Scrollbar */
+.form-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.form-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.form-container::-webkit-scrollbar-thumb {
+  background: #2563eb;
+  border-radius: 4px;
+}
+
+.form-container::-webkit-scrollbar-thumb:hover {
+  background: #1d4ed8;
+}
+
+/* For Firefox */
+.form-container {
+  scrollbar-width: thin;
+  scrollbar-color: #2563eb #f1f5f9;
 }
 
 .form-container h2 {
@@ -83,14 +111,13 @@ body {
 .form-container p {
   font-size: 0.9rem;
   color: #6b7280;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
 
 /* Input Fields */
 form input {
   width: 100%;
   padding: 12px 14px;
-  /*margin-bottom: 15px;*/
   font-size: 1rem;
   border: 1px solid #d1d5db;
   border-radius: 6px;
@@ -99,23 +126,18 @@ form input {
 }
 
 form div {
-  margin-bottom: 23px;
-  position: relative; /* Fix for floating error messages */
-}
-
-form #step-2 div {
-  margin-bottom: 14.5px;
-  position: relative; /* Fix for floating error messages */
+  margin-bottom: 18px;
+  position: relative;
 }
 
 /* Error Message - Fixed position */
 .error-msg {
-  position: relative; /* Changed from absolute to relative */
+  position: relative;
   font-size: 0.85rem;
   color: #ef4444;
   display: block;
   margin-top: 4px;
-  min-height: 18px; /* Reserve space to prevent layout shift */
+  min-height: 18px;
 }
 
 form input:focus {
@@ -127,7 +149,7 @@ form input:focus {
 /* Submit Button */
 form button {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   background-color: #2563eb;
   color: white;
   font-size: 1rem;
@@ -136,24 +158,96 @@ form button {
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  margin-top: 10px;
+  margin-top: 15px;
 }
 
 form button:hover {
   background-color: #1d4ed8;
 }
 
+/* Navigation Buttons */
+.navigation-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.navigation-buttons .btn {
+  flex: 1;
+  min-width: 120px;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navigation-buttons .btn-primary {
+  background-color: #2563eb;
+  color: white;
+}
+
+.navigation-buttons .btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.navigation-buttons .btn-secondary {
+  background-color: #6b7280;
+  color: white;
+}
+
+.navigation-buttons .btn-secondary:hover {
+  background-color: #4b5563;
+}
+
+/* Button Group for Step 2 */
+.form-step {
+  display: none;
+  flex-direction: column;
+}
+
+.active-step {
+  display: flex;
+}
+
+/* Style for Back and Submit buttons in step 2 */
+#step-2 button {
+  margin-top: 10px;
+}
+
+#step-2 button[type="button"] {
+  background-color: #6b7280;
+  margin-bottom: 8px;
+}
+
+#step-2 button[type="button"]:hover {
+  background-color: #4b5563;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .card {
     flex-direction: column;
-    max-width: 92%;
+    max-width: 100%;
+    width: 100%;
     height: auto;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .card-wrapper {
+    padding: 0;
   }
 
   .card-image {
     flex: 0 0 170px;
-    height: 170px; /* shorter banner to reveal form */
+    height: 170px;
   }
 
   .card-image img {
@@ -196,7 +290,15 @@ form button:hover {
 }
 
 @media (max-width: 400px) {
-  .card-image { flex-basis: 140px; height: 140px; }
+  .card {
+    border-radius: 0;
+  }
+
+  .card-image { 
+    flex-basis: 140px; 
+    height: 140px; 
+  }
+  
   .form-container { 
     max-height: calc(100vh - 155px); 
     padding: 20px 15px;
@@ -220,19 +322,10 @@ form button:hover {
 }
 
 /* Multi-step form logic */
-.form-step {
-  display: none;
-}
-
-.active-step {
-  display: block;
-}
-
 form select,
 form input[type="file"],
 form input[type="checkbox"] {
   width: 100%;
-  /*margin-bottom: 15px;*/
   padding: 12px 14px;
   font-size: 1rem;
   border: 1px solid #d1d5db;
@@ -243,6 +336,15 @@ form input[type="checkbox"] {
 form input[type="checkbox"] {
   width: auto;
   margin-right: 8px;
+}
+
+form select {
+  cursor: pointer;
+}
+
+form input[type="file"] {
+  padding: 10px;
+  cursor: pointer;
 }
 
 #step-1,

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test AJAX Refresh</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        #logs {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #007bff;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 AJAX Refresh Test Tool</h1>
+    
+    <div class="status info">
+        <strong>Instructions:</strong> This tool tests if the AJAX auto-refresh is working.
+        Make sure you're logged in as a receptionist first!
+    </div>
+    
+    <div>
+        <button onclick="testAPI()">🧪 Test API Once</button>
+        <button onclick="startAutoRefresh()">▶️ Start Auto-Refresh (5s)</button>
+        <button onclick="stopAutoRefresh()">⏸️ Stop Auto-Refresh</button>
+        <button onclick="clearLogs()">🗑️ Clear Logs</button>
+    </div>
+    
+    <h2>📋 Logs:</h2>
+    <div id="logs"></div>
+    
+    <script>
+        let refreshInterval = null;
+        let requestCount = 0;
+        
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.style.borderLeftColor = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#007bff';
+            entry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            logsDiv.insertBefore(entry, logsDiv.firstChild);
+        }
+        
+        async function testAPI() {
+            requestCount++;
+            log(`Request #${requestCount} - Fetching pending appointments...`);
+            
+            try {
+                const response = await fetch('/PETVET/api/appointments/get-pending.php', {
+                    credentials: 'same-origin'
+                });
+                
+                log(`Response status: ${response.status} ${response.statusText}`);
+                
+                const data = await response.json();
+                log(`Response data: ${JSON.stringify(data)}`, data.success ? 'success' : 'error');
+                
+                if (data.success) {
+                    log(`✅ Found ${data.count} pending appointments`, 'success');
+                    if (data.appointments && data.appointments.length > 0) {
+                        data.appointments.forEach((appt, idx) => {
+                            log(`  ${idx + 1}. Pet: ${appt.pet} | Owner: ${appt.owner} | Status: ${appt.status}`);
+                        });
+                    }
+                } else {
+                    log(`❌ Error: ${data.error}`, 'error');
+                    if (data.debug) {
+                        log(`Debug info: ${data.debug}`, 'error');
+                    }
+                }
+            } catch (error) {
+                log(`❌ Exception: ${error.message}`, 'error');
+            }
+        }
+        
+        function startAutoRefresh() {
+            if (refreshInterval) {
+                log('⚠️ Auto-refresh already running');
+                return;
+            }
+            
+            log('▶️ Starting auto-refresh every 5 seconds...', 'success');
+            refreshInterval = setInterval(testAPI, 5000);
+            testAPI(); // Run immediately
+        }
+        
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+                log('⏸️ Auto-refresh stopped', 'success');
+            } else {
+                log('⚠️ Auto-refresh not running');
+            }
+        }
+        
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+            requestCount = 0;
+            log('Logs cleared');
+        }
+        
+        // Initialize
+        log('🚀 Test tool loaded. Click "Test API Once" to start.');
+    </script>
+</body>
+</html>

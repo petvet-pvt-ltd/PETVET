@@ -74,10 +74,15 @@ try {
             mkdir($uploadDir, 0755, true);
         }
         
-        $fileCount = count($_FILES['product_images']['tmp_name']);
+        // Filter out empty uploads (count only actual files)
+        $actualFiles = array_filter($_FILES['product_images']['tmp_name'], function($tmpName) {
+            return !empty($tmpName) && is_uploaded_file($tmpName);
+        });
         
-        // Check if total would exceed 5
-        if ($remainingCount + $fileCount > 5) {
+        $fileCount = count($actualFiles);
+        
+        // Only check limit if there are actual files to upload
+        if ($fileCount > 0 && $remainingCount + $fileCount > 5) {
             echo json_encode(['success' => false, 'message' => "Cannot add $fileCount image(s). Maximum 5 images total. You have $remainingCount image(s) currently."]);
             exit;
         }

@@ -212,10 +212,40 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedVet = null;
   let timeCheckTimeout = null;
 
+  // Check pending status for all pets on page load
+  async function checkAllPendingStatus() {
+    for (const btn of bookBtns) {
+      const petId = btn.getAttribute("href").split("=")[1];
+      try {
+        const response = await fetch(`/PETVET/api/appointments/check-pending.php?pet_id=${petId}`);
+        const data = await response.json();
+        
+        if (data.has_pending) {
+          btn.disabled = true;
+          btn.style.opacity = "0.5";
+          btn.style.cursor = "not-allowed";
+          btn.textContent = "Pending Appointment";
+          btn.title = "This pet already has a pending appointment";
+        }
+      } catch (error) {
+        console.error('Error checking pending status for pet ' + petId + ':', error);
+      }
+    }
+  }
+  
+  // Run check on page load
+  checkAllPendingStatus();
+
   // Replace default link behavior with popup
   bookBtns.forEach(btn => {
     btn.addEventListener("click", e => {
       e.preventDefault();
+      
+      // Don't open modal if button is disabled
+      if (btn.disabled) {
+        return;
+      }
+      
       const petId = btn.getAttribute("href").split("=")[1];
       currentPet = pets.find(p => p.id == petId);
 
@@ -420,10 +450,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const date = appointmentDate.value;
     const time = appointmentTime.value;
     const vetId = selectedVetId.value || 0;
+    const clinicId = clinicSelect.value || 0;
     
     if (!date || !time) return;
     
-    fetch(`/PETVET/api/check-availability.php?date=${date}&time=${time}&vet_id=${vetId}`)
+    fetch(`/PETVET/api/check-availability.php?date=${date}&time=${time}&vet_id=${vetId}&clinic_id=${clinicId}`)
       .then(response => response.json())
       .then(data => {
         if (data.success) {
@@ -571,11 +602,19 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Final confirmation - Book the appointment
-  appointmentFinalConfirmBtn.addEventListener("click", e => {
-    e.preventDefault();
-    
-    const clinicName = clinicSelect.options[clinicSelect.selectedIndex].text;
-    const appointmentTypeName = appointmentType.options[appointmentType.selectedIndex].text;
+  if (appointmentFinalConfirmBtn) {
+    appointmentFinalConfirmBtn.addEventListener("click", async e => {
+      e.preventDefault();
+      
+      console.log('=== BOOKING APPOINTMENT ===');
+      console.log('Current Pet:', currentPet);
+      
+      // Disable button to prevent double submission
+      appointmentFinalConfirmBtn.disabled = true;
+      appointmentFinalConfirmBtn.textContent = 'Booking...';
+      
+      const clinicName = clinicSelect.options[clinicSelect.selectedIndex].text;
+      const appointmentTypeName = appointmentType.options[appointmentType.selectedIndex].text;
     
     // Format time for display
     const timeValue = appointmentTime.value;
@@ -585,14 +624,43 @@ document.addEventListener("DOMContentLoaded", () => {
     const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
     const formattedTime = `${displayHour}:${minutes} ${ampm}`;
     
-    // Hide review, show success screen
-    appointmentReview.style.display = "none";
-    confirmationView.style.display = "block";
-    appointmentBackBtn.style.display = "none";
-    appointmentFinalConfirmBtn.style.display = "none";
-    appointmentCancelBtn.textContent = "Close";
+      // Prepare booking data
+      const bookingData = {
+        pet_id: currentPet.id,
+        clinic_id: clinicSelect.value,
+        vet_id: selectedVetId.value,
+        appointment_type: appointmentType.value,
+        symptoms: appointmentSymptoms.value,
+        appointment_date: appointmentDate.value,
+        appointment_time: appointmentTime.value
+      };
+      
+      console.log('Booking Data:', bookingData);
+      
+      try {
+        // Submit booking to API
+        console.log('Calling API...');
+        const response = await fetch('/PETVET/api/appointments/book.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(bookingData)
+        });
+        
+        console.log('API Response Status:', response.status);
+        const result = await response.json();
+        console.log('API Result:', result);
+      
+      if (result.success) {
+        // Hide review, show success screen
+        appointmentReview.style.display = "none";
+        confirmationView.style.display = "block";
+        appointmentBackBtn.style.display = "none";
+        appointmentFinalConfirmBtn.style.display = "none";
+        appointmentCancelBtn.textContent = "Close";
 
-    summary.innerHTML = `
+        summary.innerHTML = `
       <div style="display:grid; gap:12px;">
         <div>
           <p style="font-size:12px; color:#64748b; margin:0;">Pet</p>
@@ -640,13 +708,36 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       </div>
     `;
-  });
+      } else {
+        // Show error message
+        console.error('Booking failed:', result);
+        showToast('Error: ' + (result.error || 'Failed to book appointment'));
+        // Re-enable button
+        appointmentFinalConfirmBtn.disabled = false;
+        appointmentFinalConfirmBtn.textContent = 'Yes, Book Appointment';
+      }
+      } catch (error) {
+        console.error('Booking error:', error);
+        showToast('Error booking appointment. Please try again.');
+        // Re-enable button
+        appointmentFinalConfirmBtn.disabled = false;
+        appointmentFinalConfirmBtn.textContent = 'Yes, Book Appointment';
+      }
+    });
+  }
 
   // Cancel button for book appointment popup
   if (appointmentCancelBtn) {
     appointmentCancelBtn.addEventListener("click", () => {
-      resetAppointmentForm();
-      bookDialog.close();
+      // Check if showing confirmation (Close button)
+      if (appointmentCancelBtn.textContent === "Close") {
+        // Booking was successful, reload page to update UI
+        window.location.reload();
+      } else {
+        // Just close the dialog
+        resetAppointmentForm();
+        bookDialog.close();
+      }
     });
   }
 

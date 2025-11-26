@@ -862,7 +862,7 @@ function calculateAge($dob) {
           <a href="pet-profile.php?id=<?php echo $pet['id']; ?>" class="btn outline">View Profile</a>
 
           <!-- ✅ Route through the controller (no direct /views/ link) -->
-          <a href="/PETVET/?module=pet-owner&page=medical-records&pet=<?php echo (int)$pet['id']; ?>" class="btn outline">Medical Records</a>
+          <a href="/PETVET/?module=pet-owner&page=medical-records&pet=1" class="btn outline">Medical Records</a>
 
           <a href="#book-appointment?pet=<?php echo $pet['id']; ?>" class="btn primary">Book Appointment</a>
           <button class="btn danger markMissingBtn" data-pet="<?php echo $pet['id']; ?>">Mark as Missing</button>
@@ -917,7 +917,7 @@ function calculateAge($dob) {
             </label>
             <label class="field">
               <span>Date of Birth</span>
-              <input type="date" class="input" name="date_of_birth">
+              <input type="date" class="input" name="date_of_birth" max="<?php echo date('Y-m-d'); ?>">
             </label>
             <label class="field">
               <span>Weight (kg)</span>
@@ -1020,7 +1020,7 @@ function calculateAge($dob) {
             </label>
             <label class="field">
               <span>Date of Birth</span>
-              <input type="date" class="input" name="date_of_birth">
+              <input type="date" class="input" name="date_of_birth" max="<?php echo date('Y-m-d'); ?>">
             </label>
             <label class="field">
               <span>Weight (kg)</span>
@@ -1132,7 +1132,7 @@ function calculateAge($dob) {
       </div>
       <footer class="dialog-actions">
         <button class="btn ghost" type="button" value="cancel">Cancel</button>
-        <button class="btn danger" type="button" id="confirmDeletePetBtn">Delete Forever</button>
+        <button class="btn danger" type="button" id="confirmDeletePetBtn">Delete</button>
       </footer>
     </div>
   </dialog>

@@ -57,7 +57,8 @@
 <section class="search-filter-section">
   <div class="search-filter-container">
     <div class="search-box">
-      <input type="text" id="productSearch" placeholder="🔍 Search products..." />
+      <label for="productSearch">🔍 Search:</label>
+      <input type="text" id="productSearch" placeholder="Search products..." />
     </div>
     <div class="filter-controls">
       <div class="price-filter">
@@ -127,37 +128,6 @@
     <button class="clear-filters-btn" id="clearFilters">Clear All Filters</button>
   </div>   
 </section>
-
-<!-- Footer -->
-<footer class="site-footer">
-  <div class="footer-content">
-    <div class="about">
-      <h3>🐾 ABOUT US</h3>
-      <p><em>petvet.lk is your One-stop shop for all things Pet related, selling a range of top quality, correctly formulated industry-trusted pet supplies brands. We only work with official product agents in Sri Lanka and offer online payment and islandwide delivery.</em></p>
-
-      <div class="social-icons">
-        <a href="#" title="Facebook">📘</a>
-        <a href="#" title="Twitter">🐦</a>
-        <a href="#" title="Instagram">📷</a>
-        <a href="#" title="LinkedIn">💼</a>
-      </div>
-    </div>
-  </div>
-
-  <hr>
-
-  <div class="payment-icons">
-  <img src="/PETVET/views/shared/images/visa.png" alt="Visa">
-  <img src="/PETVET/views/shared/images/mastercard.png" alt="Mastercard">
-  <img src="/PETVET/views/shared/images/amex.png" alt="American Express">
-  <img src="/PETVET/views/shared/images/discover.png" alt="Discover">
-  <img src="/PETVET/views/shared/images/genie.png" alt="Genie">
-  <img src="/PETVET/views/shared/images/frimi.png" alt="Frimi">
-  <img src="/PETVET/views/shared/images/ezcash.png" alt="EzCash">
-  <img src="/PETVET/views/shared/images/mcash.png" alt="MCash">
-  <img src="/PETVET/views/shared/images/sampath.png" alt="Sampath Bank">
-  </div>
-</footer>
 
 <!-- Scroll to Top Button -->
 <button class="scroll-to-top" id="scrollToTop" title="Back to top">↑</button>
