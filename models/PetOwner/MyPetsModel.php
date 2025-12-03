@@ -19,6 +19,30 @@ class MyPetsModel {
 		// Fetch pets from database
 		$petsFromDb = $this->petProfileModel->getUserPets($userId);
 		
+		// Get appointment status for all pets
+		require_once __DIR__ . '/../../config/connect.php';
+		$db = db();
+		$petIds = array_column($petsFromDb, 'id');
+		$appointmentStatus = [];
+		
+		if (!empty($petIds)) {
+			$placeholders = str_repeat('?,', count($petIds) - 1) . '?';
+			$query = "
+				SELECT pet_id, COUNT(*) as count
+				FROM appointments 
+				WHERE pet_id IN ($placeholders)
+				AND status IN ('pending', 'approved')
+				AND appointment_date >= CURDATE()
+				GROUP BY pet_id
+			";
+			$stmt = $db->prepare($query);
+			$stmt->execute($petIds);
+			$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+			foreach ($results as $row) {
+				$appointmentStatus[$row['pet_id']] = $row['count'] > 0;
+			}
+		}
+		
 		// Transform database pets to match existing UI structure
 		$pets = [];
 		foreach ($petsFromDb as $p) {
@@ -50,7 +74,8 @@ class MyPetsModel {
 				'color' => $p['color'] ?? '',
 				'allergies' => $p['allergies'] ?? 'None',
 				'notes' => $p['notes'] ?? '',
-				'photo' => $photo
+				'photo' => $photo,
+				'has_upcoming_appointment' => $appointmentStatus[$p['id']] ?? false
 			];
 		}
 		
@@ -85,31 +110,44 @@ class MyPetsModel {
 	}
 
 	public function getVetsByClinic($clinicId) {
-		// Mock vet data by clinic
-		$vets = [
-			1 => [ // Main Clinic
-				['id' => 1, 'name' => 'Dr. Sarah Johnson', 'specialization' => 'General Practice', 'avatar' => 'https://i.pravatar.cc/150?img=1'],
-				['id' => 2, 'name' => 'Dr. Michael Chen', 'specialization' => 'Surgery', 'avatar' => 'https://i.pravatar.cc/150?img=13'],
-				['id' => 3, 'name' => 'Dr. Emily Rodriguez', 'specialization' => 'Exotic Animals', 'avatar' => 'https://i.pravatar.cc/150?img=5'],
-				['id' => 4, 'name' => 'Dr. James Wilson', 'specialization' => 'Cardiology', 'avatar' => 'https://i.pravatar.cc/150?img=12']
-			],
-			2 => [ // Kandy Branch
-				['id' => 5, 'name' => 'Dr. Priya Perera', 'specialization' => 'General Practice', 'avatar' => 'https://i.pravatar.cc/150?img=9'],
-				['id' => 6, 'name' => 'Dr. Nuwan Silva', 'specialization' => 'Dentistry', 'avatar' => 'https://i.pravatar.cc/150?img=14'],
-				['id' => 7, 'name' => 'Dr. Anjali Fernando', 'specialization' => 'Dermatology', 'avatar' => 'https://i.pravatar.cc/150?img=10']
-			],
-			3 => [ // Galle Branch
-				['id' => 8, 'name' => 'Dr. Rajesh Kumar', 'specialization' => 'General Practice', 'avatar' => 'https://i.pravatar.cc/150?img=15'],
-				['id' => 9, 'name' => 'Dr. Lisa Thompson', 'specialization' => 'Orthopedics', 'avatar' => 'https://i.pravatar.cc/150?img=20'],
-				['id' => 10, 'name' => 'Dr. David Lee', 'specialization' => 'Emergency Care', 'avatar' => 'https://i.pravatar.cc/150?img=33']
-			],
-			4 => [ // Negombo Branch
-				['id' => 11, 'name' => 'Dr. Amanda Costa', 'specialization' => 'General Practice', 'avatar' => 'https://i.pravatar.cc/150?img=24'],
-				['id' => 12, 'name' => 'Dr. Robert Brown', 'specialization' => 'Behavior', 'avatar' => 'https://i.pravatar.cc/150?img=52']
-			]
-		];
-
-		return $vets[$clinicId] ?? [];
+		// Fetch vets assigned to the specific clinic
+		try {
+			require_once __DIR__ . '/../../config/connect.php';
+			$db = db();
+			
+			$query = "
+				SELECT 
+					u.id, 
+					CONCAT(u.first_name, ' ', u.last_name) as name,
+					'Veterinarian' as specialization,
+					u.avatar
+				FROM clinic_staff cs
+				JOIN users u ON cs.user_id = u.id
+				WHERE cs.clinic_id = ?
+				AND cs.role = 'vet'
+				AND cs.status = 'Active'
+				AND u.is_active = 1
+				ORDER BY u.first_name, u.last_name
+			";
+			
+			$stmt = $db->prepare($query);
+			$stmt->execute([$clinicId]);
+			$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+			
+			// Format avatar URLs or use placeholder
+			foreach ($results as &$vet) {
+				if (empty($vet['avatar'])) {
+					// Use placeholder avatar based on id
+					$vet['avatar'] = 'https://i.pravatar.cc/150?img=' . ($vet['id'] % 70);
+				}
+			}
+			
+			return $results;
+			
+		} catch (Exception $e) {
+			error_log("Error fetching vets: " . $e->getMessage());
+			return [];
+		}
 	}
 
 	public function getExistingAppointments($date) {

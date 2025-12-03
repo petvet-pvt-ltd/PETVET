@@ -212,37 +212,13 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedVet = null;
   let timeCheckTimeout = null;
 
-  // Check pending status for all pets on page load
-  async function checkAllPendingStatus() {
-    for (const btn of bookBtns) {
-      const petId = btn.getAttribute("href").split("=")[1];
-      try {
-        const response = await fetch(`/PETVET/api/appointments/check-pending.php?pet_id=${petId}`);
-        const data = await response.json();
-        
-        if (data.has_pending) {
-          btn.disabled = true;
-          btn.style.opacity = "0.5";
-          btn.style.cursor = "not-allowed";
-          btn.textContent = "Pending Appointment";
-          btn.title = "This pet already has a pending appointment";
-        }
-      } catch (error) {
-        console.error('Error checking pending status for pet ' + petId + ':', error);
-      }
-    }
-  }
-  
-  // Run check on page load
-  checkAllPendingStatus();
-
   // Replace default link behavior with popup
   bookBtns.forEach(btn => {
     btn.addEventListener("click", e => {
       e.preventDefault();
       
-      // Don't open modal if button is disabled
-      if (btn.disabled) {
+      // Button is already disabled on server-side if pet has upcoming appointment
+      if (btn.disabled || btn.tagName === 'BUTTON') {
         return;
       }
       
@@ -545,7 +521,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div style="padding-bottom:12px; border-bottom:1px solid #e2e8f0;">
           <p style="font-size:12px; color:#64748b; margin:0; font-weight:600;">PET</p>
           <p style="font-size:15px; font-weight:600; color:#0f172a; margin:4px 0 0;">
-            ${currentPet.name} (${currentPet.breed})
+            ${currentPet.name}${currentPet.breed && currentPet.breed !== 'Unknown' ? ' (' + currentPet.breed + ')' : ''}
           </p>
         </div>
         
@@ -665,7 +641,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div>
           <p style="font-size:12px; color:#64748b; margin:0;">Pet</p>
           <p style="font-size:15px; font-weight:600; color:#0f172a; margin:4px 0 0;">
-            ${currentPet.name} (${currentPet.breed})
+            ${currentPet.name}${currentPet.breed && currentPet.breed !== 'Unknown' ? ' (' + currentPet.breed + ')' : ''}
           </p>
         </div>
         

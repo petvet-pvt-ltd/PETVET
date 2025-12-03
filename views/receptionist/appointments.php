@@ -85,7 +85,7 @@ $moduleName = $appointmentsModel->getModuleName($userRole);
                   <span class="value"><?= htmlspecialchars($pending['appointment_type']) ?></span>
                 </div>
                 <div class="pending-detail">
-                  <span class="label">Symptoms/Reason:</span>
+                  <span class="label">Reason:</span>
                   <span class="value"><?= htmlspecialchars($pending['symptoms']) ?></span>
                 </div>
                 <div class="pending-detail">
@@ -137,23 +137,13 @@ let lastAppointmentIds = new Set();
 
 // Helper function for time ago
 function timeAgo(datetime) {
-  // Handle MySQL datetime format (YYYY-MM-DD HH:MM:SS)
-  // Convert to ISO format for proper parsing
-  const isoFormat = datetime.replace(' ', 'T');
+  // Handle MySQL datetime format (YYYY-MM-DD HH:MM:SS) as UTC
+  // Add 'Z' suffix to treat as UTC
+  const isoFormat = datetime.replace(' ', 'T') + 'Z';
   const date = new Date(isoFormat);
   
   const now = new Date();
   const diff = Math.floor((now - date) / 1000);
-  
-  // Debug log
-  console.log('Time calculation:', {
-    datetime: datetime,
-    parsed: date.toLocaleString(),
-    now: now.toLocaleString(),
-    diffSeconds: diff,
-    diffMinutes: Math.floor(diff / 60),
-    diffHours: Math.floor(diff / 3600)
-  });
   
   // Handle negative differences (future timestamps)
   if (diff < 0) return 'Just now';
@@ -236,7 +226,7 @@ async function refreshPendingAppointments() {
                   <span class="value">${escapeHtml(pending.appointment_type)}</span>
                 </div>
                 <div class="pending-detail">
-                  <span class="label">Symptoms/Reason:</span>
+                  <span class="label">Reason:</span>
                   <span class="value">${escapeHtml(pending.symptoms)}</span>
                 </div>
                 <div class="pending-detail">
@@ -347,8 +337,10 @@ console.log('✅ AJAX Refresh Script Loaded Successfully');
 <?php
 // Helper function for time ago
 function timeAgo($datetime) {
-    $time = strtotime($datetime);
-    $diff = time() - $time;
+    // Create DateTime objects in UTC to ensure consistent timezone comparison
+    $now = new DateTime('now', new DateTimeZone('UTC'));
+    $time = new DateTime($datetime, new DateTimeZone('UTC'));
+    $diff = $now->getTimestamp() - $time->getTimestamp();
     
     if ($diff < 60) return 'Just now';
     if ($diff < 3600) return floor($diff / 60) . 'm ago';
@@ -356,3 +348,8 @@ function timeAgo($datetime) {
     return floor($diff / 86400) . 'd ago';
 }
 ?>
+
+<script>
+// Pass vet names to JavaScript for use in acceptance popup
+window.availableVets = <?= json_encode($vetNames); ?>;
+</script>

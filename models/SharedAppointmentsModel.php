@@ -40,6 +40,7 @@ class SharedAppointmentsModel extends BaseModel {
                     p.name as pet,
                     p.species as animal,
                     CONCAT(u.first_name, ' ', u.last_name) as client,
+                    u.phone as client_phone,
                     CONCAT(v.first_name, ' ', v.last_name) as vet,
                     a.vet_id
                 FROM appointments a
@@ -71,6 +72,7 @@ class SharedAppointmentsModel extends BaseModel {
                     'pet' => $row['pet'],
                     'animal' => $row['animal'],
                     'client' => $row['client'],
+                    'client_phone' => $row['client_phone'],
                     'vet' => $vetName,
                     'vet_id' => $row['vet_id'],
                     'time' => $row['time'],
@@ -105,22 +107,39 @@ class SharedAppointmentsModel extends BaseModel {
     }
     
     /**
-     * Get list of all veterinarians
+     * Get list of veterinarians for the receptionist's clinic
      * @return array List of vet names
      */
     public function getVetNames() {
         try {
+            // Get clinic_id for the current receptionist
+            $clinicFilter = "";
+            $params = [];
+            
+            if (isset($_SESSION['user_id'])) {
+                $checkClinic = $this->db->prepare("SELECT clinic_id FROM clinic_staff WHERE user_id = ?");
+                $checkClinic->execute([$_SESSION['user_id']]);
+                $clinicId = $checkClinic->fetchColumn();
+                
+                if ($clinicId) {
+                    $clinicFilter = " AND cs.clinic_id = ?";
+                    $params[] = $clinicId;
+                }
+            }
+            
             $query = "
                 SELECT DISTINCT CONCAT(u.first_name, ' ', u.last_name) as vet_name
-                FROM users u
-                JOIN user_roles ur ON u.id = ur.user_id
-                JOIN roles r ON ur.role_id = r.id
-                WHERE r.role_name = 'vet' AND u.is_active = 1
+                FROM clinic_staff cs
+                JOIN users u ON cs.user_id = u.id
+                WHERE cs.role = 'vet' 
+                AND cs.status = 'Active'
+                AND u.is_active = 1
+                $clinicFilter
                 ORDER BY vet_name
             ";
             
             $stmt = $this->db->prepare($query);
-            $stmt->execute();
+            $stmt->execute($params);
             $results = $stmt->fetchAll(PDO::FETCH_COLUMN);
             
             return $results;
@@ -274,18 +293,49 @@ class SharedAppointmentsModel extends BaseModel {
      * @param int $appointmentId Appointment ID
      * @return bool Success status
      */
-    public function approveAppointment($appointmentId) {
+    public function approveAppointment($appointmentId, $vetName = null) {
         try {
-            $stmt = $this->db->prepare("
-                UPDATE appointments 
-                SET status = 'approved', 
-                    approved_by = ?, 
-                    approved_at = NOW() 
-                WHERE id = ? AND status = 'pending'
-            ");
-            
             $userId = $_SESSION['user_id'] ?? null;
-            $stmt->execute([$userId, $appointmentId]);
+            
+            // If vet name is provided, look up the vet ID
+            $vetId = null;
+            if ($vetName && $vetName !== 'Any Available Vet') {
+                $vetStmt = $this->db->prepare("
+                    SELECT u.id 
+                    FROM users u
+                    JOIN user_roles ur ON u.id = ur.user_id
+                    WHERE CONCAT(u.first_name, ' ', u.last_name) = ? 
+                    AND ur.role_id = 2
+                    LIMIT 1
+                ");
+                $vetStmt->execute([$vetName]);
+                $vet = $vetStmt->fetch(PDO::FETCH_ASSOC);
+                if ($vet) {
+                    $vetId = $vet['id'];
+                }
+            }
+            
+            // Update appointment with optional vet assignment
+            if ($vetId !== null) {
+                $stmt = $this->db->prepare("
+                    UPDATE appointments 
+                    SET status = 'approved', 
+                        approved_by = ?, 
+                        approved_at = NOW(),
+                        vet_id = ?
+                    WHERE id = ? AND status = 'pending'
+                ");
+                $stmt->execute([$userId, $vetId, $appointmentId]);
+            } else {
+                $stmt = $this->db->prepare("
+                    UPDATE appointments 
+                    SET status = 'approved', 
+                        approved_by = ?, 
+                        approved_at = NOW() 
+                    WHERE id = ? AND status = 'pending'
+                ");
+                $stmt->execute([$userId, $appointmentId]);
+            }
             
             return $stmt->rowCount() > 0;
             

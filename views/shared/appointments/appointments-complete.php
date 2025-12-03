@@ -52,8 +52,11 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
                 <div class="event"
                      data-id="<?= $appt['id'] ?>"
                      data-pet="<?= htmlspecialchars($appt['pet']) ?>"
+                     data-animal="<?= htmlspecialchars($appt['animal']) ?>"
                      data-client="<?= htmlspecialchars($appt['client']) ?>"
                      data-vet="<?= htmlspecialchars($appt['vet']) ?>"
+                     data-type="<?= htmlspecialchars($appt['type']) ?>"
+                     data-phone="<?= htmlspecialchars($appt['client_phone'] ?? 'N/A') ?>"
                      data-date="<?= $todayStr ?>"
                      data-time="<?= $appt['time'] ?>"
                      onclick="openDetailsFromEl(this)">
@@ -83,22 +86,52 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
             <div class="day-date-stripe">
                 <?= $dateObj->format('M j - D') ?>
             </div>
-            <?php if (!empty($appointments[$dateStr])): ?>
-                <?php foreach ($appointments[$dateStr] as $appt): ?>
-                    <div class="event"
-                         data-id="<?= $appt['id'] ?>"
-                         data-pet="<?= htmlspecialchars($appt['pet']) ?>"
-                         data-client="<?= htmlspecialchars($appt['client']) ?>"
-                         data-vet="<?= htmlspecialchars($appt['vet']) ?>"
-                         data-date="<?= $dateStr ?>"
-                         data-time="<?= $appt['time'] ?>"
-                         onclick="openDetailsFromEl(this)">
-                        <span class="evt-time"><?= date('g:i A', strtotime($appt['time'])) ?></span>
-                        <span class="evt-client"><?= htmlspecialchars($appt['client']) ?></span>
-                        <span class="evt-vet"><?= htmlspecialchars($appt['vet']) ?></span>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+            <div class="day-appointments-container" data-day-title="<?= $dateObj->format('l, F j, Y') ?>">
+                <?php if (!empty($appointments[$dateStr])): ?>
+                    <?php foreach ($appointments[$dateStr] as $appt): 
+                        $vetFirstName = explode(' ', $appt['vet'])[0];
+                    ?>
+                        <div class="event"
+                             data-id="<?= $appt['id'] ?>"
+                             data-pet="<?= htmlspecialchars($appt['pet']) ?>"
+                             data-animal="<?= htmlspecialchars($appt['animal']) ?>"
+                             data-client="<?= htmlspecialchars($appt['client']) ?>"
+                             data-vet="<?= htmlspecialchars($appt['vet']) ?>"
+                             data-type="<?= htmlspecialchars($appt['type']) ?>"
+                             data-phone="<?= htmlspecialchars($appt['client_phone'] ?? 'N/A') ?>"
+                             data-date="<?= $dateStr ?>"
+                             data-time="<?= $appt['time'] ?>"
+                             onclick="openDetailsFromEl(this)">
+                            <span class="evt-compact">
+                                <span class="evt-time"><?= date('g:i A', strtotime($appt['time'])) ?></span>
+                                <span class="evt-vet-short"><?= htmlspecialchars($vetFirstName) ?></span>
+                            </span>
+                            <div class="evt-expanded">
+                                <div class="evt-expanded-row">
+                                    <span class="evt-label">Time:</span>
+                                    <span class="evt-value"><?= date('g:i A', strtotime($appt['time'])) ?></span>
+                                </div>
+                                <div class="evt-expanded-row">
+                                    <span class="evt-label">Vet:</span>
+                                    <span class="evt-value"><?= htmlspecialchars($appt['vet']) ?></span>
+                                </div>
+                                <div class="evt-expanded-row">
+                                    <span class="evt-label">Client:</span>
+                                    <span class="evt-value"><?= htmlspecialchars($appt['client']) ?></span>
+                                </div>
+                                <div class="evt-expanded-row">
+                                    <span class="evt-label">Pet:</span>
+                                    <span class="evt-value"><?= htmlspecialchars($appt['pet']) ?> (<?= htmlspecialchars($appt['animal']) ?>)</span>
+                                </div>
+                                <div class="evt-expanded-row">
+                                    <span class="evt-label">Type:</span>
+                                    <span class="evt-value"><?= htmlspecialchars($appt['type']) ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
         </div>
         <?php endforeach; ?>
     </div>
@@ -117,21 +150,52 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
                     <div class="day-date-stripe">
                         <?= $dateObj->format('M j - D') ?>
                     </div>
-                    <?php if (!empty($appointments[$dateStr])): ?>
-                        <?php foreach ($appointments[$dateStr] as $appt): ?>
-                            <div class="event"
-                                 data-id="<?= $appt['id'] ?>"
-                                 data-pet="<?= htmlspecialchars($appt['pet']) ?>"
-                                 data-client="<?= htmlspecialchars($appt['client']) ?>"
-                                 data-vet="<?= htmlspecialchars($appt['vet']) ?>"
-                                 data-date="<?= $dateStr ?>"
-                                 data-time="<?= $appt['time'] ?>"
-                                 onclick="openDetailsFromEl(this)">
-                                <span class="evt-time"><?= date('g:i A', strtotime($appt['time'])) ?></span>
-                                <span class="evt-vet"><?= htmlspecialchars($appt['vet']) ?></span>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                    <div class="day-appointments-container" data-day-title="<?= $dateObj->format('l, F j, Y') ?>">
+                        <?php if (!empty($appointments[$dateStr])): ?>
+                            <?php foreach ($appointments[$dateStr] as $appt): 
+                                $vetFirstName = explode(' ', $appt['vet'])[0];
+                            ?>
+                                <div class="event"
+                                     data-id="<?= $appt['id'] ?>"
+                                     data-pet="<?= htmlspecialchars($appt['pet']) ?>"
+                                     data-animal="<?= htmlspecialchars($appt['animal']) ?>"
+                                     data-client="<?= htmlspecialchars($appt['client']) ?>"
+                                     data-vet="<?= htmlspecialchars($appt['vet']) ?>"
+                                     data-type="<?= htmlspecialchars($appt['type']) ?>"
+                                     data-phone="<?= htmlspecialchars($appt['client_phone'] ?? 'N/A') ?>"
+                                     data-date="<?= $dateStr ?>"
+                                     data-time="<?= $appt['time'] ?>"
+                                     onclick="openDetailsFromEl(this)">
+                                    <span class="evt-compact">
+                                        <span class="evt-time"><?= date('g:i A', strtotime($appt['time'])) ?></span>
+                                        <span class="evt-vet-short"><?= htmlspecialchars($vetFirstName) ?></span>
+                                    </span>
+                                    <div class="evt-expanded">
+                                        <div class="evt-expanded-row">
+                                            <span class="evt-label">Time:</span>
+                                            <span class="evt-value"><?= date('g:i A', strtotime($appt['time'])) ?></span>
+                                        </div>
+                                        <div class="evt-expanded-row">
+                                            <span class="evt-label">Vet:</span>
+                                            <span class="evt-value"><?= htmlspecialchars($appt['vet']) ?></span>
+                                        </div>
+                                        <div class="evt-expanded-row">
+                                            <span class="evt-label">Client:</span>
+                                            <span class="evt-value"><?= htmlspecialchars($appt['client']) ?></span>
+                                        </div>
+                                        <div class="evt-expanded-row">
+                                            <span class="evt-label">Pet:</span>
+                                            <span class="evt-value"><?= htmlspecialchars($appt['pet']) ?> (<?= htmlspecialchars($appt['animal']) ?>)</span>
+                                        </div>
+                                        <div class="evt-expanded-row">
+                                            <span class="evt-label">Type:</span>
+                                            <span class="evt-value"><?= htmlspecialchars($appt['type']) ?></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
                 </div>
                 <?php endforeach; ?>
             </div>
@@ -151,8 +215,18 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
         <span class="close" onclick="closeModal('detailsModal')">&times;</span>
         <h3>Appointment Details</h3>
         <p><strong>Pet:</strong> <span id="dPet"></span></p>
+        <p><strong>Species:</strong> <span id="dSpecies"></span></p>
         <p><strong>Client:</strong> <span id="dClient"></span></p>
-        <p><strong>Vet:</strong> <span id="dVet"></span></p>
+        <p><strong>Type:</strong> <span id="dType"></span></p>
+        <p><strong>Phone:</strong> <span id="dPhone"></span></p>
+        <div class="form-group">
+            <label>Veterinarian</label>
+            <select id="dVet" class="select">
+                <?php foreach($vetNames as $vn): ?>
+                    <option value="<?= htmlspecialchars($vn); ?>"><?= htmlspecialchars($vn); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
         <div class="input-row">
             <div>
                 <label>Date</label>
@@ -164,7 +238,7 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
             </div>
         </div>
         <div class="modal-actions">
-            <button class="btn btn-primary" onclick="rescheduleAppointment()">
+            <button class="btn btn-primary" id="rescheduleBtn" onclick="rescheduleAppointment()" disabled style="opacity: 0.5; cursor: not-allowed;">
                 Reschedule
             </button>
             <button class="btn btn-danger" onclick="cancelAppointment()">
@@ -190,8 +264,6 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
         <div class="form-group">
             <label>Veterinarian</label>
             <select id="newVetName" class="select" required>
-                <option value="">Select a veterinarian</option>
-                <option value="Any Available Vet">Any Available Vet</option>
                 <?php foreach($vetNames as $vn): ?>
                     <option value="<?= htmlspecialchars($vn); ?>"><?= htmlspecialchars($vn); ?></option>
                 <?php endforeach; ?>

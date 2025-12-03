@@ -217,6 +217,7 @@
     grid-template-columns: repeat(7, 1fr);
     gap: 1px;
     background: #dee2e6;
+    position: relative;
 }
 
 .day-date-stripe {
@@ -233,16 +234,26 @@
     border-color: #007bff;
 }
 
+/* Day appointments container */
+.day-appointments-container {
+    position: relative;
+}
+
+.day-col {
+    position: relative;
+}
+
 .event {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border: 1px solid #dee2e6;
     border-radius: 6px;
-    padding: 10px;
-    margin-bottom: 8px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     font-size: 12px;
     border-left: 3px solid #28a745;
+    position: relative;
 }
 
 .event:hover {
@@ -253,14 +264,32 @@
     background: linear-gradient(135deg, #f0f8ff 0%, #e3f2fd 100%);
 }
 
+/* Compact view - show time and vet first name */
+.evt-compact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
 .evt-time {
     font-weight: 700;
     color: #007bff;
-    display: block;
-    margin-bottom: 4px;
-    font-size: 13px;
+    font-size: 11px;
 }
 
+.evt-vet-short {
+    font-weight: 600;
+    color: #64748b;
+    font-size: 11px;
+}
+
+/* Expanded view - always hidden */
+.evt-expanded {
+    display: none;
+}
+
+/* Legacy styles for backward compatibility */
 .evt-client {
     font-weight: 600;
     color: #1e293b;

@@ -128,8 +128,26 @@ class ClinicManagerController extends BaseController {
     }
 
     public function settings() {
-        // The settings view uses simulated arrays inside the view itself
-        $this->view('clinic_manager', 'settings');
+        require_once __DIR__ . '/../models/ClinicManager/SettingsModel.php';
+        $settingsModel = new ClinicManagerSettingsModel();
+        
+        // Get current user ID from session
+        $currentUserId = $_SESSION['user_id'] ?? null;
+        
+        if (!$currentUserId) {
+            header('Location: /PETVET/index.php?module=guest&page=login');
+            exit;
+        }
+        
+        $data = [
+            'profile' => $settingsModel->getManagerProfile($currentUserId),
+            'clinic' => $settingsModel->getClinicData($currentUserId),
+            'prefs' => $settingsModel->getPreferences($currentUserId),
+            'weeklySchedule' => $settingsModel->getWeeklySchedule($currentUserId),
+            'blockedDays' => $settingsModel->getBlockedDays($currentUserId)
+        ];
+        
+        $this->view('clinic_manager', 'settings', $data);
     }
 
 }

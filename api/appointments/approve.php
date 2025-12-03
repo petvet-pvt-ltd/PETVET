@@ -25,10 +25,11 @@ if (!isset($data['appointment_id'])) {
 }
 
 $appointmentId = intval($data['appointment_id']);
+$vetName = isset($data['vet']) ? trim($data['vet']) : null;
 
 try {
     $model = new SharedAppointmentsModel();
-    $result = $model->approveAppointment($appointmentId);
+    $result = $model->approveAppointment($appointmentId, $vetName);
     
     if ($result) {
         echo json_encode([

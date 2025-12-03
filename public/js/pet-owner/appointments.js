@@ -120,16 +120,34 @@ document.addEventListener("DOMContentLoaded", () => {
 		if(!activeRow) return;
 		const apptId = activeRow.querySelector('[data-appt]')?.getAttribute('data-appt');
 		const payload = { id: apptId ? Number(apptId) : null };
-		fetch('/PETVET/pet-owner/appointments/cancel', {
+		fetch('/PETVET/api/pet-owner/appointments/cancel.php', {
 			method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
 		}).then(r=>{ if(!r.ok) throw new Error('Network response was not ok'); return r.json().catch(()=>({ success: true })); }).then(data=>{
 			if(data && data.success===false){ throw new Error(data.message || 'Could not cancel'); }
-			const badge=activeRow.querySelector('.badge-status'); badge.textContent='Cancelled'; badge.className='badge badge-status badge-cancelled'; activeRow.classList.add('appt-row--cancelled');
+			// Remove the appointment row completely
+			const dayCard = activeRow.closest('.day-card');
+			activeRow.remove();
+			// If day has no more appointments, remove the day card
+			const body = dayCard?.querySelector('.day-card__body');
+			if(body && body.children.length === 0){ 
+				dayCard.remove();
+				// Check if there are any appointments left
+				const wrap = document.querySelector('.appointments-wrap');
+				if(!wrap.querySelector('.day-card')){
+					// Show empty state
+					wrap.innerHTML = `
+						<div class="empty-state">
+							<div class="empty-icon">📅</div>
+							<h3>No Upcoming Appointments</h3>
+							<p>You don't have any scheduled appointments yet. Book an appointment for your pet from the My Pets page.</p>
+							<a href="/PETVET/index.php?module=pet-owner&page=my-pets" class="btn primary">Go to My Pets</a>
+						</div>
+					`;
+				}
+			}
 			closeModal(cancelOverlay); activeRow=null;
 		}).catch(err=>{
-			// Fallback: apply UI but notify user
-			const badge=activeRow.querySelector('.badge-status'); badge.textContent='Cancelled'; badge.className='badge badge-status badge-cancelled'; activeRow.classList.add('appt-row--cancelled');
-			closeModal(cancelOverlay); activeRow=null; console.warn('Cancel request failed:', err); alert('Cancellation saved locally. Server update failed.');
+			closeModal(cancelOverlay); activeRow=null; console.error('Cancel request failed:', err); alert('Failed to cancel appointment: ' + err.message);
 		});
 	});
 

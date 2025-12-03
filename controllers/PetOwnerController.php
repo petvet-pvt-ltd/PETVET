@@ -56,8 +56,13 @@ class PetOwnerController extends BaseController {
         $appointmentsModel = new PetOwnerAppointmentsModel();
         
         // Fetch upcoming appointments for the current pet owner
-        // In a real app, you'd get the owner ID from session/auth
-        $ownerId = 1; // Mock owner ID for testing
+        $ownerId = $_SESSION['user_id'] ?? null;
+        
+        if (!$ownerId) {
+            // Redirect to login if not authenticated
+            header('Location: /PETVET/index.php?module=guest&page=login');
+            exit;
+        }
         
         $data = $appointmentsModel->getUpcomingAppointments($ownerId);
         
@@ -111,8 +116,13 @@ class PetOwnerController extends BaseController {
     public function settings() {
         $settingsModel = new SettingsModel();
         
-        // Get current user ID (mock for now)
-        $currentUserId = 1;
+        // Get current user ID from session
+        $currentUserId = $_SESSION['user_id'] ?? null;
+        
+        if (!$currentUserId) {
+            header('Location: /PETVET/index.php?module=guest&page=login');
+            exit;
+        }
         
         $data = [
             'profile' => $settingsModel->getUserProfile($currentUserId),

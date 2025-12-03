@@ -1,50 +1,58 @@
 <?php
 require_once __DIR__ . '/../BaseModel.php';
+require_once __DIR__ . '/../../config/connect.php';
 
 class SettingsModel extends BaseModel {
+    private $conn;
+    
+    public function __construct() {
+        parent::__construct();
+        global $conn;
+        $this->conn = $conn;
+    }
     
     public function getUserProfile($userId) {
-        // Mock user profile data - in real app this would come from database
-        $profiles = [
-            1 => [
-                'id' => 1,
-                'name' => 'Janith Perera',
-                'email' => 'janith@example.com',
-                'phone' => '+94 77 123 4567',
-                'address' => '123 Galle Road, Colombo 03',
-                'city' => 'Colombo',
-                'postal_code' => '00300',
-                'avatar' => 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=256&auto=format&fit=crop',
-                'date_joined' => '2024-06-15',
-                'verified_email' => true,
-                'verified_phone' => true
-            ],
-            2 => [
-                'id' => 2,
-                'name' => 'Kasun Perera',
-                'email' => 'kasun@example.com',
-                'phone' => '+94 71 987 6543',
-                'address' => '456 Temple Street, Kandy',
-                'city' => 'Kandy',
-                'postal_code' => '20000',
-                'avatar' => 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=256&auto=format&fit=crop',
-                'date_joined' => '2024-08-20',
-                'verified_email' => true,
-                'verified_phone' => false
-            ]
-        ];
+        $sql = "SELECT 
+                    id,
+                    CONCAT(first_name, ' ', last_name) as name,
+                    first_name,
+                    last_name,
+                    email,
+                    phone,
+                    address,
+                    avatar,
+                    email_verified,
+                    created_at as date_joined
+                FROM users 
+                WHERE id = ?";
         
-        return $profiles[$userId] ?? null;
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 0) {
+            return null;
+        }
+        
+        $profile = $result->fetch_assoc();
+        
+        // Set default avatar if none exists
+        if (empty($profile['avatar'])) {
+            $profile['avatar'] = '/PETVET/public/images/emptyProfPic.png';
+        }
+        
+        return $profile;
     }
     
     public function getUserPreferences($userId) {
-        // Mock user preferences - in real app this would come from database
+        // Mock user preferences - will implement with database table later
         $preferences = [
             1 => [
                 'email_notifications' => true,
                 'sms_notifications' => false,
-                'reminder_appointments' => 24, // hours before
-                'reminder_vaccinations' => 168, // 1 week before
+                'reminder_appointments' => 24,
+                'reminder_vaccinations' => 168,
                 'newsletter_subscription' => true,
                 'marketing_emails' => false,
                 'language' => 'en',
@@ -55,8 +63,8 @@ class SettingsModel extends BaseModel {
             2 => [
                 'email_notifications' => true,
                 'sms_notifications' => true,
-                'reminder_appointments' => 48, // 2 days before
-                'reminder_vaccinations' => 336, // 2 weeks before
+                'reminder_appointments' => 48,
+                'reminder_vaccinations' => 336,
                 'newsletter_subscription' => false,
                 'marketing_emails' => false,
                 'language' => 'en',
@@ -88,27 +96,68 @@ class SettingsModel extends BaseModel {
         // Validate profile data
         $errors = [];
         
-        if (empty($data['name'])) {
-            $errors[] = 'Name is required';
+        if (empty($data['first_name'])) {
+            $errors[] = 'First name is required';
         }
         
-        if (empty($data['email']) || !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-            $errors[] = 'Valid email address is required';
+        if (empty($data['last_name'])) {
+            $errors[] = 'Last name is required';
         }
         
-        if (!empty($data['phone']) && !preg_match('/^\+94\s?[0-9]{2}\s?[0-9]{3}\s?[0-9]{4}$/', $data['phone'])) {
-            $errors[] = 'Phone number must be in format +94 XX XXX XXXX';
+        // Validate Sri Lankan phone number if provided
+        if (!empty($data['phone'])) {
+            $phone = trim($data['phone']);
+            if (!preg_match('/^07\d{8}$/', $phone)) {
+                $errors[] = 'Phone number must be 10 digits starting with 07';
+            }
         }
         
         if (!empty($errors)) {
             return ['success' => false, 'errors' => $errors];
         }
         
-        // In real app, this would update the database
-        return [
-            'success' => true,
-            'message' => 'Profile updated successfully!'
-        ];
+        // Don't allow email changes for security - it's the login username
+        // Build SQL dynamically based on whether avatar is being updated
+        if (isset($data['avatar'])) {
+            $sql = "UPDATE users SET 
+                        first_name = ?,
+                        last_name = ?,
+                        phone = ?,
+                        address = ?,
+                        avatar = ?,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?";
+            
+            $stmt = $this->conn->prepare($sql);
+            $phone = $data['phone'] ?? null;
+            $address = $data['address'] ?? null;
+            $stmt->bind_param('sssssi', $data['first_name'], $data['last_name'], $phone, $address, $data['avatar'], $userId);
+        } else {
+            $sql = "UPDATE users SET 
+                        first_name = ?,
+                        last_name = ?,
+                        phone = ?,
+                        address = ?,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?";
+            
+            $stmt = $this->conn->prepare($sql);
+            $phone = $data['phone'] ?? null;
+            $address = $data['address'] ?? null;
+            $stmt->bind_param('ssssi', $data['first_name'], $data['last_name'], $phone, $address, $userId);
+        }
+        
+        if ($stmt->execute()) {
+            return [
+                'success' => true,
+                'message' => 'Profile updated successfully!'
+            ];
+        } else {
+            return [
+                'success' => false,
+                'errors' => ['Failed to update profile']
+            ];
+        }
     }
     
     public function updateUserPreferences($userId, $preferences) {
@@ -177,24 +226,86 @@ class SettingsModel extends BaseModel {
             return ['success' => false, 'errors' => $errors];
         }
         
-        // In real app, verify current password against database hash
-        // For demo, assume validation passes
+        // Verify current password
+        $sql = "SELECT password FROM users WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
         
-        return [
-            'success' => true,
-            'message' => 'Password changed successfully!'
-        ];
+        if ($result->num_rows === 0) {
+            return ['success' => false, 'errors' => ['User not found']];
+        }
+        
+        $user = $result->fetch_assoc();
+        
+        if (!password_verify($currentPassword, $user['password'])) {
+            return ['success' => false, 'errors' => ['Current password is incorrect']];
+        }
+        
+        // Update password
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $updateSql = "UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+        $updateStmt = $this->conn->prepare($updateSql);
+        $updateStmt->bind_param('si', $hashedPassword, $userId);
+        
+        if ($updateStmt->execute()) {
+            return [
+                'success' => true,
+                'message' => 'Password changed successfully!'
+            ];
+        } else {
+            return [
+                'success' => false,
+                'errors' => ['Failed to update password']
+            ];
+        }
     }
     
     public function getAccountStats($userId) {
-        // Mock account statistics
+        // Get total pets
+        $petsResult = $this->conn->query("SELECT COUNT(*) as count FROM pets WHERE user_id = $userId AND is_active = 1");
+        $totalPets = $petsResult->fetch_assoc()['count'];
+        
+        // Get active appointments (upcoming appointments with status 'pending' or 'approved')
+        $appointmentsResult = $this->conn->query(
+            "SELECT COUNT(*) as count FROM appointments 
+             WHERE pet_owner_id = $userId 
+             AND status IN ('pending', 'approved') 
+             AND appointment_date >= CURDATE()"
+        );
+        $activeAppointments = $appointmentsResult->fetch_assoc()['count'];
+        
+        // Get user info for account age and last login
+        $userResult = $this->conn->query(
+            "SELECT created_at, last_login FROM users WHERE id = $userId"
+        );
+        $userInfo = $userResult->fetch_assoc();
+        
+        $accountAgeDays = 0;
+        if ($userInfo && $userInfo['created_at']) {
+            $accountAgeDays = (time() - strtotime($userInfo['created_at'])) / (60 * 60 * 24);
+        }
+        
+        // Calculate profile completion
+        $profileResult = $this->conn->query(
+            "SELECT 
+                (CASE WHEN first_name IS NOT NULL AND first_name != '' THEN 20 ELSE 0 END) +
+                (CASE WHEN last_name IS NOT NULL AND last_name != '' THEN 20 ELSE 0 END) +
+                (CASE WHEN phone IS NOT NULL AND phone != '' THEN 20 ELSE 0 END) +
+                (CASE WHEN address IS NOT NULL AND address != '' THEN 20 ELSE 0 END) +
+                (CASE WHEN avatar IS NOT NULL AND avatar != '' THEN 20 ELSE 0 END) as completion
+             FROM users WHERE id = $userId"
+        );
+        $profileCompletion = $profileResult->fetch_assoc()['completion'];
+        
         return [
-            'total_pets' => 3,
-            'active_appointments' => 2,
-            'total_medical_records' => 8,
-            'account_age_days' => (time() - strtotime('2024-06-15')) / (60 * 60 * 24),
-            'last_login' => date('Y-m-d H:i:s', strtotime('-2 hours')),
-            'profile_completion' => 85 // percentage
+            'total_pets' => $totalPets,
+            'active_appointments' => $activeAppointments,
+            'total_medical_records' => 0, // TODO: implement when medical records table exists
+            'account_age_days' => (int)$accountAgeDays,
+            'last_login' => $userInfo['last_login'] ?? date('Y-m-d H:i:s'),
+            'profile_completion' => $profileCompletion
         ];
     }
 }

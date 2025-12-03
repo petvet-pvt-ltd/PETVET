@@ -47,11 +47,11 @@
     cards.forEach(c=>{c.classList.add('reveal-ready'); ro.observe(c);});
   }
 
-  // Avatar preview
-  const avatarInput = $('#ownerAvatar');
-  const avatarPreview = $('#ownerAvatarPreview .image-preview-item img');
+  // Avatar preview - support pet-owner, receptionist, and clinic manager
+  const avatarInput = $('#ownerAvatar') || $('#receptionistAvatar') || $('#managerAvatar');
+  const avatarPreview = ($('#ownerAvatarPreview .image-preview-item img') || $('#receptionistAvatarPreview .image-preview-item img') || $('#managerAvatarPreview .image-preview-item img'));
   document.addEventListener('click', e=>{
-    const btn = e.target.closest('[data-for="ownerAvatar"]');
+    const btn = e.target.closest('[data-for="ownerAvatar"]') || e.target.closest('[data-for="receptionistAvatar"]') || e.target.closest('[data-for="managerAvatar"]');
     if(btn && avatarInput){ avatarInput.click(); }
   });
   if(avatarInput){
@@ -64,25 +64,155 @@
     });
   }
 
-  // Generic form save simulation
-  function handleFakeSubmit(form, label){
-    if(!form) return;
-    form.addEventListener('submit', e=>{
-      e.preventDefault();
-      // Basic validation example for password confirm
-      if(form.id === 'formPassword'){
-        const np = form.querySelector('input[name="new_password"]').value.trim();
-        const cp = form.querySelector('input[name="confirm_password"]').value.trim();
-        if(np.length < 6){ showToast('Password too short (min 6)'); return; }
-        if(np !== cp){ showToast('Passwords do not match'); return; }
+  // Real-time phone validation
+  const phoneInput = $('#phoneInput');
+  const phoneError = $('#phoneError');
+  if(phoneInput && phoneError){
+    phoneInput.addEventListener('input', e=>{
+      const phone = phoneInput.value.trim();
+      
+      if(phone === '') {
+        phoneError.style.display = 'none';
+        phoneInput.style.borderColor = '';
+        return;
       }
-      showToast(label + ' saved');
-      form.dataset.clean = 'true';
+      
+      const phoneRegex = /^07\d{8}$/;
+      
+      if(!phone.startsWith('07')) {
+        phoneError.textContent = 'Phone number must start with 07';
+        phoneError.style.display = 'block';
+        phoneInput.style.borderColor = '#ef4444';
+      } else if(phone.length < 10) {
+        phoneError.textContent = 'Phone number must be 10 digits';
+        phoneError.style.display = 'block';
+        phoneInput.style.borderColor = '#ef4444';
+      } else if(phone.length > 10) {
+        phoneError.textContent = 'Phone number cannot exceed 10 digits';
+        phoneError.style.display = 'block';
+        phoneInput.style.borderColor = '#ef4444';
+      } else if(!phoneRegex.test(phone)) {
+        phoneError.textContent = 'Invalid phone number format';
+        phoneError.style.display = 'block';
+        phoneInput.style.borderColor = '#ef4444';
+      } else {
+        phoneError.style.display = 'none';
+        phoneInput.style.borderColor = '#10b981';
+      }
     });
   }
-  handleFakeSubmit($('#formProfile'),'Profile');
-  handleFakeSubmit($('#formPassword'),'Password');
-  handleFakeSubmit($('#formPrefs'),'Preferences');
+
+  // Profile form submission
+  const formProfile = $('#formProfile');
+  if(formProfile){
+    formProfile.addEventListener('submit', async e=>{
+      e.preventDefault();
+      
+      // Validate phone number
+      const phoneInput = formProfile.querySelector('input[name="phone"]');
+      if(phoneInput && phoneInput.value.trim()) {
+        const phone = phoneInput.value.trim();
+        const phoneRegex = /^07\d{8}$/;
+        if(!phoneRegex.test(phone)) {
+          showToast('Phone number must be 10 digits starting with 07');
+          return;
+        }
+      }
+      
+      // Handle avatar upload
+      const avatarFile = avatarInput?.files?.[0];
+      const formData = new FormData(formProfile);
+      
+      if(avatarFile){
+        formData.set('avatar', avatarFile);
+      }
+      
+      const submitBtn = formProfile.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving...';
+      
+      try {
+        const response = await fetch('/PETVET/api/pet-owner/update-profile.php', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const result = await response.json();
+        
+        if(result.success){
+          showToast(result.message || 'Profile updated successfully!');
+          formProfile.dataset.clean = 'true';
+          updateButtonState(formProfile, submitBtn);
+          // Reload page to show updated avatar and data
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          showToast(result.message || result.errors?.join(', ') || 'Failed to update profile');
+        }
+      } catch(error){
+        showToast('An error occurred. Please try again.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+  }
+
+  // Password form submission
+  const formPassword = $('#formPassword');
+  if(formPassword){
+    formPassword.addEventListener('submit', async e=>{
+      e.preventDefault();
+      const np = formPassword.querySelector('input[name="new_password"]').value.trim();
+      const cp = formPassword.querySelector('input[name="confirm_password"]').value.trim();
+      
+      if(np.length < 8){ showToast('Password must be at least 8 characters'); return; }
+      if(np !== cp){ showToast('Passwords do not match'); return; }
+      
+      const formData = new FormData(formPassword);
+      const data = Object.fromEntries(formData.entries());
+      
+      const submitBtn = formPassword.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Updating...';
+      
+      try {
+        const response = await fetch('/PETVET/api/pet-owner/update-password.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        if(result.success){
+          showToast(result.message || 'Password updated successfully!');
+          formPassword.reset();
+          formPassword.dataset.clean = 'true';
+          updateButtonState(formPassword, submitBtn);
+        } else {
+          showToast(result.message || result.errors?.join(', ') || 'Failed to update password');
+        }
+      } catch(error){
+        showToast('An error occurred. Please try again.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+  }
+
+  // Preferences form (keeping as mock for now since no preferences table exists)
+  const formPrefs = $('#formPrefs');
+  if(formPrefs){
+    formPrefs.addEventListener('submit', e=>{
+      e.preventDefault();
+      const submitBtn = formPrefs.querySelector('button[type="submit"]');
+      showToast('Preferences saved');
+      formPrefs.dataset.clean = 'true';
+      if(submitBtn) updateButtonState(formPrefs, submitBtn);
+    });
+  }
 
   // Set current reminder value if select has value attribute (server injected)
   const reminderSelect = document.querySelector('select[name="reminder_appointments"]');
@@ -91,12 +221,69 @@
     if(val && !reminderSelect.value) reminderSelect.value = val;
   }
 
-  // Dirty form tracking
-  ['#formProfile','#formPassword','#formPrefs'].forEach(id=>{
-    const f = $(id);
-    if(!f) return; f.dataset.clean='true';
-    f.addEventListener('input', ()=>{ f.dataset.clean='false'; });
-  });
+  // Dirty form tracking and button state management
+  function updateButtonState(form, button) {
+    if (form.dataset.clean === 'true') {
+      button.disabled = true;
+      button.style.opacity = '0.5';
+      button.style.cursor = 'not-allowed';
+      button.style.pointerEvents = 'none';
+    } else {
+      button.disabled = false;
+      button.style.opacity = '1';
+      button.style.cursor = 'pointer';
+      button.style.pointerEvents = 'auto';
+    }
+  }
+
+  function captureFormState(form) {
+    const formData = new FormData(form);
+    const state = {};
+    for (let [key, value] of formData.entries()) {
+      state[key] = value;
+    }
+    return JSON.stringify(state);
+  }
+
+  function hasFormChanged(form, originalState) {
+    const currentState = captureFormState(form);
+    return currentState !== originalState;
+  }
+
+  // Initialize all forms with disabled buttons
+  setTimeout(() => {
+    ['#formProfile','#formPassword','#formPrefs'].forEach(id=>{
+      const f = $(id);
+      if(!f) return; 
+      
+      // Capture original state
+      const originalState = captureFormState(f);
+      f.dataset.originalState = originalState;
+      f.dataset.clean='true';
+      
+      const btn = f.querySelector('button[type="submit"]');
+      if(btn) {
+        updateButtonState(f, btn);
+      }
+      
+      f.addEventListener('input', ()=>{ 
+        const changed = hasFormChanged(f, f.dataset.originalState);
+        f.dataset.clean = changed ? 'false' : 'true';
+        if(btn) updateButtonState(f, btn);
+      });
+      
+      // Also track file input changes for avatar
+      const fileInputs = f.querySelectorAll('input[type="file"]');
+      fileInputs.forEach(inp => {
+        inp.addEventListener('change', () => {
+          if(inp.files && inp.files.length > 0) {
+            f.dataset.clean='false';
+            if(btn) updateButtonState(f, btn);
+          }
+        });
+      });
+    });
+  }, 100);
   window.addEventListener('beforeunload', e=>{
     const dirty = ['#formProfile','#formPassword','#formPrefs'].some(id=>{
       const f=$(id); return f && f.dataset.clean==='false';

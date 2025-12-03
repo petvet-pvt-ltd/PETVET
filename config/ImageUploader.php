@@ -71,12 +71,10 @@ class ImageUploader {
         
         // Move uploaded file
         if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-            // Return relative path for database storage
-            $relativePath = '/PETVET/public/images/products/' . $filename;
-            
+            // Return just the filename - the caller will construct the full path
             return [
                 'success' => true,
-                'path' => $relativePath,
+                'path' => $filename,
                 'message' => 'Image uploaded successfully'
             ];
         } else {

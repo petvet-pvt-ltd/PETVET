@@ -38,28 +38,67 @@
     window.openDetailsFromEl = function(element) {
         const appointmentId = element.getAttribute('data-id');
         const pet = element.getAttribute('data-pet');
+        const animal = element.getAttribute('data-animal');
         const client = element.getAttribute('data-client');
         const vet = element.getAttribute('data-vet');
+        const type = element.getAttribute('data-type') || 'General Checkup';
+        const phone = element.getAttribute('data-phone') || 'N/A';
         const date = element.getAttribute('data-date');
         const time = element.getAttribute('data-time');
         
-        // Store appointment ID globally for cancel/reschedule
+        // Store appointment ID and original values globally for cancel/reschedule
         window.currentAppointmentId = appointmentId;
+        window.originalAppointmentData = {
+            vet: vet,
+            date: date,
+            time: time
+        };
         
         // Populate modal fields
         const modal = document.getElementById('detailsModal');
         if (modal) {
             const petSpan = document.getElementById('dPet');
+            const speciesSpan = document.getElementById('dSpecies');
             const clientSpan = document.getElementById('dClient');
-            const vetSpan = document.getElementById('dVet');
+            const typeSpan = document.getElementById('dType');
+            const phoneSpan = document.getElementById('dPhone');
+            const vetSelect = document.getElementById('dVet');
             const dateInput = document.getElementById('dDate');
             const timeInput = document.getElementById('dTime');
+            const rescheduleBtn = document.getElementById('rescheduleBtn');
             
             if (petSpan) petSpan.textContent = pet;
+            if (speciesSpan) speciesSpan.textContent = animal || 'N/A';
             if (clientSpan) clientSpan.textContent = client;
-            if (vetSpan) vetSpan.textContent = vet;
+            if (typeSpan) typeSpan.textContent = type;
+            if (phoneSpan) phoneSpan.textContent = phone;
+            if (vetSelect) vetSelect.value = vet;
             if (dateInput) dateInput.value = date;
             if (timeInput) timeInput.value = time;
+            
+            // Disable reschedule button initially
+            if (rescheduleBtn) {
+                rescheduleBtn.disabled = true;
+                rescheduleBtn.style.opacity = '0.5';
+                rescheduleBtn.style.cursor = 'not-allowed';
+            }
+            
+            // Add change listeners to enable reschedule button
+            const enableReschedule = () => {
+                const changed = vetSelect.value !== window.originalAppointmentData.vet ||
+                               dateInput.value !== window.originalAppointmentData.date ||
+                               timeInput.value !== window.originalAppointmentData.time;
+                               
+                if (rescheduleBtn) {
+                    rescheduleBtn.disabled = !changed;
+                    rescheduleBtn.style.opacity = changed ? '1' : '0.5';
+                    rescheduleBtn.style.cursor = changed ? 'pointer' : 'not-allowed';
+                }
+            };
+            
+            if (vetSelect) vetSelect.addEventListener('change', enableReschedule);
+            if (dateInput) dateInput.addEventListener('change', enableReschedule);
+            if (timeInput) timeInput.addEventListener('input', enableReschedule);
             
             // Show modal
             modal.classList.remove('hidden');
@@ -208,19 +247,46 @@
             hour12: true
         });
         
+        // Get selected vet
+        const vetSelect = document.getElementById('dVet');
+        const selectedVet = vetSelect ? vetSelect.value : null;
+        
         // Show confirmation dialog
         const confirmMessage = `Are you sure you want to reschedule <strong>${petName}'s</strong> appointment?<br><br>
                                <strong>New Date:</strong> ${dateFormatted}<br>
-                               <strong>New Time:</strong> ${timeFormatted}`;
+                               <strong>New Time:</strong> ${timeFormatted}${selectedVet ? '<br><strong>Vet:</strong> ' + selectedVet : ''}`;
         
         showConfirmation('Reschedule Appointment', confirmMessage, function() {
-            // Execute reschedule
-            showNotification(`Appointment for ${petName} has been rescheduled to ${dateFormatted} at ${timeFormatted}`, 'Success', 'success');
-            closeModal('detailsModal');
-            
-            setTimeout(() => {
-                window.location.reload();
-            }, 2000);
+            // Execute reschedule via API
+            fetch('/PETVET/api/appointments/reschedule.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    appointment_id: window.currentAppointmentId,
+                    date: newDate,
+                    time: newTime,
+                    vet: selectedVet
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(`Appointment for ${petName} has been rescheduled successfully!`, 'Success', 'success');
+                    closeModal('detailsModal');
+                    // Refresh calendar immediately without page reload
+                    if (window.refreshCalendarNow) {
+                        window.refreshCalendarNow();
+                    }
+                } else {
+                    showNotification(data.error || 'Failed to reschedule appointment', 'Error', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Reschedule error:', error);
+                showNotification('An error occurred while rescheduling the appointment', 'Error', 'error');
+            });
         }, 'Reschedule', 'btn-primary');
     };
     
@@ -280,10 +346,10 @@
                 if (data.success) {
                     showNotification(`Appointment for ${petName} (${clientName}) on ${appointmentDate} at ${appointmentTime} has been cancelled.`, 'Appointment Cancelled', 'warning');
                     closeModal('detailsModal');
-                    
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 2000);
+                    // Refresh calendar immediately without page reload
+                    if (window.refreshCalendarNow) {
+                        window.refreshCalendarNow();
+                    }
                 } else {
                     showNotification('Failed to cancel appointment: ' + (data.error || 'Unknown error'), 'Error', 'error');
                 }
@@ -359,9 +425,10 @@
             dateInput.value = '';
             timeInput.value = '';
             
-            setTimeout(() => {
-                window.location.reload();
-            }, 2000);
+            // Refresh calendar immediately without page reload
+            if (window.refreshCalendarNow) {
+                window.refreshCalendarNow();
+            }
         }, 'Create Appointment', 'btn-primary');
     };
     
@@ -396,4 +463,199 @@
             }
         }
     });
+    
+    // Real-time calendar refresh with AJAX
+    let refreshInterval = null;
+    let lastUpdateTimestamp = 0;
+    
+    function refreshCalendar() {
+        const currentView = document.querySelector('.calendar-view.active')?.id.replace('calendar-', '') || 'week';
+        const vetSelect = document.getElementById('vetSelect');
+        const selectedVet = vetSelect ? vetSelect.value : 'all';
+        
+        fetch(`/PETVET/api/appointments/get-appointments.php?view=${currentView}&vet=${encodeURIComponent(selectedVet)}`, {
+            method: 'GET',
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.timestamp > lastUpdateTimestamp) {
+                lastUpdateTimestamp = data.timestamp;
+                updateCalendarUI(data.appointments, currentView);
+            }
+        })
+        .catch(error => {
+            console.error('Calendar refresh error:', error);
+        });
+    }
+    
+    function updateCalendarUI(appointments, view) {
+        if (view === 'today') {
+            updateTodayView(appointments);
+        } else if (view === 'week') {
+            updateWeekView(appointments);
+        } else if (view === 'month') {
+            updateMonthView(appointments);
+        }
+    }
+    
+    function updateTodayView(appointments) {
+        const today = new Date().toISOString().split('T')[0];
+        const container = document.querySelector('#calendar-today .today-appointments-container');
+        
+        if (!container) return;
+        
+        const todayAppts = appointments[today] || [];
+        
+        if (todayAppts.length === 0) {
+            container.innerHTML = '<div style="color:#64748b; font-size:15px; text-align:center; margin-top:18px;">No appointments for today.</div>';
+        } else {
+            container.innerHTML = todayAppts.map(appt => `
+                <div class="event"
+                     data-id="${appt.id}"
+                     data-pet="${escapeHtml(appt.pet)}"
+                     data-animal="${escapeHtml(appt.animal)}"
+                     data-client="${escapeHtml(appt.client)}"
+                     data-vet="${escapeHtml(appt.vet)}"
+                     data-type="${escapeHtml(appt.type)}"
+                     data-phone="${escapeHtml(appt.client_phone || 'N/A')}"
+                     data-date="${today}"
+                     data-time="${appt.time}"
+                     onclick="openDetailsFromEl(this)">
+                    <span class="evt-time">${formatTime(appt.time)}</span>
+                    <span class="evt-client">${escapeHtml(appt.client)}</span>
+                    <span class="evt-vet">${escapeHtml(appt.vet)}</span>
+                </div>
+            `).join('');
+        }
+    }
+    
+    function updateWeekView(appointments) {
+        document.querySelectorAll('#calendar-week .day-appointments-container').forEach(container => {
+            const date = container.closest('.day-col')?.querySelector('.day-date-stripe')?.textContent;
+            if (!date) return;
+            
+            const dateKey = parseDateFromStripe(date);
+            const dayAppts = appointments[dateKey] || [];
+            
+            container.innerHTML = dayAppts.map(appt => {
+                const vetFirstName = appt.vet.split(' ')[0];
+                return `
+                    <div class="event"
+                         data-id="${appt.id}"
+                         data-pet="${escapeHtml(appt.pet)}"
+                         data-animal="${escapeHtml(appt.animal)}"
+                         data-client="${escapeHtml(appt.client)}"
+                         data-vet="${escapeHtml(appt.vet)}"
+                         data-type="${escapeHtml(appt.type)}"
+                         data-phone="${escapeHtml(appt.client_phone || 'N/A')}"
+                         data-date="${dateKey}"
+                         data-time="${appt.time}"
+                         onclick="openDetailsFromEl(this)">
+                        <span class="evt-compact">
+                            <span class="evt-time">${formatTime(appt.time)}</span>
+                            <span class="evt-vet-short">${escapeHtml(vetFirstName)}</span>
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        });
+    }
+    
+    function updateMonthView(appointments) {
+        document.querySelectorAll('#calendar-month .day-appointments-container').forEach(container => {
+            const date = container.closest('.day-col')?.querySelector('.day-date-stripe')?.textContent;
+            if (!date) return;
+            
+            const dateKey = parseDateFromStripe(date);
+            const dayAppts = appointments[dateKey] || [];
+            
+            container.innerHTML = dayAppts.map(appt => {
+                const vetFirstName = appt.vet.split(' ')[0];
+                return `
+                    <div class="event"
+                         data-id="${appt.id}"
+                         data-pet="${escapeHtml(appt.pet)}"
+                         data-animal="${escapeHtml(appt.animal)}"
+                         data-client="${escapeHtml(appt.client)}"
+                         data-vet="${escapeHtml(appt.vet)}"
+                         data-type="${escapeHtml(appt.type)}"
+                         data-phone="${escapeHtml(appt.client_phone || 'N/A')}"
+                         data-date="${dateKey}"
+                         data-time="${appt.time}"
+                         onclick="openDetailsFromEl(this)">
+                        <span class="evt-compact">
+                            <span class="evt-time">${formatTime(appt.time)}</span>
+                            <span class="evt-vet-short">${escapeHtml(vetFirstName)}</span>
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        });
+    }
+    
+    function formatTime(time) {
+        const [hours, minutes] = time.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+        return `${displayHour}:${minutes} ${ampm}`;
+    }
+    
+    function parseDateFromStripe(dateStr) {
+        // Parse "Dec 3 - Wed" format to "2025-12-03"
+        const currentYear = new Date().getFullYear();
+        const months = {
+            'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+            'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+            'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+        };
+        
+        const parts = dateStr.split(' - ')[0].trim().split(' ');
+        const month = months[parts[0]];
+        const day = parts[1].padStart(2, '0');
+        
+        return `${currentYear}-${month}-${day}`;
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Start auto-refresh (every 5 seconds)
+    function startAutoRefresh() {
+        if (refreshInterval) return; // Already running
+        
+        refreshInterval = setInterval(refreshCalendar, 5000); // 5 seconds
+        console.log('📅 Calendar auto-refresh started (5s interval)');
+    }
+    
+    function stopAutoRefresh() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+            refreshInterval = null;
+            console.log('📅 Calendar auto-refresh stopped');
+        }
+    }
+    
+    // Start auto-refresh on page load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startAutoRefresh);
+    } else {
+        startAutoRefresh();
+    }
+    
+    // Stop refresh when page is hidden
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            stopAutoRefresh();
+        } else {
+            startAutoRefresh();
+        }
+    });
+    
+    // Expose refresh function globally
+    window.refreshCalendarNow = refreshCalendar;
 })();

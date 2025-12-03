@@ -4,79 +4,200 @@ require_once __DIR__ . '/../BaseModel.php';
 class PetOwnerAppointmentsModel extends BaseModel {
     
     public function getAppointmentsByOwnerId($ownerId) {
-        // Mock data - in real implementation this would query the database
-        // For now, return realistic appointment data for testing
+        $db = $this->db;
         
-        $pets = [
-            1 => ['name' => 'Rocky',    'species' => 'Dog', 'breed' => 'Golden Retriever', 'photo' => 'https://images.unsplash.com/photo-1552053831-71594a27632d?q=80&w=150&auto=format&fit=crop'],
-            2 => ['name' => 'Whiskers', 'species' => 'Cat', 'breed' => 'Siamese',           'photo' => 'https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=150&auto=format&fit=crop'],
-            3 => ['name' => 'Tweety',   'species' => 'Bird','breed' => 'Canary',            'photo' => 'https://images.unsplash.com/photo-1452570053594-1b985d6ea890?q=80&w=150&auto=format&fit=crop'],
-            4 => ['name' => 'Buddy',    'species' => 'Dog', 'breed' => 'Labrador',          'photo' => 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?q=80&w=150&auto=format&fit=crop'],
-        ];
+        // Fetch all appointments for this owner with pet and vet details
+        $stmt = $db->prepare("
+            SELECT 
+                a.id,
+                a.pet_id,
+                a.appointment_date as date,
+                a.appointment_time as time,
+                a.appointment_type as type,
+                a.status,
+                a.symptoms,
+                p.name as pet_name,
+                p.species,
+                p.breed,
+                p.photo_url,
+                COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Any Available Vet') as vet
+            FROM appointments a
+            INNER JOIN pets p ON a.pet_id = p.id
+            LEFT JOIN users u ON a.vet_id = u.id
+            WHERE a.pet_owner_id = ?
+            ORDER BY a.appointment_date DESC, a.appointment_time DESC
+        ");
         
-        $appointments = [
-            // Upcoming appointments
-            ['id'=>101, 'pet_id'=>1, 'date'=>date('Y-m-d', strtotime('+2 days')), 'time'=>'09:30', 'vet'=>'Dr. Williams', 'type'=>'General Checkup', 'status'=>'Confirmed'],
-            ['id'=>102, 'pet_id'=>2, 'date'=>date('Y-m-d', strtotime('+3 days')), 'time'=>'14:00', 'vet'=>'Dr. Taylor',   'type'=>'Vaccination',     'status'=>'Pending'],
-            ['id'=>103, 'pet_id'=>1, 'date'=>date('Y-m-d', strtotime('+7 days')), 'time'=>'11:15', 'vet'=>'Dr. Lee',      'type'=>'Grooming',        'status'=>'Confirmed'],
-            ['id'=>104, 'pet_id'=>3, 'date'=>date('Y-m-d', strtotime('+10 days')), 'time'=>'16:45', 'vet'=>'Dr. Patel',    'type'=>'Nail Trim',       'status'=>'Confirmed'],
-            ['id'=>105, 'pet_id'=>2, 'date'=>date('Y-m-d', strtotime('+14 days')), 'time'=>'10:00', 'vet'=>'Dr. Taylor',   'type'=>'Follow-up',       'status'=>'Confirmed'],
-            ['id'=>106, 'pet_id'=>4, 'date'=>date('Y-m-d', strtotime('+5 days')), 'time'=>'15:30', 'vet'=>'Dr. Martinez', 'type'=>'Dental Cleaning', 'status'=>'Confirmed'],
+        $stmt->execute([$ownerId]);
+        $appointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Organize pets data by pet_id
+        $pets = [];
+        $appointmentsList = [];
+        
+        foreach ($appointments as $appt) {
+            $petId = $appt['pet_id'];
             
-            // Past appointments
-            ['id'=>107, 'pet_id'=>1, 'date'=>date('Y-m-d', strtotime('-2 days')), 'time'=>'08:30', 'vet'=>'Dr. Lee', 'type'=>'Dental', 'status'=>'Completed'],
-            ['id'=>108, 'pet_id'=>2, 'date'=>date('Y-m-d', strtotime('-5 days')), 'time'=>'13:15', 'vet'=>'Dr. Taylor', 'type'=>'Checkup', 'status'=>'Completed'],
-        ];
+            // Store pet info
+            if (!isset($pets[$petId])) {
+                $pets[$petId] = [
+                    'name' => $appt['pet_name'],
+                    'species' => $appt['species'],
+                    'breed' => $appt['breed'],
+                    'photo' => $appt['photo_url']
+                ];
+            }
+            
+            // Store appointment info
+            $appointmentsList[] = [
+                'id' => $appt['id'],
+                'pet_id' => $petId,
+                'date' => $appt['date'],
+                'time' => $appt['time'],
+                'type' => $appt['type'],
+                'status' => ucfirst($appt['status']),
+                'vet' => $appt['vet']
+            ];
+        }
         
         return [
             'pets' => $pets,
-            'appointments' => $appointments
+            'appointments' => $appointmentsList
         ];
     }
     
     public function getUpcomingAppointments($ownerId) {
-        $data = $this->getAppointmentsByOwnerId($ownerId);
-        $appointments = $data['appointments'];
-        $pets = $data['pets'];
+        $db = $this->db;
         
-        // Filter upcoming appointments only
-        $nowTs = time();
-        $upcoming = array_values(array_filter($appointments, function($a) use ($nowTs) {
-            $ts = strtotime($a['date'] . ' ' . $a['time']);
-            return $ts >= strtotime(date('Y-m-d 00:00:00', $nowTs));
-        }));
+        // Fetch upcoming appointments for this owner
+        $stmt = $db->prepare("
+            SELECT 
+                a.id,
+                a.pet_id,
+                a.appointment_date as date,
+                a.appointment_time as time,
+                a.appointment_type as type,
+                a.status,
+                a.symptoms,
+                p.name as pet_name,
+                p.species,
+                p.breed,
+                p.photo_url,
+                c.clinic_name,
+                COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Any Available Vet') as vet
+            FROM appointments a
+            INNER JOIN pets p ON a.pet_id = p.id
+            LEFT JOIN clinics c ON a.clinic_id = c.id
+            LEFT JOIN users u ON a.vet_id = u.id
+            WHERE a.pet_owner_id = ?
+            AND a.appointment_date >= CURDATE()
+            AND a.status NOT IN ('cancelled', 'declined', 'completed')
+            ORDER BY a.appointment_date ASC, a.appointment_time ASC
+        ");
         
-        // Sort by date and time
-        usort($upcoming, function($a, $b) {
-            return strtotime($a['date'] . ' ' . $a['time']) <=> strtotime($b['date'] . ' ' . $b['time']);
-        });
+        $stmt->execute([$ownerId]);
+        $appointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Organize pets data by pet_id
+        $pets = [];
+        $appointmentsList = [];
+        
+        foreach ($appointments as $appt) {
+            $petId = $appt['pet_id'];
+            
+            // Store pet info
+            if (!isset($pets[$petId])) {
+                $pets[$petId] = [
+                    'name' => $appt['pet_name'],
+                    'species' => $appt['species'],
+                    'breed' => $appt['breed'],
+                    'photo' => $appt['photo_url']
+                ];
+            }
+            
+            // Store appointment info
+            $appointmentsList[] = [
+                'id' => $appt['id'],
+                'pet_id' => $petId,
+                'date' => $appt['date'],
+                'time' => $appt['time'],
+                'type' => $appt['type'],
+                'status' => $appt['status'] === 'approved' ? 'Confirmed' : ucfirst($appt['status']),
+                'vet' => $appt['vet'],
+                'clinic' => $appt['clinic_name']
+            ];
+        }
         
         return [
             'pets' => $pets,
-            'appointments' => $upcoming
+            'appointments' => $appointmentsList
         ];
     }
     
     public function getPastAppointments($ownerId) {
-        $data = $this->getAppointmentsByOwnerId($ownerId);
-        $appointments = $data['appointments'];
-        $pets = $data['pets'];
+        $db = $this->db;
         
-        // Filter past appointments only
-        $nowTs = time();
-        $past = array_values(array_filter($appointments, function($a) use ($nowTs) {
-            $ts = strtotime($a['date'] . ' ' . $a['time']);
-            return $ts < strtotime(date('Y-m-d 00:00:00', $nowTs));
-        }));
+        // Fetch past appointments for this owner
+        $stmt = $db->prepare("
+            SELECT 
+                a.id,
+                a.pet_id,
+                a.appointment_date as date,
+                a.appointment_time as time,
+                a.appointment_type as type,
+                a.status,
+                a.symptoms,
+                p.name as pet_name,
+                p.species,
+                p.breed,
+                p.photo_url,
+                COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Any Available Vet') as vet
+            FROM appointments a
+            INNER JOIN pets p ON a.pet_id = p.id
+            LEFT JOIN users u ON a.vet_id = u.id
+            WHERE a.pet_owner_id = ?
+            AND (
+                a.appointment_date < CURDATE()
+                OR a.status IN ('cancelled', 'declined', 'completed')
+            )
+            ORDER BY a.appointment_date DESC, a.appointment_time DESC
+        ");
         
-        // Sort by date and time (most recent first)
-        usort($past, function($a, $b) {
-            return strtotime($b['date'] . ' ' . $b['time']) <=> strtotime($a['date'] . ' ' . $a['time']);
-        });
+        $stmt->execute([$ownerId]);
+        $appointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Organize pets data by pet_id
+        $pets = [];
+        $appointmentsList = [];
+        
+        foreach ($appointments as $appt) {
+            $petId = $appt['pet_id'];
+            
+            // Store pet info
+            if (!isset($pets[$petId])) {
+                $pets[$petId] = [
+                    'name' => $appt['pet_name'],
+                    'species' => $appt['species'],
+                    'breed' => $appt['breed'],
+                    'photo' => $appt['photo_url']
+                ];
+            }
+            
+            // Store appointment info
+            $appointmentsList[] = [
+                'id' => $appt['id'],
+                'pet_id' => $petId,
+                'date' => $appt['date'],
+                'time' => $appt['time'],
+                'type' => $appt['type'],
+                'status' => ucfirst($appt['status']),
+                'vet' => $appt['vet']
+            ];
+        }
         
         return [
             'pets' => $pets,
-            'appointments' => $past
+            'appointments' => $appointmentsList
         ];
     }
 }

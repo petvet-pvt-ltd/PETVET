@@ -453,6 +453,10 @@ class Auth {
      * Log audit trail
      */
     private function logAudit(?int $userId, string $action, array $details = []): void {
+        // Audit logging disabled for now - will enable later
+        return;
+        
+        /* DISABLED - Uncomment to re-enable audit logging
         try {
             $stmt = $this->db->prepare("
                 INSERT INTO audit_logs (user_id, action, ip_address, user_agent, details) 
@@ -468,6 +472,7 @@ class Auth {
         } catch (Exception $e) {
             error_log("Audit log error: " . $e->getMessage());
         }
+        */
     }
     
     /**

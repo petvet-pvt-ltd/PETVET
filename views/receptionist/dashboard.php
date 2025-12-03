@@ -17,17 +17,14 @@ date_default_timezone_set('Asia/Colombo');
 <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
 
 <main class="main-content">
-  <div class="dashboard-header">
-    <div class="welcome-section">
-      <h1 class="welcome-name">Welcome, <?php echo htmlspecialchars($userName ?: 'Receptionist'); ?>!</h1>
-      <p class="welcome-date">Today is <?php echo date('l, F j, Y'); ?></p>
-    </div>
-    <?php if ($clinicName): ?>
-      <div class="clinic-badge">
-        <span class="clinic-icon">🏥</span>
-        <span class="clinic-name"><?php echo htmlspecialchars($clinicName); ?></span>
-      </div>
-    <?php endif; ?>
+  <?php 
+  // Include user welcome header
+  include __DIR__ . '/../shared/components/user-welcome-header.php'; 
+  ?>
+
+  <!-- Receptionist Welcome Message -->
+  <div style="margin-bottom: 24px;">
+    <h2 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0;">Welcome, <?php echo htmlspecialchars($userName ?? 'Receptionist'); ?></h2>
   </div>
 
   <!-- Stats Grid - Two Cards in a Row -->

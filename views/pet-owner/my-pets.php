@@ -426,15 +426,38 @@ function calculateAge($dob) {
       position: relative;
     }
 
+    /* Header Actions in Dark Header */
+    .header-actions-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-actions-content .btn.primary {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 10px 20px;
+      font-size: 14px;
+      border-radius: 10px;
+      box-shadow: none;
+    }
+
+    .header-actions-content .btn.primary:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
     /* Bell Button */
     .notification-bell {
       position: relative;
       width: 40px;
       height: 40px;
-      border-radius: 50%;
-      border: none;
-      background: transparent;
-      color: #0f172a;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -443,7 +466,8 @@ function calculateAge($dob) {
     }
 
     .notification-bell:hover {
-      background: #f1f5f9;
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
     }
 
     .notification-bell:active {
@@ -696,10 +720,10 @@ function calculateAge($dob) {
     include __DIR__ . '/../shared/components/user-welcome-header.php'; 
     ?>
     
-    <header class="page-header">
-      <h2>My Pets</h2>
-      <div class="header-actions">
-        <!-- Notification Bell -->
+    <script>
+    // Insert header actions immediately
+    (function() {
+      const headerActionsHTML = `
         <div class="notification-container">
           <button type="button" class="notification-bell" id="notificationBell" aria-label="Notifications">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -825,9 +849,16 @@ function calculateAge($dob) {
           </div>
         </div>
 
-        <button type="button" class="btn primary" id="addPetBtn">+ Add Pet</button>
-      </div>
-    </header>
+          <button type="button" class="btn primary" id="addPetBtn">+ Add Pet</button>
+        </div>
+      `;
+      
+      const slot = document.getElementById('headerActionsSlot');
+      if (slot) {
+        slot.innerHTML = headerActionsHTML;
+      }
+    })();
+    </script>
 
     <section class="pets-grid" id="petsGrid">
       <?php foreach ($pets as $pet): ?>
@@ -852,10 +883,6 @@ function calculateAge($dob) {
             <?php echo $pet['breed']; ?> • 
             <?php echo calculateAge($pet['date_of_birth']); ?>y
           </p>
-          <ul class="pet-tags">
-            <li class="tag">Microchipped</li>
-            <li class="tag success">Vaccinated</li>
-          </ul>
           <p class="pet-notes"><?php echo $pet['notes']; ?></p>
         </div>
         <div class="pet-actions">
@@ -864,7 +891,11 @@ function calculateAge($dob) {
           <!-- ✅ Route through the controller (no direct /views/ link) -->
           <a href="/PETVET/?module=pet-owner&page=medical-records&pet=1" class="btn outline">Medical Records</a>
 
-          <a href="#book-appointment?pet=<?php echo $pet['id']; ?>" class="btn primary">Book Appointment</a>
+          <?php if ($pet['has_upcoming_appointment']): ?>
+            <button class="btn primary" disabled style="opacity: 0.5; cursor: not-allowed;" title="This pet already has an upcoming appointment">Has Upcoming Appointment</button>
+          <?php else: ?>
+            <a href="#book-appointment?pet=<?php echo $pet['id']; ?>" class="btn primary">Book Appointment</a>
+          <?php endif; ?>
           <button class="btn danger markMissingBtn" data-pet="<?php echo $pet['id']; ?>">Mark as Missing</button>
         </div>
       </article>
@@ -1234,8 +1265,9 @@ function calculateAge($dob) {
 
       <!-- Confirmation View (hidden initially) -->
       <div class="dialog-body" id="appointmentConfirmation" style="display:none;text-align:center;">
-        <div style="font-size:64px; margin-bottom:16px;">✅</div>
-        <h3 style="color:#16a34a; margin-bottom:16px;">Appointment Confirmed!</h3>
+        <div style="font-size:64px; margin-bottom:16px;">📨</div>
+        <h3 style="color:#2563eb; margin-bottom:8px;">Appointment Requested!</h3>
+        <p style="color:#64748b; font-size:14px; margin:0 0 20px 0;">Your appointment request has been submitted successfully. You'll be notified once the receptionist confirms your appointment.</p>
         <div id="appointmentSummary" style="text-align:left; background:#f8fafc; padding:20px; border-radius:8px; margin-top:20px;">
         </div>
       </div>
@@ -1492,6 +1524,8 @@ function calculateAge($dob) {
         document.body.classList.remove('dialog-open');
       };
     })();
+
+
   </script>
 </body>
 </html>

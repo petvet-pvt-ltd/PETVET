@@ -1,292 +1,165 @@
 <?php
 $currentPage = basename($_SERVER['PHP_SELF']);
+$module = 'receptionist';
+$GLOBALS['currentPage'] = 'settings.php';
+$GLOBALS['module'] = 'receptionist';
+/** Receptionist Settings (Profile & Preferences) */
+// Provide safe defaults if controller didn't pass data.
+$profile = isset($profile) ? $profile : [
+	'first_name' => 'Your',
+	'last_name' => 'Name',
+	'email' => 'you@example.com',
+	'phone' => '',
+	'avatar' => '/PETVET/public/images/emptyProfPic.png',
+	'date_joined' => date('Y-m-d'),
+	'email_verified' => false
+];
+$prefs = isset($prefs) ? $prefs : [
+	'email_notifications' => true,
+	'sms_notifications' => false,
+	'reminder_appointments' => 24,
+	'newsletter_subscription' => true,
+	'marketing_emails' => false,
+	'language' => 'en',
+	'timezone' => 'Asia/Colombo',
+	'theme' => 'light',
+	'privacy_profile' => 'public'
+];
+$accountStats = isset($accountStats) ? $accountStats : [
+	'active_appointments' => 0,
+	'account_age_days' => 0,
+	'last_login' => date('Y-m-d H:i:s'),
+	'profile_completion' => 50
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Settings | Receptionist</title>
-  <link rel="stylesheet" href="/PETVET/public/css/clinic-manager/enhanced-global.css">
-  <style>
-    .settings-container {
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    
-    .settings-section {
-      background: white;
-      border-radius: var(--border-radius-lg);
-      padding: 24px;
-      margin-bottom: 24px;
-      box-shadow: var(--shadow-sm);
-    }
-    
-    .section-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--gray-900);
-      margin-bottom: 16px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid var(--primary);
-    }
-    
-    .form-group {
-      margin-bottom: 20px;
-    }
-    
-    .form-label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 600;
-      color: var(--gray-700);
-      font-size: 14px;
-    }
-    
-    .form-input, .form-select, .form-textarea {
-      width: 100%;
-      padding: 12px 16px;
-      border: 2px solid var(--gray-200);
-      border-radius: var(--border-radius);
-      font-size: 16px;
-      transition: var(--transition);
-      background: white;
-    }
-    
-    .form-input:focus, .form-select:focus, .form-textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    
-    .btn {
-      padding: 12px 24px;
-      border: none;
-      border-radius: var(--border-radius);
-      font-weight: 600;
-      cursor: pointer;
-      transition: var(--transition);
-      font-size: 14px;
-    }
-    
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      background: var(--primary-dark);
-      transform: translateY(-1px);
-    }
-    
-    .btn-secondary {
-      background: var(--gray-200);
-      color: var(--gray-700);
-    }
-    
-    .btn-secondary:hover {
-      background: var(--gray-300);
-    }
-    
-    @media (max-width: 768px) {
-      .form-row {
-        grid-template-columns: 1fr;
-      }
-      
-      .settings-section {
-        padding: 16px;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings - Receptionist - PetVet</title>
+<link rel="stylesheet" href="/PETVET/public/css/pet-owner/settings.css" />
 </head>
 <body>
+<?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
+<main class="main-content" style="padding-top: 0px !important;">
+		<div class="settings-header">
+			<div>
+				<h1>Settings</h1>
+				<p class="muted">Manage your profile &amp; preferences</p>
+			</div>
+			<nav class="quick-nav" aria-label="Quick navigation">
+				<a href="#section-profile">Profile</a>
+				<a href="#section-password">Password</a>
+				<a href="#section-preferences">Preferences</a>
+			</nav>
+		</div>
+		<div class="page-wrap">
+			<div class="settings-grid">
+				<!-- Profile Card -->
+				<section class="card" id="section-profile" data-section>
+					<div class="card-head"><h2>Profile</h2></div>
+					<form id="formProfile" class="form" enctype="multipart/form-data">
+						<div class="profile-grid">
+							<div class="profile-left">
+								<div class="avatar-frame">
+									<div class="image-preview-list avatar big" id="receptionistAvatarPreview">
+										<div class="image-preview-item">
+											<img src="<?= htmlspecialchars($profile['avatar']) ?>" alt="avatar" />
+										</div>
+									</div>
+									<div class="uploader-actions center">
+										<input type="file" id="receptionistAvatar" accept="image/*" hidden />
+										<button type="button" class="btn outline" data-for="receptionistAvatar">Change</button>
+									</div>
+								</div>
+							</div>
+							<div class="profile-right">
+								<div class="row two">
+									<label>First Name
+										<input type="text" name="first_name" value="<?= htmlspecialchars($profile['first_name'] ?? '') ?>" required />
+									</label>
+									<label>Last Name
+										<input type="text" name="last_name" value="<?= htmlspecialchars($profile['last_name'] ?? '') ?>" required />
+									</label>
+								</div>
+							<div class="row one">
+								<label>Email (Login Username)
+									<input type="email" name="email" value="<?= htmlspecialchars($profile['email']) ?>" readonly style="background: #f0f0f0; cursor: not-allowed;" />
+								</label>
+							</div>
+							<div class="row one">
+							<label>Phone
+								<input type="tel" name="phone" id="phoneInput" value="<?= htmlspecialchars($profile['phone'] ?? '') ?>" placeholder="07XXXXXXXX" pattern="07[0-9]{8}" title="Phone number must be 10 digits starting with 07" />
+								<span id="phoneError" style="color: #ef4444; font-size: 12px; margin-top: 4px; display: none;"></span>
+							</label>
+						</div>
+							<div class="actions">
+									<button class="btn primary" type="submit">Save Profile</button>
+								</div>
+							</div>
+						</div>
+					</form>
+				</section>
 
-<div class="main-content">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Settings</h1>
-      <p class="page-subtitle">Manage your account and preferences</p>
-    </div>
-  </div>
+				<!-- Password Card -->
+				<section class="card" id="section-password" data-section>
+					<div class="card-head"><h2>Change Password</h2></div>
+					<form id="formPassword" class="form">
+						<div class="row one">
+							<label>Current Password
+								<input type="password" name="current_password" autocomplete="current-password" />
+							</label>
+						</div>
+						<div class="row one">
+							<label>New Password
+								<input type="password" name="new_password" autocomplete="new-password" />
+							</label>
+						</div>
+						<div class="row one">
+							<label>Confirm New Password
+								<input type="password" name="confirm_password" />
+							</label>
+						</div>
+						<div class="actions">
+							<button class="btn primary" type="submit">Update Password</button>
+						</div>
+					</form>
+				</section>
 
-  <div class="settings-container">
-    
-    <!-- Profile Settings -->
-    <div class="settings-section">
-      <h2 class="section-title">Profile Information</h2>
-      <form id="profileForm">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="firstName">First Name</label>
-            <input type="text" id="firstName" name="firstName" class="form-input" value="<?= htmlspecialchars($userData['first_name'] ?? '') ?>" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="lastName">Last Name</label>
-            <input type="text" id="lastName" name="lastName" class="form-input" value="<?= htmlspecialchars($userData['last_name'] ?? '') ?>" required>
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label" for="email">Email Address</label>
-          <input type="email" id="email" name="email" class="form-input" value="<?= htmlspecialchars($userData['email'] ?? '') ?>" required>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="phone">Phone Number</label>
-            <input type="tel" id="phone" name="phone" class="form-input" value="<?= htmlspecialchars($userData['phone'] ?? '') ?>">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="position">Position</label>
-            <input type="text" id="position" name="position" class="form-input" value="Receptionist" readonly>
-          </div>
-        </div>
-        
-        <?php if (!empty($clinicData)): ?>
-        <div class="form-group">
-          <label class="form-label" for="clinic">Assigned Clinic</label>
-          <input type="text" id="clinic" name="clinic" class="form-input" value="<?= htmlspecialchars($clinicData['clinic_name'] ?? '') ?>" readonly>
-        </div>
-        <?php endif; ?>
-        
-        <div class="form-group">
-          <button type="submit" class="btn btn-primary">Update Profile</button>
-        </div>
-      </form>
-    </div>
-
-    <!-- Work Preferences -->
-    <div class="settings-section">
-      <h2 class="section-title">Work Preferences</h2>
-      <form id="preferencesForm">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="shiftPreference">Preferred Shift</label>
-            <select id="shiftPreference" name="shiftPreference" class="form-select">
-              <option value="morning">Morning (8 AM - 4 PM)</option>
-              <option value="afternoon" selected>Afternoon (12 PM - 8 PM)</option>
-              <option value="evening">Evening (4 PM - 12 AM)</option>
-              <option value="flexible">Flexible</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="timezone">Timezone</label>
-            <select id="timezone" name="timezone" class="form-select">
-              <option value="Asia/Colombo" selected>Asia/Colombo (Sri Lanka)</option>
-              <option value="Asia/Kolkata">Asia/Kolkata (India)</option>
-              <option value="UTC">UTC</option>
-            </select>
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label" for="skills">Skills & Experience</label>
-          <textarea id="skills" name="skills" class="form-textarea" placeholder="List your relevant skills, software experience, etc.">Customer service, appointment scheduling, veterinary software (VetBlue), Microsoft Office, phone support</textarea>
-        </div>
-        
-        <div class="form-group">
-          <button type="submit" class="btn btn-primary">Save Preferences</button>
-        </div>
-      </form>
-    </div>
-
-    <!-- Security Settings -->
-    <div class="settings-section">
-      <h2 class="section-title">Security</h2>
-      <form id="securityForm">
-        <div class="form-group">
-          <label class="form-label" for="currentPassword">Current Password</label>
-          <input type="password" id="currentPassword" name="currentPassword" class="form-input" required>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="newPassword">New Password</label>
-            <input type="password" id="newPassword" name="newPassword" class="form-input">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="confirmPassword">Confirm New Password</label>
-            <input type="password" id="confirmPassword" name="confirmPassword" class="form-input">
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <button type="submit" class="btn btn-primary">Change Password</button>
-        </div>
-      </form>
-    </div>
-
-    <!-- Notification Settings -->
-    <div class="settings-section">
-      <h2 class="section-title">Notifications</h2>
-      <form id="notificationsForm">
-        <div class="form-group">
-          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-            <input type="checkbox" checked>
-            <span>Email notifications for new appointments</span>
-          </label>
-        </div>
-        
-        <div class="form-group">
-          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-            <input type="checkbox" checked>
-            <span>SMS alerts for emergency appointments</span>
-          </label>
-        </div>
-        
-        <div class="form-group">
-          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-            <input type="checkbox">
-            <span>Daily appointment summary emails</span>
-          </label>
-        </div>
-        
-        <div class="form-group">
-          <button type="submit" class="btn btn-primary">Save Notification Settings</button>
-        </div>
-      </form>
-    </div>
-
-  </div>
-</div>
-
-<script>
-// Form submission handlers
-document.getElementById('profileForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  alert('Profile updated successfully!');
-});
-
-document.getElementById('preferencesForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  alert('Preferences saved successfully!');
-});
-
-document.getElementById('securityForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  const newPassword = document.getElementById('newPassword').value;
-  const confirmPassword = document.getElementById('confirmPassword').value;
-  
-  if (newPassword && newPassword !== confirmPassword) {
-    alert('New passwords do not match!');
-    return;
-  }
-  
-  alert('Password changed successfully!');
-  e.target.reset();
-});
-
-document.getElementById('notificationsForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  alert('Notification settings saved successfully!');
-});
-</script>
+				<!-- Preferences Card -->
+				<section class="card" id="section-preferences" data-section>
+					<div class="card-head"><h2>Preferences</h2></div>
+					<form id="formPrefs" class="form">
+						<div class="pref-simplified">
+							<div class="pref-row">
+								<label class="toggle">
+									<input type="checkbox" name="email_notifications" <?= $prefs['email_notifications'] ? 'checked' : '' ?> />
+									<span class="toggle-track"><span class="toggle-handle"></span></span>
+									<span class="toggle-label">Email Notifications <small>Appointment confirmations & updates</small></span>
+								</label>
+							</div>
+							<div class="pref-row">
+								<label class="select-group">Appointment Reminder
+									<select name="reminder_appointments" class="slim-select" value="<?= (int)$prefs['reminder_appointments']; ?>">
+										<option value="24" <?= ($prefs['reminder_appointments']==24?'selected':''); ?>>24 hours before</option>
+										<option value="12" <?= ($prefs['reminder_appointments']==12?'selected':''); ?>>12 hours before</option>
+										<option value="6" <?= ($prefs['reminder_appointments']==6?'selected':''); ?>>6 hours before</option>
+										<option value="1" <?= ($prefs['reminder_appointments']==1?'selected':''); ?>>1 hour before</option>
+									</select>
+								</label>
+							</div>
+						</div>
+						<div class="actions">
+							<button class="btn primary" type="submit">Save Preferences</button>
+						</div>
+					</form>
+				</section>
+			</div>
+	</div>
+</main>
+<div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+<script src="/PETVET/public/js/pet-owner/settings.js"></script>
 
 </body>
 </html>

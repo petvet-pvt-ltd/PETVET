@@ -39,12 +39,13 @@ try {
         exit;
     }
     
-    // Check for pending appointments
+    // Check for upcoming appointments (pending or approved)
     $stmt = $pdo->prepare("
         SELECT COUNT(*) as pending_count 
         FROM appointments 
         WHERE pet_id = ? 
-        AND status = 'pending'
+        AND status IN ('pending', 'approved')
+        AND appointment_date >= CURDATE()
     ");
     $stmt->execute([$pet_id]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);

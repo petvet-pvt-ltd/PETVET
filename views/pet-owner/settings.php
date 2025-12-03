@@ -6,16 +6,14 @@ $GLOBALS['module'] = 'pet-owner';
 /** Pet Owner Settings (Profile & Preferences) */
 // Provide safe defaults if controller didn't pass data.
 $profile = isset($profile) ? $profile : [
-	'name' => 'Your Name',
+	'first_name' => 'Your',
+	'last_name' => 'Name',
 	'email' => 'you@example.com',
 	'phone' => '',
 	'address' => '',
-	'city' => '',
-	'postal_code' => '',
-	'avatar' => 'https://placehold.co/200x200?text=Avatar',
+	'avatar' => '/PETVET/public/images/emptyProfPic.png',
 	'date_joined' => date('Y-m-d'),
-	'verified_email' => false,
-	'verified_phone' => false
+	'email_verified' => false
 ];
 $prefs = isset($prefs) ? $prefs : [
 	'email_notifications' => true,
@@ -48,20 +46,19 @@ $accountStats = isset($accountStats) ? $accountStats : [
 </head>
 <body>
 <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
-<main class="main-content">
-		<div class="page-wrap">
-			<div class="settings-header">
-				<div>
-					<h1>Settings</h1>
-					<p class="muted">Manage your profile &amp; preferences</p>
-				</div>
-				<nav class="quick-nav" aria-label="Quick navigation">
-					<a href="#section-profile">Profile</a>
-					<a href="#section-password">Password</a>
-					<a href="#section-preferences">Preferences</a>
-				</nav>
+<main class="main-content" style="padding-top: 0px !important;">
+		<div class="settings-header">
+			<div>
+				<h1>Settings</h1>
+				<p class="muted">Manage your profile &amp; preferences</p>
 			</div>
-
+			<nav class="quick-nav" aria-label="Quick navigation">
+				<a href="#section-profile">Profile</a>
+				<a href="#section-password">Password</a>
+				<a href="#section-preferences">Preferences</a>
+			</nav>
+		</div>
+		<div class="page-wrap">
 			<div class="settings-grid">
 				<!-- Profile Card -->
 				<section class="card" id="section-profile" data-section>
@@ -83,23 +80,29 @@ $accountStats = isset($accountStats) ? $accountStats : [
 							</div>
 							<div class="profile-right">
 								<div class="row two">
-									<label>Full Name
-										<input type="text" name="name" value="<?= htmlspecialchars($profile['name']) ?>" required />
+									<label>First Name
+										<input type="text" name="first_name" value="<?= htmlspecialchars($profile['first_name'] ?? '') ?>" required />
 									</label>
-									<label>Email
-										<input type="email" name="email" value="<?= htmlspecialchars($profile['email']) ?>" required />
-									</label>
-								</div>
-								<div class="row one">
-									<label>Phone
-										<input type="tel" name="phone" value="<?= htmlspecialchars($profile['phone']) ?>" />
+									<label>Last Name
+										<input type="text" name="last_name" value="<?= htmlspecialchars($profile['last_name'] ?? '') ?>" required />
 									</label>
 								</div>
-								<div class="row one">
-									<label>Bio / Notes
-										<textarea name="bio" rows="3" placeholder="Tell us about you &amp; your pets"></textarea>
-									</label>
-								</div>
+							<div class="row one">
+								<label>Email (Login Username)
+									<input type="email" name="email" value="<?= htmlspecialchars($profile['email']) ?>" readonly style="background: #f0f0f0; cursor: not-allowed;" />
+								</label>
+							</div>
+							<div class="row one">
+								<label>Phone
+									<input type="tel" name="phone" id="phoneInput" value="<?= htmlspecialchars($profile['phone'] ?? '') ?>" placeholder="07XXXXXXXX" pattern="07[0-9]{8}" title="Phone number must be 10 digits starting with 07" />
+									<span id="phoneError" style="color: #ef4444; font-size: 12px; margin-top: 4px; display: none;"></span>
+								</label>
+							</div>
+							<div class="row one">
+								<label>Address
+									<textarea name="address" rows="3" placeholder="Enter your full address"><?= htmlspecialchars($profile['address'] ?? '') ?></textarea>
+								</label>
+							</div>
 								<div class="actions">
 									<button class="btn primary" type="submit">Save Profile</button>
 								</div>
@@ -112,10 +115,12 @@ $accountStats = isset($accountStats) ? $accountStats : [
 				<section class="card" id="section-password" data-section>
 					<div class="card-head"><h2>Change Password</h2></div>
 					<form id="formPassword" class="form">
-						<div class="row two">
+						<div class="row one">
 							<label>Current Password
 								<input type="password" name="current_password" autocomplete="current-password" />
 							</label>
+						</div>
+						<div class="row one">
 							<label>New Password
 								<input type="password" name="new_password" autocomplete="new-password" />
 							</label>

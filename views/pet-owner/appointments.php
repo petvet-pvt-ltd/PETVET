@@ -31,6 +31,14 @@ function fmt12($hhmm){
     return date('h:i A',$ts);
 } 
 ?>
+<?php if (empty($appointments)): ?>
+  <div class="empty-state">
+    <div class="empty-icon">📅</div>
+    <h3>No Upcoming Appointments</h3>
+    <p>You don't have any scheduled appointments yet. Book an appointment for your pet from the My Pets page.</p>
+    <a href="/PETVET/index.php?module=pet-owner&page=my-pets" class="btn primary">Go to My Pets</a>
+  </div>
+<?php else: ?>
 <?php foreach ($byDate as $ymd => $list): ?>
   <section class="day-card" data-day="<?php echo $ymd; ?>">
     <header class="day-card__header">
@@ -53,6 +61,10 @@ function fmt12($hhmm){
               <span class="pet-meta"><?php echo htmlspecialchars($meta); ?></span>
               <span class="dot">·</span>
               <span class="vet-name"><?php echo htmlspecialchars($a['vet']); ?></span>
+              <?php if (!empty($a['clinic'])): ?>
+              <span class="dot">·</span>
+              <span class="clinic-name"><?php echo htmlspecialchars($a['clinic']); ?></span>
+              <?php endif; ?>
             </div>
             <div class="appt-tags">
               <span class="badge badge-type"><?php echo htmlspecialchars($type); ?></span>
@@ -69,6 +81,7 @@ function fmt12($hhmm){
     </div>
   </section>
 <?php endforeach; ?>
+<?php endif; ?>
   </div>
 </div>
 

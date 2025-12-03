@@ -26,75 +26,7 @@ body {
   }
 }
 
-/* Dashboard Header */
-.dashboard-header {
-  margin-bottom: 32px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.welcome-section {
-  flex: 1;
-  min-width: 250px;
-}
-
-.welcome-name {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 8px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.welcome-date {
-  font-size: 1rem;
-  color: #64748b;
-}
-
-.clinic-badge {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-  padding: 14px 24px;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2), 0 2px 4px -1px rgba(99, 102, 241, 0.1);
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.clinic-badge:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3), 0 4px 6px -2px rgba(99, 102, 241, 0.15);
-}
-
-.clinic-icon {
-  font-size: 1.5rem;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-}
-
-.clinic-name {
-  font-size: 1rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-
-@media (max-width: 768px) {
-  .dashboard-header {
-    flex-direction: column;
-  }
-  
-  .clinic-badge {
-    align-self: flex-start;
-  }
-}
+/* Dashboard Header - Now using shared user-welcome-header component */
 
 /* Stats Grid - 2 Cards in a Row */
 .stats-grid {

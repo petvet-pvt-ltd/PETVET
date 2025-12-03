@@ -134,7 +134,7 @@ function userDisplayName(?array $user = null): string {
 function userAvatar(?array $user = null): string {
     $user = $user ?? currentUser();
     if (!$user || empty($user['avatar'])) {
-        return '/PETVET/views/shared/images/placeholder-avatar.png';
+        return '/PETVET/public/images/emptyProfPic.png';
     }
     return $user['avatar'];
 }

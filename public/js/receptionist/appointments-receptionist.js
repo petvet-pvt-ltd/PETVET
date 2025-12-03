@@ -16,8 +16,9 @@ function acceptAppointment(appointmentId) {
   const details = card.querySelectorAll('.pending-detail .value');
   const owner = details[0].textContent;
   const appointmentType = details[1].textContent;
-  const dateTime = details[2].textContent;
-  const vet = details[3].textContent;
+  const symptoms = details[2].textContent;
+  const dateTime = details[3].textContent;
+  const vet = details[4].textContent;
   
   // Show custom confirmation popup
   showAcceptConfirmation({
@@ -25,6 +26,7 @@ function acceptAppointment(appointmentId) {
     petName,
     owner,
     appointmentType,
+    symptoms,
     dateTime,
     vet,
     card
@@ -46,7 +48,7 @@ function declineAppointment(appointmentId) {
   const petName = card.querySelector('.pet-name').textContent;
   const details = card.querySelectorAll('.pending-detail .value');
   const owner = details[0].textContent;
-  const dateTime = details[2].textContent;
+  const dateTime = details[3].textContent;
   
   // Show custom decline popup
   showDeclineConfirmation({
@@ -64,6 +66,24 @@ function declineAppointment(appointmentId) {
 function showAcceptConfirmation(data) {
   const overlay = createOverlay();
   
+  const isAnyVet = data.vet === 'Any Available Vet';
+  const vetOptions = window.availableVets || [];
+  
+  let vetDropdownHtml = '';
+  if (isAnyVet || vetOptions.length > 0) {
+    vetDropdownHtml = `
+      <div class="detail-row" style="flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+        <label for="acceptVetSelect" style="font-weight: 600; color: #334155; font-size: 14px;">
+          ${isAnyVet ? 'Assign Veterinarian: *' : 'Veterinarian (can be changed):'}
+        </label>
+        <select id="acceptVetSelect" style="width: 100%; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: white;" ${isAnyVet ? 'required' : ''}>
+          ${isAnyVet ? '<option value="">-- Select a Veterinarian --</option>' : ''}
+          ${vetOptions.map(vet => `<option value="${vet}" ${!isAnyVet && vet === data.vet ? 'selected' : ''}>${vet}</option>`).join('')}
+        </select>
+      </div>
+    `;
+  }
+  
   const popup = document.createElement('div');
   popup.className = 'confirmation-popup';
   popup.innerHTML = `
@@ -71,7 +91,7 @@ function showAcceptConfirmation(data) {
       <h3>✓ Accept Appointment</h3>
     </div>
     <div class="confirmation-body">
-      <p class="confirmation-message">Are you sure you want to accept this appointment?</p>
+      <p class="confirmation-message">Review the appointment details and ${isAnyVet ? 'assign a veterinarian' : 'confirm or change the veterinarian'}:</p>
       <div class="appointment-details">
         <div class="detail-row">
           <span class="detail-label">Pet:</span>
@@ -86,27 +106,29 @@ function showAcceptConfirmation(data) {
           <span class="detail-value">${data.appointmentType}</span>
         </div>
         <div class="detail-row">
+          <span class="detail-label">Reason:</span>
+          <span class="detail-value">${data.symptoms}</span>
+        </div>
+        <div class="detail-row">
           <span class="detail-label">Date & Time:</span>
           <span class="detail-value">${data.dateTime}</span>
         </div>
-        <div class="detail-row">
-          <span class="detail-label">Veterinarian:</span>
-          <span class="detail-value">${data.vet}</span>
-        </div>
+        ${vetDropdownHtml}
       </div>
-      <p class="confirmation-note">The pet owner will be notified.</p>
+      <p class="confirmation-note" style="margin-top: 16px;">The pet owner will be notified via email.</p>
     </div>
     <div class="confirmation-actions">
       <button class="btn-cancel" onclick="closeConfirmationPopup()">Cancel</button>
-      <button class="btn-confirm-accept" onclick="confirmAccept(${data.appointmentId})">Accept Appointment</button>
+      <button class="btn-confirm-accept" onclick="confirmAccept(${data.appointmentId}, ${isAnyVet})">Accept Appointment</button>
     </div>
   `;
   
   overlay.appendChild(popup);
   document.body.appendChild(overlay);
   
-  // Store card reference
+  // Store card reference and data
   window.currentAppointmentCard = data.card;
+  window.currentAppointmentData = data;
 }
 
 /**
@@ -184,7 +206,17 @@ function closeConfirmationPopup() {
 /**
  * Confirm accept appointment
  */
-function confirmAccept(appointmentId) {
+function confirmAccept(appointmentId, requiresVet) {
+  // Get selected vet if dropdown exists
+  const vetSelect = document.getElementById('acceptVetSelect');
+  const selectedVet = vetSelect ? vetSelect.value : null;
+  
+  // Validate vet selection if required
+  if (requiresVet && (!selectedVet || selectedVet === '')) {
+    alert('Please select a veterinarian before accepting the appointment.');
+    return;
+  }
+  
   const card = window.currentAppointmentCard;
   if (!card) return;
   
@@ -199,12 +231,17 @@ function confirmAccept(appointmentId) {
   acceptBtn.disabled = true;
   
   setTimeout(() => {
+    const requestBody = { appointment_id: appointmentId };
+    if (selectedVet) {
+      requestBody.vet = selectedVet;
+    }
+    
     fetch('/PETVET/api/appointments/approve.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ appointment_id: appointmentId })
+      body: JSON.stringify(requestBody)
     })
     .then(response => response.json())
     .then(data => {

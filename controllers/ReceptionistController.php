@@ -282,45 +282,6 @@ class ReceptionistController extends BaseController {
         }
     }
     
-    public function settings() {
-        try {
-            $userId = currentUserId();
-            $userData = [];
-            $clinicData = [];
-            
-            if ($userId) {
-                $pdo = db();
-                
-                // Get user data
-                $userStmt = $pdo->prepare("
-                    SELECT id, first_name, last_name, email, phone, address
-                    FROM users 
-                    WHERE id = ?
-                ");
-                $userStmt->execute([$userId]);
-                $userData = $userStmt->fetch(PDO::FETCH_ASSOC) ?: [];
-                
-                // Get clinic data
-                $clinicStmt = $pdo->prepare("
-                    SELECT c.id, c.clinic_name, c.clinic_address, c.clinic_phone, c.clinic_email
-                    FROM clinic_staff cs
-                    JOIN clinics c ON cs.clinic_id = c.id
-                    WHERE cs.user_id = ?
-                ");
-                $clinicStmt->execute([$userId]);
-                $clinicData = $clinicStmt->fetch(PDO::FETCH_ASSOC) ?: [];
-            }
-            
-            $this->view('receptionist', 'settings', [
-                'userData' => $userData,
-                'clinicData' => $clinicData
-            ]);
-            
-        } catch (Exception $e) {
-            echo "Error: " . $e->getMessage();
-        }
-    }
-    
     // Handle appointment actions (add, edit, delete)
     public function handleAppointmentAction() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -390,6 +351,27 @@ class ReceptionistController extends BaseController {
             'success' => true,
             'message' => 'Appointment cancelled successfully'
         ]);
+    }
+    
+    public function settings() {
+        require_once __DIR__ . '/../models/PetOwner/SettingsModel.php';
+        $settingsModel = new SettingsModel();
+        
+        // Get current user ID from session
+        $currentUserId = $_SESSION['user_id'] ?? null;
+        
+        if (!$currentUserId) {
+            header('Location: /PETVET/index.php?module=guest&page=login');
+            exit;
+        }
+        
+        $data = [
+            'profile' => $settingsModel->getUserProfile($currentUserId),
+            'prefs' => $settingsModel->getUserPreferences($currentUserId),
+            'accountStats' => $settingsModel->getAccountStats($currentUserId)
+        ];
+        
+        $this->view('receptionist', 'settings', $data);
     }
 }
 ?>

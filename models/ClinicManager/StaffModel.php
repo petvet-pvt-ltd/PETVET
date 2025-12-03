@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../config/connect.php';
  * Uses database for persistence with CRUD operations
  */
 class StaffModel extends BaseModel {
-    private $db;
+    protected $db;
 
     public function __construct() {
         parent::__construct();

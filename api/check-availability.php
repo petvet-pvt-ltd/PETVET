@@ -13,6 +13,9 @@ if (empty($date) || empty($time)) {
     exit;
 }
 
+// Debug logging
+error_log("Availability check - Date: $date, Time: $time, VetId: $vetId, ClinicId: $clinicId");
+
 try {
     $db = db();
     
@@ -36,6 +39,9 @@ try {
     $stmt->execute($params);
     $existingAppointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
+    // Debug logging
+    error_log("Found " . count($existingAppointments) . " existing appointments");
+    
 } catch (Exception $e) {
     error_log("Availability check error: " . $e->getMessage());
     echo json_encode(['success' => false, 'error' => 'Failed to check availability']);
@@ -56,17 +62,19 @@ $isAvailable = true;
 $conflictingAppointment = null;
 
 // Check for conflicts
+// Only check if the SAME vet has conflicting appointments
+// Different vets can have appointments at the same time
 foreach ($existingAppointments as $appointment) {
-    // If vet_id is 0, it means "any available" was selected - only check if specific vet selected
-    if ($vetId > 0 && $appointment['vet_id'] != $vetId && $appointment['vet_id'] != null) {
-        continue; // Different vet, no conflict
+    // Skip if this appointment is for a different vet
+    if ($vetId > 0 && (int)$appointment['vet_id'] !== $vetId) {
+        continue;
     }
     
     $slotDuration = isset($appointment['duration_minutes']) ? (int)$appointment['duration_minutes'] : $defaultSlotDuration;
     $appointmentTimeMinutes = timeToMinutes($appointment['time']);
     $appointmentEndMinutes = $appointmentTimeMinutes + $slotDuration;
     
-    // Check if time slots overlap
+    // Check if time slots overlap for the same vet
     if (
         ($requestedTimeMinutes >= $appointmentTimeMinutes && $requestedTimeMinutes < $appointmentEndMinutes) ||
         ($requestedEndMinutes > $appointmentTimeMinutes && $requestedEndMinutes <= $appointmentEndMinutes) ||
@@ -77,6 +85,9 @@ foreach ($existingAppointments as $appointment) {
         break;
     }
 }
+
+// Debug logging
+error_log("Result - Available: " . ($isAvailable ? 'YES' : 'NO'));
 
 echo json_encode([
     'success' => true,

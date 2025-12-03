@@ -1,134 +1,91 @@
 <?php
-// ==== Simulated DB data (arrays) ====
-$manager = [
-  'name' => 'Kasun Perera',
-  'email' => 'kasun.perera@petvet.lk',
-  'phone' => '+94 77 123 4567',
-  'avatar' => 'https://media.istockphoto.com/photos/headshot-portrait-of-smiling-ethnic-businessman-in-office-picture-id1300512215?b=1&k=20&m=1300512215&s=170667a&w=0&h=LsZL_-vvAHB2A2sNLHu9Vpoib_3aLLkRamveVW3AGeQ='
-];
+$currentPage = basename($_SERVER['PHP_SELF']);
+$module = 'clinic_manager';
+$GLOBALS['currentPage'] = 'settings.php';
+$GLOBALS['module'] = 'clinic_manager';
 
-$clinic = [
-  'name' => 'PetVet Animal Clinic',
-  'reg_no' => 'PV-CLN-2021-045',
-  'logo' => 'https://static.vecteezy.com/system/resources/previews/005/601/780/non_2x/veterinary-clinic-logo-vector.jpg',
+/** Clinic Manager Settings (Profile & Preferences) */
+// Data is provided by controller
+if (!isset($profile) || !isset($clinic) || !isset($prefs)) {
+    die('Settings data not loaded');
+}
 
-  'cover' => 'https://img.freepik.com/free-vector/veterinary-clinic-social-media-cover-template_23-2149716789.jpg?w=1060&t=st=1704177217~exp=1704177817~hmac=197572bb68251ba0fc40f21b0c57a1e6099f7fa4dedc067b41e398190d17b804',
-
-  'description' => 'Trusted pet healthcare and wellness. Experienced vets, modern facilities, and friendly service.',
-  'address' => '123 Main St, Colombo 03',
-  'map_pin' => '6.9271, 79.8612',
-  'phone' => '+94 11 234 5678',
-  'email' => 'contact@petvet.lk',
-  'website' => 'https://petvet.lk',
-  'facebook' => 'https://facebook.com/petvetlk',
-  'instagram' => 'https://instagram.com/petvetlk'
-];
-
-$hours = [
-  ['day' => 'Monday',    'open' => true,  'start' => '09:00', 'end' => '18:00'],
-  ['day' => 'Tuesday',   'open' => true,  'start' => '09:00', 'end' => '18:00'],
-  ['day' => 'Wednesday', 'open' => true,  'start' => '09:00', 'end' => '18:00'],
-  ['day' => 'Thursday',  'open' => true,  'start' => '09:00', 'end' => '18:00'],
-  ['day' => 'Friday',    'open' => true,  'start' => '09:00', 'end' => '18:00'],
-  ['day' => 'Saturday',  'open' => true,  'start' => '10:00', 'end' => '16:00'],
-  ['day' => 'Sunday',    'open' => false, 'start' => '09:00', 'end' => '13:00'],
-];
-
-$holidays = ['2025-12-25', '2026-01-01'];
-
-$cfgPath = __DIR__ . '/../../config/clinic_manager.php';
-$cfg = file_exists($cfgPath) ? require $cfgPath : ['slot_duration_minutes' => 20];
-$policies = [
-  'slot_length' => (int)($cfg['slot_duration_minutes'] ?? 20), // minutes
-  'lead_time_hours' => 2,
-  'cancellation_policy' => "Please cancel appointments at least 2 hours in advance to avoid fees.",
-  'no_show_policy' => "No-shows may incur a standard charge and require prepayment for future bookings."
-];
+// Ensure weeklySchedule and blockedDays are set
+$weeklySchedule = $weeklySchedule ?? [];
+$blockedDays = $blockedDays ?? [];
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Settings | Clinic Manager</title>
-  <link rel="stylesheet" href="/PETVET/public/css/clinic-manager/enhanced-global.css" />
-  <link rel="stylesheet" href="/PETVET/public/css/clinic-manager/settings.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings - Clinic Manager - PetVet</title>
+<link rel="stylesheet" href="/PETVET/public/css/pet-owner/settings.css" />
+<link rel="stylesheet" href="/PETVET/public/css/clinic-manager/settings.css" />
 </head>
 <body>
-  <div class="main-content">
-    <div class="page-wrap">
-      <div class="settings-header">
-        <div>
-          <h1>Settings</h1>
-          <p class="muted">Manage your profile, clinic details, and policies</p>
-        </div>
-        <nav class="quick-nav" aria-label="Quick navigation">
-          <a href="#section-manager">Manager</a>
-          <a href="#section-clinic">Clinic</a>
-          <a href="#section-hours">Hours &amp; Policies</a>
-        </nav>
-      </div>
-
-      <div class="settings-grid">
-
-        <!-- ============== Manager Profile (Avatar left, form right) ============== -->
-        <section class="card" id="section-manager">
-          <div class="card-head"><h2>Manager Profile</h2></div>
-          <form id="formManager" class="form" enctype="multipart/form-data">
-            <div class="profile-grid">
-              <!-- Left: BIG circular avatar -->
-              <div class="profile-left">
-                <div class="avatar-frame">
-                  <div class="image-preview-list avatar big" id="mgrAvatarPreview">
-                    <div class="image-preview-item"><img src="<?=htmlspecialchars($manager['avatar'])?>" alt="avatar"></div>
-                  </div>
-                  <div class="uploader-actions center">
-                    <input type="file" id="mgrAvatar" accept="image/*" hidden />
-                    <button type="button" class="btn btn-light" data-for="mgrAvatar">Change</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Right: fields -->
-              <div class="profile-right">
-                <div class="row two">
-                  <label>Full Name
-                    <input type="text" name="name" value="<?=htmlspecialchars($manager['name'])?>" required />
-                  </label>
-                  <label>Email
-                    <input type="email" name="email" value="<?=htmlspecialchars($manager['email'])?>" required />
-                  </label>
-                </div>
-                <div class="row one">
-                  <label>Phone
-                    <input type="tel" name="phone" value="<?=htmlspecialchars($manager['phone'])?>" />
-                  </label>
-                </div>
-
-                <fieldset class="fieldset">
-                  <legend>Change Password</legend>
-                  <div class="row two">
-                    <label>Current Password
-                      <input type="password" name="current_password" />
-                    </label>
-                    <label>New Password
-                      <input type="password" name="new_password" />
-                    </label>
-                  </div>
-                  <div class="row one">
-                    <label>Confirm New Password
-                      <input type="password" name="confirm_password" />
-                    </label>
-                  </div>
-                </fieldset>
-
-                <div class="actions">
-                  <button class="btn btn-primary" type="submit">Save Changes</button>
-                </div>
-              </div>
-            </div>
-          </form>
-        </section>
+<?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
+<main class="main-content" style="padding-top: 0px !important;">
+		<div class="settings-header">
+			<div>
+				<h1>Settings</h1>
+				<p class="muted">Manage your profile, clinic details &amp; preferences</p>
+			</div>
+			<nav class="quick-nav" aria-label="Quick navigation">
+				<a href="#section-profile">Profile</a>
+				<a href="#section-clinic">Clinic</a>
+				<a href="#section-preferences">Preferences</a>
+				<a href="#section-availability">Availability</a>
+				<a href="#section-password">Password</a>
+			</nav>
+		</div>
+		<div class="page-wrap">
+			<div class="settings-grid">
+				<!-- Profile Card -->
+				<section class="card" id="section-profile" data-section>
+					<div class="card-head"><h2>Profile</h2></div>
+					<form id="formProfile" class="form" enctype="multipart/form-data">
+						<div class="profile-grid">
+							<div class="profile-left">
+								<div class="avatar-frame">
+									<div class="image-preview-list avatar big" id="managerAvatarPreview">
+										<div class="image-preview-item">
+											<img src="<?= htmlspecialchars($profile['avatar']) ?>" alt="avatar" />
+										</div>
+									</div>
+									<div class="uploader-actions center">
+										<input type="file" id="managerAvatar" accept="image/*" hidden />
+										<button type="button" class="btn outline" data-for="managerAvatar">Change</button>
+									</div>
+								</div>
+							</div>
+							<div class="profile-right">
+								<div class="row two">
+									<label>First Name
+										<input type="text" name="first_name" value="<?= htmlspecialchars($profile['first_name'] ?? '') ?>" required />
+									</label>
+									<label>Last Name
+										<input type="text" name="last_name" value="<?= htmlspecialchars($profile['last_name'] ?? '') ?>" required />
+									</label>
+								</div>
+							<div class="row one">
+								<label>Email (Login Username)
+									<input type="email" name="email" value="<?= htmlspecialchars($profile['email']) ?>" readonly style="background: #f0f0f0; cursor: not-allowed;" />
+								</label>
+							</div>
+							<div class="row one">
+								<label>Phone
+									<input type="tel" name="phone" id="phoneInput" value="<?= htmlspecialchars($profile['phone'] ?? '') ?>" placeholder="07XXXXXXXX" pattern="07[0-9]{8}" title="Phone number must be 10 digits starting with 07" />
+									<span id="phoneError" style="color: #ef4444; font-size: 12px; margin-top: 4px; display: none;"></span>
+								</label>
+							</div>
+								<div class="actions">
+									<button class="btn primary" type="submit">Save Profile</button>
+								</div>
+							</div>
+						</div>
+					</form>
+				</section>
 
         <!-- ============== Clinic Profile (Facebook-style cover + logo) ============== -->
         <section class="card" id="section-clinic">
@@ -159,12 +116,9 @@ $policies = [
               <p class="hero-sub"><?=$clinic['description']?></p>
             </div>
 
-            <div class="row two">
+            <div class="row one">
               <label>Clinic Name
                 <input type="text" name="name" value="<?=htmlspecialchars($clinic['name'])?>" required />
-              </label>
-              <label>Registration No.
-                <input type="text" name="reg_no" value="<?=htmlspecialchars($clinic['reg_no'])?>" />
               </label>
             </div>
 
@@ -187,107 +141,164 @@ $policies = [
                 <input type="tel" name="phone" value="<?=htmlspecialchars($clinic['phone'])?>" />
               </label>
             </div>
-            <div class="row two">
+            <div class="row one">
               <label>Email
                 <input type="email" name="email" value="<?=htmlspecialchars($clinic['email'])?>" />
               </label>
-              <label>Website
-                <input type="url" name="website" value="<?=htmlspecialchars($clinic['website'])?>" />
-              </label>
-            </div>
-            <div class="row two">
-              <label>Facebook
-                <input type="url" name="facebook" value="<?=htmlspecialchars($clinic['facebook'])?>" />
-              </label>
-              <label>Instagram
-                <input type="url" name="instagram" value="<?=htmlspecialchars($clinic['instagram'])?>" />
-              </label>
             </div>
 
             <div class="actions">
-              <button class="btn btn-primary" type="submit">Save Changes</button>
+              <button class="btn primary" type="submit">Save Changes</button>
             </div>
           </form>
         </section>
 
-        <!-- ============== Business Hours & Policies ============== -->
-        <section class="card" id="section-hours">
-          <div class="card-head"><h2>Business Hours &amp; Policies</h2></div>
-          <form id="formHours" class="form">
-            <div class="hours-list">
-              <?php foreach ($hours as $i => $d): ?>
-              <div class="hours-row" data-i="<?=$i?>">
-                <span class="day"><?=htmlspecialchars($d['day'])?></span>
-                <label class="switch">
-                  <input type="checkbox" class="open-toggle" <?=$d['open'] ? 'checked' : ''?> />
-                  <span>Open</span>
+				<!-- Preferences Card -->
+				<section class="card" id="section-preferences" data-section>
+					<div class="card-head"><h2>Preferences</h2></div>
+					<form id="formPrefs" class="form">
+						<div class="prefs-container">
+							<div class="pref-item">
+								<div class="pref-info">
+									<div class="pref-title">Email Notifications</div>
+									<div class="pref-subtitle">Pending requests and shop updates</div>
+								</div>
+								<label class="toggle-switch">
+									<input type="checkbox" name="email_notifications" <?= $prefs['email_notifications'] ? 'checked' : '' ?> />
+									<span class="toggle-slider"></span>
+								</label>
+							</div>
+
+							<div class="pref-item">
+								<div class="pref-info">
+									<div class="pref-title">Slot Time (minutes)</div>
+									<div class="pref-subtitle">Duration for each appointment slot</div>
+								</div>
+								<input type="number" name="slot_time" value="<?= $prefs['slot_duration_minutes'] ?? 20 ?>" min="5" max="120" step="5" class="slot-input" />
+							</div>
+						</div>
+
+						<div class="actions">
+							<button class="btn btn-primary" type="submit">Save Preferences</button>
+						</div>
+					</form>
+				</section>
+
+        <!-- Availability / Weekly Schedule -->
+        <section class="card" id="section-availability" data-section>
+          <div class="card-head"><h2>Weekly Schedule</h2></div>
+          <form id="formWeeklySchedule" class="form">
+            <p class="muted" style="margin-top:0">Configure your availability for each day of the week</p>
+            
+            <?php foreach ($weeklySchedule as $day): 
+            ?>
+            <div class="schedule-day <?= $day['active'] ? 'active' : '' ?>" data-day="<?= $day['id'] ?>">
+              <div class="day-label"><?= $day['label'] ?></div>
+              
+              <label class="toggle-switch">
+                <input 
+                  type="checkbox" 
+                  name="<?= $day['id'] ?>_enabled"
+                  <?= $day['active'] ? 'checked' : '' ?>
+                />
+                <span class="toggle-slider"></span>
+              </label>
+              
+              <div class="time-inputs">
+                <label>
+                  Start
+                  <input 
+                    type="time" 
+                    name="<?= $day['id'] ?>_start" 
+                    value="<?= $day['start'] ?>"
+                    <?= !$day['active'] ? 'disabled' : '' ?>
+                  />
                 </label>
-                <div class="time-group">
-                  <input type="time" class="time-start" value="<?=htmlspecialchars($d['start'])?>" <?=$d['open']? '' : 'disabled'?> />
-                  <span class="sep">to</span>
-                  <input type="time" class="time-end" value="<?=htmlspecialchars($d['end'])?>" <?=$d['open']? '' : 'disabled'?> />
-                </div>
+                <label>
+                  End
+                  <input 
+                    type="time" 
+                    name="<?= $day['id'] ?>_end" 
+                    value="<?= $day['end'] ?>"
+                    <?= !$day['active'] ? 'disabled' : '' ?>
+                  />
+                </label>
               </div>
-              <?php endforeach; ?>
             </div>
-
-            <div class="row one">
-              <label>Holidays / Closures
-                <div class="holiday-list" id="holidayList">
-                  <?php foreach ($holidays as $h): ?>
-                    <div class="holiday-item">
-                      <input type="date" value="<?=htmlspecialchars($h)?>" />
-                      <button type="button" class="icon-btn remove" aria-label="Remove holiday" title="Remove">×</button>
-                    </div>
-                  <?php endforeach; ?>
-                </div>
-                <div class="add-holiday">
-                  <input type="date" id="newHoliday" />
-                  <button type="button" class="btn" id="btnAddHoliday">Add Holiday</button>
-                </div>
-              </label>
-            </div>
-
-            <div class="row two">
-              <label>Appointment Slot Length (minutes)
-                <select id="slotLength">
-                  <?php foreach ([10,15,20,30,45,60] as $opt): ?>
-                    <option value="<?=$opt?>" <?=$opt==$policies['slot_length']?'selected':''?>><?=$opt?></option>
-                  <?php endforeach; ?>
-                </select>
-                <small class="muted">This is applied across Overview and Appointments. Current default: <?=$policies['slot_length']?> minutes.</small>
-              </label>
-              <label>Lead Time (hours)
-                <select id="leadTime">
-                  <?php foreach ([1,2,3,4,6,12,24] as $opt): ?>
-                    <option value="<?=$opt?>" <?=$opt==$policies['lead_time_hours']?'selected':''?>><?=$opt?></option>
-                  <?php endforeach; ?>
-                </select>
-              </label>
-            </div>
-
-            <div class="row one">
-              <label>Cancellation Policy
-                <textarea id="cancelPolicy" rows="3"><?=htmlspecialchars($policies['cancellation_policy'])?></textarea>
-              </label>
-            </div>
-            <div class="row one">
-              <label>No-show Policy
-                <textarea id="noShowPolicy" rows="3"><?=htmlspecialchars($policies['no_show_policy'])?></textarea>
-              </label>
-            </div>
+            <?php endforeach; ?>
 
             <div class="actions">
-              <button class="btn btn-primary" type="submit">Save Changes</button>
+              <button class="btn btn-light" type="reset">Reset</button>
+              <button class="btn btn-primary" type="submit">Save Schedule</button>
             </div>
           </form>
         </section>
 
-      </div>
-    </div>
-  </div>
+        <!-- Blocked Days -->
+        <section class="card" id="section-blocked-days" data-section>
+          <div class="card-head"><h2>Blocked Days</h2></div>
+          <div class="form">
+            <p class="muted" style="margin-top:0">Block specific dates for holidays, vacations, or personal reasons</p>
+            
+            <div class="blocked-days-header">
+              <input type="date" id="newBlockedDate" placeholder="Select date" />
+              <input type="text" id="newBlockedReason" placeholder="Reason (e.g., Holiday, Vacation)" />
+              <button type="button" class="btn btn-primary" id="btnAddBlockedDay">Add Date</button>
+            </div>
 
-  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
-  <script src="/PETVET/public/js/clinic-manager/settings.js"></script>
+            <div class="blocked-days-list" id="blockedDaysList">
+              <?php if (empty($blockedDays)): ?>
+                <div class="empty-state">No blocked days yet. Add dates you won't be available.</div>
+              <?php else:
+                foreach ($blockedDays as $blocked): 
+                  $dateObj = new DateTime($blocked['blocked_date']);
+                  $displayDate = $dateObj->format('M j, Y');
+              ?>
+                <div class="blocked-day-item" data-date="<?= htmlspecialchars($blocked['blocked_date']) ?>">
+                  <div class="blocked-date"><?= htmlspecialchars($displayDate) ?></div>
+                  <div class="blocked-reason"><?= htmlspecialchars($blocked['reason'] ?? 'Holiday') ?></div>
+                  <button type="button" class="btn-remove" data-action="remove">Remove</button>
+                </div>
+              <?php endforeach; 
+              endif; ?>
+            </div>
+
+            <div class="actions" style="margin-top:var(--space-4)">
+              <button class="btn btn-primary" type="button" id="btnSaveBlockedDays">Save Blocked Days</button>
+            </div>
+          </div>
+        </section>
+
+				<!-- Password Card -->
+				<section class="card" id="section-password" data-section>
+					<div class="card-head"><h2>Change Password</h2></div>
+					<form id="formPassword" class="form">
+						<div class="row one">
+							<label>Current Password
+								<input type="password" name="current_password" autocomplete="current-password" />
+							</label>
+						</div>
+						<div class="row one">
+							<label>New Password
+								<input type="password" name="new_password" autocomplete="new-password" />
+							</label>
+						</div>
+						<div class="row one">
+							<label>Confirm New Password
+								<input type="password" name="confirm_password" />
+							</label>
+						</div>
+						<div class="actions">
+							<button class="btn primary" type="submit">Update Password</button>
+						</div>
+					</form>
+				</section>
+
+			</div>
+	</div>
+</main>
+<div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+<script src="/PETVET/public/js/pet-owner/settings.js"></script>
+<script src="/PETVET/public/js/clinic-manager/settings.js"></script>
 </body>
 </html>
