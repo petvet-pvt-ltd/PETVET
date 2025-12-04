@@ -1,9 +1,14 @@
 // Shopping Cart Management - No Frameworks/Libraries
+console.log('Cart.js loaded successfully');
+
 let cart = JSON.parse(localStorage.getItem('petvet_cart')) || [];
+console.log('Initial cart:', cart);
 
-// Global image override for cart items (user-specified)
-const CART_IMG_OVERRIDE = 'https://m.media-amazon.com/images/I/41A-2VUQHsL.jpg';
+// No image override - use actual product images
+const CART_IMG_OVERRIDE = null;
 
+// Don't initialize with demo items - start with empty cart
+/*
 // Initialize with demo items if cart is empty (first time)
 if (cart.length === 0 && !localStorage.getItem('petvet_cart_initialized')) {
     cart = [
@@ -39,6 +44,7 @@ if (cart.length === 0 && !localStorage.getItem('petvet_cart_initialized')) {
     localStorage.setItem('petvet_cart', JSON.stringify(cart));
     localStorage.setItem('petvet_cart_initialized', 'true');
 }
+*/
 
 // Toggle cart dropdown (full-screen modal behavior)
 function toggleCart() {
@@ -101,19 +107,27 @@ document.addEventListener('keydown', function(e) {
 
 // Add item to cart
 function addToCart(productId, productName, productPrice, productImage, quantity = 1) {
+    console.log('addToCart called with:', {productId, productName, productPrice, productImage, quantity});
+    console.log('Current cart before:', JSON.parse(JSON.stringify(cart)));
+    
     const existingItem = cart.find(item => item.id === productId);
     
     if (existingItem) {
         existingItem.quantity += quantity;
+        console.log('Updated existing item:', existingItem);
     } else {
-        cart.push({
+        const newItem = {
             id: productId,
             name: productName,
             price: productPrice,
             image: productImage,
             quantity: quantity
-        });
+        };
+        cart.push(newItem);
+        console.log('Added new item:', newItem);
     }
+    
+    console.log('Current cart after:', JSON.parse(JSON.stringify(cart)));
     
     saveCart();
     updateCartUI();
@@ -188,11 +202,11 @@ function updateCartUI() {
             </div>`;
         const rows = cart.map(item => {
             const lineTotal = item.price * item.quantity;
-            const imgSrc = CART_IMG_OVERRIDE || item.image;
+            const imgSrc = item.image || 'https://via.placeholder.com/150?text=No+Image';
             return `
             <div class="cart-item">
                 <div class="col-product">
-                    <img src="${imgSrc}" alt="${item.name}" class="cart-item-image" onerror="this.onerror=null;this.src='${CART_IMG_OVERRIDE}';">
+                    <img src="${imgSrc}" alt="${item.name}" class="cart-item-image" onerror="this.onerror=null;this.src='https://via.placeholder.com/150?text=No+Image';">
                     <div class="cart-item-details">
                         <div class="cart-item-name">${item.name}</div>
                     </div>
@@ -238,13 +252,79 @@ function viewCart() {
     }
 }
 
-// Checkout
-function checkout() {
+// Checkout - Redirect to Stripe Payment
+async function checkout() {
     if (cart.length === 0) {
         alert('Your cart is empty!');
         return;
     }
-    alert('Checkout functionality - Coming soon!');
+    
+    // Show delivery information modal first
+    showDeliveryModal();
+}
+
+// Process checkout with delivery info
+async function processCheckout(deliveryCity = null) {
+    // Show loading state
+    const checkoutBtn = document.querySelector('.btn-checkout');
+    const originalText = checkoutBtn ? checkoutBtn.textContent : 'Proceed to Checkout';
+    if (checkoutBtn) {
+        checkoutBtn.textContent = 'Processing...';
+        checkoutBtn.disabled = true;
+    }
+    
+    try {
+        // Calculate subtotal
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        
+        // Prepare cart data for Stripe
+        const cartData = {
+            cart: cart.map(item => ({
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                image: item.image || 'https://via.placeholder.com/150'
+            })),
+            deliveryCity: deliveryCity,
+            subtotal: subtotal
+        };
+        
+        // Call API to create Stripe checkout session
+        const response = await fetch('/PETVET/api/payments/create-checkout-session.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(cartData)
+        });
+        
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Server returned invalid response. Please check if Stripe is configured correctly.');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.url) {
+            // Redirect to Stripe Checkout page
+            window.location.href = data.url;
+        } else {
+            throw new Error(data.error || 'Failed to create checkout session');
+        }
+        
+    } catch (error) {
+        console.error('Checkout error:', error);
+        
+        let errorMessage = 'Unable to proceed to checkout.\n\n';
+        errorMessage += 'Error: ' + error.message;
+        
+        alert(errorMessage);
+        
+        // Restore button state
+        checkoutBtn.textContent = originalText;
+        checkoutBtn.disabled = false;
+    }
 }
 
 // Show notification
@@ -291,15 +371,58 @@ document.head.appendChild(style);
 
 // Initialize cart UI on page load
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded - Cart initialization starting');
     updateCartUI();
     
-    // Handle Add to Cart buttons
+    console.log('Setting up Add to Cart click listener');
+    // Handle Add to Cart buttons - use capture phase to run before other handlers
     document.addEventListener('click', function(e) {
+        console.log('Document clicked:', e.target);
+        
         if (e.target.classList.contains('add-to-cart') || e.target.closest('.add-to-cart')) {
+            console.log('Add to cart button detected!');
+            e.preventDefault(); // Prevent any default action
+            e.stopPropagation(); // Stop event bubbling
+            e.stopImmediatePropagation(); // Stop other listeners on the same element
+            
             const button = e.target.classList.contains('add-to-cart') ? e.target : e.target.closest('.add-to-cart');
             
-            // Check if this is a product detail page (has data attributes on button)
-            if (button.hasAttribute('data-product-id')) {
+            // Get product card (works for both shop page and product detail page)
+            const productCard = button.closest('.product-card');
+            
+            if (productCard) {
+                // Shop page - get from product card
+                const productId = parseInt(productCard.dataset.productId);
+                const productName = productCard.querySelector('h3').textContent.trim();
+                const priceText = productCard.querySelector('.price').textContent;
+                const productPrice = parseInt(priceText.replace(/[^0-9]/g, ''));
+                
+                // Get the first visible image
+                let productImage = '';
+                const carouselImg = productCard.querySelector('.carousel-img.active');
+                if (carouselImg) {
+                    productImage = carouselImg.src;
+                } else {
+                    const regularImg = productCard.querySelector('.product-image-container img');
+                    if (regularImg) {
+                        productImage = regularImg.src;
+                    }
+                }
+                
+                console.log('Adding to cart:', {productId, productName, productPrice, productImage}); // Debug
+                
+                addToCart(productId, productName, productPrice, productImage, 1);
+                
+                // Visual feedback
+                const originalText = button.textContent;
+                button.textContent = 'Added! ✓';
+                button.style.background = '#10b981';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '';
+                }, 1500);
+            } else if (button.hasAttribute('data-product-id')) {
+                // Product detail page with full data attributes on button
                 const productId = parseInt(button.getAttribute('data-product-id'));
                 const productName = button.getAttribute('data-product-name');
                 const productPrice = parseInt(button.getAttribute('data-product-price'));
@@ -309,39 +432,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 const quantityInput = document.getElementById('quantity');
                 const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
                 
+                console.log('Adding to cart (detail page):', {productId, productName, productPrice, productImage, quantity}); // Debug
+                
                 addToCart(productId, productName, productPrice, productImage, quantity);
                 
                 // Visual feedback
-                button.textContent = 'Added!';
+                const originalText = button.textContent;
+                button.textContent = 'Added! ✓';
                 button.style.background = '#10b981';
                 setTimeout(() => {
-                    button.textContent = 'Add to Cart';
+                    button.textContent = originalText;
                     button.style.background = '';
                 }, 1500);
-            } else {
-                // Shop page - get from product card
-                const productCard = button.closest('.product-card');
-                
-                if (productCard) {
-                    const productId = parseInt(productCard.dataset.productId);
-                    const productName = productCard.querySelector('h3').textContent;
-                    const priceText = productCard.querySelector('.price').textContent;
-                    const productPrice = parseInt(priceText.replace(/[^0-9]/g, ''));
-                    const productImage = productCard.querySelector('img').src;
-                    
-                    addToCart(productId, productName, productPrice, productImage, 1);
-                    
-                    // Visual feedback
-                    button.textContent = 'Added!';
-                    button.style.background = '#10b981';
-                    setTimeout(() => {
-                        button.textContent = 'Add to Cart';
-                        button.style.background = '';
-                    }, 1500);
-                }
             }
         }
-    });
+    }, true); // Use capture phase to intercept clicks before they reach the product card handler
+    
+    console.log('Add to Cart listener set up successfully');
 });
 
 // Quantity controls for product detail page
@@ -353,4 +460,184 @@ function changeQty(delta) {
             input.value = newValue;
         }
     }
+}
+
+// Delivery rates configuration
+const deliveryRates = {
+    'Colombo': 200,
+    'Dehiwala-Mount Lavinia': 200,
+    'Moratuwa': 250,
+    'Sri Jayawardenepura Kotte': 200,
+    'Gampaha': 300,
+    'Negombo': 350,
+    'Kalutara': 400,
+    'Panadura': 350,
+    'Kandy': 500,
+    'Matale': 550,
+    'Nuwara Eliya': 600,
+    'Galle': 500,
+    'Matara': 550,
+    'Hambantota': 600,
+    'Jaffna': 700,
+    'Kilinochchi': 750,
+    'Mannar': 750,
+    'Vavuniya': 700,
+    'Mullaitivu': 750,
+    'Trincomalee': 650,
+    'Batticaloa': 650,
+    'Ampara': 600,
+    'Kurunegala': 450,
+    'Puttalam': 500,
+    'Anuradhapura': 600,
+    'Polonnaruwa': 650,
+    'Badulla': 600,
+    'Monaragala': 650,
+    'Ratnapura': 500,
+    'Kegalle': 450
+};
+
+const freeDeliveryThreshold = 5000;
+
+// Show delivery information modal
+function showDeliveryModal() {
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const isFreeDelivery = subtotal >= freeDeliveryThreshold;
+    
+    // Create modal HTML
+    const modalHTML = `
+        <div class="delivery-modal-overlay" id="deliveryModalOverlay">
+            <div class="delivery-modal">
+                <div class="delivery-modal-header">
+                    <h2>🚚 Delivery Information</h2>
+                    <button class="delivery-modal-close" onclick="closeDeliveryModal()">&times;</button>
+                </div>
+                
+                <div class="delivery-modal-body">
+                    <div class="order-summary-box">
+                        <h3>Order Summary</h3>
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span class="summary-value">Rs. ${subtotal.toLocaleString()}</span>
+                        </div>
+                        ${isFreeDelivery ? `
+                            <div class="free-delivery-banner">
+                                🎉 You qualify for FREE delivery!
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="delivery-form">
+                        <label for="deliveryCity">Select Your City/District:</label>
+                        <select id="deliveryCity" onchange="updateDeliveryCharge()">
+                            <option value="">-- Select City --</option>
+                            ${Object.keys(deliveryRates).sort().map(city => 
+                                `<option value="${city}">${city}</option>`
+                            ).join('')}
+                        </select>
+                        
+                        <div class="delivery-charge-info" id="deliveryChargeInfo" style="display: none;">
+                            <div class="charge-row">
+                                <span>Delivery Charge:</span>
+                                <span class="charge-value" id="deliveryChargeValue">Rs. 0</span>
+                            </div>
+                            <div class="total-row">
+                                <span>Total Amount:</span>
+                                <span class="total-value" id="totalAmountValue">Rs. ${subtotal.toLocaleString()}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="delivery-note">
+                            <strong>Note:</strong> You'll be asked to enter your complete delivery address on the next page (Stripe payment page).
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="delivery-modal-footer">
+                    <button class="btn-secondary" onclick="closeDeliveryModal()">Cancel</button>
+                    <button class="btn-primary" onclick="confirmDeliveryAndCheckout()" id="confirmDeliveryBtn">
+                        Continue to Payment
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('deliveryModalOverlay');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+}
+
+// Update delivery charge when city is selected
+function updateDeliveryCharge() {
+    const citySelect = document.getElementById('deliveryCity');
+    const selectedCity = citySelect.value;
+    const deliveryChargeInfo = document.getElementById('deliveryChargeInfo');
+    const deliveryChargeValue = document.getElementById('deliveryChargeValue');
+    const totalAmountValue = document.getElementById('totalAmountValue');
+    const confirmBtn = document.getElementById('confirmDeliveryBtn');
+    
+    if (!selectedCity) {
+        deliveryChargeInfo.style.display = 'none';
+        confirmBtn.disabled = true;
+        return;
+    }
+    
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    let deliveryCharge = deliveryRates[selectedCity] || 400;
+    
+    // Check for free delivery
+    if (subtotal >= freeDeliveryThreshold) {
+        deliveryCharge = 0;
+    }
+    
+    const total = subtotal + deliveryCharge;
+    
+    deliveryChargeInfo.style.display = 'block';
+    
+    if (deliveryCharge === 0) {
+        deliveryChargeValue.innerHTML = '<span style="color: #10b981; font-weight: 600;">FREE</span>';
+    } else {
+        deliveryChargeValue.textContent = 'Rs. ' + deliveryCharge.toLocaleString();
+    }
+    
+    totalAmountValue.textContent = 'Rs. ' + total.toLocaleString();
+    confirmBtn.disabled = false;
+}
+
+// Close delivery modal
+function closeDeliveryModal() {
+    const modal = document.getElementById('deliveryModalOverlay');
+    if (modal) {
+        modal.remove();
+    }
+    document.body.style.overflow = '';
+    
+    // Restore checkout button
+    const checkoutBtn = document.querySelector('.btn-checkout');
+    if (checkoutBtn) {
+        checkoutBtn.textContent = 'Proceed to Checkout';
+        checkoutBtn.disabled = false;
+    }
+}
+
+// Confirm delivery and proceed to checkout
+function confirmDeliveryAndCheckout() {
+    const citySelect = document.getElementById('deliveryCity');
+    const selectedCity = citySelect.value;
+    
+    if (!selectedCity) {
+        alert('Please select your city/district');
+        return;
+    }
+    
+    closeDeliveryModal();
+    processCheckout(selectedCity);
 }
