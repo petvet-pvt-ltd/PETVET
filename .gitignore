@@ -39,6 +39,9 @@ temp/
 .env.local
 .env.production
 
+# Stripe API Keys (sensitive - never commit)
+config/stripe_keys.php
+
 # Cache files
 cache/
 *.cache

@@ -201,11 +201,12 @@
 
 <script src="/PETVET/public/js/pet-owner/shop.js"></script>
 <script>
-// Override module for pet-owner
+// Override module for pet-owner - Navigate to product detail when clicking card (but not buttons)
 document.querySelectorAll('.product-card').forEach(card => {
     card.addEventListener('click', function(e) {
-        if (e.target.closest('button') || e.target.closest('a')) {
-            return;
+        // Don't navigate if clicking a button or inside a button
+        if (e.target.closest('button') || e.target.closest('a') || e.target.tagName === 'BUTTON') {
+            return; // Let the button handle its own click
         }
         const productId = this.dataset.productId;
         if (productId) {
