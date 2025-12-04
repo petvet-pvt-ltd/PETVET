@@ -15,8 +15,8 @@ require_once __DIR__ . '/../../config/connect.php';
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
 
-// Validate required fields
-$required = ['pet_id', 'clinic_id', 'appointment_type', 'symptoms', 'appointment_date', 'appointment_time'];
+// Validate required fields (symptoms is now optional)
+$required = ['pet_id', 'clinic_id', 'appointment_type', 'appointment_date', 'appointment_time'];
 foreach ($required as $field) {
     if (!isset($data[$field]) || empty($data[$field])) {
         http_response_code(400);
@@ -32,7 +32,7 @@ $petId = intval($data['pet_id']);
 $clinicId = intval($data['clinic_id']);
 $vetId = isset($data['vet_id']) && $data['vet_id'] != '0' ? intval($data['vet_id']) : null;
 $appointmentType = $data['appointment_type'];
-$symptoms = $data['symptoms'];
+$symptoms = isset($data['symptoms']) ? $data['symptoms'] : ''; // Optional field
 $appointmentDate = $data['appointment_date'];
 $appointmentTime = $data['appointment_time'];
 $petOwnerId = $_SESSION['user_id'];
@@ -53,28 +53,61 @@ try {
     }
     
     // Check if the time slot is already booked
-    $checkStmt = $db->prepare("
-        SELECT id FROM appointments 
-        WHERE clinic_id = ? 
-        AND appointment_date = ? 
-        AND appointment_time = ?
-        AND status NOT IN ('declined', 'cancelled')
-        " . ($vetId ? "AND (vet_id = ? OR vet_id IS NULL)" : "")
-    );
-    
     if ($vetId) {
+        // For specific vet: check if that vet is already booked
+        $checkStmt = $db->prepare("
+            SELECT id FROM appointments 
+            WHERE clinic_id = ? 
+            AND appointment_date = ? 
+            AND appointment_time = ?
+            AND vet_id = ?
+            AND status NOT IN ('declined', 'cancelled')
+        ");
         $checkStmt->execute([$clinicId, $appointmentDate, $appointmentTime, $vetId]);
+        
+        if ($checkStmt->fetch()) {
+            http_response_code(409);
+            echo json_encode([
+                'success' => false,
+                'error' => 'This vet is already booked at this time. Please choose another time or vet.'
+            ]);
+            exit;
+        }
     } else {
-        $checkStmt->execute([$clinicId, $appointmentDate, $appointmentTime]);
-    }
-    
-    if ($checkStmt->fetch()) {
-        http_response_code(409);
-        echo json_encode([
-            'success' => false,
-            'error' => 'This time slot is already booked. Please choose another time.'
-        ]);
-        exit;
+        // For "Any vet": check if ALL vets at this clinic are booked at this time
+        // First, count total vets at this clinic
+        $vetCountStmt = $db->prepare("
+            SELECT COUNT(DISTINCT ur.user_id) as vet_count
+            FROM user_roles ur
+            JOIN roles r ON ur.role_id = r.id
+            WHERE r.role_name = 'vet'
+        ");
+        $vetCountStmt->execute();
+        $vetCountRow = $vetCountStmt->fetch();
+        $totalVets = $vetCountRow['vet_count'];
+        
+        // Count appointments at this time slot
+        $bookedStmt = $db->prepare("
+            SELECT COUNT(*) as booked_count
+            FROM appointments 
+            WHERE clinic_id = ? 
+            AND appointment_date = ? 
+            AND appointment_time = ?
+            AND status NOT IN ('declined', 'cancelled')
+        ");
+        $bookedStmt->execute([$clinicId, $appointmentDate, $appointmentTime]);
+        $bookedRow = $bookedStmt->fetch();
+        $bookedCount = $bookedRow['booked_count'];
+        
+        // If all vets are booked, reject
+        if ($bookedCount >= $totalVets) {
+            http_response_code(409);
+            echo json_encode([
+                'success' => false,
+                'error' => 'All vets are booked at this time. Please choose another time.'
+            ]);
+            exit;
+        }
     }
     
     // Insert the appointment

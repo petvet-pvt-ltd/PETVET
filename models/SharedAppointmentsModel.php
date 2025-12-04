@@ -257,6 +257,7 @@ class SharedAppointmentsModel extends BaseModel {
             $query = "
                 SELECT 
                     a.id,
+                    a.clinic_id,
                     a.appointment_date as requested_date,
                     a.appointment_time as requested_time,
                     a.appointment_type,
@@ -293,13 +294,14 @@ class SharedAppointmentsModel extends BaseModel {
      * @param int $appointmentId Appointment ID
      * @return bool Success status
      */
-    public function approveAppointment($appointmentId, $vetName = null) {
+    public function approveAppointment($appointmentId, $vetName = null, $vetIdParam = null) {
         try {
             $userId = $_SESSION['user_id'] ?? null;
             
-            // If vet name is provided, look up the vet ID
-            $vetId = null;
-            if ($vetName && $vetName !== 'Any Available Vet') {
+            // Use provided vet_id if available, otherwise look up by name
+            $vetId = $vetIdParam;
+            
+            if ($vetId === null && $vetName && $vetName !== 'Any Available Vet') {
                 $vetStmt = $this->db->prepare("
                     SELECT u.id 
                     FROM users u

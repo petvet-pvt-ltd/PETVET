@@ -3,7 +3,7 @@
 /**
  * Accept a pending appointment
  */
-function acceptAppointment(appointmentId) {
+async function acceptAppointment(appointmentId) {
   const card = document.querySelector(`.pending-card[data-id="${appointmentId}"]`);
   
   if (!card) {
@@ -16,21 +16,38 @@ function acceptAppointment(appointmentId) {
   const details = card.querySelectorAll('.pending-detail .value');
   const owner = details[0].textContent;
   const appointmentType = details[1].textContent;
-  const symptoms = details[2].textContent;
-  const dateTime = details[3].textContent;
-  const vet = details[4].textContent;
+  const dateTime = details[2].textContent;
+  const vet = details[3].textContent;
   
-  // Show custom confirmation popup
-  showAcceptConfirmation({
-    appointmentId,
-    petName,
-    owner,
-    appointmentType,
-    symptoms,
-    dateTime,
-    vet,
-    card
-  });
+  // Get clinic_id, date, and time from data attributes
+  const clinicId = card.dataset.clinicId;
+  const appointmentDate = card.dataset.appointmentDate;
+  const appointmentTime = card.dataset.appointmentTime;
+  
+  // Fetch available vets for this time slot
+  try {
+    const response = await fetch(`/PETVET/api/appointments/get-available-vets.php?clinic_id=${clinicId}&appointment_date=${appointmentDate}&appointment_time=${appointmentTime}&exclude_appointment_id=${appointmentId}`);
+    const data = await response.json();
+    
+    if (data.success) {
+      // Show custom confirmation popup with available vets
+      showAcceptConfirmation({
+        appointmentId,
+        petName,
+        owner,
+        appointmentType,
+        dateTime,
+        vet,
+        card,
+        availableVets: data.available_vets
+      });
+    } else {
+      alert('Error loading available vets: ' + (data.error || 'Unknown error'));
+    }
+  } catch (error) {
+    console.error('Error fetching available vets:', error);
+    alert('Error loading available vets. Please try again.');
+  }
 }
 
 /**
@@ -67,10 +84,10 @@ function showAcceptConfirmation(data) {
   const overlay = createOverlay();
   
   const isAnyVet = data.vet === 'Any Available Vet';
-  const vetOptions = window.availableVets || [];
+  const availableVets = data.availableVets || [];
   
   let vetDropdownHtml = '';
-  if (isAnyVet || vetOptions.length > 0) {
+  if (availableVets.length > 0) {
     vetDropdownHtml = `
       <div class="detail-row" style="flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
         <label for="acceptVetSelect" style="font-weight: 600; color: #334155; font-size: 14px;">
@@ -78,8 +95,16 @@ function showAcceptConfirmation(data) {
         </label>
         <select id="acceptVetSelect" style="width: 100%; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: white;" ${isAnyVet ? 'required' : ''}>
           ${isAnyVet ? '<option value="">-- Select a Veterinarian --</option>' : ''}
-          ${vetOptions.map(vet => `<option value="${vet}" ${!isAnyVet && vet === data.vet ? 'selected' : ''}>${vet}</option>`).join('')}
+          ${availableVets.map(vet => `<option value="${vet.id}" ${!isAnyVet && vet.name === data.vet ? 'selected' : ''}>${vet.name}</option>`).join('')}
         </select>
+        ${availableVets.length === 0 ? '<p style="color: #dc2626; font-size: 13px; margin-top: 4px;">⚠️ All vets are booked at this time</p>' : ''}
+      </div>
+    `;
+  } else {
+    vetDropdownHtml = `
+      <div class="detail-row" style="flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+        <p style="color: #dc2626; font-size: 14px; font-weight: 600;">⚠️ No vets available at this time</p>
+        <p style="color: #64748b; font-size: 13px;">All veterinarians are already booked for this time slot. Please reschedule or decline this appointment.</p>
       </div>
     `;
   }
@@ -104,10 +129,6 @@ function showAcceptConfirmation(data) {
         <div class="detail-row">
           <span class="detail-label">Type:</span>
           <span class="detail-value">${data.appointmentType}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Reason:</span>
-          <span class="detail-value">${data.symptoms}</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Date & Time:</span>
@@ -233,7 +254,7 @@ function confirmAccept(appointmentId, requiresVet) {
   setTimeout(() => {
     const requestBody = { appointment_id: appointmentId };
     if (selectedVet) {
-      requestBody.vet = selectedVet;
+      requestBody.vet_id = parseInt(selectedVet);
     }
     
     fetch('/PETVET/api/appointments/approve.php', {

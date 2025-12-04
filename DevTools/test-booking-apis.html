@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Booking APIs</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 8px; }
+    button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+    pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Test Booking APIs</h1>
+  
+  <div class="test-section">
+    <h2>1. Test Get Available Dates API</h2>
+    <p>Get disabled dates for a clinic (next 30 days)</p>
+    <button onclick="testGetDates(1)">Test Clinic 1</button>
+    <button onclick="testGetDates(2)">Test Clinic 2</button>
+    <button onclick="testGetDates(3)">Test Clinic 3</button>
+    <pre id="datesResult">Click a button to test...</pre>
+  </div>
+  
+  <div class="test-section">
+    <h2>2. Test Get Available Times API</h2>
+    <p>Get available time slots for a specific date</p>
+    <label>Clinic ID: <input type="number" id="clinicId" value="1" min="1"></label>
+    <label>Vet ID: <input type="text" id="vetId" value="any" placeholder="any or number"></label>
+    <label>Date: <input type="date" id="testDate"></label>
+    <button onclick="testGetTimes()">Test Get Times</button>
+    <pre id="timesResult">Fill in the fields and click Test...</pre>
+  </div>
+  
+  <script>
+    // Set today's date as default
+    document.getElementById('testDate').value = new Date().toISOString().split('T')[0];
+    
+    async function testGetDates(clinicId) {
+      const resultEl = document.getElementById('datesResult');
+      resultEl.textContent = 'Loading...';
+      
+      try {
+        const response = await fetch(`/PETVET/api/appointments/get-available-dates.php?clinic_id=${clinicId}`);
+        const data = await response.json();
+        resultEl.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        resultEl.textContent = 'Error: ' + error.message;
+      }
+    }
+    
+    async function testGetTimes() {
+      const resultEl = document.getElementById('timesResult');
+      const clinicId = document.getElementById('clinicId').value;
+      const vetId = document.getElementById('vetId').value;
+      const date = document.getElementById('testDate').value;
+      
+      if (!clinicId || !vetId || !date) {
+        resultEl.textContent = 'Please fill in all fields';
+        return;
+      }
+      
+      resultEl.textContent = 'Loading...';
+      
+      try {
+        const response = await fetch(`/PETVET/api/appointments/get-available-times.php?clinic_id=${clinicId}&vet_id=${vetId}&date=${date}`);
+        const data = await response.json();
+        resultEl.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        resultEl.textContent = 'Error: ' + error.message;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -195,22 +195,19 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Form fields
   const appointmentType = document.getElementById("appointmentType");
-  const appointmentSymptoms = document.getElementById("appointmentSymptoms");
   const clinicSelect = document.getElementById("clinicSelect");
   const clinicInfo = document.getElementById("clinicInfo");
   const vetSection = document.getElementById("vetSection");
   const vetsList = document.getElementById("vetsList");
-  const dateTimeSection = document.getElementById("dateTimeSection");
+  const dateSection = document.getElementById("dateSection");
+  const timeSection = document.getElementById("timeSection");
   const appointmentDate = document.getElementById("appointmentDate");
   const appointmentTime = document.getElementById("appointmentTime");
-  const timeValidation = document.getElementById("timeValidation");
-  const timeValidationMessage = document.getElementById("timeValidationMessage");
   const noticeSection = document.getElementById("noticeSection");
   const selectedVetId = document.getElementById("selectedVetId");
   
   let currentPet = null;
   let selectedVet = null;
-  let timeCheckTimeout = null;
 
   // Replace default link behavior with popup
   bookBtns.forEach(btn => {
@@ -253,31 +250,21 @@ document.addEventListener("DOMContentLoaded", () => {
     // Hide all progressive sections
     clinicInfo.style.display = "none";
     vetSection.style.display = "none";
-    dateTimeSection.style.display = "none";
+    dateSection.style.display = "none";
+    timeSection.style.display = "none";
     noticeSection.style.display = "none";
-    timeValidation.style.display = "none";
-    timeValidation.className = "";
-    appointmentTime.className = "input";
     
     // Clear vet selection
     vetsList.innerHTML = "";
-  }
-
-  // Set min and max dates (today to today + 28 days)
-  function setDateLimits() {
-    const today = new Date();
-    const maxDate = new Date();
-    maxDate.setDate(today.getDate() + 28);
     
-    const formatDate = (date) => {
-      return date.toISOString().split('T')[0];
-    };
-    
-    appointmentDate.min = formatDate(today);
-    appointmentDate.max = formatDate(maxDate);
+    // Reset calendar state
+    if (typeof window.initializeCalendar === 'function') {
+      selectedDate = null;
+      disabledDates = [];
+      currentClinicId = null;
+      currentVetId = null;
+    }
   }
-  
-  setDateLimits();
 
   // Clinic selection handler
   clinicSelect.addEventListener("change", function() {
@@ -299,14 +286,20 @@ document.addEventListener("DOMContentLoaded", () => {
       
       // Show vet section
       vetSection.style.display = "block";
+      
+      // Load disabled dates for calendar
+      if (typeof window.loadDisabledDates === 'function') {
+        window.loadDisabledDates(this.value);
+      }
     } else {
       clinicInfo.style.display = "none";
       vetSection.style.display = "none";
-      dateTimeSection.style.display = "none";
+      dateSection.style.display = "none";
+      timeSection.style.display = "none";
       noticeSection.style.display = "none";
     }
     
-    validateForm();
+    validateBookingForm();
   });
 
   // Fetch vets by clinic
@@ -370,96 +363,24 @@ document.addEventListener("DOMContentLoaded", () => {
     card.classList.add('selected');
     selectedVet = { id: vetId, name: vetName };
     selectedVetId.value = vetId;
+    currentVetId = String(vetId);
     
-    // Show date/time section
-    dateTimeSection.style.display = "block";
-    noticeSection.style.display = "block";
-    
-    // Revalidate time if already entered
-    if (appointmentDate.value && appointmentTime.value) {
-      checkTimeAvailability();
+    // Show date section and render calendar
+    if (dateSection) {
+      dateSection.style.display = 'block';
     }
     
-    validateForm();
-  }
-
-  // Date change handler
-  appointmentDate.addEventListener("change", function() {
-    if (appointmentTime.value) {
-      checkTimeAvailability();
-    }
-    validateForm();
-  });
-
-  // Time input handler with debouncing
-  appointmentTime.addEventListener("input", function() {
-    // Clear previous timeout
-    if (timeCheckTimeout) {
-      clearTimeout(timeCheckTimeout);
+    // Render calendar with loaded disabled dates
+    if (typeof window.renderCalendarNow === 'function') {
+      window.renderCalendarNow();
     }
     
-    // Reset validation display
-    timeValidation.style.display = "none";
-    timeValidation.className = "";
-    appointmentTime.classList.remove('valid', 'invalid');
-    
-    if (this.value && appointmentDate.value) {
-      // Show loading state
-      timeValidation.style.display = "block";
-      timeValidation.className = "";
-      timeValidationMessage.textContent = "⏳ Checking availability...";
-      timeValidation.style.background = "#f1f5f9";
-      timeValidation.style.borderLeft = "3px solid #94a3b8";
-      timeValidation.style.color = "#475569";
-      
-      // Debounce the API call
-      timeCheckTimeout = setTimeout(() => {
-        checkTimeAvailability();
-      }, 800);
+    // If date is already selected, reload time slots for new vet
+    if (appointmentDate && appointmentDate.value && typeof window.loadTimeSlotsForVet === 'function') {
+      window.loadTimeSlotsForVet(appointmentDate.value);
     }
     
-    validateForm();
-  });
-
-  // Check time availability via API
-  function checkTimeAvailability() {
-    const date = appointmentDate.value;
-    const time = appointmentTime.value;
-    const vetId = selectedVetId.value || 0;
-    const clinicId = clinicSelect.value || 0;
-    
-    if (!date || !time) return;
-    
-    fetch(`/PETVET/api/check-availability.php?date=${date}&time=${time}&vet_id=${vetId}&clinic_id=${clinicId}`)
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          if (data.available) {
-            // Time is available
-            appointmentTime.classList.remove('invalid');
-            appointmentTime.classList.add('valid');
-            timeValidation.className = "success";
-            timeValidation.style.display = "block";
-            timeValidationMessage.textContent = "✓ This time slot is available";
-          } else {
-            // Time is not available
-            appointmentTime.classList.remove('valid');
-            appointmentTime.classList.add('invalid');
-            timeValidation.className = "error";
-            timeValidation.style.display = "block";
-            timeValidationMessage.textContent = "✗ This time slot is already booked. Please choose another time.";
-          }
-        }
-        validateForm();
-      })
-      .catch(error => {
-        console.error('Error checking availability:', error);
-        timeValidation.style.display = "block";
-        timeValidation.style.background = "#fef2f2";
-        timeValidation.style.borderLeft = "3px solid #ef4444";
-        timeValidation.style.color = "#991b1b";
-        timeValidationMessage.textContent = "⚠️ Unable to check availability. Please try again.";
-      });
+    validateBookingForm();
   }
 
   // Simple age calculator
@@ -474,22 +395,24 @@ document.addEventListener("DOMContentLoaded", () => {
     return age;
   }
 
-  // Enable confirm when all required fields are filled and time is available
-  function validateForm() {
+  // Enable confirm when all required fields are filled
+  function validateBookingForm() {
     const hasType = appointmentType.value !== "";
-    const hasSymptoms = appointmentSymptoms.value.trim() !== "";
     const hasClinic = clinicSelect.value !== "";
     const hasVet = selectedVet !== null;
     const hasDate = appointmentDate.value !== "";
     const hasTime = appointmentTime.value !== "";
-    const timeIsValid = appointmentTime.classList.contains('valid');
     
-    confirmBtn.disabled = !(hasType && hasSymptoms && hasClinic && hasVet && hasDate && hasTime && timeIsValid);
+    confirmBtn.disabled = !(hasType && hasClinic && hasVet && hasDate && hasTime);
+    
+    // Also call global validation if it exists
+    if (typeof window.validateBookingForm === 'function') {
+      window.validateBookingForm();
+    }
   }
 
-  // Listen to all form inputs
-  appointmentType.addEventListener("change", validateForm);
-  appointmentSymptoms.addEventListener("input", validateForm);
+  // Listen to form inputs
+  appointmentType.addEventListener("change", validateBookingForm);
 
   // Confirm booking - Show review screen first
   confirmBtn.addEventListener("click", e => {
@@ -529,13 +452,6 @@ document.addEventListener("DOMContentLoaded", () => {
           <p style="font-size:12px; color:#64748b; margin:0; font-weight:600;">APPOINTMENT TYPE</p>
           <p style="font-size:15px; font-weight:600; color:#0f172a; margin:4px 0 0;">
             ${appointmentTypeName}
-          </p>
-        </div>
-        
-        <div style="padding-bottom:12px; border-bottom:1px solid #e2e8f0;">
-          <p style="font-size:12px; color:#64748b; margin:0; font-weight:600;">SYMPTOMS / REASON</p>
-          <p style="font-size:14px; color:#0f172a; margin:4px 0 0;">
-            ${appointmentSymptoms.value}
           </p>
         </div>
         
@@ -585,9 +501,14 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log('=== BOOKING APPOINTMENT ===');
       console.log('Current Pet:', currentPet);
       
-      // Disable button to prevent double submission
+      // Prevent double submission
+      if (appointmentFinalConfirmBtn.disabled) {
+        return;
+      }
+      
+      // Disable button
       appointmentFinalConfirmBtn.disabled = true;
-      appointmentFinalConfirmBtn.textContent = 'Booking...';
+      appointmentFinalConfirmBtn.textContent = '⏳ Booking...';
       
       const clinicName = clinicSelect.options[clinicSelect.selectedIndex].text;
       const appointmentTypeName = appointmentType.options[appointmentType.selectedIndex].text;
@@ -606,7 +527,7 @@ document.addEventListener("DOMContentLoaded", () => {
         clinic_id: clinicSelect.value,
         vet_id: selectedVetId.value,
         appointment_type: appointmentType.value,
-        symptoms: appointmentSymptoms.value,
+        symptoms: '', // Symptoms field removed from form
         appointment_date: appointmentDate.value,
         appointment_time: appointmentTime.value
       };
@@ -649,13 +570,6 @@ document.addEventListener("DOMContentLoaded", () => {
           <p style="font-size:12px; color:#64748b; margin:0;">Appointment Type</p>
           <p style="font-size:15px; font-weight:600; color:#0f172a; margin:4px 0 0;">
             ${appointmentTypeName}
-          </p>
-        </div>
-        
-        <div>
-          <p style="font-size:12px; color:#64748b; margin:0;">Symptoms / Reason</p>
-          <p style="font-size:14px; color:#0f172a; margin:4px 0 0;">
-            ${appointmentSymptoms.value}
           </p>
         </div>
         
@@ -816,7 +730,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const toast = document.createElement('div');
     toast.style.cssText = `
       position: fixed;
-      bottom: 24px;
+      top: 24px;
       left: 50%;
       transform: translateX(-50%);
       background: #1f2937;
@@ -824,16 +738,16 @@ document.addEventListener("DOMContentLoaded", () => {
       padding: 12px 24px;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 10000;
+      z-index: 999999;
       font-size: 14px;
       font-weight: 500;
-      animation: slideUp 0.3s ease;
+      animation: slideDown 0.3s ease;
     `;
     toast.textContent = message;
     document.body.appendChild(toast);
 
     setTimeout(() => {
-      toast.style.animation = 'slideDown 0.3s ease';
+      toast.style.animation = 'slideUp 0.3s ease';
       setTimeout(() => toast.remove(), 300);
     }, 2000);
   }
@@ -843,24 +757,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const style = document.createElement('style');
     style.id = 'toast-animations';
     style.textContent = `
-      @keyframes slideUp {
+      @keyframes slideDown {
         from {
           opacity: 0;
-          transform: translateX(-50%) translateY(20px);
+          transform: translateX(-50%) translateY(-20px);
         }
         to {
           opacity: 1;
           transform: translateX(-50%) translateY(0);
         }
       }
-      @keyframes slideDown {
+      @keyframes slideUp {
         from {
           opacity: 1;
           transform: translateX(-50%) translateY(0);
         }
         to {
           opacity: 0;
-          transform: translateX(-50%) translateY(20px);
+          transform: translateX(-50%) translateY(-20px);
         }
       }
     `;

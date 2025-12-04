@@ -66,7 +66,12 @@ $moduleName = $appointmentsModel->getModuleName($userRole);
           </div>
         <?php else: ?>
           <?php foreach ($pendingAppointments as $pending): ?>
-            <div class="pending-card" data-id="<?= $pending['id'] ?>" data-requested-at="<?= $pending['requested_at'] ?>">
+            <div class="pending-card" 
+                 data-id="<?= $pending['id'] ?>" 
+                 data-requested-at="<?= $pending['requested_at'] ?>"
+                 data-clinic-id="<?= $pending['clinic_id'] ?>"
+                 data-appointment-date="<?= $pending['requested_date'] ?>"
+                 data-appointment-time="<?= $pending['requested_time'] ?>">
               <div class="pending-card-header">
                 <div class="pending-pet-info">
                   <span class="pet-name"><?= htmlspecialchars($pending['pet']) ?></span>
@@ -83,10 +88,6 @@ $moduleName = $appointmentsModel->getModuleName($userRole);
                 <div class="pending-detail">
                   <span class="label">Type:</span>
                   <span class="value"><?= htmlspecialchars($pending['appointment_type']) ?></span>
-                </div>
-                <div class="pending-detail">
-                  <span class="label">Reason:</span>
-                  <span class="value"><?= htmlspecialchars($pending['symptoms']) ?></span>
                 </div>
                 <div class="pending-detail">
                   <span class="label">Date:</span>
@@ -207,7 +208,12 @@ async function refreshPendingAppointments() {
           const requestedTime = new Date('2000-01-01 ' + pending.requested_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
           
           html += `
-            <div class="pending-card" data-id="${pending.id}" data-requested-at="${pending.requested_at}">
+            <div class="pending-card" 
+                 data-id="${pending.id}" 
+                 data-requested-at="${pending.requested_at}"
+                 data-clinic-id="${pending.clinic_id}"
+                 data-appointment-date="${pending.requested_date}"
+                 data-appointment-time="${pending.requested_time}">
               <div class="pending-card-header">
                 <div class="pending-pet-info">
                   <span class="pet-name">${escapeHtml(pending.pet)}</span>
@@ -224,10 +230,6 @@ async function refreshPendingAppointments() {
                 <div class="pending-detail">
                   <span class="label">Type:</span>
                   <span class="value">${escapeHtml(pending.appointment_type)}</span>
-                </div>
-                <div class="pending-detail">
-                  <span class="label">Reason:</span>
-                  <span class="value">${escapeHtml(pending.symptoms)}</span>
                 </div>
                 <div class="pending-detail">
                   <span class="label">Date:</span>

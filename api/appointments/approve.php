@@ -26,10 +26,12 @@ if (!isset($data['appointment_id'])) {
 
 $appointmentId = intval($data['appointment_id']);
 $vetName = isset($data['vet']) ? trim($data['vet']) : null;
+$vetId = isset($data['vet_id']) ? intval($data['vet_id']) : null;
 
 try {
     $model = new SharedAppointmentsModel();
-    $result = $model->approveAppointment($appointmentId, $vetName);
+    // Use vet_id if provided, otherwise fall back to vet name lookup
+    $result = $model->approveAppointment($appointmentId, $vetName, $vetId);
     
     if ($result) {
         echo json_encode([

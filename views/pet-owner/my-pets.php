@@ -16,6 +16,7 @@ function calculateAge($dob) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Pets</title>
   <link rel="stylesheet" href="/PETVET/public/css/pet-owner/my-pets.css">
+  <link rel="stylesheet" href="/PETVET/public/css/pet-owner/booking-calendar.css">
   <style>
     /* Pet Delete Button - Top Right Corner */
     .pet-hero {
@@ -1178,25 +1179,20 @@ function calculateAge($dob) {
       </header>
 
       <div class="dialog-body" id="appointmentFormContent">
-        <!-- Section A: Appointment Type & Symptoms -->
+        <!-- Section A: Appointment Type -->
         <div class="form-section">
-          <h4 class="section-title">Appointment Details</h4>
+          <h4 class="section-title">Appointment Type</h4>
           <label class="field">
-            <span>Appointment Type *</span>
+            <span>Select Type *</span>
             <select class="select" name="appointment_type" id="appointmentType" required>
               <option value="">Select Appointment Type</option>
               <option value="routine">Routine Check-up</option>
               <option value="vaccination">Vaccination</option>
               <option value="dental">Dental Cleaning</option>
               <option value="illness">Illness/Injury Consultation</option>
-              <option value="surgery">Surgery</option>
               <option value="emergency">Emergency</option>
               <option value="other">Other</option>
             </select>
-          </label>
-          <label class="field field-col">
-            <span>Symptoms / Reason for Visit *</span>
-            <textarea class="input" name="symptoms" id="appointmentSymptoms" rows="3" placeholder="Please describe symptoms, concerns, or reason for visit..." required></textarea>
           </label>
         </div>
 
@@ -1232,24 +1228,27 @@ function calculateAge($dob) {
           <input type="hidden" name="vet_id" id="selectedVetId">
         </div>
 
-        <!-- Section D: Date & Time -->
-        <div class="form-section" id="dateTimeSection" style="display:none;">
-          <h4 class="section-title">Date & Time</h4>
-          <div class="grid-2">
-            <label class="field">
-              <span>Select Date *</span>
-              <input type="date" class="input" name="date" id="appointmentDate" required>
-            </label>
-            <label class="field">
-              <span>Enter Time *</span>
-              <input type="time" class="input" name="time" id="appointmentTime" required>
-            </label>
+        <!-- Section D: Date Selection -->
+        <div class="form-section" id="dateSection" style="display:none;">
+          <h4 class="section-title">Select Date</h4>
+          <div id="calendarWidget" class="calendar-widget">
+            <!-- Calendar will be generated here -->
           </div>
-          <div id="timeValidation">
-            <span id="timeValidationMessage"></span>
+          <input type="hidden" name="date" id="appointmentDate" required>
+          <p style="margin:12px 0 0; font-size:11px; color:#64748b;">
+            📅 Available dates: Next 30 days (excludes clinic closed days and blocked dates)
+          </p>
+        </div>
+
+        <!-- Section E: Time Selection -->
+        <div class="form-section" id="timeSection" style="display:none;">
+          <h4 class="section-title">Select Time</h4>
+          <div id="timeSlotsGrid" class="time-slots-grid">
+            <!-- Time slots will be loaded dynamically -->
           </div>
-          <p style="margin:8px 0 0; font-size:11px; color:#64748b;">
-            ⏱️ Default slot duration: 20 minutes
+          <input type="hidden" name="time" id="appointmentTime" required>
+          <p style="margin:12px 0 0; font-size:11px; color:#64748b;">
+            ⏱️ Slot duration: 20 minutes | Times show only available slots
           </p>
         </div>
 
@@ -1322,6 +1321,7 @@ function calculateAge($dob) {
   echo '<script>window.petsData = ' . json_encode($pets) . ';</script>';
   echo '<script>window.clinicsData = ' . json_encode($clinics) . ';</script>';
   ?>
+  <script src="/PETVET/public/js/pet-owner/booking-calendar.js"></script>
   <script src="/PETVET/public/js/pet-owner/my-pets.js"></script>
   <script>
     /* ========================================
