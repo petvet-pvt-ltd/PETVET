@@ -210,6 +210,7 @@ $on_duty_today = array_column(array_filter($vets, fn($v)=>in_array($today, $v['o
                   ?>
                   <button type="button"
                           class="action-btn btn-leave-toggle <?= $isSuspended ? 'disabled' : '' ?>"
+                          data-user-id="<?= $v['user_id'] ?>"
                           data-name="<?= htmlspecialchars($v['name']) ?>"
                           data-leave="<?= $isOnLeave ? 'leave' : 'active' ?>"
                           title="<?= $leaveBtnTitle ?>">
@@ -219,6 +220,7 @@ $on_duty_today = array_column(array_filter($vets, fn($v)=>in_array($today, $v['o
                   <button
                     type="button"
                     class="action-btn vet-toggle-status"
+                    data-user-id="<?= $v['user_id'] ?>"
                     data-name="<?= htmlspecialchars($v['name']) ?>"
                     data-status="<?= htmlspecialchars($v['status']) ?>"
                     title="<?= $v['status']==='Suspended'?'Activate':'Suspend' ?>">
@@ -325,45 +327,96 @@ statusCancel.addEventListener('click', closeStatusModal);
 statusModal.addEventListener('click', e=>{ if(e.target===statusModal) closeStatusModal(); });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && statusModal.classList.contains('show')) closeStatusModal(); });
 
-statusConfirm.addEventListener('click', () => {
+statusConfirm.addEventListener('click', async () => {
   if(!pendingToggleBtn) return closeStatusModal();
   const btn = pendingToggleBtn;
   const pill = btn.closest('tr').querySelector('.status-pill');
   const isSuspended = btn.dataset.status === 'Suspended';
+  const userId = btn.dataset.userId;
+  const newStatus = isSuspended ? 'Active' : 'Inactive'; // Inactive = Suspended in database
+  
   // Find leave button in same row
   const leaveBtn = btn.closest('tr').querySelector('.btn-leave-toggle');
-  if (pill) {
-    if (isSuspended) {
-      pill.textContent = 'Active';
-      pill.classList.remove('status-suspended');
-      pill.classList.add('status-active');
-      btn.dataset.status = 'Active';
-      btn.title = 'Suspend';
-      btn.textContent = '⛔';
-      // Re-enable leave button when activating
-      if(leaveBtn){
-        leaveBtn.classList.remove('disabled');
-        if(leaveBtn.dataset.leave === 'leave'){
-          // If previously on leave, keep pill consistent
-          pill.textContent = 'On Leave';
-          pill.classList.remove('status-active','status-suspended');
-          pill.classList.add('status-leave');
+  
+  // Store original state for rollback
+  const originalStatus = btn.dataset.status;
+  const originalPillText = pill ? pill.textContent : '';
+  const originalPillClasses = pill ? pill.className : '';
+  
+  try {
+    // Update UI optimistically
+    if (pill) {
+      if (isSuspended) {
+        pill.textContent = 'Active';
+        pill.classList.remove('status-suspended');
+        pill.classList.add('status-active');
+        btn.dataset.status = 'Active';
+        btn.title = 'Suspend';
+        btn.textContent = '⛔';
+        // Re-enable leave button when activating
+        if(leaveBtn){
+          leaveBtn.classList.remove('disabled');
+          if(leaveBtn.dataset.leave === 'leave'){
+            // If previously on leave, keep pill consistent
+            pill.textContent = 'On Leave';
+            pill.classList.remove('status-active','status-suspended');
+            pill.classList.add('status-leave');
+          }
+        }
+      } else {
+        pill.textContent = 'Suspended';
+        pill.classList.remove('status-active','status-leave');
+        pill.classList.add('status-suspended');
+        btn.dataset.status = 'Suspended';
+        btn.title = 'Activate';
+        btn.textContent = '▶️';
+        // Disable leave button while suspended
+        if(leaveBtn){
+          leaveBtn.classList.add('disabled');
         }
       }
-    } else {
-      pill.textContent = 'Suspended';
-      pill.classList.remove('status-active','status-leave');
-      pill.classList.add('status-suspended');
-      btn.dataset.status = 'Suspended';
+    }
+    
+    closeStatusModal();
+    
+    // Call API to update database
+    const response = await fetch('/PETVET/api/clinic-manager/update-vet-status.php', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ user_id: userId, status: newStatus })
+    });
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to update status');
+    }
+    
+  } catch (error) {
+    console.error('Error updating vet status:', error);
+    alert('Failed to update status: ' + error.message);
+    
+    // Revert UI changes on error
+    btn.dataset.status = originalStatus;
+    if(pill) {
+      pill.textContent = originalPillText;
+      pill.className = originalPillClasses;
+    }
+    if(originalStatus === 'Suspended') {
       btn.title = 'Activate';
       btn.textContent = '▶️';
-      // Disable leave button while suspended
-      if(leaveBtn){
+    } else {
+      btn.title = 'Suspend';
+      btn.textContent = '⛔';
+    }
+    if(leaveBtn) {
+      if(originalStatus === 'Suspended') {
         leaveBtn.classList.add('disabled');
+      } else {
+        leaveBtn.classList.remove('disabled');
       }
     }
   }
-  closeStatusModal();
 });
 
 document.querySelectorAll('.vet-toggle-status').forEach(btn => {
@@ -383,39 +436,80 @@ document.querySelectorAll('.btn-schedule').forEach(btn => {
   });
 });
 
-// On Leave toggle logic (client-side only)
+// On Leave toggle logic (with API call)
 document.querySelectorAll('.btn-leave-toggle').forEach(btn => {
-  btn.addEventListener('click', () => {
+  btn.addEventListener('click', async () => {
     if(btn.classList.contains('disabled')) return; // safety
     const row = btn.closest('tr');
     const pill = row.querySelector('.status-pill');
     const statusToggleBtn = row.querySelector('.vet-toggle-status');
     const currentLeaveState = btn.dataset.leave; // 'leave' means currently On Leave
-    if(currentLeaveState === 'leave') {
-      // Set Active
-      btn.dataset.leave = 'active';
-      btn.title = 'Set On Leave';
-      btn.textContent = '⏳';
-      if(pill){
-        // If not suspended
-        if(statusToggleBtn && statusToggleBtn.dataset.status !== 'Suspended'){
+    const userId = btn.dataset.userId;
+    const newStatus = (currentLeaveState === 'leave') ? 'Active' : 'On Leave';
+    
+    // Update UI optimistically
+    const originalLeaveState = currentLeaveState;
+    const originalPillText = pill ? pill.textContent : '';
+    const originalPillClasses = pill ? pill.className : '';
+    
+    try {
+      // Update UI first
+      if(currentLeaveState === 'leave') {
+        // Set Active
+        btn.dataset.leave = 'active';
+        btn.title = 'Set On Leave';
+        btn.textContent = '⏳';
+        if(pill && statusToggleBtn && statusToggleBtn.dataset.status !== 'Suspended'){
           pill.textContent = 'Active';
           pill.classList.remove('status-leave','status-suspended');
           pill.classList.add('status-active');
         }
-      }
-    } else {
-      // Set On Leave
-      btn.dataset.leave = 'leave';
-      btn.title = 'Mark Active';
-      btn.textContent = '✅';
-      if(pill){
-        // Only if not suspended
-        if(statusToggleBtn && statusToggleBtn.dataset.status !== 'Suspended'){
+      } else {
+        // Set On Leave
+        btn.dataset.leave = 'leave';
+        btn.title = 'Mark Active';
+        btn.textContent = '✅';
+        if(pill && statusToggleBtn && statusToggleBtn.dataset.status !== 'Suspended'){
           pill.textContent = 'On Leave';
           pill.classList.remove('status-active','status-suspended');
           pill.classList.add('status-leave');
         }
+      }
+      
+      // Call API to update database
+      const response = await fetch('/PETVET/api/clinic-manager/update-vet-status.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ user_id: userId, status: newStatus })
+      });
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to update status');
+      }
+      
+      // Update status toggle button dataset
+      if(statusToggleBtn) {
+        statusToggleBtn.dataset.status = newStatus;
+      }
+      
+    } catch (error) {
+      console.error('Error updating vet status:', error);
+      alert('Failed to update status: ' + error.message);
+      
+      // Revert UI changes on error
+      btn.dataset.leave = originalLeaveState;
+      if(pill) {
+        pill.textContent = originalPillText;
+        pill.className = originalPillClasses;
+      }
+      if(originalLeaveState === 'leave') {
+        btn.title = 'Mark Active';
+        btn.textContent = '✅';
+      } else {
+        btn.title = 'Set On Leave';
+        btn.textContent = '⏳';
       }
     }
   });

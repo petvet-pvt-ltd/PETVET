@@ -109,6 +109,16 @@
     window.openAddModal = function() {
         const modal = document.getElementById('addModal');
         if (modal) {
+            // Reset receptionist booking flow
+            if (typeof window.resetReceptionistBooking === 'function') {
+                window.resetReceptionistBooking();
+            }
+            
+            // Initialize receptionist booking
+            if (typeof window.initReceptionistBooking === 'function') {
+                window.initReceptionistBooking();
+            }
+            
             modal.classList.remove('hidden');
             modal.classList.add('active');
         }
@@ -368,11 +378,12 @@
         const vetInput = document.getElementById('newVetName');
         const dateInput = document.getElementById('newDate');
         const timeInput = document.getElementById('newTime');
+        const appointmentTypeInput = document.getElementById('newAppointmentType');
         
         // Validate all fields are filled
         if (!petInput.value.trim() || !clientInput.value.trim() || !vetInput.value.trim() || 
-            !dateInput.value || !timeInput.value) {
-            showNotification('Please fill in all fields', 'Validation Error', 'error');
+            !dateInput.value || !timeInput.value || !appointmentTypeInput.value) {
+            showNotification('Please complete all steps and fill in all required fields', 'Validation Error', 'error');
             return;
         }
         
@@ -382,13 +393,6 @@
         
         if (selectedDateTime <= now) {
             showNotification('Please select a future date and time for the appointment', 'Invalid Date/Time', 'error');
-            return;
-        }
-        
-        // Validate business hours
-        const selectedHour = parseInt(timeInput.value.split(':')[0]);
-        if (selectedHour < 8 || selectedHour >= 18) {
-            showNotification('Please select a time between 8:00 AM and 6:00 PM', 'Invalid Time', 'error');
             return;
         }
         
@@ -409,6 +413,7 @@
         const confirmMessage = `Please confirm the new appointment details:<br><br>
                                <strong>Pet:</strong> ${petInput.value}<br>
                                <strong>Owner:</strong> ${clientInput.value}<br>
+                               <strong>Type:</strong> ${appointmentTypeInput.options[appointmentTypeInput.selectedIndex].text}<br>
                                <strong>Vet:</strong> ${vetInput.value}<br>
                                <strong>Date:</strong> ${dateFormatted}<br>
                                <strong>Time:</strong> ${timeFormatted}`;
@@ -418,12 +423,10 @@
             showNotification(`Appointment scheduled for ${petInput.value} on ${dateFormatted} at ${timeFormatted}`, 'Appointment Created', 'success');
             closeModal('addModal');
             
-            // Clear form
-            petInput.value = '';
-            clientInput.value = '';
-            vetInput.value = '';
-            dateInput.value = '';
-            timeInput.value = '';
+            // Reset form using receptionist booking reset function
+            if (typeof window.resetReceptionistBooking === 'function') {
+                window.resetReceptionistBooking();
+            }
             
             // Refresh calendar immediately without page reload
             if (window.refreshCalendarNow) {

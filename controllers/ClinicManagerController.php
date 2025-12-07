@@ -70,10 +70,25 @@ class ClinicManagerController extends BaseController {
     }
 
     public function vets() {
+        // Get the current clinic manager's clinic_id
+        $currentUserId = $_SESSION['user_id'] ?? 0;
+        
+        // Get clinic_id from clinic_manager_profiles
+        $stmt = db()->prepare("SELECT clinic_id FROM clinic_manager_profiles WHERE user_id = ?");
+        $stmt->execute([$currentUserId]);
+        $profile = $stmt->fetch();
+        
+        if (!$profile) {
+            // If no clinic found, show error or redirect
+            die("Error: Clinic manager profile not found.");
+        }
+        
+        $clinicId = $profile['clinic_id'];
+        
         $model = new VetsModel();
         $data = [
-            'vets' => $model->fetchVetsData(),
-            'pending' => $model->fetchPendingRequests()
+            'vets' => $model->fetchVetsData($clinicId),
+            'pending' => $model->fetchPendingRequests($clinicId)
         ];
         $this->view('clinic_manager', 'vets', $data);
     }

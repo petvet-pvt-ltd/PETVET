@@ -26,8 +26,8 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
         <label for="vetSelect" style="font-weight: 600; color: var(--gray-700); margin-right: 8px;">Filter by Vet:</label>
         <select id="vetSelect" name="vet" class="select" style="min-width: 160px;" aria-label="Filter by vet">
             <option value="all" <?= $selectedVet==='all'?'selected':''; ?>>All Vets</option>
-            <?php foreach($vetNames as $vn): ?>
-                <option value="<?= htmlspecialchars($vn); ?>" <?= $selectedVet===$vn?'selected':''; ?>><?= htmlspecialchars($vn); ?></option>
+            <?php foreach($vetNames as $vet): ?>
+                <option value="<?= htmlspecialchars($vet['vet_name']); ?>" <?= $selectedVet===$vet['vet_name']?'selected':''; ?>><?= htmlspecialchars($vet['vet_name']); ?></option>
             <?php endforeach; ?>
         </select>
         <?php if($selectedVet !== 'all'): ?>
@@ -222,8 +222,8 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
         <div class="form-group">
             <label>Veterinarian</label>
             <select id="dVet" class="select">
-                <?php foreach($vetNames as $vn): ?>
-                    <option value="<?= htmlspecialchars($vn); ?>"><?= htmlspecialchars($vn); ?></option>
+                <?php foreach($vetNames as $vet): ?>
+                    <option value="<?= htmlspecialchars($vet['vet_name']); ?>"><?= htmlspecialchars($vet['vet_name']); ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -250,43 +250,78 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
 
 <!-- Add Modal -->
 <div id="addModal" class="modal hidden">
-    <div class="modal-content">
+    <div class="modal-content receptionist-booking-modal">
         <span class="close" onclick="closeModal('addModal')">&times;</span>
         <h3>Add New Appointment</h3>
-        <div class="form-group">
-            <label>Pet Name</label>
-            <input type="text" id="newPetName" placeholder="Enter pet name" required>
-        </div>
-        <div class="form-group">
-            <label>Client Name</label>
-            <input type="text" id="newClientName" placeholder="Enter client name" required>
-        </div>
-        <div class="form-group">
-            <label>Veterinarian</label>
-            <select id="newVetName" class="select" required>
-                <?php foreach($vetNames as $vn): ?>
-                    <option value="<?= htmlspecialchars($vn); ?>"><?= htmlspecialchars($vn); ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div class="input-row">
-            <div>
-                <label>Date</label>
-                <input type="date" id="newDate" required>
+        
+        <!-- Step 1: Appointment Type & Vet Selection -->
+        <div class="form-section" id="receptionistVetSection">
+            <h4 class="section-title">Step 1: Appointment Details</h4>
+            <div class="form-group">
+                <label>Appointment Type</label>
+                <select id="newAppointmentType" class="select" required>
+                    <option value="">Select type</option>
+                    <option value="routine">Routine Check-up</option>
+                    <option value="vaccination">Vaccination</option>
+                    <option value="dental">Dental Cleaning</option>
+                    <option value="illness">Illness/Injury</option>
+                    <option value="emergency">Emergency</option>
+                    <option value="other">Other</option>
+                </select>
             </div>
-            <div>
-                <label>Time</label>
-                <input type="time" id="newTime" min="08:00" max="18:00" required>
+            <div class="form-group">
+                <label>Veterinarian</label>
+                <select id="newVetName" class="select" required>
+                    <option value="">Choose a veterinarian</option>
+                    <?php foreach($vetNames as $vet): ?>
+                        <option value="<?= htmlspecialchars($vet['id']); ?>"><?= htmlspecialchars($vet['vet_name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
             </div>
         </div>
-        <div class="business-hours-note">
-            <small>Business hours: 8:00 AM - 6:00 PM</small>
+
+        <!-- Step 2: Date Selection -->
+        <div class="form-section" id="receptionistDateSection" style="display:none;">
+            <h4 class="section-title">Step 2: Select Date</h4>
+            <div id="receptionistCalendarWidget" class="calendar-widget">
+                <!-- Calendar will be generated here -->
+            </div>
+            <input type="hidden" id="newDate" required>
+            <p style="margin:12px 0 0; font-size:11px; color:#64748b;">
+                📅 Available dates: Next 30 days (excludes clinic closed days and blocked dates)
+            </p>
         </div>
+
+        <!-- Step 3: Time Selection -->
+        <div class="form-section" id="receptionistTimeSection" style="display:none;">
+            <h4 class="section-title">Step 3: Select Time</h4>
+            <div id="receptionistTimeSlotsGrid" class="time-slots-grid">
+                <!-- Time slots will be loaded dynamically -->
+            </div>
+            <input type="hidden" id="newTime" required>
+            <p style="margin:12px 0 0; font-size:11px; color:#64748b;">
+                ⏱️ Slot duration: 20 minutes | Times show only available slots
+            </p>
+        </div>
+
+        <!-- Step 4: Pet and Client Details -->
+        <div class="form-section" id="receptionistDetailsSection" style="display:none;">
+            <h4 class="section-title">Step 4: Pet & Client Details</h4>
+            <div class="form-group">
+                <label>Pet Name</label>
+                <input type="text" id="newPetName" placeholder="Enter pet name" required>
+            </div>
+            <div class="form-group">
+                <label>Client Name</label>
+                <input type="text" id="newClientName" placeholder="Enter client name" required>
+            </div>
+        </div>
+
         <div class="modal-actions">
             <button class="btn btn-secondary" onclick="closeModal('addModal')">
                 Cancel
             </button>
-            <button class="btn btn-primary" onclick="saveAppointment()">
+            <button class="btn btn-primary" id="saveAppointmentBtn" onclick="saveAppointment()" disabled>
                 Save Appointment
             </button>
         </div>

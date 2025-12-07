@@ -29,7 +29,7 @@ try {
     
     // Get all vets at this specific clinic
     $vetsQuery = "
-        SELECT DISTINCT u.id, CONCAT(u.first_name, ' ', u.last_name) as name
+        SELECT DISTINCT u.id, u.first_name, u.last_name, CONCAT(u.first_name, ' ', u.last_name) as name
         FROM users u
         JOIN user_roles ur ON u.id = ur.user_id
         JOIN roles r ON ur.role_id = r.id

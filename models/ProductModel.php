@@ -4,11 +4,8 @@ require_once __DIR__ . '/../config/connect.php';
 
 class ProductModel extends BaseModel {
     
-    private $db;
-    
     public function __construct() {
         parent::__construct();
-        $this->db = db();
     }
     
     /**

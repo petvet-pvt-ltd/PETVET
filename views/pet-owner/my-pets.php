@@ -195,7 +195,6 @@ function calculateAge($dob) {
       background: #ef4444;
       color: white;
       border: none;
-      padding: 12px 24px;
       border-radius: 8px;
       font-weight: 600;
       font-size: 15px;

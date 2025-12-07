@@ -11,12 +11,14 @@
 // define('DB_NAME', 'petvet');
 // define('DB_CHARSET', 'utf8mb4');
 
-// Database credentials
-define('DB_HOST', 'btfrleeonbksuwewbmxg-mysql.services.clever-cloud.com');
-define('DB_USER', 'uns4jebox1gqsa9u');
-define('DB_PASS', '6kCJ4Bt0iVoWlIPLuYL8');  // Change if you set a password
-define('DB_NAME', 'btfrleeonbksuwewbmxg');
+// TiDB Database credentials
+define('DB_HOST', 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com');
+define('DB_PORT', '4000');
+define('DB_USER', '2iYmekB7i4tHWm7.root');
+define('DB_PASS', 'Po3TdFdOuAqvbtCn');
+define('DB_NAME', 'petvetDB');
 define('DB_CHARSET', 'utf8mb4');
+define('DB_CA_PATH', __DIR__ . '/../database/CA/isrgrootx1.pem');
 
 /**
  * Get PDO database connection
@@ -26,11 +28,13 @@ function db(): PDO {
     static $pdo = null;
     
     if ($pdo === null) {
-        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+        $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
         $options = [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
+            PDO::MYSQL_ATTR_SSL_CA => DB_CA_PATH,
+            PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => true,
         ];
         
         try {
@@ -45,9 +49,14 @@ function db(): PDO {
 }
 
 // MySQLi connection for legacy compatibility and models
-$conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+$conn = mysqli_init();
 
-if (!$conn) {
+// Set SSL options
+mysqli_ssl_set($conn, NULL, NULL, DB_CA_PATH, NULL, NULL);
+
+// Connect with SSL
+if (!mysqli_real_connect($conn, DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT, NULL, MYSQLI_CLIENT_SSL)) {
     error_log("MySQLi connection failed: " . mysqli_connect_error());
     die("Database connection failed. Please check your configuration.");
 }

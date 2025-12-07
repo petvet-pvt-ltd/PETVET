@@ -96,7 +96,8 @@ $pendingOrders = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clinic Shop</title>
+    <title>Shop Manager | Clinic Manager</title>
+    <link rel="stylesheet" href="/PETVET/public/css/clinic-manager/enhanced-global.css">
     <link rel="stylesheet" href="/PETVET/public/css/clinic-manager/shop.css">
 </head>
 <body>

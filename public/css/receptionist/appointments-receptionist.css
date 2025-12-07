@@ -566,6 +566,11 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
+.event .evt-time {
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: .3px;
+}
 
 /* Responsive popup */
 @media (max-width: 600px) {
@@ -598,5 +603,327 @@
   .btn-confirm-accept,
   .btn-confirm-decline {
     width: 100%;
+  }
+}
+
+/* ============================================
+   RECEPTIONIST BOOKING MODAL STYLES
+   ============================================ */
+
+.receptionist-booking-modal {
+  max-width: 700px !important;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.receptionist-booking-modal .form-section {
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.receptionist-booking-modal .form-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.receptionist-booking-modal .section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.receptionist-booking-modal .section-title::before {
+  content: '';
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+#receptionistDateSection .section-title::before {
+  content: '2';
+}
+
+#receptionistTimeSection .section-title::before {
+  content: '3';
+}
+
+#receptionistVetSection .section-title::before {
+  content: '1';
+}
+
+#receptionistDetailsSection .section-title::before {
+  content: '4';
+}
+
+.receptionist-booking-modal .form-group + .form-group {
+  margin-top: 12px;
+}
+
+/* Calendar Widget Styles (inherited from pet owner) */
+#receptionistCalendarWidget {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+  max-width: 400px;
+}
+
+#receptionistCalendarWidget .calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+#receptionistCalendarWidget .calendar-month {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+#receptionistCalendarWidget .calendar-nav {
+  display: flex;
+  gap: 6px;
+}
+
+#receptionistCalendarWidget .calendar-nav button {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: #f1f5f9;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #475569;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#receptionistCalendarWidget .calendar-nav button:hover:not(:disabled) {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+#receptionistCalendarWidget .calendar-nav button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+#receptionistCalendarWidget .calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-bottom: 6px;
+}
+
+#receptionistCalendarWidget .calendar-weekday {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  padding: 4px 2px;
+  text-transform: uppercase;
+}
+
+#receptionistCalendarWidget .calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+#receptionistCalendarWidget .calendar-day {
+  aspect-ratio: 1;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1e293b;
+  transition: all 0.2s;
+  position: relative;
+  height: 32px;
+  max-height: 32px;
+}
+
+#receptionistCalendarWidget .calendar-day:hover:not(.disabled):not(.empty):not(.selected) {
+  border-color: #2563eb;
+  background: #eff6ff;
+  transform: scale(1.05);
+}
+
+#receptionistCalendarWidget .calendar-day.selected {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+#receptionistCalendarWidget .calendar-day.selected:hover {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+  transform: none !important;
+}
+
+#receptionistCalendarWidget .calendar-day.today:not(.selected) {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+#receptionistCalendarWidget .calendar-day.disabled {
+  background: #f8fafc;
+  color: #cbd5e1;
+  cursor: not-allowed;
+  border-color: #f1f5f9;
+}
+
+#receptionistCalendarWidget .calendar-day.empty {
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+/* Time Slots Grid */
+#receptionistTimeSlotsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+#receptionistTimeSlotsGrid .time-slot {
+  padding: 8px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: pointer;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  transition: all 0.2s;
+}
+
+#receptionistTimeSlotsGrid .time-slot:hover:not(.disabled):not(.selected) {
+  border-color: #2563eb;
+  background: #eff6ff;
+  transform: scale(1.05);
+}
+
+#receptionistTimeSlotsGrid .time-slot.selected {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+#receptionistTimeSlotsGrid .time-slot.selected:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  transform: none;
+}
+
+#receptionistTimeSlotsGrid .time-slot.disabled {
+  background: #f8fafc;
+  color: #cbd5e1;
+  cursor: not-allowed;
+  border-color: #f1f5f9;
+}
+
+.time-slots-loading,
+.time-slots-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b;
+  font-size: 14px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
+  min-width: 100%;
+  grid-column: 1 / -1;
+}
+
+/* Form Groups */
+.receptionist-booking-modal .form-group {
+  margin-bottom: 16px;
+}
+
+.receptionist-booking-modal .form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.receptionist-booking-modal .form-group input,
+.receptionist-booking-modal .form-group select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.receptionist-booking-modal .form-group input:focus,
+.receptionist-booking-modal .form-group select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Modal Actions */
+.receptionist-booking-modal .modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.receptionist-booking-modal .modal-actions .btn {
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .receptionist-booking-modal {
+    max-width: 95vw !important;
+    margin: 10px;
+  }
+  
+  #receptionistTimeSlotsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   }
 }

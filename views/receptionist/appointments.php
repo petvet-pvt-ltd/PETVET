@@ -124,6 +124,7 @@ $moduleName = $appointmentsModel->getModuleName($userRole);
 </div>
 
 <script src="/PETVET/public/js/shared/appointments.js"></script>
+<script src="/PETVET/public/js/receptionist/receptionist-booking.js"></script>
 <script src="/PETVET/public/js/receptionist/appointments-receptionist.js"></script>
 <script>
 // Force immediate execution - don't wait for other scripts

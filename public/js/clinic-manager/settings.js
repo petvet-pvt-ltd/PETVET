@@ -138,6 +138,39 @@ function initBlockedDays() {
   
   if (!dateInput || !reasonInput || !addBtn || !list) return;
 
+  // Capture initial state of blocked days
+  let initialBlockedDays = getBlockedDaysState();
+  
+  // Disable save button initially
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.style.opacity = '0.5';
+  }
+  
+  // Helper to get current state
+  function getBlockedDaysState() {
+    const days = [];
+    $$('.blocked-day-item').forEach(item => {
+      const date = item.getAttribute('data-date');
+      const reason = item.querySelector('.blocked-reason')?.textContent || '';
+      if (date) days.push({ date, reason });
+    });
+    return JSON.stringify(days);
+  }
+  
+  // Helper to update save button state
+  function updateSaveButtonState() {
+    if (!saveBtn) return;
+    const currentState = getBlockedDaysState();
+    if (currentState !== initialBlockedDays) {
+      saveBtn.disabled = false;
+      saveBtn.style.opacity = '1';
+    } else {
+      saveBtn.disabled = true;
+      saveBtn.style.opacity = '0.5';
+    }
+  }
+
   // Add new blocked day
   addBtn.addEventListener('click', () => {
     const dateValue = dateInput.value;
@@ -183,6 +216,9 @@ function initBlockedDays() {
     dateInput.value = '';
     reasonInput.value = '';
     
+    // Update save button state
+    updateSaveButtonState();
+    
     toast('Date added to blocked list');
   });
   
@@ -202,6 +238,9 @@ function initBlockedDays() {
         emptyDiv.textContent = 'No blocked days yet. Add dates you won\'t be available.';
         list.appendChild(emptyDiv);
       }
+      
+      // Update save button state
+      updateSaveButtonState();
       
       toast('Date removed from blocked list');
     }
@@ -227,6 +266,9 @@ function initBlockedDays() {
       
       if (result.success) {
         toast(result.message);
+        // Update initial state after successful save
+        initialBlockedDays = getBlockedDaysState();
+        updateSaveButtonState();
       } else {
         toast(result.message, 'error');
       }
@@ -282,6 +324,7 @@ function wireForms() {
   const formClinic = $('#formClinic');
   if (formClinic) {
     captureFormState('#formClinic');
+    updateButtonState('#formClinic', '#formClinic button[type="submit"]'); // Disable initially
     formClinic.addEventListener('input', () => updateButtonState('#formClinic', '#formClinic button[type="submit"]'));
     formClinic.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -326,7 +369,9 @@ function wireForms() {
   const formWeeklySchedule = $('#formWeeklySchedule');
   if (formWeeklySchedule) {
     captureFormState('#formWeeklySchedule');
+    updateButtonState('#formWeeklySchedule', '#formWeeklySchedule button[type="submit"]'); // Disable initially
     formWeeklySchedule.addEventListener('input', () => updateButtonState('#formWeeklySchedule', '#formWeeklySchedule button[type="submit"]'));
+    formWeeklySchedule.addEventListener('change', () => updateButtonState('#formWeeklySchedule', '#formWeeklySchedule button[type="submit"]'));
     formWeeklySchedule.addEventListener('submit', async (e) => {
       e.preventDefault();
       

@@ -144,53 +144,98 @@ if (isLoggedIn()) {
 
 @media (max-width: 768px) {
     .user-welcome-header {
-        padding: 14px 18px;
-        flex-wrap: wrap;
-        gap: 12px;
+        background: #17293F;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 2px 8px rgba(23, 41, 63, 0.15);
+        padding: 10px 12px;
+        margin-bottom: 16px;
+        border-radius: 12px;
+        position: relative;
+        margin-top: 0;
     }
     
     .user-welcome-left {
-        gap: 12px;
+        gap: 10px;
+        flex: 1;
+        min-width: 0;
     }
     
     .user-welcome-avatar {
-        width: 44px;
-        height: 44px;
-        border-radius: 10px;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border-width: 1px;
+    }
+    
+    .user-welcome-info {
+        flex: 1;
+        gap: 2px;
+        min-width: 0;
     }
     
     .user-welcome-name {
-        font-size: 16px;
+        font-size: 14px;
+        line-height: 1.3;
+        font-weight: 600;
+        color: #ffffff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     .user-welcome-role {
-        font-size: 11px;
-        padding: 3px 10px;
+        font-size: 10px;
+        padding: 2px 8px;
+        background: rgba(255, 255, 255, 0.15);
+        color: #e0e7ff;
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
     
+    .user-welcome-role::before {
+        font-size: 6px;
+        color: #93c5fd;
+    }
+    
+    /* Hide center section (date) on mobile */
     .user-welcome-center {
-        order: 3;
-        width: 100%;
-        justify-content: flex-start;
-        margin-top: 4px;
+        display: none !important;
     }
     
-    .user-welcome-date {
+    /* Right side - keep actions visible */
+    .user-welcome-right {
+        gap: 8px;
+        margin-left: auto;
+    }
+    
+    /* Hide clinic badge on mobile to save space */
+    .user-clinic-badge {
+        display: none;
+    }
+    
+    .user-welcome-actions {
+        gap: 8px;
+        min-height: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-welcome-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+    }
+    
+    .user-welcome-name {
         font-size: 13px;
     }
     
-    .user-welcome-right {
-        order: 2;
-        justify-content: flex-end;
+    .user-welcome-role {
+        font-size: 9px;
+        padding: 2px 6px;
     }
     
-    .user-clinic-badge {
-        font-size: 12px;
-        padding: 8px 14px;
-    }
-    
-    .user-clinic-icon {
-        font-size: 16px;
+    .user-welcome-actions {
+        gap: 6px;
     }
 }
 </style>

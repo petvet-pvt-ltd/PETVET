@@ -168,33 +168,30 @@ try {
  * Check if a vet is available at a specific date and time
  */
 function isVetAvailable($conn, $vet_id, $date, $time, $duration) {
-    // Calculate slot end time
-    $slot_start = strtotime($date . ' ' . $time);
-    $slot_end = $slot_start + ($duration * 60);
-    
-    // Check for overlapping appointments
+    // Check for overlapping appointments (include pending, approved, and completed appointments)
+    // An appointment overlaps if it starts at the same time OR if it would overlap with our slot
     $stmt = $conn->prepare("
         SELECT COUNT(*) as count
         FROM appointments
         WHERE vet_id = ?
         AND appointment_date = ?
-        AND status NOT IN ('cancelled', 'declined')
+        AND status IN ('pending', 'approved', 'completed')
         AND (
-            (TIME_TO_SEC(appointment_time) < ? AND TIME_TO_SEC(appointment_time) + (duration_minutes * 60) > ?)
-            OR (TIME_TO_SEC(appointment_time) >= ? AND TIME_TO_SEC(appointment_time) < ?)
+            appointment_time = ?
+            OR (
+                appointment_time < ADDTIME(?, SEC_TO_TIME(? * 60))
+                AND ADDTIME(appointment_time, SEC_TO_TIME(duration_minutes * 60)) > ?
+            )
         )
     ");
     
-    $slot_start_seconds = intval(date('H', $slot_start)) * 3600 + intval(date('i', $slot_start)) * 60;
-    $slot_end_seconds = intval(date('H', $slot_end)) * 3600 + intval(date('i', $slot_end)) * 60;
-    
-    $stmt->bind_param("isiiii", 
+    $stmt->bind_param("isssss", 
         $vet_id, 
         $date, 
-        $slot_end_seconds,
-        $slot_start_seconds,
-        $slot_start_seconds,
-        $slot_end_seconds
+        $time,
+        $time,
+        $duration,
+        $time
     );
     $stmt->execute();
     $result = $stmt->get_result();

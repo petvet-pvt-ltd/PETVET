@@ -40,7 +40,7 @@ class PetProfileModel extends BaseModel {
     /**
      * Get pet by ID (with user verification)
      */
-    public function getPetById(int $id, int $userId = null): ?array {
+    public function getPetById(int $id, ?int $userId = null): ?array {
         try {
             $sql = "
                 SELECT id, user_id, name, species, breed, sex, 
@@ -104,7 +104,7 @@ class PetProfileModel extends BaseModel {
     /**
      * Update an existing pet profile
      */
-    public function updatePet(int $id, array $data, int $userId = null): bool {
+    public function updatePet(int $id, array $data, ?int $userId = null): bool {
         try {
             $sql = "
                 UPDATE pets 
@@ -155,7 +155,7 @@ class PetProfileModel extends BaseModel {
     /**
      * Soft delete a pet (set is_active = false)
      */
-    public function deletePet(int $id, int $userId = null): bool {
+    public function deletePet(int $id, ?int $userId = null): bool {
         try {
             $sql = "
                 UPDATE pets 
@@ -182,7 +182,7 @@ class PetProfileModel extends BaseModel {
     /**
      * Permanently delete a pet from database
      */
-    public function permanentlyDeletePet(int $id, int $userId = null): bool {
+    public function permanentlyDeletePet(int $id, ?int $userId = null): bool {
         try {
             $sql = "DELETE FROM pets WHERE id = ?";
             $params = [$id];
@@ -204,7 +204,7 @@ class PetProfileModel extends BaseModel {
     /**
      * Restore a soft-deleted pet
      */
-    public function restorePet(int $id, int $userId = null): bool {
+    public function restorePet(int $id, ?int $userId = null): bool {
         try {
             $sql = "
                 UPDATE pets 

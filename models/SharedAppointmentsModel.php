@@ -128,7 +128,7 @@ class SharedAppointmentsModel extends BaseModel {
             }
             
             $query = "
-                SELECT DISTINCT CONCAT(u.first_name, ' ', u.last_name) as vet_name
+                SELECT DISTINCT u.id, CONCAT(u.first_name, ' ', u.last_name) as vet_name
                 FROM clinic_staff cs
                 JOIN users u ON cs.user_id = u.id
                 WHERE cs.role = 'vet' 
@@ -140,7 +140,7 @@ class SharedAppointmentsModel extends BaseModel {
             
             $stmt = $this->db->prepare($query);
             $stmt->execute($params);
-            $results = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             return $results;
             
@@ -276,7 +276,7 @@ class SharedAppointmentsModel extends BaseModel {
                 JOIN clinics c ON a.clinic_id = c.id
                 LEFT JOIN users vet ON a.vet_id = vet.id
                 WHERE a.status = 'pending' $clinicFilter
-                ORDER BY a.created_at DESC
+                ORDER BY a.created_at ASC
             ";
             
             $stmt = $this->db->prepare($query);
