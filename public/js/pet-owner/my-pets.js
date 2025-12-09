@@ -196,7 +196,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Form fields
   const appointmentType = document.getElementById("appointmentType");
   const clinicSelect = document.getElementById("clinicSelect");
-  const clinicInfo = document.getElementById("clinicInfo");
   const vetSection = document.getElementById("vetSection");
   const vetsList = document.getElementById("vetsList");
   const dateSection = document.getElementById("dateSection");
@@ -211,27 +210,62 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Replace default link behavior with popup
   bookBtns.forEach(btn => {
-    btn.addEventListener("click", e => {
+    let touchHandled = false;
+    
+    const handleBooking = (e) => {
       e.preventDefault();
+      e.stopPropagation();
+      
+      // Prevent double-firing on mobile (touchend + click)
+      if (e.type === 'click' && touchHandled) {
+        touchHandled = false;
+        return;
+      }
+      
+      if (e.type === 'touchend') {
+        touchHandled = true;
+        setTimeout(() => touchHandled = false, 500);
+      }
       
       // Button is already disabled on server-side if pet has upcoming appointment
       if (btn.disabled || btn.tagName === 'BUTTON') {
         return;
       }
       
-      const petId = btn.getAttribute("href").split("=")[1];
+      const petId = btn.getAttribute("href")?.split("=")[1];
+      if (!petId) return;
+      
       currentPet = pets.find(p => p.id == petId);
-
       if (!currentPet) return;
 
-      header.textContent = `Book Appointment for ${currentPet.name}`;
-      petInfo.textContent = `${currentPet.name} • ${currentPet.breed} • ${calculateAge(currentPet.date_of_birth)}y`;
-      healthNotes.textContent = "";
+      if (header) header.textContent = `Book Appointment for ${currentPet.name}`;
+      if (petInfo) petInfo.textContent = `${currentPet.name} • ${currentPet.breed} • ${calculateAge(currentPet.date_of_birth)}y`;
+      if (healthNotes) healthNotes.textContent = "";
 
       // Reset form
       resetAppointmentForm();
-      bookDialog.showModal();
-    });
+      
+      // Open dialog with fallback for mobile
+      if (bookDialog) {
+        try {
+          if (typeof bookDialog.showModal === 'function') {
+            bookDialog.showModal();
+          } else {
+            // Fallback for browsers that don't support dialog.showModal()
+            bookDialog.setAttribute('open', '');
+            bookDialog.style.display = 'flex';
+          }
+        } catch (error) {
+          // Ultimate fallback
+          bookDialog.setAttribute('open', '');
+          bookDialog.style.display = 'flex';
+        }
+      }
+    };
+    
+    // Handle both touch and click events properly
+    btn.addEventListener("touchend", handleBooking, { passive: false });
+    btn.addEventListener("click", handleBooking);
   });
 
   function resetAppointmentForm() {
@@ -248,7 +282,6 @@ document.addEventListener("DOMContentLoaded", () => {
     selectedVetId.value = "";
     
     // Hide all progressive sections
-    clinicInfo.style.display = "none";
     vetSection.style.display = "none";
     dateSection.style.display = "none";
     timeSection.style.display = "none";
@@ -268,19 +301,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Clinic selection handler
   clinicSelect.addEventListener("change", function() {
-    const selectedOption = this.options[this.selectedIndex];
-    
     if (this.value) {
-      // Show clinic info
-      const clinicName = selectedOption.textContent;
-      const clinicAddress = selectedOption.getAttribute("data-address");
-      const clinicPhone = selectedOption.getAttribute("data-phone");
-      
-      document.getElementById("clinicInfoName").textContent = clinicName;
-      document.getElementById("clinicInfoAddress").textContent = clinicAddress;
-      document.getElementById("clinicInfoPhone").textContent = clinicPhone;
-      clinicInfo.style.display = "block";
-      
       // Fetch vets for this clinic
       fetchVets(this.value);
       
@@ -292,7 +313,6 @@ document.addEventListener("DOMContentLoaded", () => {
         window.loadDisabledDates(this.value);
       }
     } else {
-      clinicInfo.style.display = "none";
       vetSection.style.display = "none";
       dateSection.style.display = "none";
       timeSection.style.display = "none";
@@ -420,7 +440,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     if (confirmBtn.disabled) return;
     
-    const clinicName = clinicSelect.options[clinicSelect.selectedIndex].text;
+    const clinicName = window.selectedClinicData ? window.selectedClinicData.clinic_name : 'Selected Clinic';
     const appointmentTypeName = appointmentType.options[appointmentType.selectedIndex].text;
     
     // Format time for display
@@ -510,7 +530,7 @@ document.addEventListener("DOMContentLoaded", () => {
       appointmentFinalConfirmBtn.disabled = true;
       appointmentFinalConfirmBtn.textContent = '⏳ Booking...';
       
-      const clinicName = clinicSelect.options[clinicSelect.selectedIndex].text;
+      const clinicName = window.selectedClinicData ? window.selectedClinicData.clinic_name : 'Selected Clinic';
       const appointmentTypeName = appointmentType.options[appointmentType.selectedIndex].text;
     
     // Format time for display
@@ -779,5 +799,47 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     `;
     document.head.appendChild(style);
+  }
+
+  // Initialize Modern Clinic Selector
+  if (typeof ClinicSelector !== 'undefined' && document.getElementById('clinicSelectorContainer')) {
+    try {
+      clinicSelectorInstance = new ClinicSelector({
+        containerId: 'clinicSelectorContainer',
+        onSelect: (clinic) => {
+          // Update hidden input for form submission
+          const hiddenInput = document.getElementById('clinicSelect');
+          if (hiddenInput) {
+            hiddenInput.value = clinic.id;
+            
+            // Trigger change event to update vets and calendar
+            const event = new Event('change', { bubbles: true });
+            hiddenInput.dispatchEvent(event);
+          }
+          
+          // Store selected clinic data for display
+          window.selectedClinicData = clinic;
+        }
+      });
+      
+      // Initialize without location first
+      clinicSelectorInstance.init(null);
+      
+      // Update with location when available
+      let checkCount = 0;
+      const maxChecks = 40; // 20 seconds total
+      const checkLocation = setInterval(() => {
+        checkCount++;
+        
+        if (window.clinicDistanceCalculator?.petOwnerLocation) {
+          clinicSelectorInstance.updateLocation(window.clinicDistanceCalculator.petOwnerLocation);
+          clearInterval(checkLocation);
+        } else if (checkCount >= maxChecks) {
+          clearInterval(checkLocation);
+        }
+      }, 500);
+    } catch (error) {
+      console.error('Error initializing clinic selector:', error);
+    }
   }
 });

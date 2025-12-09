@@ -17,6 +17,7 @@ function calculateAge($dob) {
   <title>My Pets</title>
   <link rel="stylesheet" href="/PETVET/public/css/pet-owner/my-pets.css">
   <link rel="stylesheet" href="/PETVET/public/css/pet-owner/booking-calendar.css">
+  <link rel="stylesheet" href="/PETVET/public/css/pet-owner/clinic-selector.css">
   <style>
     /* Pet Delete Button - Top Right Corner */
     .pet-hero {
@@ -1007,7 +1008,7 @@ function calculateAge($dob) {
       <div class="dialog-body">
         <div class="form-section" style="align-items:center;display:flex;flex-direction:column;">
           <div id="petProfileImgWrap" style="margin-bottom:18px;">
-            <img id="petProfileImg" src="../../images/sample-dog.jpg" alt="Pet Photo" style="width:110px;height:110px;object-fit:cover;border-radius:50%;border:2px solid #e5e7eb;box-shadow:0 2px 8px rgba(37,99,235,.10);background:#f5f7fb;">
+            <img id="petProfileImg" src="/PETVET/public/images/emptyProfPic.png" alt="Pet Photo" style="width:110px;height:110px;object-fit:cover;border-radius:50%;border:2px solid #e5e7eb;box-shadow:0 2px 8px rgba(37,99,235,.10);background:#f5f7fb;">
           </div>
           <label class="btn ghost" style="margin-bottom:10px;cursor:pointer;">
             <input type="file" name="pet_photo" id="petProfileImgInput" accept="image/*" style="display:none;">
@@ -1200,22 +1201,9 @@ function calculateAge($dob) {
           <h4 class="section-title">Select Clinic</h4>
           <label class="field">
             <span>Clinic Location *</span>
-            <select class="select" name="clinic" id="clinicSelect" required>
-              <option value="">Select a Clinic</option>
-              <?php foreach($clinics as $clinic): ?>
-                <option value="<?= $clinic['id'] ?>" data-address="<?= htmlspecialchars($clinic['address']) ?>" data-phone="<?= htmlspecialchars($clinic['phone']) ?>">
-                  <?= htmlspecialchars($clinic['name']) ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
+            <div id="clinicSelectorContainer"></div>
+            <input type="hidden" name="clinic" id="clinicSelect" required>
           </label>
-          <div id="clinicInfo" style="display:none;">
-            <p style="margin:0;"><strong id="clinicInfoName"></strong></p>
-            <p style="margin:4px 0 0;">
-              📍 <span id="clinicInfoAddress"></span><br>
-              📞 <span id="clinicInfoPhone"></span>
-            </p>
-          </div>
         </div>
 
         <!-- Section C: Veterinarian Selection -->
@@ -1321,6 +1309,8 @@ function calculateAge($dob) {
   echo '<script>window.clinicsData = ' . json_encode($clinics) . ';</script>';
   ?>
   <script src="/PETVET/public/js/pet-owner/booking-calendar.js"></script>
+  <script src="/PETVET/public/js/pet-owner/clinic-distance.js"></script>
+  <script src="/PETVET/public/js/pet-owner/clinic-selector.js"></script>
   <script src="/PETVET/public/js/pet-owner/my-pets.js"></script>
   <script>
     /* ========================================
