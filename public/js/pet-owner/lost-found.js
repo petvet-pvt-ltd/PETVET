@@ -170,62 +170,35 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 	// My Listings functionality
-	function loadMyListings() {
-		// Demo data - in production, fetch from server
-		const stored = localStorage.getItem('myLostFoundListings');
-		const version = localStorage.getItem('myLostFoundListingsVersion');
-		
-		// Clear old data if version doesn't match
-		if (stored && version !== '3.0') {
-			localStorage.removeItem('myLostFoundListings');
-			localStorage.setItem('myLostFoundListingsVersion', '3.0');
+	async function loadMyListings() {
+		try {
+			const response = await fetch('/PETVET/api/pet-owner/get-my-reports.php');
+			const result = await response.json();
+			
+			if (result.success) {
+				// Transform API data to match existing format
+				myListings = result.reports.map(report => ({
+					id: report.id,
+					type: report.type,
+					species: report.species,
+					name: report.name || 'Unknown',
+					color: report.color,
+					location: report.location,
+					date: report.date,
+					notes: report.notes,
+					phone: report.contact.phone,
+					phone2: report.contact.phone2,
+					email: report.contact.email,
+					photos: report.photos || []
+				}));
+			} else {
+				console.error('Failed to load listings:', result.message);
+				myListings = [];
+			}
+		} catch (error) {
+			console.error('Error loading listings:', error);
+			myListings = [];
 		}
-		
-		if (stored && version === '3.0') {
-			myListings = JSON.parse(stored);
-		} else {
-			// Initialize with two demo reports with multiple photos
-			myListings = [
-				{
-					type: 'lost',
-					species: 'dog',
-					name: 'Max',
-					color: 'Golden Brown',
-					location: 'Central Park, Downtown',
-					date: '2025-10-18',
-					notes: 'Very friendly golden retriever. Has a blue collar with name tag. Last seen near the fountain.',
-					phone: '+94 77 123 4567',
-					phone2: '+94 77 123 4568',
-					email: 'owner@example.com',
-					photos: [
-						'https://images.pexels.com/photos/356378/pexels-photo-356378.jpeg?auto=format%2Ccompress&cs=tinysrgb&dpr=1&w=500',
-						'https://images.pexels.com/photos/1805164/pexels-photo-1805164.jpeg?auto=format%2Ccompress&cs=tinysrgb&dpr=1&w=500',
-						'https://images.pexels.com/photos/2253275/pexels-photo-2253275.jpeg?auto=format%2Ccompress&cs=tinysrgb&dpr=1&w=500'
-					]
-				},
-				{
-					type: 'found',
-					species: 'cat',
-					name: 'Unknown',
-					color: 'Gray and White',
-					location: 'Maple Street, Suburb',
-					date: '2025-10-19',
-					notes: 'Found this cat wandering near my house. Well-groomed, seems to be someone\'s pet. Very calm and friendly.',
-					phone: '+94 76 555 1212',
-					phone2: '',
-					email: 'finder@example.com',
-					photos: [
-						'https://images.unsplash.com/photo-1574158622682-e40e69881006?q=80&w=300&auto=format&fit=crop',
-						'https://images.unsplash.com/photo-1573865526739-10c1dd7aa123?q=80&w=300&auto=format&fit=crop'
-					]
-				}
-			];
-			saveMyListings();
-		}
-	}
-
-	function saveMyListings() {
-		localStorage.setItem('myLostFoundListings', JSON.stringify(myListings));
 	}
 
 	function renderMyListings() {
@@ -240,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 
 		myListingsContent.innerHTML = '';
-		myListings.forEach((listing, idx) => {
+		myListings.forEach((listing) => {
 			const item = document.createElement('div');
 			item.className = 'listing-item';
 			
@@ -256,8 +229,8 @@ document.addEventListener('DOMContentLoaded', () => {
 					<span class="listing-badge ${listing.type}">${listing.type.toUpperCase()}</span>
 				</div>
 				<div class="listing-actions">
-					<button class="btn outline edit-listing-btn" data-id="${idx}">Edit</button>
-					<button class="btn danger delete-listing-btn" data-id="${idx}" data-name="${listing.name || 'this pet'}">Delete</button>
+					<button class="btn outline edit-listing-btn" data-id="${listing.id}">Edit</button>
+					<button class="btn danger delete-listing-btn" data-id="${listing.id}" data-name="${listing.name || 'this pet'}">Delete</button>
 				</div>
 			`;
 			myListingsContent.appendChild(item);
@@ -286,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 	function openEditListing(id) {
-		const listing = myListings[id];
+		const listing = myListings.find(l => l.id == id);
 		if (!listing) return;
 
 		qs('#editId').value = id;
@@ -331,12 +304,39 @@ document.addEventListener('DOMContentLoaded', () => {
 		confirmDialog.hidden = false;
 	}
 
-	function deleteListing(id) {
-		myListings.splice(id, 1);
-		saveMyListings();
-		renderMyListings();
-		confirmDialog.hidden = true;
-		myListingsModal.hidden = false;
+	async function deleteListing(id) {
+		try {
+			const formData = new FormData();
+			formData.append('report_id', id);
+			
+			const response = await fetch('/PETVET/api/pet-owner/delete-report.php', {
+				method: 'POST',
+				body: formData
+			});
+			
+			const result = await response.json();
+			
+			if (result.success) {
+				// Remove from local array
+				myListings = myListings.filter(l => l.id != id);
+				renderMyListings();
+				confirmDialog.hidden = true;
+				myListingsModal.hidden = false;
+				alert('Report deleted successfully');
+				
+				// Reload page to update main listing
+				setTimeout(() => window.location.reload(), 1000);
+			} else {
+				alert('Error: ' + (result.message || 'Failed to delete report'));
+				confirmDialog.hidden = true;
+				myListingsModal.hidden = false;
+			}
+		} catch (error) {
+			console.error('Error deleting report:', error);
+			alert('An error occurred while deleting the report');
+			confirmDialog.hidden = true;
+			myListingsModal.hidden = false;
+		}
 	}
 
 	// Handle photo preview
@@ -421,10 +421,11 @@ document.addEventListener('DOMContentLoaded', () => {
 	closeContactBtn && closeContactBtn.addEventListener('click', () => { contactModal.hidden = true; });
 	contactModal && contactModal.addEventListener('mousedown', e=>{ if(e.target===contactModal) contactModal.hidden = true; });
 
-	myListingsBtn && myListingsBtn.addEventListener('click', () => { 
-		loadMyListings();
-		renderMyListings();
+	myListingsBtn && myListingsBtn.addEventListener('click', async () => { 
 		myListingsModal.hidden = false;
+		myListingsContent.innerHTML = '<p style="text-align:center;padding:32px;color:var(--gray);">Loading...</p>';
+		await loadMyListings();
+		renderMyListings();
 	});
 	closeMyListingsBtn && closeMyListingsBtn.addEventListener('click', () => { myListingsModal.hidden = true; });
 	myListingsModal && myListingsModal.addEventListener('mousedown', e=>{ if(e.target===myListingsModal) myListingsModal.hidden = true; });
@@ -458,60 +459,135 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 
 	// Form submissions
-	reportForm && reportForm.addEventListener('submit', e=>{ 
+	reportForm && reportForm.addEventListener('submit', async (e) => { 
 		e.preventDefault();
-		const formData = new FormData(reportForm);
-		const photos = [];
+		
+		// Create FormData from form
+		const formData = new FormData();
+		formData.append('type', qs('#rType').value);
+		formData.append('species', qs('#rSpecies').value);
+		formData.append('name', qs('#rName').value || '');
+		formData.append('color', qs('#rColor').value || '');
+		formData.append('location', qs('#rLocation').value);
+		formData.append('date', qs('#rDate').value);
+		formData.append('notes', qs('#rNotes').value || '');
+		formData.append('phone', qs('#rPhone').value || '');
+		formData.append('phone2', qs('#rPhone2').value || '');
+		formData.append('email', qs('#rEmail').value || '');
+		
+		// Append multiple photos
 		if (photoInput.files.length > 0) {
-			Array.from(photoInput.files).slice(0, 3).forEach(file => {
-				photos.push(URL.createObjectURL(file));
+			Array.from(photoInput.files).forEach((file, index) => {
+				formData.append('photos[]', file);
 			});
 		}
 		
-		const newListing = {
-			type: qs('#rType').value,
-			species: qs('#rSpecies').value,
-			name: qs('#rName').value,
-			color: qs('#rColor').value,
-			location: qs('#rLocation').value,
-			date: qs('#rDate').value,
-			notes: qs('#rNotes').value,
-			phone: qs('#rPhone').value,
-			phone2: qs('#rPhone2').value,
-			email: qs('#rEmail').value,
-			photos: photos
-		};
-		
-		myListings.push(newListing);
-		saveMyListings();
-		
-		alert('Report submitted successfully (demo mode)');
-		closeReportModal();
+		try {
+			// Show loading indicator
+			const submitBtn = reportForm.querySelector('button[type="submit"]');
+			const originalText = submitBtn.textContent;
+			submitBtn.disabled = true;
+			submitBtn.textContent = 'Submitting...';
+			
+			// Submit to API
+			const response = await fetch('/PETVET/api/pet-owner/submit-report.php', {
+				method: 'POST',
+				body: formData
+			});
+			
+			const result = await response.json();
+			
+			// Restore button
+			submitBtn.disabled = false;
+			submitBtn.textContent = originalText;
+			
+			if (result.success) {
+				alert('Report submitted successfully! Thank you for helping the community.');
+				closeReportModal();
+				
+				// Reload page to show new report
+				window.location.reload();
+			} else {
+				alert('Error: ' + (result.message || 'Failed to submit report'));
+			}
+		} catch (error) {
+			console.error('Error submitting report:', error);
+			alert('An error occurred while submitting your report. Please try again.');
+			
+			// Re-enable button
+			const submitBtn = reportForm.querySelector('button[type="submit"]');
+			submitBtn.disabled = false;
+			submitBtn.textContent = 'Submit Report';
+		}
 	});
 
-	editListingForm && editListingForm.addEventListener('submit', e=>{ 
+	editListingForm && editListingForm.addEventListener('submit', async (e) => { 
 		e.preventDefault();
-		const id = parseInt(qs('#editId').value);
 		
-		myListings[id] = {
-			...myListings[id],
-			type: qs('#editType').value,
-			species: qs('#editSpecies').value,
-			name: qs('#editName').value,
-			color: qs('#editColor').value,
-			location: qs('#editLocation').value,
-			date: qs('#editDate').value,
-			notes: qs('#editNotes').value,
-			phone: qs('#editPhone').value,
-			phone2: qs('#editPhone2').value,
-			email: qs('#editEmail').value
-		};
-		
-		saveMyListings();
-		renderMyListings();
-		editListingModal.hidden = true;
-		myListingsModal.hidden = false;
-		alert('Listing updated successfully');
+		try {
+			const reportId = qs('#editId').value;
+			
+			// Create FormData
+			const formData = new FormData();
+			formData.append('report_id', reportId);
+			formData.append('type', qs('#editType').value);
+			formData.append('species', qs('#editSpecies').value);
+			formData.append('name', qs('#editName').value);
+			formData.append('color', qs('#editColor').value);
+			formData.append('location', qs('#editLocation').value);
+			formData.append('date', qs('#editDate').value);
+			formData.append('notes', qs('#editNotes').value);
+			formData.append('phone', qs('#editPhone').value);
+			formData.append('phone2', qs('#editPhone2').value);
+			formData.append('email', qs('#editEmail').value);
+			
+			// Check if new photos uploaded
+			const photoInput = qs('#editPhoto');
+			if (photoInput && photoInput.files.length > 0) {
+				Array.from(photoInput.files).forEach((file) => {
+					formData.append('photos[]', file);
+				});
+			}
+			
+			// Show loading
+			const submitBtn = editListingForm.querySelector('button[type="submit"]');
+			const originalText = submitBtn.textContent;
+			submitBtn.disabled = true;
+			submitBtn.textContent = 'Updating...';
+			
+			// Submit to API
+			const response = await fetch('/PETVET/api/pet-owner/update-report.php', {
+				method: 'POST',
+				body: formData
+			});
+			
+			const result = await response.json();
+			
+			// Restore button
+			submitBtn.disabled = false;
+			submitBtn.textContent = originalText;
+			
+			if (result.success) {
+				alert('Listing updated successfully!');
+				editListingModal.hidden = true;
+				myListingsModal.hidden = false;
+				
+				// Reload listings and page
+				await loadMyListings();
+				renderMyListings();
+				setTimeout(() => window.location.reload(), 1000);
+			} else {
+				alert('Error: ' + (result.message || 'Failed to update report'));
+			}
+		} catch (error) {
+			console.error('Error updating report:', error);
+			alert('An error occurred while updating the report');
+			
+			// Re-enable button
+			const submitBtn = editListingForm.querySelector('button[type="submit"]');
+			submitBtn.disabled = false;
+			submitBtn.textContent = 'Update Listing';
+		}
 	});
 
 	// Escape key handling
