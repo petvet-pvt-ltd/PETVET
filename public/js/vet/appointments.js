@@ -1,16 +1,7 @@
-const STORAGE_KEY = 'petvet_v1';
+// ===========================
+// Appointments JS (DB-driven)
+// ===========================
 
-function getData(){ 
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null; 
-}
-function setData(d){ 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); 
-}
-function initIfNeeded(){
-    if(!localStorage.getItem(STORAGE_KEY) && window.PETVET_INITIAL_DATA) setData(window.PETVET_INITIAL_DATA);
-}
-
-// Adds Date column
 function buildTableHTML(rows, includeActions=false){
     if(rows.length===0) 
         return '<div class="simple-mobile-table"><table><thead><tr><th>ID</th><th>Date</th><th>Time</th><th>Pet</th><th>Owner</th><th>Reason</th>' + 
@@ -21,13 +12,13 @@ function buildTableHTML(rows, includeActions=false){
                (includeActions? '<th>Actions</th>':'') + '</tr></thead><tbody>';
     
     rows.forEach(r=>{
-        html += `<tr><td>${r.id}</td><td>${r.date}</td><td>${r.time}</td><td>${r.petName}</td><td>${r.ownerName}</td><td>${r.reason}</td>`;
+        html += `<tr><td>${r.id}</td><td>${r.appointment_date||r.date}</td><td>${r.appointment_time||r.time}</td><td>${r.pet_name||r.petName}</td><td>${r.owner_name||r.ownerName}</td><td>${r.appointment_type||r.reason}</td>`;
         
         if(includeActions){
-            const d = getData();
-            const hasRec = d.medicalRecords.some(m=>m.appointmentId===r.id);
-            const hasPres = d.prescriptions.some(p=>p.appointmentId===r.id);
-            const hasVacc = d.vaccinations.some(v=>v.appointmentId===r.id);
+            const hasRec = window.PETVET_INITIAL_DATA.medicalRecords.some(m =>m.appointmentId == r.id || m.appointment_id == r.id);
+            const hasPres = window.PETVET_INITIAL_DATA.prescriptions.some(p =>p.appointmentId == r.id || p.appointment_id == r.id);
+            const hasVacc = window.PETVET_INITIAL_DATA.vaccinations.some(v =>v.appointmentId == r.id || v.appointment_id == r.id);
+
             let actions = '';
             if(hasRec) actions += `<button class="btn navy" onclick="goView('medical-records','${r.id}')">View Record</button>`;
             if(hasPres) actions += `<button class="btn blue" onclick="goView('prescriptions','${r.id}')">View Prescription</button>`;
@@ -46,60 +37,42 @@ function goView(page, apptId){
     location.href = `/PETVET/?module=vet&page=${page}&from=completed&appointment=${encodeURIComponent(apptId)}`;
 }
 
+function renderAll(){
+    const d = window.PETVET_INITIAL_DATA;
+    if(!d) return;
+
+    renderSection('ongoingTableContainer', d.ongoing, false);
+    renderSection('upcomingTableContainer', d.upcoming, false);
+    renderSection('completedTableContainer', d.completed, true);
+    renderSection('cancelledTableContainer', d.cancelled, false);
+}
+
 function renderSection(containerId, data, includeActions=false){
     const container = document.getElementById(containerId);
-    if (container) {
+    if(container){
         container.innerHTML = buildTableHTML(data, includeActions);
     }
 }
 
-function renderAll(){
-    initIfNeeded();
-    const d = getData();
-    if (!d) return;
-
-    // Keep all data sets separately for filtering later
-    window.PETVET_TABLES = {
-        ongoing: d.appointments.filter(a=>a.status==='ongoing'),
-        upcoming: d.appointments.filter(a=>a.status==='scheduled'),
-        completed: d.appointments.filter(a=>a.status==='completed'),
-        cancelled: d.appointments.filter(a=>a.status==='cancelled')
-    };
-
-    renderSection('ongoingTableContainer', window.PETVET_TABLES.ongoing, false);
-    renderSection('upcomingTableContainer', window.PETVET_TABLES.upcoming, false);
-    renderSection('completedTableContainer', window.PETVET_TABLES.completed, true);
-    renderSection('cancelledTableContainer', window.PETVET_TABLES.cancelled, false);
-}
-
-// 🔍 Add search functionality
 function setupSearch(){
-    const inputs = document.querySelectorAll('#searchBar');
+    const inputs = document.querySelectorAll('input[id^="searchBar"]');
     inputs.forEach(input=>{
         input.addEventListener('input', e=>{
             const term = e.target.value.toLowerCase();
-            const target = e.target.getAttribute('data-target');
-            
-            if (!target || !window.PETVET_TABLES) return;
+            let containerId = '';
+            if(input.parentElement.querySelector('div')) containerId = input.parentElement.querySelector('div').id;
 
-            // Map container to dataset
-            let dataset;
-            if(target.includes('ongoing')) dataset = window.PETVET_TABLES.ongoing;
-            else if(target.includes('upcoming')) dataset = window.PETVET_TABLES.upcoming;
-            else if(target.includes('completed')) dataset = window.PETVET_TABLES.completed;
-            else if(target.includes('cancelled')) dataset = window.PETVET_TABLES.cancelled;
+            if(!containerId || !window.PETVET_INITIAL_DATA) return;
 
-            if (!dataset) return;
+            let dataset = [];
+            if(containerId==='ongoingTableContainer') dataset = window.PETVET_INITIAL_DATA.ongoing;
+            else if(containerId==='upcomingTableContainer') dataset = window.PETVET_INITIAL_DATA.upcoming;
+            else if(containerId==='completedTableContainer') dataset = window.PETVET_INITIAL_DATA.completed;
+            else if(containerId==='cancelledTableContainer') dataset = window.PETVET_INITIAL_DATA.cancelled;
 
-            const filtered = dataset.filter(r => 
-                Object.values(r).some(val => String(val).toLowerCase().includes(term))
-            );
-
-            const includeActions = target.includes('completed');
-            const container = document.getElementById(target);
-            if (container) {
-                container.innerHTML = buildTableHTML(filtered, includeActions);
-            }
+            const includeActions = containerId==='completedTableContainer';
+            const filtered = dataset.filter(r => Object.values(r).some(v=>String(v).toLowerCase().includes(term)));
+            renderSection(containerId, filtered, includeActions);
         });
     });
 }

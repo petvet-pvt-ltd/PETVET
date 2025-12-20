@@ -1,23 +1,95 @@
 <?php
 require_once __DIR__ . '/../BaseModel.php';
 
-class VaccinationsModel extends BaseModel {
-    public function fetchVaccinationsData(): array {
-        return [
-            'appointments' => [
-                ['id' => 1, 'pet' => 'Bella', 'owner' => 'John Doe', 'status' => 'Ongoing', 'date' => '2025-10-10'],
-                ['id' => 2, 'pet' => 'Max', 'owner' => 'Jane Smith', 'status' => 'Completed', 'date' => '2025-09-28'],
-                ['id' => 3, 'pet' => 'Luna', 'owner' => 'Chris Brown', 'status' => 'Cancelled', 'date' => '2025-09-15'],
-                ['id' => 4, 'pet' => 'Charlie', 'owner' => 'Emily Clark', 'status' => 'Upcoming', 'date' => '2025-10-20'],
-                ['id' => 5, 'pet' => 'Lucy', 'owner' => 'Michael Adams', 'status' => 'Completed', 'date' => '2025-09-25'],
-                ['id' => 6, 'pet' => 'Cooper', 'owner' => 'Olivia Harris', 'status' => 'Completed', 'date' => '2025-09-22']
-            ],
-            'vaccinations' => [
-                ['id' => 1, 'appointmentId' => 2, 'pet' => 'Max', 'owner' => 'Jane Smith', 'vaccine' => 'Rabies', 'nextDue' => '2026-09-28', 'date' => '2025-09-28'],
-                ['id' => 2, 'appointmentId' => 5, 'pet' => 'Lucy', 'owner' => 'Michael Adams', 'vaccine' => 'DHPP', 'nextDue' => '2026-09-25', 'date' => '2025-09-25'],
-                ['id' => 3, 'appointmentId' => 6, 'pet' => 'Cooper', 'owner' => 'Olivia Harris', 'vaccine' => 'Bordetella', 'nextDue' => '2026-03-22', 'date' => '2025-09-22']
-            ]
-        ];
+class VaccinationsModel extends BaseModel
+{
+    public function getVaccinationsForVet(int $vetId, int $clinicId): array
+    {
+        $sql = "
+            SELECT 
+                vax.*,
+                vax.appointment_id,
+                p.name AS pet_name,
+                CONCAT(u.first_name, ' ', u.last_name) AS owner_name
+            FROM vaccinations vax
+            JOIN appointments a ON a.id = vax.appointment_id
+            JOIN pets p        ON p.id = a.pet_id
+            JOIN users u       ON u.id = a.pet_owner_id
+            WHERE a.vet_id = :vet_id
+              AND a.clinic_id = :clinic_id
+            ORDER BY vax.created_at DESC
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['vet_id' => $vetId, 'clinic_id' => $clinicId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getByAppointment(int $appointmentId, int $vetId, int $clinicId): array
+    {
+        $sql = "
+            SELECT 
+                vax.*,
+                vax.appointment_id,
+                p.name AS pet_name,
+                CONCAT(u.first_name, ' ', u.last_name) AS owner_name
+            FROM vaccinations vax
+            JOIN appointments a ON a.id = vax.appointment_id
+            JOIN pets p        ON p.id = a.pet_id
+            JOIN users u       ON u.id = a.pet_owner_id
+            WHERE vax.appointment_id = :appointment_id
+              AND a.vet_id = :vet_id
+              AND a.clinic_id = :clinic_id
+            ORDER BY vax.created_at DESC
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'appointment_id' => $appointmentId,
+            'vet_id' => $vetId,
+            'clinic_id' => $clinicId
+        ]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function addVaccination(
+        int $appointmentId,
+        int $vetId,
+        int $clinicId,
+        string $vaccine,
+        ?string $nextDue
+    ): bool {
+        $chk = $this->pdo->prepare("
+            SELECT id
+            FROM appointments
+            WHERE id = :id
+              AND vet_id = :vet_id
+              AND clinic_id = :clinic_id
+              AND status IN ('ongoing','completed')
+            LIMIT 1
+        ");
+        $chk->execute([
+            'id' => $appointmentId,
+            'vet_id' => $vetId,
+            'clinic_id' => $clinicId
+        ]);
+        if (!$chk->fetch()) return false;
+
+        // Optional: prevent duplicates (one vaccination per appointment)
+        $dup = $this->pdo->prepare("SELECT id FROM vaccinations WHERE appointment_id = ? LIMIT 1");
+        $dup->execute([$appointmentId]);
+        if ($dup->fetch()) return false;
+
+        // Normalize next_due
+        $nextDue = ($nextDue === '' ? null : $nextDue);
+
+        $sql = "
+            INSERT INTO vaccinations (appointment_id, vaccine, next_due, created_at)
+            VALUES (:appointment_id, :vaccine, :next_due, NOW())
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([
+            'appointment_id' => $appointmentId,
+            'vaccine' => $vaccine,
+            'next_due' => $nextDue
+        ]);
     }
 }
-?>

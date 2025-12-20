@@ -180,6 +180,13 @@ class Auth {
             $this->recordLoginAttempt($email, true);
             $this->createSession($user, $roles);
             
+            // If vet logged in but clinic_id missing -> block access (data integrity)
+            if ($_SESSION['current_role'] === 'vet' && empty($_SESSION['clinic_id'])) {
+             $this->logout();
+             return ['success' => false, 'message' => 'Vet profile not linked to a clinic. Contact admin.'];
+}
+
+
             // Update last login
             $stmt = $this->db->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
             $stmt->execute([$user['id']]);
@@ -203,19 +210,36 @@ class Auth {
      * Create user session
      */
     private function createSession(array $user, array $roles): void {
-        $primaryRole = $roles[0]; // First role is primary
-        
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['email'] = $user['email'];
-        $_SESSION['name'] = $user['first_name'] . ' ' . $user['last_name'];
-        $_SESSION['avatar'] = $user['avatar'];
-        $_SESSION['current_role'] = $primaryRole['role_name'];
-        $_SESSION['current_role_id'] = $primaryRole['role_id'];
-        $_SESSION['current_role_display'] = $primaryRole['role_display_name'];
-        $_SESSION['roles'] = array_map(fn($r) => $r['role_name'], $roles);
-        $_SESSION['logged_in'] = true;
-        $_SESSION['login_time'] = time();
+    $primaryRole = $roles[0];
+
+    $_SESSION['user_id'] = (int)$user['id'];
+    $_SESSION['email'] = $user['email'];
+    $_SESSION['name'] = $user['first_name'] . ' ' . $user['last_name'];
+    $_SESSION['avatar'] = $user['avatar'] ?? null;
+
+    $_SESSION['current_role'] = $primaryRole['role_name'];
+    $_SESSION['current_role_id'] = (int)$primaryRole['role_id'];
+    $_SESSION['current_role_display'] = $primaryRole['role_display_name'];
+    $_SESSION['roles'] = array_map(fn($r) => $r['role_name'], $roles);
+
+    $_SESSION['logged_in'] = true;
+    $_SESSION['login_time'] = time();
+
+    // ✅ Always create the key so it shows in session dump
+    $_SESSION['clinic_id'] = null;
+
+    // ✅ If vet, pull clinic_id from vets table
+    if ($primaryRole['role_name'] === 'vet') {
+        $stmt = $this->db->prepare("SELECT clinic_id FROM vets WHERE user_id = ? LIMIT 1");
+        $stmt->execute([$_SESSION['user_id']]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row && isset($row['clinic_id']) && $row['clinic_id'] !== null) {
+            $_SESSION['clinic_id'] = (int)$row['clinic_id'];
+        }
     }
+}
+
     
     /**
      * Logout user
@@ -384,20 +408,25 @@ class Auth {
                     break;
                     
                 case 'vet':
-                    if (!empty($data['license_number'])) {
-                        $stmt = $this->db->prepare("
-                            INSERT INTO vet_profiles (user_id, license_number, specialization, years_experience, clinic_id) 
-                            VALUES (?, ?, ?, ?, ?)
-                        ");
-                        $stmt->execute([
-                            $userId,
-                            $data['license_number'],
-                            $data['specialization'] ?? null,
-                            $data['years_experience'] ?? 0,
-                            $data['clinic_id'] ?? null
-                        ]);
-                    }
-                    break;
+                // If user registers as vet, store vet profile in `vets` table
+                     if (!empty($data['license_number']) && !empty($data['clinic_id'])) {
+                     $stmt = $this->db->prepare("
+                         INSERT INTO vets (
+                         user_id, clinic_id, license_number,
+                         specialization, years_experience,
+                         created_at, updated_at
+                      )
+                         VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+                  ");
+                      $stmt->execute([
+                      $userId,
+                      (int)$data['clinic_id'],
+                      $data['license_number'],
+                      $data['specialization'] ?? null,
+                      (int)($data['years_experience'] ?? 0)
+                   ]);}
+                      break;
+
                     
                 case 'clinic_manager':
                     if (!empty($data['clinic_id'])) {
