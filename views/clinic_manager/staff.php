@@ -96,27 +96,41 @@ $total_staff = count($staff);
     <table class="cmc-table staff-table">
   <thead><tr><th>Name</th><th>Role</th><th>Contact</th><th class="col-actions">Actions</th></tr></thead>
         <tbody>
-        <?php if($filtered): foreach($filtered as $s): ?>
+        <?php if($filtered): foreach($filtered as $s): 
+          // Check if this is a receptionist with system access (has user_id)
+          $hasSystemAccess = !empty($s['user_id']) && strtolower($s['role']) === 'receptionist';
+        ?>
           <tr data-staff-id="<?= $s['id'] ?>">
             <td>
               <span class="link"><?= htmlspecialchars($s['name']) ?></span>
+              <?php if($hasSystemAccess): ?>
+                <span style="display:inline-block;margin-left:8px;background:#10b981;color:white;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">SYSTEM ACCESS</span>
+              <?php endif; ?>
             </td>
             <td><?= htmlspecialchars($s['role']) ?></td>
             <td><div><?= htmlspecialchars($s['phone']) ?></div><div class="muted"><?= htmlspecialchars($s['email']) ?></div></td>
             <td>
               <div class="row-actions">
-                <button class="action-btn staff-edit" 
-                        data-id="<?= $s['id'] ?>" 
-                        data-name="<?= htmlspecialchars($s['name']) ?>" 
-                        data-role="<?= htmlspecialchars($s['role']) ?>" 
-                        data-email="<?= htmlspecialchars($s['email']) ?>" 
-                        data-phone="<?= htmlspecialchars($s['phone']) ?>"
-                        data-status="<?= htmlspecialchars($s['status']) ?>"
-                        title="Edit">✏️</button>
+                <?php if(!$hasSystemAccess): ?>
+                  <button class="action-btn staff-edit" 
+                          data-id="<?= $s['id'] ?>" 
+                          data-name="<?= htmlspecialchars($s['name']) ?>" 
+                          data-role="<?= htmlspecialchars($s['role']) ?>" 
+                          data-email="<?= htmlspecialchars($s['email']) ?>" 
+                          data-phone="<?= htmlspecialchars($s['phone']) ?>"
+                          data-status="<?= htmlspecialchars($s['status']) ?>"
+                          title="Edit">✏️</button>
+                <?php else: ?>
+                  <button class="action-btn" 
+                          disabled
+                          style="opacity:0.3;cursor:not-allowed;"
+                          title="Receptionist manages own profile">✏️</button>
+                <?php endif; ?>
                 <button class="action-btn staff-delete" 
                         data-id="<?= $s['id'] ?>" 
-                        data-name="<?= htmlspecialchars($s['name']) ?>" 
-                        title="Delete">🗑️</button>
+                        data-name="<?= htmlspecialchars($s['name']) ?>"
+                        data-has-system-access="<?= $hasSystemAccess ? '1' : '0' ?>"
+                        title="<?= $hasSystemAccess ? 'Remove from clinic' : 'Delete' ?>">🗑️</button>
               </div>
             </td>
           </tr>
@@ -143,8 +157,16 @@ $total_staff = count($staff);
         </select></label>
       </div>
       <div class="row">
-        <label>Email<input type="email" name="email" required></label>
-        <label>Phone<input name="phone" required></label>
+        <label>
+          Email (Optional)
+          <input type="email" name="email" id="staffEmail">
+          <span class="email-validation-error" id="staffEmailError" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;"></span>
+        </label>
+        <label>
+          Phone
+          <input name="phone" id="staffPhone" required>
+          <span class="phone-validation-error" id="staffPhoneError" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;"></span>
+        </label>
       </div>
       <div class="staff-modal-actions">
         <button type="button" class="btn btn-ghost" id="cancelAddStaff">Cancel</button>
@@ -191,22 +213,38 @@ $total_staff = count($staff);
   <div class="staff-modal-dialog">
     <h3>Create Receptionist Account</h3>
     <form id="receptionistForm" class="staff-form">
-      <label>
-        Full Name
-        <input type="text" name="name" id="recepName" placeholder="Enter full name" required>
-      </label>
-      <label>
-        Email Address
-        <input type="email" name="email" id="recepEmail" placeholder="receptionist@clinic.com" required>
-      </label>
-      <label>
-        Password
-        <input type="password" name="password" id="recepPassword" placeholder="Create a secure password" required minlength="6">
-      </label>
-      <label>
-        Confirm Password
-        <input type="password" name="confirm_password" id="recepConfirmPassword" placeholder="Re-enter password" required minlength="6">
-      </label>
+      <div class="row">
+        <label>
+          First Name
+          <input type="text" name="first_name" id="recepFirstName" placeholder="First name" required>
+        </label>
+        <label>
+          Last Name
+          <input type="text" name="last_name" id="recepLastName" placeholder="Last name" required>
+        </label>
+      </div>
+      <div class="row">
+        <label>
+          Email Address
+          <input type="email" name="email" id="recepEmail" placeholder="receptionist@clinic.com" required>
+          <span class="email-validation-error" id="recepEmailError" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;"></span>
+        </label>
+        <label>
+          Phone Number
+          <input type="tel" name="phone" id="recepPhone" placeholder="0771234567" required>
+          <span class="phone-validation-error" id="recepPhoneError" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;"></span>
+        </label>
+      </div>
+      <div class="row">
+        <label>
+          Password
+          <input type="password" name="password" id="recepPassword" placeholder="Create a secure password" required minlength="6">
+        </label>
+        <label>
+          Confirm Password
+          <input type="password" name="confirm_password" id="recepConfirmPassword" placeholder="Re-enter password" required minlength="6">
+        </label>
+      </div>
       <div class="password-match-indicator" id="passwordMatchIndicator" style="display: none;"></div>
       <div class="staff-modal-actions">
         <button type="button" class="btn btn-ghost" id="cancelAddReceptionist">Cancel</button>
@@ -273,9 +311,88 @@ addModal.addEventListener('click', e => {
   if (e.target === addModal) closeAdd();
 });
 
+// Phone validation for staff form
+const staffPhoneInput = document.getElementById('staffPhone');
+const staffPhoneError = document.getElementById('staffPhoneError');
+
+staffPhoneInput.addEventListener('input', function() {
+  const phone = this.value.trim();
+  let errorMsg = '';
+  
+  if (phone) {
+    // Check if only numbers
+    if (!/^\d*$/.test(phone)) {
+      errorMsg = 'Only numbers allowed';
+    }
+    // Check if starts with 07
+    else if (phone.length > 0 && !phone.startsWith('07')) {
+      errorMsg = 'Phone must start with 07';
+    }
+    // Check if exactly 10 digits when complete
+    else if (phone.length > 10) {
+      errorMsg = 'Phone must be exactly 10 digits';
+    }
+    else if (phone.length > 0 && phone.length < 10) {
+      errorMsg = `Need ${10 - phone.length} more digit(s)`;
+    }
+  }
+  
+  if (errorMsg) {
+    staffPhoneError.textContent = errorMsg;
+    staffPhoneError.style.display = 'block';
+    this.setCustomValidity(errorMsg);
+  } else {
+    staffPhoneError.style.display = 'none';
+    this.setCustomValidity('');
+  }
+});
+
+// Email validation for staff form
+const staffEmailInput = document.getElementById('staffEmail');
+const staffEmailError = document.getElementById('staffEmailError');
+let staffEmailCheckTimeout;
+
+staffEmailInput.addEventListener('input', function() {
+  clearTimeout(staffEmailCheckTimeout);
+  const email = this.value.trim();
+  
+  // Clear error if email is empty
+  if (!email) {
+    staffEmailError.style.display = 'none';
+    return;
+  }
+  
+  // Wait 500ms after user stops typing
+  staffEmailCheckTimeout = setTimeout(async () => {
+    if (email && email.includes('@')) {
+      try {
+        const response = await fetch(`/PETVET/api/clinic-manager/check-email.php?email=${encodeURIComponent(email)}`);
+        const result = await response.json();
+        
+        if (result.success && result.exists) {
+          staffEmailError.textContent = `❌ ${result.message} (${result.user.name})`;
+          staffEmailError.style.display = 'block';
+          staffEmailInput.setCustomValidity('Email already exists');
+        } else {
+          staffEmailError.style.display = 'none';
+          staffEmailInput.setCustomValidity('');
+        }
+      } catch (error) {
+        console.error('Email check error:', error);
+      }
+    }
+  }, 500);
+});
+
 // Handle add staff form submission
 staffForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+  
+  // Check if email validation passed
+  if (staffEmailInput.validity.customError) {
+    staffEmailError.style.display = 'block';
+    return;
+  }
   
   const formData = new FormData(staffForm);
   const data = Object.fromEntries(formData.entries());
@@ -387,8 +504,13 @@ function bindEditButtons() {
 // ============================================
 // DELETE STAFF MEMBER
 // ============================================
-async function deleteStaff(id, name) {
-  if (!confirm(`Delete ${name}? This cannot be undone.`)) {
+async function deleteStaff(id, name, hasSystemAccess) {
+  const action = hasSystemAccess ? 'remove from the clinic' : 'delete';
+  const message = hasSystemAccess 
+    ? `Remove ${name} from this clinic?\n\nNote: This will only remove them from your clinic staff list. Their system account and profile will remain active.`
+    : `Delete ${name}? This cannot be undone.`;
+    
+  if (!confirm(message)) {
     return;
   }
   
@@ -400,7 +522,10 @@ async function deleteStaff(id, name) {
     const result = await response.json();
     
     if (result.success) {
-      alert('Staff member deleted successfully!');
+      const successMsg = hasSystemAccess 
+        ? 'Staff member removed from clinic successfully!' 
+        : 'Staff member deleted successfully!';
+      alert(successMsg);
       
       // Remove the row from the table
       const row = document.querySelector(`tr[data-staff-id="${id}"]`);
@@ -408,7 +533,7 @@ async function deleteStaff(id, name) {
         row.remove();
       }
     } else {
-      alert('Error: ' + (result.message || 'Failed to delete staff member'));
+      alert('Error: ' + (result.message || 'Failed to ' + action + ' staff member'));
     }
   } catch (error) {
     console.error('Error deleting staff:', error);
@@ -422,7 +547,8 @@ function bindDeleteButtons() {
     btn.onclick = () => {
       const id = btn.dataset.id;
       const name = btn.dataset.name || 'this staff member';
-      deleteStaff(id, name);
+      const hasSystemAccess = btn.dataset.hasSystemAccess === '1';
+      deleteStaff(id, name, hasSystemAccess);
     };
   });
 }
@@ -459,10 +585,12 @@ function closeReceptionistModal() {
   passwordMatchIndicator.style.display = 'none';
 }
 
-// Close credentials modal
+// Close credentials modal and reload page
 function closeCredentials() {
   credentialsModal.classList.remove('show');
   createdReceptionistData = null;
+  // Reload page to show new receptionist in table
+  window.location.reload();
 }
 
 // Password match validation
@@ -491,13 +619,94 @@ function checkPasswordMatch() {
 recepPassword.addEventListener('input', checkPasswordMatch);
 recepConfirmPassword.addEventListener('input', checkPasswordMatch);
 
+// Phone validation for receptionist form
+const recepPhoneInput = document.getElementById('recepPhone');
+const recepPhoneError = document.getElementById('recepPhoneError');
+
+recepPhoneInput.addEventListener('input', function() {
+  const phone = this.value.trim();
+  let errorMsg = '';
+  
+  if (phone) {
+    // Check if only numbers
+    if (!/^\d*$/.test(phone)) {
+      errorMsg = 'Only numbers allowed';
+    }
+    // Check if starts with 07
+    else if (phone.length > 0 && !phone.startsWith('07')) {
+      errorMsg = 'Phone must start with 07';
+    }
+    // Check if exactly 10 digits when complete
+    else if (phone.length > 10) {
+      errorMsg = 'Phone must be exactly 10 digits';
+    }
+    else if (phone.length > 0 && phone.length < 10) {
+      errorMsg = `Need ${10 - phone.length} more digit(s)`;
+    }
+  }
+  
+  if (errorMsg) {
+    recepPhoneError.textContent = errorMsg;
+    recepPhoneError.style.display = 'block';
+    this.setCustomValidity(errorMsg);
+  } else {
+    recepPhoneError.style.display = 'none';
+    this.setCustomValidity('');
+  }
+});
+
+// Email validation for receptionist form
+const recepEmailInput = document.getElementById('recepEmail');
+const recepEmailError = document.getElementById('recepEmailError');
+let recepEmailCheckTimeout;
+
+recepEmailInput.addEventListener('input', function() {
+  clearTimeout(recepEmailCheckTimeout);
+  const email = this.value.trim();
+  
+  // Clear error if email is empty
+  if (!email) {
+    recepEmailError.style.display = 'none';
+    return;
+  }
+  
+  // Wait 500ms after user stops typing
+  recepEmailCheckTimeout = setTimeout(async () => {
+    if (email && email.includes('@')) {
+      try {
+        const response = await fetch(`/PETVET/api/clinic-manager/check-email.php?email=${encodeURIComponent(email)}`);
+        const result = await response.json();
+        
+        if (result.success && result.exists) {
+          recepEmailError.textContent = `❌ ${result.message} (${result.user.name})`;
+          recepEmailError.style.display = 'block';
+          recepEmailInput.setCustomValidity('Email already exists');
+        } else {
+          recepEmailError.style.display = 'none';
+          recepEmailInput.setCustomValidity('');
+        }
+      } catch (error) {
+        console.error('Email check error:', error);
+      }
+    }
+  }, 500);
+});
+
 // Handle receptionist form submission
-receptionistForm.addEventListener('submit', function(e) {
+receptionistForm.addEventListener('submit', async function(e) {
   e.preventDefault();
   
+  // Check if email validation passed
+  if (recepEmailInput.validity.customError) {
+    recepEmailError.style.display = 'block';
+    return;
+  }
+  
   const formData = new FormData(receptionistForm);
-  const name = formData.get('name');
+  const firstName = formData.get('first_name');
+  const lastName = formData.get('last_name');
   const email = formData.get('email');
+  const phone = formData.get('phone');
   const password = formData.get('password');
   const confirmPassword = formData.get('confirm_password');
   
@@ -507,46 +716,39 @@ receptionistForm.addEventListener('submit', function(e) {
     return;
   }
   
-  // TODO: Backend API call to create receptionist account
-  // fetch('/PETVET/api/clinic-manager/create-receptionist.php', {
-  //   method: 'POST',
-  //   body: formData  // Send FormData directly, PHP will receive via $_POST
-  // })
-  // .then(response => response.json())
-  // .then(data => {
-  //   if (data.success) {
-  //     createdReceptionistData = data.receptionist;
-  //     closeReceptionistModal();
-  //     showCredentialsModal(data.receptionist.name, data.receptionist.email, password);
-  //     addReceptionistToTable(data.receptionist.name, data.receptionist.email, password);
-  //   } else {
-  //     alert(data.message || 'Failed to create account');
-  //   }
-  // })
-  // .catch(error => {
-  //   console.error('Error:', error);
-  //   alert('An error occurred. Please try again.');
-  // });
-  
-      const id = Date.now();
-    staffData.push({ id, ...payload });
-    renderList();
-  // Simulate success
-  createdReceptionistData = {
-    name: name,
-    email: email,
-    password: password,
-    createdAt: new Date().toISOString()
-  };
-  
-  // Close receptionist modal
-  closeReceptionistModal();
-  
-  // Show credentials modal
-  showCredentialsModal(name, email, password);
-  
-  // Add to staff table as pending
-  addReceptionistToTable(name, email, password);
+  try {
+    const response = await fetch('/PETVET/api/clinic-manager/create-receptionist.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        phone: phone,
+        password: password
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Close receptionist modal
+      closeReceptionistModal();
+      
+      // Show credentials modal
+      const fullName = firstName + ' ' + lastName;
+      showCredentialsModal(fullName, email, password);
+      
+      // Page will reload when user closes the credentials modal (via "Done" button)
+    } else {
+      alert('Error: ' + (result.message || 'Failed to create account'));
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('An error occurred. Please try again.');
+  }
 });
 
 // Show credentials modal with copy functionality

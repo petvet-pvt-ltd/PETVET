@@ -11,8 +11,8 @@ class GuestShopModel extends BaseModel {
     public function getAllProducts(): array {
         try {
             $stmt = $this->db->prepare("
-                SELECT id, name, description, price, category, image_url as image, 
-                       stock, seller, sold, is_active
+                SELECT id, clinic_id, name, description, price, category, image_url as image, 
+                       stock, sold, is_active
                 FROM products 
                 WHERE is_active = TRUE
                 ORDER BY id ASC
@@ -36,8 +36,8 @@ class GuestShopModel extends BaseModel {
     public function getProductById(int $id): ?array {
         try {
             $stmt = $this->db->prepare("
-                SELECT id, name, description, price, category, image_url as image, 
-                       stock, seller, sold, is_active
+                SELECT id, clinic_id, name, description, price, category, image_url as image, 
+                       stock, sold, is_active
                 FROM products 
                 WHERE id = ? AND is_active = TRUE
             ");
@@ -51,12 +51,28 @@ class GuestShopModel extends BaseModel {
         }
     }
 
+    public function getProductImages(int $productId): array {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT image_url 
+                FROM product_images 
+                WHERE product_id = ? 
+                ORDER BY display_order ASC
+            ");
+            $stmt->execute([$productId]);
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (PDOException $e) {
+            error_log("Get product images error: " . $e->getMessage());
+            return [];
+        }
+    }
+
     public function getRelatedProducts(int $excludeId, string $category = '', int $limit = 3): array {
         try {
             if ($category) {
                 $stmt = $this->db->prepare("
-                    SELECT id, name, description, price, category, image_url as image, 
-                           stock, seller, sold
+                    SELECT id, clinic_id, name, description, price, category, image_url as image, 
+                           stock, sold
                     FROM products 
                     WHERE id != ? AND category = ? AND is_active = TRUE
                     ORDER BY sold DESC
@@ -65,8 +81,8 @@ class GuestShopModel extends BaseModel {
                 $stmt->execute([$excludeId, $category, $limit]);
             } else {
                 $stmt = $this->db->prepare("
-                    SELECT id, name, description, price, category, image_url as image, 
-                           stock, seller, sold
+                    SELECT id, clinic_id, name, description, price, category, image_url as image, 
+                           stock, sold
                     FROM products 
                     WHERE id != ? AND is_active = TRUE
                     ORDER BY sold DESC
@@ -96,8 +112,8 @@ class GuestShopModel extends BaseModel {
     public function getProductsByCategory(string $category): array {
         try {
             $stmt = $this->db->prepare("
-                SELECT id, name, description, price, category, image_url as image, 
-                       stock, seller, sold
+                SELECT id, clinic_id, name, description, price, category, image_url as image, 
+                       stock, sold
                 FROM products 
                 WHERE category = ? AND is_active = TRUE
                 ORDER BY sold DESC
@@ -107,30 +123,6 @@ class GuestShopModel extends BaseModel {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Get products by category error: " . $e->getMessage());
-            return [];
-        }
-    }
-    
-    /**
-     * Get all images for a product
-     */
-    public function getProductImages(int $productId): array {
-        try {
-            $stmt = $this->db->prepare("
-                SELECT image_url
-                FROM product_images
-                WHERE product_id = ?
-                ORDER BY display_order ASC, id ASC
-            ");
-            $stmt->execute([$productId]);
-            $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            // Return array of image URLs
-            return array_map(function($img) {
-                return $img['image_url'];
-            }, $images);
-        } catch (PDOException $e) {
-            error_log("Get product images error: " . $e->getMessage());
             return [];
         }
     }

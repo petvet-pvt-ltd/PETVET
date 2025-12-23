@@ -36,103 +36,70 @@
   </div>
 </section>
 
-<!-- Categories Section -->
-<section class="categories">
-  <h2>🛍️ Shop by Categories</h2>
-  <div class="category-list">
-    <a class="category-card" data-category="all">
-      <img src="https://img.freepik.com/premium-photo/cheerful-overhead-shot-assorted-pet-supply-products-pastel-pink-background_1223049-5710.jpg" alt="ALL">
-      <p>All Products</p>
-    </a>
-    <?php foreach($categories as $categoryKey => $categoryName): ?>
-    <a class="category-card" data-category="<?php echo htmlspecialchars($categoryKey); ?>">
-      <img src="/PETVET/views/shared/images/category-<?php echo htmlspecialchars($categoryKey); ?>.png" alt="<?php echo strtoupper($categoryKey); ?>">
-      <p><?php echo htmlspecialchars($categoryName); ?></p>
-    </a>
-    <?php endforeach; ?>
-  </div>
-</section>
-
-<!-- Search and Filter Section -->
-<section class="search-filter-section">
-  <div class="search-filter-container">
-    <div class="search-box">
-      <label for="productSearch">🔍 Search:</label>
-      <input type="text" id="productSearch" placeholder="Search products..." />
+<!-- Clinics/Shops Section -->
+<section class="clinics-section">
+  <h2>🏪 Available Pet Shops</h2>
+  <p class="section-subtitle">Select a shop to view their products</p>
+  
+  <!-- Filters -->
+  <div class="shop-filters">
+    <div class="filter-group">
+      <button class="filter-chip active" id="filterNearby" onclick="toggleFilter('nearby')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        Nearby
+      </button>
     </div>
-    <div class="filter-controls">
-      <div class="price-filter">
-        <label for="minPrice">💰 Price Range:</label>
-        <div class="price-range-inputs">
-          <input type="number" id="minPrice" placeholder="Min" min="0" />
-          <span>to</span>
-          <input type="number" id="maxPrice" placeholder="Max" min="0" />
-        </div>
-      </div>
-      <div class="sort-control">
-        <label for="sortBy">📊 Sort by:</label>
-        <select id="sortBy">
-          <option value="default">Default</option>
-          <option value="price-low">Price: Low to High</option>
-          <option value="price-high">Price: High to Low</option>
-          <option value="name">Name: A to Z</option>
-        </select>
-      </div>
+    <div class="search-group">
+      <input type="text" id="shopSearch" placeholder="Search shops..." class="shop-search-input" onkeyup="filterClinics()">
     </div>
   </div>
-</section>
-
-<!-- Products Section -->
-<section class="products">
-  <h2>🎁 Featured Products</h2>
-  <div class="results-info" id="resultsInfo">Showing all products</div>
-  <div class="product-grid" id="productGrid">
-    <?php foreach($products as $product): ?>
-    <div class="product-card" data-category="<?php echo htmlspecialchars($product['category']); ?>" data-product-id="<?php echo $product['id']; ?>" data-price="<?php echo $product['price']; ?>" data-name="<?php echo htmlspecialchars(strtolower($product['name'])); ?>" data-stock="<?php echo $product['stock']; ?>">
-      <div class="product-image-container">
-        <?php if (!empty($product['images']) && count($product['images']) > 1): ?>
-          <div class="product-carousel" data-current="0">
-            <?php foreach ($product['images'] as $idx => $img): ?>
-              <img class="carousel-img <?php echo $idx === 0 ? 'active' : ''; ?>" src="<?php echo htmlspecialchars($img); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
-            <?php endforeach; ?>
-            <button class="carousel-prev">❮</button>
-            <button class="carousel-next">❯</button>
-            <div class="carousel-dots">
-              <?php foreach ($product['images'] as $idx => $img): ?>
-                <span class="dot <?php echo $idx === 0 ? 'active' : ''; ?>" data-index="<?php echo $idx; ?>"></span>
-              <?php endforeach; ?>
-            </div>
-          </div>
+  
+  <div class="clinics-grid" id="clinicsGrid">
+    <?php foreach($clinics as $clinic): ?>
+    <a href="/PETVET/index.php?module=guest&page=shop-clinic&clinic_id=<?php echo $clinic['id']; ?>" class="clinic-card" data-clinic-id="<?php echo $clinic['id']; ?>" data-map-location="<?php echo htmlspecialchars($clinic['map_location']); ?>">
+      <div class="clinic-logo">
+        <?php if (!empty($clinic['clinic_logo'])): ?>
+          <img src="<?php echo htmlspecialchars($clinic['clinic_logo']); ?>" alt="<?php echo htmlspecialchars($clinic['clinic_name']); ?>">
         <?php else: ?>
-          <img src="<?php echo htmlspecialchars($product['images'][0] ?? $product['image']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+          <div class="clinic-logo-placeholder">
+            <span><?php echo strtoupper(substr($clinic['clinic_name'], 0, 2)); ?></span>
+          </div>
         <?php endif; ?>
       </div>
-      <div class="product-info">
-        <h3><?php echo htmlspecialchars($product['name']); ?></h3>
-        <p class="seller">🏪 <?php echo htmlspecialchars($product['seller']); ?></p>
-        <p class="price">Rs. <?php echo number_format($product['price']); ?></p>
-        <div class="product-meta">
-          <span class="stock-info">📦 <?php echo $product['stock']; ?> in stock</span>
-          <span class="sold-info"><?php echo $product['sold']; ?> sold</span>
-        </div>
-        <div class="product-actions">
-          <button class="add-to-cart" data-product-id="<?php echo $product['id']; ?>">🛒 Add to Cart</button>
+      
+      <div class="clinic-info">
+        <h3 class="clinic-name"><?php echo htmlspecialchars($clinic['clinic_name']); ?></h3>
+        
+        <?php if (!empty($clinic['clinic_description'])): ?>
+        <p class="clinic-description"><?php echo htmlspecialchars(substr($clinic['clinic_description'], 0, 100)); ?><?php echo strlen($clinic['clinic_description']) > 100 ? '...' : ''; ?></p>
+        <?php endif; ?>
+        
+        <div class="clinic-meta">
+          <?php if (!empty($clinic['city'])): ?>
+          <span class="clinic-location">📍 <?php echo htmlspecialchars($clinic['city']); ?><?php echo !empty($clinic['district']) ? ', ' . htmlspecialchars($clinic['district']) : ''; ?></span>
+          <?php endif; ?>
+          
+          <span class="clinic-distance" data-clinic-id="<?php echo $clinic['id']; ?>">
+            <span class="distance-loader">⏳ Calculating...</span>
+          </span>
         </div>
       </div>
-    </div>
+    </a>
     <?php endforeach; ?>
   </div>
-  <div class="no-results" id="noResults" style="display: none;">
-    <span class="no-results-icon">🔍</span>
-    <p>No products found matching your criteria.</p>
-    <button class="clear-filters-btn" id="clearFilters">Clear All Filters</button>
-  </div>   
+  
+  <?php if (empty($clinics)): ?>
+  <div class="no-clinics">
+    <span class="no-clinics-icon">🏪</span>
+    <p>No shops available at the moment.</p>
+  </div>
+  <?php endif; ?>
 </section>
 
-<!-- Scroll to Top Button -->
-<button class="scroll-to-top" id="scrollToTop" title="Back to top">↑</button>
-
-<script src="/PETVET/public/js/guest/shop.js"></script>
+<script src="/PETVET/public/js/guest/shop-clinics.js"></script>
 </body>
 
 </html>

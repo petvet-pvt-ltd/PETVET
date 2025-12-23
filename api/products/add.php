@@ -76,6 +76,16 @@ try {
         }
     }
     
+    // Get clinic ID for the current manager
+    $stmt = db()->prepare("SELECT clinic_id FROM clinic_manager_profiles WHERE user_id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $clinicId = $stmt->fetchColumn();
+
+    if (!$clinicId) {
+        echo json_encode(['success' => false, 'message' => 'Clinic profile not found']);
+        exit;
+    }
+
     // Get POST data
     $data = [
         'name' => trim($_POST['name'] ?? ''),
@@ -84,7 +94,7 @@ try {
         'category' => trim($_POST['category'] ?? ''),
         'image_url' => !empty($imagePaths) ? $imagePaths[0] : null, // First image as primary
         'stock' => intval($_POST['stock'] ?? 0),
-        'seller' => trim($_POST['seller'] ?? 'PetVet Store'),
+        'clinic_id' => $clinicId,
         'is_active' => isset($_POST['is_active']) ? (bool)$_POST['is_active'] : true
     ];
     

@@ -35,6 +35,13 @@ function renderUpcoming(data){
   const today = window.PETVET_TODAY;
   const rows = data.appointments.filter(a=>a.appointment_date===today && a.status==='approved');
 
+  // Sort by time (earliest first)
+  rows.sort((a, b) => {
+    const timeA = a.appointment_time || '00:00:00';
+    const timeB = b.appointment_time || '00:00:00';
+    return timeA.localeCompare(timeB);
+  });
+
   rows.forEach(a=>{
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${a.id}</td><td>${a.appointment_time}</td><td>${a.pet_name}</td><td>${a.owner_name}</td><td>${a.appointment_type}</td>
@@ -99,4 +106,11 @@ function fetchDashboardData(){
 document.addEventListener('DOMContentLoaded',()=>{
   renderAll();
   bindSearch();
+  
+  // Start auto-refresh every 5 seconds
+  setInterval(() => {
+    fetchDashboardData();
+  }, 5000);
+  
+  console.log('🏥 Vet dashboard auto-refresh started (5s interval)');
 });

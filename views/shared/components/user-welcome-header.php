@@ -9,12 +9,14 @@ if (isLoggedIn()) {
     $userRole = $_SESSION['current_role_display'] ?? '';
     $userAvatar = userAvatar($user);
     
-    // Get clinic info for receptionist and clinic manager
+    // Get clinic info for receptionist, clinic manager, and vet
     $clinicInfo = null;
-    if (isset($_SESSION['current_role']) && in_array($_SESSION['current_role'], ['receptionist', 'clinic_manager'])) {
+    if (isset($_SESSION['current_role']) && in_array($_SESSION['current_role'], ['receptionist', 'clinic_manager', 'vet'])) {
         $userId = currentUserId();
         if ($userId) {
             $pdo = db();
+            
+            // Check clinic_staff table for receptionists and other staff
             $clinicStmt = $pdo->prepare("
                 SELECT c.clinic_name 
                 FROM clinic_staff cs
@@ -23,6 +25,31 @@ if (isLoggedIn()) {
             ");
             $clinicStmt->execute([$userId]);
             $clinic = $clinicStmt->fetch(PDO::FETCH_ASSOC);
+            
+            // If not found and user is clinic_manager, check clinic_manager_profiles table
+            if (!$clinic && $_SESSION['current_role'] === 'clinic_manager') {
+                $managerStmt = $pdo->prepare("
+                    SELECT c.clinic_name 
+                    FROM clinic_manager_profiles cmp
+                    JOIN clinics c ON cmp.clinic_id = c.id
+                    WHERE cmp.user_id = ?
+                ");
+                $managerStmt->execute([$userId]);
+                $clinic = $managerStmt->fetch(PDO::FETCH_ASSOC);
+            }
+            
+            // If not found and user is vet, check vets table
+            if (!$clinic && $_SESSION['current_role'] === 'vet') {
+                $vetStmt = $pdo->prepare("
+                    SELECT c.clinic_name 
+                    FROM vets v
+                    JOIN clinics c ON v.clinic_id = c.id
+                    WHERE v.user_id = ?
+                ");
+                $vetStmt->execute([$userId]);
+                $clinic = $vetStmt->fetch(PDO::FETCH_ASSOC);
+            }
+            
             if ($clinic) {
                 $clinicInfo = $clinic['clinic_name'];
             }

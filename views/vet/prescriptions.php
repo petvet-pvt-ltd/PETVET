@@ -20,8 +20,6 @@ $data = [
 <?php include 'views/shared/sidebar/sidebar.php'; ?>
 
 <div class="main-content">
-  <?php include __DIR__ . '/../shared/components/user-welcome-header.php'; ?>
-
   <div class="page-frame">
     <div class="page-header">
       <div>

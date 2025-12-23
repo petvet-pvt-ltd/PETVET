@@ -74,7 +74,7 @@ try {
     $slot_duration = $prefs ? $prefs['slot_duration_minutes'] : 20;
     $stmt->close();
     
-    // Generate all possible time slots (X:00 and X:30 only)
+    // Generate all possible time slots based on slot duration
     $start_time = strtotime($date . ' ' . $schedule['start_time']);
     $end_time = strtotime($date . ' ' . $schedule['end_time']);
     
@@ -83,18 +83,15 @@ try {
     
     while ($current_time < $end_time) {
         $time_string = date('H:i', $current_time);
-        $minutes = intval(date('i', $current_time));
         
-        // Only include :00 and :30 times
-        if ($minutes == 0 || $minutes == 30) {
-            // Check if slot + duration fits within operating hours
-            $slot_end_time = $current_time + ($slot_duration * 60);
-            if ($slot_end_time <= $end_time) {
-                $all_slots[] = $time_string;
-            }
+        // Check if slot + duration fits within operating hours
+        $slot_end_time = $current_time + ($slot_duration * 60);
+        if ($slot_end_time <= $end_time) {
+            $all_slots[] = $time_string;
         }
         
-        $current_time += 1800; // Add 30 minutes
+        // Move to next slot based on slot duration
+        $current_time += ($slot_duration * 60);
     }
     
     // Now check availability based on vet selection

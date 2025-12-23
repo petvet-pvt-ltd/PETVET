@@ -14,8 +14,8 @@ class ProductModel extends BaseModel {
     public function getAllProducts(bool $includeInactive = false): array {
         try {
             $sql = "
-                SELECT id, name, description, price, category, image_url, 
-                       stock, seller, sold, is_active, created_at, updated_at
+                SELECT id, clinic_id, name, description, price, category, image_url, 
+                       stock, sold, is_active, created_at, updated_at
                 FROM products
             ";
             
@@ -41,8 +41,8 @@ class ProductModel extends BaseModel {
     public function getProductById(int $id): ?array {
         try {
             $stmt = $this->db->prepare("
-                SELECT id, name, description, price, category, image_url, 
-                       stock, seller, sold, is_active, created_at, updated_at
+                SELECT id, clinic_id, name, description, price, category, image_url, 
+                       stock, sold, is_active, created_at, updated_at
                 FROM products 
                 WHERE id = ?
             ");
@@ -63,7 +63,7 @@ class ProductModel extends BaseModel {
         try {
             $stmt = $this->db->prepare("
                 INSERT INTO products 
-                (name, description, price, category, image_url, stock, seller, is_active)
+                (name, description, price, category, image_url, stock, clinic_id, is_active)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ");
             
@@ -74,7 +74,7 @@ class ProductModel extends BaseModel {
                 $data['category'],
                 $data['image_url'] ?? null,
                 $data['stock'] ?? 0,
-                $data['seller'] ?? 'PetVet Store',
+                $data['clinic_id'] ?? 1, // Default to 1 if not provided
                 $data['is_active'] ?? true
             ]);
         } catch (PDOException $e) {
@@ -96,7 +96,6 @@ class ProductModel extends BaseModel {
                     category = ?, 
                     image_url = ?, 
                     stock = ?, 
-                    seller = ?,
                     is_active = ?,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
@@ -109,7 +108,6 @@ class ProductModel extends BaseModel {
                 $data['category'],
                 $data['image_url'] ?? null,
                 $data['stock'] ?? 0,
-                $data['seller'] ?? 'PetVet Store',
                 $data['is_active'] ?? true,
                 $id
             ]);
@@ -137,19 +135,7 @@ class ProductModel extends BaseModel {
         }
     }
     
-    /**
-     * Permanently delete a product from database
-     */
-    public function permanentlyDeleteProduct(int $id): bool {
-        try {
-            $stmt = $this->db->prepare("DELETE FROM products WHERE id = ?");
-            return $stmt->execute([$id]);
-        } catch (PDOException $e) {
-            error_log("Permanent delete product error: " . $e->getMessage());
-            return false;
-        }
-    }
-    
+
     /**
      * Restore a soft-deleted product
      */
@@ -291,6 +277,30 @@ class ProductModel extends BaseModel {
      */
     public function getLastInsertId(): int {
         return (int)$this->db->lastInsertId();
+    }
+
+    /**
+     * Permanently delete a product
+     */
+    public function permanentlyDeleteProduct(int $id): bool {
+        try {
+            $this->db->beginTransaction();
+            
+            // 1. Delete associated images from product_images table
+            $stmt = $this->db->prepare("DELETE FROM product_images WHERE product_id = ?");
+            $stmt->execute([$id]);
+            
+            // 2. Delete the product
+            $stmt = $this->db->prepare("DELETE FROM products WHERE id = ?");
+            $stmt->execute([$id]);
+            
+            $this->db->commit();
+            return true;
+        } catch (PDOException $e) {
+            $this->db->rollBack();
+            error_log("Permanently delete product error: " . $e->getMessage());
+            return false;
+        }
     }
 }
 ?>

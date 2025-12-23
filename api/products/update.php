@@ -133,7 +133,6 @@ try {
         'category' => trim($_POST['category'] ?? ''),
         'image_url' => $existingProduct['image_url'], // Keep current primary image
         'stock' => intval($_POST['stock'] ?? 0),
-        'seller' => trim($_POST['seller'] ?? 'PetVet Store'),
         'is_active' => isset($_POST['is_active']) ? (bool)$_POST['is_active'] : true
     ];
     

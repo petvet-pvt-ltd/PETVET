@@ -40,8 +40,8 @@ function setupQuantityControls() {
             if (isNaN(value) || value < 1) {
                 this.value = 1;
             }
-            if (value > 99) {
-                this.value = 99;
+            if (value > 5) {
+                this.value = 5;
             }
         });
         
@@ -63,7 +63,7 @@ window.changeQty = function(delta) {
     let current = parseInt(qtyInput.value, 10);
     if (isNaN(current)) current = 1;
     
-    const newQty = Math.max(1, Math.min(99, current + delta));
+    const newQty = Math.max(1, Math.min(5, current + delta));
     qtyInput.value = newQty;
     
     // Visual feedback
@@ -93,34 +93,8 @@ function setupAddToCartButton() {
     document.querySelectorAll('.add-to-cart').forEach(button => {
         button.addEventListener('click', function(e) {
             e.stopPropagation();
-            
-            const quantity = document.getElementById('quantity')?.value || 1;
-            const productName = document.querySelector('h1')?.textContent || 'Product';
-            
-            // Create ripple effect
-            createRippleEffect(this, e);
-            
-            // Button animation
-            const originalText = this.innerHTML;
-            this.innerHTML = '✅ Added to Cart!';
-            this.style.background = 'linear-gradient(135deg, #48bb78, #38a169)';
-            this.disabled = true;
-            
-            // Create floating cart icon
-            createFloatingCartIcon(this);
-            
-            // Show success notification
-            showNotification(
-                `${quantity}x ${productName} added to cart!`, 
-                'success'
-            );
-            
-            // Reset button after 3 seconds
-            setTimeout(() => {
-                this.innerHTML = originalText;
-                this.style.background = '';
-                this.disabled = false;
-            }, 3000);
+            // Redirect guest to login page
+            window.location.href = '/PETVET/index.php?module=guest&page=login&redirect=shop';
         });
     });
 }

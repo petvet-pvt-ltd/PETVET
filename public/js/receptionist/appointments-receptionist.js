@@ -95,7 +95,7 @@ function showAcceptConfirmation(data) {
         </label>
         <select id="acceptVetSelect" style="width: 100%; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: white;" ${isAnyVet ? 'required' : ''}>
           ${isAnyVet ? '<option value="">-- Select a Veterinarian --</option>' : ''}
-          ${availableVets.map(vet => `<option value="${vet.id}" ${!isAnyVet && vet.name === data.vet ? 'selected' : ''}>${vet.name}</option>`).join('')}
+          ${availableVets.map(vet => `<option value="${vet.id}" data-avatar="${vet.avatar || '/PETVET/public/images/emptyProfPic.png'}" ${!isAnyVet && vet.name === data.vet ? 'selected' : ''}>${vet.name}</option>`).join('')}
         </select>
         ${availableVets.length === 0 ? '<p style="color: #dc2626; font-size: 13px; margin-top: 4px;">⚠️ All vets are booked at this time</p>' : ''}
       </div>

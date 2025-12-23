@@ -1,59 +1,65 @@
 <?php
 require_once __DIR__ . '/../BaseModel.php';
+
 class ShopModel extends BaseModel {
-    // Add methods to interact with the shop-related data in the database
-    public function fetchShopData(): array{
-        $products = [
-            [
-                'id' => 1,
-                'title' => 'Dog Food Premium',
-                'category' => 'Food',
-                'stock' => 25,
-                'price' => 3500,
-                'description' => 'High quality dog food for all breeds.',
-                'images' => [
-                    'https://bestcarepetshop.lk/web/image/product.product/21628/image_1024/%5BPC03007%5D%20Purina%20Pro%20Plan%20Adult%20Medium%20Breed%20Essential%20Health%203Kg%20%282%29%2C%20Rs%2010%2C900.00?unique=07c8065',
-                    'https://bestcarepetshop.lk/web/image/product.image/311/image_1024/Purina%20Pro%20Plan%20Adult%20Medium%20Breed%20Essential%20Health%203Kg?unique=1d70473',
-                    'https://bestcarepetshop.lk/web/image/product.image/313/image_1024/Purina%20Pro%20Plan%20Adult%20Medium%20Breed%20Essential%20Health%203Kg?unique=1d70473',
-                    'https://bestcarepetshop.lk/web/image/product.image/314/image_1024/Purina%20Pro%20Plan%20Adult%20Medium%20Breed%20Essential%20Health%203Kg?unique=1d70473'
-                ]
-            ],
-            [
-                'id' => 2,
-                'title' => 'Cat Toy Mouse',
-                'category' => 'Toys',
-                'stock' => 60,
-                'price' => 700,
-                'description' => 'Fun mouse toy for cats.',
-                'images' => [
-                    'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=facearea&w=400&q=80'
-                ]
-            ],
-        ];
+    
+    private function getClinicId() {
+        $userId = $_SESSION['user_id'] ?? 0;
+        if (!$userId) return 0;
+
+        $stmt = $this->db->prepare("SELECT clinic_id FROM clinic_manager_profiles WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        return $stmt->fetchColumn() ?: 0;
+    }
+
+    public function fetchShopData(): array {
+        $clinicId = $this->getClinicId();
+        if (!$clinicId) return [];
+
+        $stmt = $this->db->prepare("
+            SELECT 
+                id, 
+                name as title, 
+                category, 
+                stock, 
+                price, 
+                description, 
+                image_url 
+            FROM products 
+            WHERE clinic_id = ? AND is_active = 1
+            ORDER BY created_at DESC
+        ");
+        $stmt->execute([$clinicId]);
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Prepare statement for fetching images
+        $imgStmt = $this->db->prepare("SELECT image_url FROM product_images WHERE product_id = ? ORDER BY display_order ASC");
+
+        // Format images as array to match view expectation
+        foreach ($products as &$product) {
+            // Fetch all images for this product
+            $imgStmt->execute([$product['id']]);
+            $images = $imgStmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            if (!empty($images)) {
+                $product['images'] = $images;
+            } else {
+                // Fallback to the main image_url if no entries in product_images (legacy support)
+                $product['images'] = !empty($product['image_url']) ? [$product['image_url']] : [];
+            }
+            
+            // Ensure numeric types
+            $product['price'] = (float)$product['price'];
+            $product['stock'] = (int)$product['stock'];
+        }
+
         return $products;
     }
+
     public function fetchPendingOrders(): array {
-        $pendingOrders = [
-            [
-                'id' => 101,
-                'customer' => 'Nimal Perera',
-                'address' => '123 Main St, Colombo',
-                'phone' => '077-1234567',
-                'product' => 'Dog Food Premium',
-                'qty' => 2,
-                'date' => '2025-08-10'
-            ],
-            [
-                'id' => 102,
-                'customer' => 'Samanthi Silva',
-                'address' => '456 Lake Rd, Kandy',
-                'phone' => '071-9876543',
-                'product' => 'Cat Toy Mouse',
-                'qty' => 1,
-                'date' => '2025-08-11'
-            ],
-        ];
-        return $pendingOrders;
+        // TODO: Implement real orders table
+        // For now, return empty or mock data
+        return []; 
     }
 }
 ?>

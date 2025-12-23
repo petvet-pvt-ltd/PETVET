@@ -396,6 +396,10 @@
             return;
         }
         
+        // Get vet name from select element
+        const vetSelect = document.getElementById('newVetName');
+        const vetName = vetSelect.options[vetSelect.selectedIndex].text;
+        
         // Format for confirmation
         const dateFormatted = new Date(dateInput.value).toLocaleDateString('en-US', {
             weekday: 'long',
@@ -414,24 +418,70 @@
                                <strong>Pet:</strong> ${petInput.value}<br>
                                <strong>Owner:</strong> ${clientInput.value}<br>
                                <strong>Type:</strong> ${appointmentTypeInput.options[appointmentTypeInput.selectedIndex].text}<br>
-                               <strong>Vet:</strong> ${vetInput.value}<br>
+                               <strong>Vet:</strong> ${vetName}<br>
                                <strong>Date:</strong> ${dateFormatted}<br>
                                <strong>Time:</strong> ${timeFormatted}`;
         
         showConfirmation('Confirm New Appointment', confirmMessage, function() {
-            // Execute save
-            showNotification(`Appointment scheduled for ${petInput.value} on ${dateFormatted} at ${timeFormatted}`, 'Appointment Created', 'success');
-            closeModal('addModal');
-            
-            // Reset form using receptionist booking reset function
-            if (typeof window.resetReceptionistBooking === 'function') {
-                window.resetReceptionistBooking();
+            // Disable button to prevent double submission
+            const saveBtn = document.getElementById('saveAppointmentBtn');
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Saving...';
             }
             
-            // Refresh calendar immediately without page reload
-            if (window.refreshCalendarNow) {
-                window.refreshCalendarNow();
-            }
+            // Detect current module from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const module = urlParams.get('module') || 'clinic-manager';
+            
+            // Submit to API
+            fetch(`/PETVET/api/${module}/add-appointment.php`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    pet_name: petInput.value.trim(),
+                    client_name: clientInput.value.trim(),
+                    vet_id: vetInput.value,
+                    appointment_date: dateInput.value,
+                    appointment_time: timeInput.value,
+                    appointment_type: appointmentTypeInput.value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Save Appointment';
+                }
+                
+                if (data.success) {
+                    showNotification(`Appointment successfully created for ${petInput.value} on ${dateFormatted} at ${timeFormatted}`, 'Appointment Created', 'success');
+                    closeModal('addModal');
+                    
+                    // Reset form using receptionist booking reset function
+                    if (typeof window.resetReceptionistBooking === 'function') {
+                        window.resetReceptionistBooking();
+                    }
+                    
+                    // Refresh calendar immediately without page reload
+                    if (window.refreshCalendarNow) {
+                        setTimeout(() => window.refreshCalendarNow(), 500);
+                    }
+                } else {
+                    showNotification(data.error || 'Failed to create appointment', 'Error', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving appointment:', error);
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Save Appointment';
+                }
+                showNotification('Failed to create appointment. Please try again.', 'Error', 'error');
+            });
         }, 'Create Appointment', 'btn-primary');
     };
     
@@ -476,7 +526,14 @@
         const vetSelect = document.getElementById('vetSelect');
         const selectedVet = vetSelect ? vetSelect.value : 'all';
         
-        fetch(`/PETVET/api/appointments/get-appointments.php?view=${currentView}&vet=${encodeURIComponent(selectedVet)}`, {
+        // Detect current module from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const module = urlParams.get('module') || 'clinic-manager';
+        
+        // Use module-specific API endpoint
+        const apiUrl = `/PETVET/api/${module}/get-appointments.php?view=${currentView}&vet=${encodeURIComponent(selectedVet)}`;
+        
+        fetch(apiUrl, {
             method: 'GET',
             credentials: 'same-origin'
         })

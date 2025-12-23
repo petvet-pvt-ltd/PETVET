@@ -27,7 +27,33 @@ function userModel(): User {
 
 // Quick check if user is logged in
 function isLoggedIn(): bool {
-    return auth()->isLoggedIn();
+    if (!auth()->isLoggedIn()) {
+        return false;
+    }
+    
+    // Additional check: verify user account still exists and is active
+    $userId = currentUserId();
+    if ($userId) {
+        $pdo = db();
+        $stmt = $pdo->prepare("SELECT is_active FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // If account doesn't exist or is deactivated, destroy session and redirect
+        if (!$result || !$result['is_active']) {
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            $_SESSION = array();
+            session_destroy();
+            
+            // Redirect to login with message
+            header('Location: /PETVET/index.php?module=guest&page=login&error=account_deleted');
+            exit;
+        }
+    }
+    
+    return true;
 }
 
 // Get current user ID

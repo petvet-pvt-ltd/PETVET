@@ -20,9 +20,17 @@ class SharedAppointmentsModel extends BaseModel {
             $params = [];
             
             if (isset($_SESSION['user_id'])) {
+                // Check clinic_staff for receptionists
                 $checkClinic = $this->db->prepare("SELECT clinic_id FROM clinic_staff WHERE user_id = ?");
                 $checkClinic->execute([$_SESSION['user_id']]);
                 $clinicId = $checkClinic->fetchColumn();
+                
+                // If not found, check vets table
+                if (!$clinicId) {
+                    $checkVet = $this->db->prepare("SELECT clinic_id FROM vets WHERE user_id = ?");
+                    $checkVet->execute([$_SESSION['user_id']]);
+                    $clinicId = $checkVet->fetchColumn();
+                }
                 
                 if ($clinicId) {
                     $clinicFilter = " AND a.clinic_id = ?";
@@ -112,27 +120,34 @@ class SharedAppointmentsModel extends BaseModel {
      */
     public function getVetNames() {
         try {
-            // Get clinic_id for the current receptionist
+            // Get clinic_id for the current receptionist or vet
             $clinicFilter = "";
             $params = [];
             
             if (isset($_SESSION['user_id'])) {
+                // Check clinic_staff for receptionists
                 $checkClinic = $this->db->prepare("SELECT clinic_id FROM clinic_staff WHERE user_id = ?");
                 $checkClinic->execute([$_SESSION['user_id']]);
                 $clinicId = $checkClinic->fetchColumn();
                 
+                // If not found, check vets table
+                if (!$clinicId) {
+                    $checkVet = $this->db->prepare("SELECT clinic_id FROM vets WHERE user_id = ?");
+                    $checkVet->execute([$_SESSION['user_id']]);
+                    $clinicId = $checkVet->fetchColumn();
+                }
+                
                 if ($clinicId) {
-                    $clinicFilter = " AND cs.clinic_id = ?";
+                    $clinicFilter = " AND v.clinic_id = ?";
                     $params[] = $clinicId;
                 }
             }
             
             $query = "
                 SELECT DISTINCT u.id, CONCAT(u.first_name, ' ', u.last_name) as vet_name
-                FROM clinic_staff cs
-                JOIN users u ON cs.user_id = u.id
-                WHERE cs.role = 'vet' 
-                AND cs.status = 'Active'
+                FROM vets v
+                JOIN users u ON v.user_id = u.id
+                WHERE v.available = 1
                 AND u.is_active = 1
                 $clinicFilter
                 ORDER BY vet_name
@@ -239,14 +254,22 @@ class SharedAppointmentsModel extends BaseModel {
      */
     public function getPendingAppointments() {
         try {
-            // Get clinic_id if user is receptionist
+            // Get clinic_id if user is receptionist or vet
             $clinicFilter = "";
             $params = [];
             
             if (isset($_SESSION['user_id'])) {
+                // Check clinic_staff for receptionists
                 $checkClinic = $this->db->prepare("SELECT clinic_id FROM clinic_staff WHERE user_id = ?");
                 $checkClinic->execute([$_SESSION['user_id']]);
                 $clinicId = $checkClinic->fetchColumn();
+                
+                // If not found, check vets table
+                if (!$clinicId) {
+                    $checkVet = $this->db->prepare("SELECT clinic_id FROM vets WHERE user_id = ?");
+                    $checkVet->execute([$_SESSION['user_id']]);
+                    $clinicId = $checkVet->fetchColumn();
+                }
                 
                 if ($clinicId) {
                     $clinicFilter = " AND a.clinic_id = ?";

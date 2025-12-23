@@ -21,7 +21,33 @@ class StaffModel extends BaseModel {
      */
     public function all(int $clinicId = 1): array {
         try {
-            $sql = "SELECT * FROM clinic_staff WHERE clinic_id = ? ORDER BY role, name";
+            // Only get non-vet staff (Receptionist, Veterinary Assistant, Front Desk, Support Staff)
+            // Exclude vets and clinic managers who have their own management sections
+            // JOIN with users table to get current name and email if user_id exists
+            $sql = "SELECT 
+                        cs.id, 
+                        cs.clinic_id, 
+                        cs.user_id,
+                        COALESCE(CONCAT(u.first_name, ' ', u.last_name), cs.name) as name,
+                        cs.role,
+                        COALESCE(u.email, cs.email) as email,
+                        COALESCE(u.phone, cs.phone) as phone,
+                        cs.status,
+                        cs.next_shift,
+                        cs.created_at,
+                        cs.updated_at
+                    FROM clinic_staff cs
+                    LEFT JOIN users u ON cs.user_id = u.id
+                    WHERE cs.clinic_id = ? 
+                    AND LOWER(cs.role) NOT IN ('vet', 'veterinarian', 'clinic manager')
+                    ORDER BY 
+                        CASE 
+                            WHEN cs.role = 'Receptionist' THEN 1
+                            WHEN cs.role = 'Veterinary Assistant' THEN 2
+                            WHEN cs.role = 'Front Desk' THEN 3
+                            ELSE 4
+                        END,
+                        name";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$clinicId]);
             
@@ -62,6 +88,8 @@ class StaffModel extends BaseModel {
         try {
             // Set default status
             $data['status'] = $data['status'] ?? 'Active';
+            // Allow empty email
+            $data['email'] = $data['email'] ?? '';
             
             $sql = "INSERT INTO clinic_staff (clinic_id, name, role, email, phone, status) 
                     VALUES (?, ?, ?, ?, ?, ?)";

@@ -29,14 +29,12 @@ try {
     
     // Get all vets at this specific clinic
     $vetsQuery = "
-        SELECT DISTINCT u.id, u.first_name, u.last_name, CONCAT(u.first_name, ' ', u.last_name) as name
+        SELECT DISTINCT u.id, u.first_name, u.last_name, CONCAT(u.first_name, ' ', u.last_name) as name, u.avatar
         FROM users u
-        JOIN user_roles ur ON u.id = ur.user_id
-        JOIN roles r ON ur.role_id = r.id
-        JOIN clinic_staff cs ON u.id = cs.user_id
-        WHERE r.role_name = 'vet'
-        AND ur.is_active = 1
-        AND cs.clinic_id = ?
+        JOIN vets v ON u.id = v.user_id
+        WHERE v.available = 1
+        AND u.is_active = 1
+        AND v.clinic_id = ?
         ORDER BY u.first_name, u.last_name
     ";
     
@@ -53,7 +51,8 @@ try {
     while ($row = mysqli_fetch_assoc($vetsResult)) {
         $allVets[] = [
             'id' => $row['id'],
-            'name' => $row['name']
+            'name' => $row['name'],
+            'avatar' => !empty($row['avatar']) ? $row['avatar'] : '/PETVET/public/images/emptyProfPic.png'
         ];
     }
     

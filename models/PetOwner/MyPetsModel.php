@@ -110,7 +110,7 @@ class MyPetsModel {
 	}
 
 	public function getVetsByClinic($clinicId) {
-		// Fetch vets assigned to the specific clinic
+		// Fetch vets assigned to the specific clinic from vets table
 		try {
 			require_once __DIR__ . '/../../config/connect.php';
 			$db = db();
@@ -119,13 +119,12 @@ class MyPetsModel {
 				SELECT 
 					u.id, 
 					CONCAT(u.first_name, ' ', u.last_name) as name,
-					'Veterinarian' as specialization,
+					COALESCE(v.specialization, 'Veterinarian') as specialization,
 					u.avatar
-				FROM clinic_staff cs
-				JOIN users u ON cs.user_id = u.id
-				WHERE cs.clinic_id = ?
-				AND cs.role = 'vet'
-				AND cs.status = 'Active'
+				FROM vets v
+				JOIN users u ON v.user_id = u.id
+				WHERE v.clinic_id = ?
+				AND v.available = 1
 				AND u.is_active = 1
 				ORDER BY u.first_name, u.last_name
 			";
@@ -137,8 +136,8 @@ class MyPetsModel {
 			// Format avatar URLs or use placeholder
 			foreach ($results as &$vet) {
 				if (empty($vet['avatar'])) {
-					// Use placeholder avatar based on id
-					$vet['avatar'] = 'https://i.pravatar.cc/150?img=' . ($vet['id'] % 70);
+					// Use default empty profile picture
+					$vet['avatar'] = '/PETVET/public/images/emptyProfPic.png';
 				}
 			}
 			

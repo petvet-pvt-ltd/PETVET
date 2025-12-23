@@ -36,7 +36,6 @@ curl_setopt($ch, CURLOPT_HEADER, true);
 $response = curl_exec($ch);
 $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
 
 $headers = substr($response, 0, $headerSize);
 $body = substr($response, $headerSize);

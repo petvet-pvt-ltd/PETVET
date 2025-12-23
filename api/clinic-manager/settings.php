@@ -7,6 +7,7 @@
 session_start();
 require_once __DIR__ . '/../../config/connect.php';
 require_once __DIR__ . '/../../config/Auth.php';
+require_once __DIR__ . '/../../config/ImageUploader.php';
 
 header('Content-Type: application/json');
 
@@ -85,18 +86,67 @@ try {
             $phone = $_POST['phone'] ?? '';
             $email = $_POST['email'] ?? '';
             
-            $stmt = $pdo->prepare("
-                UPDATE clinics 
-                SET clinic_name = ?, 
-                    clinic_description = ?, 
-                    clinic_address = ?, 
-                    map_location = ?, 
-                    clinic_phone = ?, 
-                    clinic_email = ?,
-                    updated_at = NOW()
-                WHERE id = ?
-            ");
-            $stmt->execute([$clinicName, $description, $address, $mapPin, $phone, $email, $clinicId]);
+            // Handle clinic logo upload
+            $logoPath = null;
+            if (isset($_FILES['clinicLogo']) && $_FILES['clinicLogo']['error'] === UPLOAD_ERR_OK) {
+                $logoDir = __DIR__ . '/../../uploads/clinics/';
+                if (!is_dir($logoDir)) {
+                    mkdir($logoDir, 0755, true);
+                }
+                $uploader = new ImageUploader($logoDir);
+                $uploadResult = $uploader->upload($_FILES['clinicLogo'], 'logo_');
+                
+                if ($uploadResult['success']) {
+                    $logoPath = '/PETVET/uploads/clinics/' . $uploadResult['path'];
+                } else {
+                    throw new Exception('Failed to upload logo: ' . $uploadResult['message']);
+                }
+            }
+            
+            // Handle clinic cover upload
+            $coverPath = null;
+            if (isset($_FILES['clinicCover']) && $_FILES['clinicCover']['error'] === UPLOAD_ERR_OK) {
+                $coverDir = __DIR__ . '/../../uploads/clinics/';
+                if (!is_dir($coverDir)) {
+                    mkdir($coverDir, 0755, true);
+                }
+                $uploader = new ImageUploader($coverDir);
+                $uploadResult = $uploader->upload($_FILES['clinicCover'], 'cover_');
+                
+                if ($uploadResult['success']) {
+                    $coverPath = '/PETVET/uploads/clinics/' . $uploadResult['path'];
+                } else {
+                    throw new Exception('Failed to upload cover: ' . $uploadResult['message']);
+                }
+            }
+            
+            // Build update query dynamically
+            $updateFields = [
+                'clinic_name = ?',
+                'clinic_description = ?',
+                'clinic_address = ?',
+                'map_location = ?',
+                'clinic_phone = ?',
+                'clinic_email = ?',
+                'updated_at = NOW()'
+            ];
+            $params = [$clinicName, $description, $address, $mapPin, $phone, $email];
+            
+            if ($logoPath !== null) {
+                $updateFields[] = 'clinic_logo = ?';
+                $params[] = $logoPath;
+            }
+            
+            if ($coverPath !== null) {
+                $updateFields[] = 'clinic_cover = ?';
+                $params[] = $coverPath;
+            }
+            
+            $params[] = $clinicId;
+            
+            $sql = "UPDATE clinics SET " . implode(', ', $updateFields) . " WHERE id = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
             
             echo json_encode(['success' => true, 'message' => 'Clinic profile updated successfully']);
             break;

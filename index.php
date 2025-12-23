@@ -144,6 +144,7 @@ switch ($module) {
             case 'sell-pets': $c->sellPets(); break;
             case 'settings': $c->settings(); break;
             case 'shop': $c->shop(); break;
+            case 'shop-clinic': $c->shopClinic(); break;
             case 'shop-product': $c->shopProduct(); break;
             default: show404("This pet owner page doesn't exist."); break;
         }
@@ -158,6 +159,7 @@ switch ($module) {
             case 'medical-records': $c->medicalRecords(); break;
             case 'prescriptions': $c->prescriptions(); break;
             case 'vaccinations': $c->vaccinations(); break;
+            case 'settings': $c->settings(); break;
             default: show404("This veterinarian page doesn't exist."); break;
         }
         break;
@@ -277,11 +279,12 @@ switch ($module) {
         }
 
         // Pages that use GuestController
-        if (in_array($page, ['shop','shop-product','explore-pets','lost-found','register','vet-register','clinic-manager-register'], true)) {
+        if (in_array($page, ['shop','shop-clinic','shop-product','explore-pets','lost-found','register','vet-register','clinic-manager-register'], true)) {
             require_once __DIR__ . '/controllers/GuestController.php';
             $c = new GuestController();
             switch ($page) {
                 case 'shop': $c->shop(); break;
+                case 'shop-clinic': $c->shopClinic(); break;
                 case 'shop-product': $c->shopProduct(); break;
                 case 'explore-pets': $c->explorePets(); break;
                 case 'lost-found': $c->lostFound(); break;

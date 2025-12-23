@@ -98,7 +98,7 @@ $blockedDays = $blockedDays ?? [];
                 <div class="image-preview-list cover hero-cover" id="clinicCoverPreview">
                   <div class="image-preview-item hero"><img src="<?=htmlspecialchars($clinic['cover'])?>" alt="cover"></div>
                 </div>
-                <input type="file" id="clinicCover" accept="image/*" hidden />
+                <input type="file" id="clinicCover" name="clinicCover" accept="image/*" hidden />
                 <button type="button" class="btn btn-light btn-sm change-cover" data-for="clinicCover">Change cover</button>
               </div>
 
@@ -106,7 +106,7 @@ $blockedDays = $blockedDays ?? [];
                 <div class="image-preview-list logo hero-logo" id="clinicLogoPreview">
                   <div class="image-preview-item"><img src="<?=htmlspecialchars($clinic['logo'])?>" alt="logo"></div>
                 </div>
-                <input type="file" id="clinicLogo" accept="image/*" hidden />
+                <input type="file" id="clinicLogo" name="clinicLogo" accept="image/*" hidden />
                 <button type="button" class="btn btn-light btn-sm change-logo" data-for="clinicLogo">Change logo</button>
               </div>
             </div>

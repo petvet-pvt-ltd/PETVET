@@ -19,18 +19,75 @@ class GuestController extends BaseController {
     }
 
     public function shop() {
-        $products = $this->shopModel->getAllProducts();
-        $categories = $this->shopModel->getCategories();
+        // Fetch all active clinics
+        $pdo = db();
+        $sql = "SELECT 
+                    id,
+                    clinic_name,
+                    clinic_description,
+                    clinic_logo,
+                    clinic_address,
+                    map_location,
+                    city,
+                    district
+                FROM clinics 
+                WHERE is_active = 1 
+                AND verification_status = 'approved'
+                ORDER BY clinic_name";
         
-        // Add multiple images to each product
-        foreach ($products as &$product) {
-            $images = $this->shopModel->getProductImages($product['id']);
-            $product['images'] = !empty($images) ? $images : [$product['image']];
-        }
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        $clinics = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         $this->guestView('shop', [
-            'products' => $products,
-            'categories' => $categories
+            'clinics' => $clinics
+        ]);
+    }
+
+    public function shopClinic() {
+        $clinicId = isset($_GET['clinic_id']) ? (int)$_GET['clinic_id'] : 0;
+        
+        if ($clinicId <= 0) {
+            header("Location: /PETVET/?module=guest&page=shop");
+            exit;
+        }
+        
+        $pdo = db();
+        
+        // Fetch clinic details
+        $stmt = $pdo->prepare("SELECT * FROM clinics WHERE id = ? AND is_active = 1 AND verification_status = 'approved'");
+        $stmt->execute([$clinicId]);
+        $clinic = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$clinic) {
+            header("Location: /PETVET/?module=guest&page=shop");
+            exit;
+        }
+        
+        // Fetch products for this clinic
+        $stmt = $pdo->prepare("SELECT * FROM products WHERE clinic_id = ? AND is_active = 1 ORDER BY created_at DESC");
+        $stmt->execute([$clinicId]);
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Fetch images for each product
+        foreach ($products as &$product) {
+            $imgStmt = $pdo->prepare("SELECT image_url FROM product_images WHERE product_id = ? ORDER BY display_order");
+            $imgStmt->execute([$product['id']]);
+            $images = $imgStmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            // Use product_images if available, otherwise use main image_url
+            if (!empty($images)) {
+                $product['images'] = $images;
+            } else if (!empty($product['image_url'])) {
+                $product['images'] = [$product['image_url']];
+            } else {
+                $product['images'] = ['public/images/product-placeholder.png'];
+            }
+        }
+        
+        $this->guestView('shop-clinic', [
+            'clinic' => $clinic,
+            'products' => $products
         ]);
     }
 
@@ -138,6 +195,10 @@ class GuestController extends BaseController {
 
     // Modified view method for guest pages (no sidebar)
     protected function guestView(string $name, array $data = []) {
+        // Make data available globally to ensure it persists through includes
+        foreach ($data as $key => $value) {
+            $GLOBALS[$key] = $value;
+        }
         extract($data);
         $page = $name;
         include __DIR__ . '/../views/guest/' . $name . '.php';

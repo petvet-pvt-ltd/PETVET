@@ -95,8 +95,20 @@ class ClinicManagerController extends BaseController {
 
     public function staff() {
         $model = new StaffModel();
+        
+        // Get clinic manager's clinic ID
+        $userId = currentUserId();
+        $pdo = db();
+        $stmt = $pdo->prepare("SELECT clinic_id FROM clinic_manager_profiles WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        $clinicId = $stmt->fetchColumn();
+        
+        if (!$clinicId) {
+            $clinicId = 1; // Fallback
+        }
+        
         $data = [
-            'staff' => $model->all()
+            'staff' => $model->all($clinicId)
         ];
         $this->view('clinic_manager', 'staff', $data);
     }

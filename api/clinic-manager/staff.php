@@ -31,9 +31,18 @@ $method = $_SERVER['REQUEST_METHOD'];
 // Initialize model
 $staffModel = new StaffModel();
 
-// TODO: Get clinic ID from user session/profile
-// For now, default to 1
-$clinicId = 1;
+// Get clinic manager's clinic ID
+$userId = currentUserId();
+$pdo = db();
+$stmt = $pdo->prepare("SELECT clinic_id FROM clinic_manager_profiles WHERE user_id = ?");
+$stmt->execute([$userId]);
+$clinicId = $stmt->fetchColumn();
+
+if (!$clinicId) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'No clinic associated with this manager']);
+    exit;
+}
 
 try {
     switch ($method) {
@@ -92,8 +101,8 @@ function handleGet($staffModel, $clinicId) {
 function handlePost($staffModel, $clinicId) {
     $data = json_decode(file_get_contents('php://input'), true);
     
-    // Validate required fields
-    $requiredFields = ['name', 'role', 'email', 'phone'];
+    // Validate required fields (email is optional now)
+    $requiredFields = ['name', 'role', 'phone'];
     $missing = [];
     
     foreach ($requiredFields as $field) {
@@ -111,15 +120,22 @@ function handlePost($staffModel, $clinicId) {
         return;
     }
     
-    // Validate email format
-    if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+    // Validate email format if provided
+    if (!empty($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Invalid email format']);
         return;
     }
     
-    // Check if email already exists
-    if ($staffModel->emailExists($data['email'], null, $clinicId)) {
+    // Prevent adding receptionists through this form (they need system accounts)
+    if (strtolower($data['role']) === 'receptionist') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Receptionists must be added through "Add Receptionist" with system account']);
+        return;
+    }
+    
+    // Check if email already exists (only if email is provided)
+    if (!empty($data['email']) && $staffModel->emailExists($data['email'], null, $clinicId)) {
         http_response_code(409);
         echo json_encode(['success' => false, 'message' => 'Email already exists']);
         return;
@@ -241,16 +257,82 @@ function handleDelete($staffModel, $clinicId) {
         return;
     }
     
-    // Delete staff member
-    $success = $staffModel->delete($id, $clinicId);
+    // Check if this is a receptionist with system access (has user_id)
+    // Also check if user exists by email in case clinic_staff record was already deleted
+    $hasSystemAccess = !empty($existing['user_id']) && strtolower($existing['role']) === 'receptionist';
     
-    if ($success) {
-        echo json_encode([
-            'success' => true, 
-            'message' => 'Staff member deleted successfully'
-        ]);
+    // If no user_id but it's a receptionist, try to find user by email
+    if (!$hasSystemAccess && strtolower($existing['role']) === 'receptionist' && !empty($existing['email'])) {
+        $pdo = db();
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->execute([$existing['email']]);
+        $userId = $stmt->fetchColumn();
+        if ($userId) {
+            $existing['user_id'] = $userId;
+            $hasSystemAccess = true;
+        }
+    }
+    
+    if ($hasSystemAccess) {
+        // For receptionists with system access:
+        // 1. Deactivate their user account
+        // 2. Remove receptionist role
+        // 3. Remove from clinic_staff
+        
+        $pdo = db();
+        
+        try {
+            $pdo->beginTransaction();
+            
+            // Permanently delete receptionist account and all related data
+            
+            // 1. Delete from user_roles
+            $stmt = $pdo->prepare("DELETE FROM user_roles WHERE user_id = ?");
+            $stmt->execute([$existing['user_id']]);
+            
+            // 2. Delete from favorite_clinics (if exists)
+            $stmt = $pdo->prepare("DELETE FROM favorite_clinics WHERE user_id = ?");
+            $stmt->execute([$existing['user_id']]);
+            
+            // 3. Delete any sessions
+            $stmt = $pdo->prepare("DELETE FROM sessions WHERE user_id = ?");
+            $stmt->execute([$existing['user_id']]);
+            
+            // 4. Delete from clinic_staff
+            $success = $staffModel->delete($id, $clinicId);
+            
+            if (!$success) {
+                throw new Exception('Failed to remove from clinic_staff');
+            }
+            
+            // 5. Finally delete the user account
+            $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
+            $stmt->execute([$existing['user_id']]);
+            
+            $pdo->commit();
+            
+            echo json_encode([
+                'success' => true, 
+                'message' => 'Receptionist account permanently deleted'
+            ]);
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            error_log("Delete receptionist error: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to delete receptionist: ' . $e->getMessage()]);
+        }
     } else {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Failed to delete staff member']);
+        // For regular staff without system access, just delete the record
+        $success = $staffModel->delete($id, $clinicId);
+        
+        if ($success) {
+            echo json_encode([
+                'success' => true, 
+                'message' => 'Staff member deleted successfully'
+            ]);
+        } else {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to delete staff member']);
+        }
     }
 }

@@ -13,42 +13,6 @@
     
     <div class="main-content">
 
-<!-- Cart Icon -->
-<div class="cart-icon-wrapper">
-  <button class="cart-icon" onclick="toggleCart()" aria-label="Shopping Cart">
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
-    </svg>
-    <span class="cart-badge" id="cartBadge">0</span>
-  </button>
-  
-  <div class="cart-dropdown" id="cartDropdown">
-    <div class="cart-header">
-      <h3>Shopping Cart</h3>
-      <button class="cart-close" onclick="toggleCart()" aria-label="Close Cart">&times;</button>
-    </div>
-    
-    <div class="cart-items" id="cartItems">
-      <div class="cart-empty">
-        <div class="cart-empty-icon">🛒</div>
-        <p>Your cart is empty</p>
-        <p style="font-size: 0.85rem; color: #9ca3af; margin-top: 0.5rem;">Add items from the shop to get started</p>
-      </div>
-    </div>
-    
-    <div class="cart-footer" id="cartFooter" style="display: none;">
-      <div class="cart-total">
-        <span class="cart-total-label">Total:</span>
-        <span class="cart-total-value" id="cartTotal">Rs. 0</span>
-      </div>
-      <div class="cart-actions">
-        <button class="btn-cart btn-checkout" onclick="checkout()">Proceed to Checkout</button>
-        <button class="btn-cart" onclick="clearCart()">Clear Cart</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Banner Image -->
 <div class="shop-banner">
   <img src="/PETVET/views/shared/images/shop-banner.png" alt="Pet Shop Banner - Best Pet Products">
@@ -71,122 +35,84 @@
   </div>
 </section>
 
-<!-- Categories Section -->
-<section class="categories">
-  <h2>🛍️ Shop by Categories</h2>
-  <div class="category-list">
-    <a class="category-card" data-category="all">
-      <img src="https://img.freepik.com/premium-photo/cheerful-overhead-shot-assorted-pet-supply-products-pastel-pink-background_1223049-5710.jpg" alt="ALL">
-      <p>All Products</p>
-    </a>
-    <?php foreach($categories as $categoryKey => $categoryName): ?>
-    <a class="category-card" data-category="<?php echo htmlspecialchars($categoryKey); ?>">
-      <img src="/PETVET/views/shared/images/category-<?php echo htmlspecialchars($categoryKey); ?>.png" alt="<?php echo strtoupper($categoryKey); ?>">
-      <p><?php echo htmlspecialchars($categoryName); ?></p>
-    </a>
-    <?php endforeach; ?>
-  </div>
-</section>
-
-<!-- Search and Filter Section -->
-<section class="search-filter-section">
-  <div class="search-filter-container">
-    <div class="search-box">
-      <label for="productSearch">🔍 Search:</label>
-      <input type="text" id="productSearch" placeholder="Search products..." />
+<!-- Clinics/Shops Section -->
+<section class="clinics-section">
+  <h2>🏪 Available Pet Shops</h2>
+  <p class="section-subtitle">Select a shop to view their products</p>
+  
+  <!-- Filters -->
+  <div class="shop-filters">
+    <div class="filter-group">
+      <button class="filter-chip active" id="filterNearby" onclick="toggleFilter('nearby')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        Nearby
+      </button>
+      <button class="filter-chip" id="filterFavorites" onclick="toggleFilter('favorites')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+        Favourites
+      </button>
     </div>
-    <div class="filter-controls">
-      <div class="price-filter">
-        <label for="minPrice">💰 Price Range:</label>
-        <div class="price-range-inputs">
-          <input type="number" id="minPrice" placeholder="Min" min="0" />
-          <span>to</span>
-          <input type="number" id="maxPrice" placeholder="Max" min="0" />
-        </div>
-      </div>
-      <div class="sort-control">
-        <label for="sortBy">📊 Sort by:</label>
-        <select id="sortBy">
-          <option value="default">Default</option>
-          <option value="price-low">Price: Low to High</option>
-          <option value="price-high">Price: High to Low</option>
-          <option value="name">Name: A to Z</option>
-        </select>
-      </div>
+    <div class="search-group">
+      <input type="text" id="shopSearch" placeholder="Search shops..." class="shop-search-input" onkeyup="filterClinics()">
     </div>
   </div>
-</section>
-
-<!-- Products Section -->
-<section class="products">
-  <h2>🎁 Featured Products</h2>
-  <div class="results-info" id="resultsInfo">Showing all products</div>
-  <div class="product-grid" id="productGrid">
-    <?php foreach($products as $product): ?>
-    <div class="product-card" data-category="<?php echo htmlspecialchars($product['category']); ?>" data-product-id="<?php echo $product['id']; ?>" data-price="<?php echo $product['price']; ?>" data-name="<?php echo htmlspecialchars(strtolower($product['name'])); ?>" data-stock="<?php echo $product['stock']; ?>">
-      <div class="product-image-container">
-        <?php if (!empty($product['images']) && count($product['images']) > 1): ?>
-          <div class="product-carousel" data-current="0">
-            <?php foreach ($product['images'] as $idx => $img): ?>
-              <img class="carousel-img <?php echo $idx === 0 ? 'active' : ''; ?>" src="<?php echo htmlspecialchars($img); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
-            <?php endforeach; ?>
-            <button class="carousel-prev">❮</button>
-            <button class="carousel-next">❯</button>
-            <div class="carousel-dots">
-              <?php foreach ($product['images'] as $idx => $img): ?>
-                <span class="dot <?php echo $idx === 0 ? 'active' : ''; ?>" data-index="<?php echo $idx; ?>"></span>
-              <?php endforeach; ?>
-            </div>
-          </div>
+  
+  <div class="clinics-grid" id="clinicsGrid">
+    <?php foreach($clinics as $clinic): ?>
+    <a href="/PETVET/index.php?module=pet-owner&page=shop-clinic&clinic_id=<?php echo $clinic['id']; ?>" class="clinic-card" data-clinic-id="<?php echo $clinic['id']; ?>" data-map-location="<?php echo htmlspecialchars($clinic['map_location']); ?>">
+      <div class="clinic-logo">
+        <?php if (!empty($clinic['clinic_logo'])): ?>
+          <img src="<?php echo htmlspecialchars($clinic['clinic_logo']); ?>" alt="<?php echo htmlspecialchars($clinic['clinic_name']); ?>">
         <?php else: ?>
-          <img src="<?php echo htmlspecialchars($product['images'][0] ?? $product['image']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+          <div class="clinic-logo-placeholder">
+            <span><?php echo strtoupper(substr($clinic['clinic_name'], 0, 2)); ?></span>
+          </div>
         <?php endif; ?>
       </div>
-      <div class="product-info">
-        <h3><?php echo htmlspecialchars($product['name']); ?></h3>
-        <p class="seller">🏪 <?php echo htmlspecialchars($product['seller']); ?></p>
-        <p class="price">Rs. <?php echo number_format($product['price']); ?></p>
-        <div class="product-meta">
-          <span class="stock-info">📦 <?php echo $product['stock']; ?> in stock</span>
-          <span class="sold-info"><?php echo $product['sold']; ?> sold</span>
+      
+      <div class="clinic-info">
+        <div class="clinic-header">
+          <h3 class="clinic-name"><?php echo htmlspecialchars($clinic['clinic_name']); ?></h3>
+          <button class="favorite-btn" data-clinic-id="<?php echo $clinic['id']; ?>" onclick="event.preventDefault(); toggleFavorite(<?php echo $clinic['id']; ?>);">
+            <svg class="heart-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </button>
         </div>
-        <div class="product-actions">
-          <button class="add-to-cart" data-product-id="<?php echo $product['id']; ?>">Add to Cart</button>
+        
+        <?php if (!empty($clinic['clinic_description'])): ?>
+        <p class="clinic-description"><?php echo htmlspecialchars(substr($clinic['clinic_description'], 0, 100)); ?><?php echo strlen($clinic['clinic_description']) > 100 ? '...' : ''; ?></p>
+        <?php endif; ?>
+        
+        <div class="clinic-meta">
+          <?php if (!empty($clinic['city'])): ?>
+          <span class="clinic-location">📍 <?php echo htmlspecialchars($clinic['city']); ?><?php echo !empty($clinic['district']) ? ', ' . htmlspecialchars($clinic['district']) : ''; ?></span>
+          <?php endif; ?>
+          
+          <span class="clinic-distance" data-clinic-id="<?php echo $clinic['id']; ?>">
+            <span class="distance-loader">⏳ Calculating...</span>
+          </span>
         </div>
       </div>
-    </div>
+    </a>
     <?php endforeach; ?>
   </div>
-  <div class="no-results" id="noResults" style="display: none;">
-    <span class="no-results-icon">🔍</span>
-    <p>No products found matching your criteria.</p>
-    <button class="clear-filters-btn" id="clearFilters">Clear All Filters</button>
-  </div>   
+  
+  <?php if (empty($clinics)): ?>
+  <div class="no-clinics">
+    <span class="no-clinics-icon">🏪</span>
+    <p>No shops available at the moment.</p>
+  </div>
+  <?php endif; ?>
 </section>
-
-</footer>
-
-<!-- Scroll to Top Button -->
-<button class="scroll-to-top" id="scrollToTop" title="Back to top">↑</button>
 
     </div> <!-- End main-content -->
 
-<script src="/PETVET/public/js/pet-owner/shop.js"></script>
-<script>
-// Override module for pet-owner - Navigate to product detail when clicking card (but not buttons)
-document.querySelectorAll('.product-card').forEach(card => {
-    card.addEventListener('click', function(e) {
-        // Don't navigate if clicking a button or inside a button
-        if (e.target.closest('button') || e.target.closest('a') || e.target.tagName === 'BUTTON') {
-            return; // Let the button handle its own click
-        }
-        const productId = this.dataset.productId;
-        if (productId) {
-            window.location.href = `/PETVET/index.php?module=pet-owner&page=shop-product&id=${productId}`;
-        }
-    });
-});
-</script>
-<script src="/PETVET/public/js/cart.js"></script>
+<script src="/PETVET/public/js/pet-owner/shop-clinics.js"></script>
 </body>
 </html>

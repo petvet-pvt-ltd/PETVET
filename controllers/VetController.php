@@ -8,6 +8,7 @@ require_once __DIR__ . '/../models/Vet/MedicalRecordsModel.php';
 require_once __DIR__ . '/../models/Vet/PrescriptionsModel.php';
 require_once __DIR__ . '/../models/Vet/VaccinationsModel.php';
 require_once __DIR__ . '/../models/Vet/DashboardModel.php';
+require_once __DIR__ . '/../models/Vet/SettingsModel.php';
 
 class VetController extends BaseController
 {
@@ -23,14 +24,9 @@ class VetController extends BaseController
         requireRole('vet', '/PETVET/index.php');
 
         // ✅ Enforce clinic context
-        // If you added requireClinic() helper, use it:
-        if (function_exists('requireClinic')) {
-            requireClinic('/PETVET/index.php?module=guest&page=home');
-        } else {
-            if (empty($_SESSION['clinic_id'])) {
-                header('Location: /PETVET/index.php?module=guest&page=home');
-                exit;
-            }
+        if (empty($_SESSION['clinic_id'])) {
+            header('Location: /PETVET/index.php?module=guest&page=home');
+            exit;
         }
 
         // ✅ Init models once
@@ -144,5 +140,20 @@ class VetController extends BaseController
             'appointments',
             'vaccinations'
         ));
+    }
+
+    /* SETTINGS PAGE */
+    public function settings()
+    {
+        $settingsModel = new VetSettingsModel();
+        $userId = currentUserId();
+        
+        $data = [
+            'profile' => $settingsModel->getVetProfile($userId),
+            'prefs' => $settingsModel->getPreferences($userId),
+            'accountStats' => $settingsModel->getAccountStats($userId)
+        ];
+        
+        $this->view('vet', 'settings', $data);
     }
 }

@@ -16,79 +16,21 @@ if (!isset($_SESSION['user_id']) || $userRole !== 'clinic_manager') {
 
 $currentPage = basename($_SERVER['PHP_SELF']);
 
-// Load products from database
-require_once __DIR__ . '/../../models/ProductModel.php';
+// Products are passed from the controller as $products
+// Orders are passed from the controller as $orders
 
-$productModel = new ProductModel();
-$productsFromDb = $productModel->getAllProducts(true); // Include inactive products for management
-
-// Transform database products to match existing UI structure
-$products = [];
-foreach ($productsFromDb as $p) {
-    // Get all images for this product
-    $productImages = $productModel->getProductImages($p['id']);
-    $images = [];
-    foreach ($productImages as $img) {
-        $images[] = $img['image_url'];
-    }
-    
-    // Fallback to default image if no images exist
-    if (empty($images)) {
-        $images = ['https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?q=80&w=400&auto=format&fit=crop'];
-    }
-    
-    $products[] = [
-        'id' => $p['id'],
-        'title' => $p['name'],
-        'category' => ucfirst($p['category']),
-        'stock' => $p['stock'],
-        'price' => $p['price'],
-        'description' => $p['description'],
-        'seller' => $p['seller'] ?? 'PetVet Store',
-        'is_active' => $p['is_active'],
-        'images' => $images
-    ];
+// If products are not set (e.g. direct access), initialize empty
+if (!isset($products)) {
+    $products = [];
 }
 
-// Simulated pending orders
-$pendingOrders = [
-    [
-        'id' => 101,
-        'customer' => 'Nimal Perera',
-        'address' => '123 Main St, Colombo',
-        'phone' => '077-1234567',
-        'product' => 'Dog Food Premium',
-        'qty' => 2,
-        'date' => '2025-08-10'
-    ],
-    [
-        'id' => 102,
-        'customer' => 'Samanthi Silva',
-        'address' => '456 Lake Rd, Kandy',
-        'phone' => '071-9876543',
-        'product' => 'Cat Toy Mouse',
-        'qty' => 1,
-        'date' => '2025-08-11'
-    ],
-    [
-        'id' => 103,
-        'customer' => 'Kasun Fernando',
-        'address' => '89 Temple Rd, Galle',
-        'phone' => '075-5558899',
-        'product' => 'Flea & Tick Shampoo',
-        'qty' => 1,
-        'date' => '2025-08-12'
-    ],
-    [
-        'id' => 104,
-        'customer' => 'Dilani Jayasuriya',
-        'address' => '12 Park Ave, Negombo',
-        'phone' => '077-1122334',
-        'product' => 'Puppy Collar Set',
-        'qty' => 3,
-        'date' => '2025-08-14'
-    ],
-];
+// If orders are not set, initialize empty
+if (!isset($orders)) {
+    $orders = [];
+}
+
+// Map controller orders to $pendingOrders variable used in view
+$pendingOrders = $orders;
 ?>
 
 <!DOCTYPE html>

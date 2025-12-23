@@ -57,3 +57,6 @@ backup/
 # Don't ignore the scripts and docs we created
 !scripts/
 !docs/
+
+#SQL files
+*.sql

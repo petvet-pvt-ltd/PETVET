@@ -11,38 +11,36 @@ class VetsModel extends BaseModel {
     public function fetchVetsData(int $clinicId): array {
         $sql = "
             SELECT 
-                cs.id,
-                cs.user_id,
-                cs.name,
-                cs.email,
-                cs.phone,
-                cs.status,
+                v.user_id as id,
+                v.user_id,
+                CONCAT(u.first_name, ' ', u.last_name) as name,
+                u.email,
+                u.phone,
+                CASE WHEN v.available = 1 THEN 'Active' ELSE 'Inactive' END as status,
                 u.avatar,
-                vp.specialization,
-                vp.license_number,
-                vp.years_experience,
-                vp.consultation_fee,
-                vp.rating,
-                vp.bio,
-                vp.available,
+                v.specialization,
+                v.license_number,
+                v.years_experience,
+                v.consultation_fee,
+                v.rating,
+                v.bio,
+                v.available,
                 (SELECT MIN(a.appointment_date) 
                  FROM appointments a 
-                 WHERE a.vet_id = cs.user_id 
+                 WHERE a.vet_id = v.user_id 
                  AND a.appointment_date >= CURDATE() 
                  AND a.status != 'cancelled'
                 ) as next_appointment_date,
                 (SELECT MIN(a.appointment_time) 
                  FROM appointments a 
-                 WHERE a.vet_id = cs.user_id 
+                 WHERE a.vet_id = v.user_id 
                  AND a.appointment_date >= CURDATE() 
                  AND a.status != 'cancelled'
                 ) as next_appointment_time
-            FROM clinic_staff cs
-            LEFT JOIN users u ON cs.user_id = u.id
-            LEFT JOIN vet_profiles vp ON cs.user_id = vp.user_id
-            WHERE cs.clinic_id = :clinic_id 
-            AND cs.role = 'vet'
-            ORDER BY cs.name ASC
+            FROM vets v
+            JOIN users u ON v.user_id = u.id
+            WHERE v.clinic_id = :clinic_id
+            ORDER BY u.first_name, u.last_name ASC
         ";
         
         $stmt = $this->db->prepare($sql);
@@ -63,7 +61,7 @@ class VetsModel extends BaseModel {
                 'name' => $vet['name'],
                 'email' => $vet['email'],
                 'phone' => $vet['phone'],
-                'photo' => $vet['avatar'] ?? 'https://i.pravatar.cc/64?img=' . ($vet['id'] % 70),
+                'photo' => !empty($vet['avatar']) ? $vet['avatar'] : '/PETVET/public/images/emptyProfPic.png',
                 'specialization' => $vet['specialization'] ?? 'General',
                 'license_number' => $vet['license_number'] ?? 'N/A',
                 'years_experience' => $vet['years_experience'] ?? 0,
@@ -86,6 +84,14 @@ class VetsModel extends BaseModel {
      * @return array - Array of pending requests
      */
     public function fetchPendingRequests(int $clinicId): array {
+        // Note: With the new system, vets are created directly in the vets table
+        // Pending requests would need to come from a different workflow
+        // For now, return empty array as pending vet requests are handled differently
+        
+        // If you need pending vet applications, you would query user_roles 
+        // where role='vet' and verification_status='pending'
+        // But those vets won't have entries in the vets table until approved
+        
         $sql = "
             SELECT 
                 ur.id as request_id,
@@ -94,25 +100,18 @@ class VetsModel extends BaseModel {
                 u.email,
                 u.phone,
                 u.avatar,
-                vp.specialization,
-                vp.license_number,
-                vp.years_experience,
-                vp.education,
-                vp.bio,
                 ur.applied_at,
                 ur.verification_status
             FROM user_roles ur
             JOIN users u ON ur.user_id = u.id
             JOIN roles r ON ur.role_id = r.id
-            LEFT JOIN vet_profiles vp ON u.id = vp.user_id
             WHERE r.role_name = 'vet'
             AND ur.verification_status = 'pending'
-            AND (vp.clinic_id = :clinic_id OR vp.clinic_id IS NULL)
             ORDER BY ur.applied_at DESC
         ";
         
         $stmt = $this->db->prepare($sql);
-        $stmt->execute(['clinic_id' => $clinicId]);
+        $stmt->execute();
         $requests = $stmt->fetchAll();
         
         // Format for view
@@ -123,13 +122,13 @@ class VetsModel extends BaseModel {
                 'user_id' => $req['user_id'],
                 'name' => $req['name'],
                 'email' => $req['email'],
-                'phone' => $req['phone'],
+                'phone' => $req['phone'] ?? 'N/A',
                 'photo' => $req['avatar'] ?? 'https://i.pravatar.cc/64?img=' . ($req['user_id'] % 70),
-                'specialization' => $req['specialization'] ?? 'General',
-                'license' => $req['license_number'] ?? 'N/A',
-                'experience' => ($req['years_experience'] ?? 0) . ' years',
-                'education' => $req['education'] ?? 'Not provided',
-                'bio' => $req['bio'] ?? '',
+                'specialization' => 'General',
+                'license' => 'Pending',
+                'experience' => 'N/A',
+                'education' => 'Not provided',
+                'bio' => '',
                 'applied_date' => date('M d, Y', strtotime($req['applied_at']))
             ];
         }

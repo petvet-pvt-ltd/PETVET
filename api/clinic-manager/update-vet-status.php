@@ -1,7 +1,7 @@
 <?php
 /**
  * API Endpoint: Update Vet Status
- * Updates vet status (Active, On Leave, Suspended) in clinic_staff table
+ * Updates vet availability status in vets table
  */
 
 session_start();
@@ -35,6 +35,9 @@ try {
         throw new Exception('Invalid status value');
     }
     
+    // Convert status to available flag (Active = 1, others = 0)
+    $available = ($status === 'Active') ? 1 : 0;
+    
     // Get clinic manager's clinic_id
     $stmt = $pdo->prepare("SELECT clinic_id FROM clinic_manager_profiles WHERE user_id = ?");
     $stmt->execute([$_SESSION['user_id']]);
@@ -46,17 +49,16 @@ try {
     
     $clinicId = $profile['clinic_id'];
     
-    // Update vet status in clinic_staff table (only for vets in this clinic)
+    // Update vet availability in vets table (only for vets in this clinic)
     $stmt = $pdo->prepare("
-        UPDATE clinic_staff 
-        SET status = ?,
+        UPDATE vets 
+        SET available = ?,
             updated_at = CURRENT_TIMESTAMP
         WHERE user_id = ? 
         AND clinic_id = ?
-        AND role = 'vet'
     ");
     
-    $stmt->execute([$status, $userId, $clinicId]);
+    $stmt->execute([$available, $userId, $clinicId]);
     
     if ($stmt->rowCount() === 0) {
         throw new Exception('Vet not found or no permission to update');

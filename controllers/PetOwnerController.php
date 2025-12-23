@@ -189,22 +189,76 @@ class PetOwnerController extends BaseController {
     }
 
     public function shop() {
-        $shopModel = new PetOwnerShopModel();
+        // Fetch all active clinics
+        $pdo = db();
+        $sql = "SELECT 
+                    id,
+                    clinic_name,
+                    clinic_description,
+                    clinic_logo,
+                    clinic_address,
+                    map_location,
+                    city,
+                    district
+                FROM clinics 
+                WHERE is_active = 1 
+                AND verification_status = 'approved'
+                ORDER BY clinic_name";
         
-        $products = $shopModel->getAllProducts();
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        $clinics = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Add multiple images to each product
-        foreach ($products as &$product) {
-            $images = $shopModel->getProductImages($product['id']);
-            $product['images'] = !empty($images) ? $images : [$product['image']];
+        $this->view('pet-owner', 'shop', [
+            'clinics' => $clinics
+        ]);
+    }
+
+    public function shopClinic() {
+        $clinicId = isset($_GET['clinic_id']) ? (int)$_GET['clinic_id'] : 0;
+        
+        if ($clinicId <= 0) {
+            header("Location: /PETVET/?module=pet-owner&page=shop");
+            exit;
         }
         
-        $data = [
-            'categories' => $shopModel->getCategories(),
-            'products' => $products
-        ];
+        $pdo = db();
         
-        $this->view('pet-owner', 'shop', $data);
+        // Fetch clinic details
+        $stmt = $pdo->prepare("SELECT * FROM clinics WHERE id = ? AND is_active = 1 AND verification_status = 'approved'");
+        $stmt->execute([$clinicId]);
+        $clinic = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$clinic) {
+            header("Location: /PETVET/?module=pet-owner&page=shop");
+            exit;
+        }
+        
+        // Fetch products for this clinic
+        $stmt = $pdo->prepare("SELECT * FROM products WHERE clinic_id = ? AND is_active = 1 ORDER BY created_at DESC");
+        $stmt->execute([$clinicId]);
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Fetch images for each product
+        foreach ($products as &$product) {
+            $imgStmt = $pdo->prepare("SELECT image_url FROM product_images WHERE product_id = ? ORDER BY display_order");
+            $imgStmt->execute([$product['id']]);
+            $images = $imgStmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            // Use product_images if available, otherwise use main image_url
+            if (!empty($images)) {
+                $product['images'] = $images;
+            } else if (!empty($product['image_url'])) {
+                $product['images'] = [$product['image_url']];
+            } else {
+                $product['images'] = ['public/images/product-placeholder.png'];
+            }
+        }
+        
+        $this->view('pet-owner', 'shop-clinic', [
+            'clinic' => $clinic,
+            'products' => $products
+        ]);
     }
 
     public function shopProduct() {

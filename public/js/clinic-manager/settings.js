@@ -10,18 +10,36 @@ const toast = (msg, type='success') => {
 
 // Form change tracking
 const formStates = new Map();
+const fileInputStates = new Map();
 
 function captureFormState(formId) {
   const form = $(formId);
   if (!form) return;
   const data = new FormData(form);
-  formStates.set(formId, JSON.stringify([...data.entries()]));
+  // Store text/checkbox/radio inputs, excluding file inputs
+  const entries = [...data.entries()].filter(([key, value]) => !(value instanceof File));
+  formStates.set(formId, JSON.stringify(entries));
+  
+  // Track file inputs separately
+  const fileInputs = form.querySelectorAll('input[type="file"]');
+  fileInputStates.set(formId, Array.from(fileInputs).every(input => !input.files.length));
 }
 
 function hasFormChanged(formId) {
   const form = $(formId);
   if (!form) return false;
-  const current = JSON.stringify([...new FormData(form).entries()]);
+  
+  // Check if any file input has a file selected
+  const fileInputs = form.querySelectorAll('input[type="file"]');
+  const hasFiles = Array.from(fileInputs).some(input => input.files.length > 0);
+  
+  // If files are selected, form has changed
+  if (hasFiles) return true;
+  
+  // Otherwise check text inputs
+  const data = new FormData(form);
+  const entries = [...data.entries()].filter(([key, value]) => !(value instanceof File));
+  const current = JSON.stringify(entries);
   return formStates.get(formId) !== current;
 }
 
@@ -53,7 +71,7 @@ async function apiRequest(url, data) {
 }
 
 // Image previewers
-function bindImagePreview(inputId, previewContainerId) {
+function bindImagePreview(inputId, previewContainerId, formId = null) {
   const input = document.getElementById(inputId);
   const preview = document.getElementById(previewContainerId);
   if (!input || !preview) return;
@@ -70,6 +88,15 @@ function bindImagePreview(inputId, previewContainerId) {
       item.appendChild(img);
       preview.appendChild(item);
     });
+    
+    // Trigger form change detection if formId is provided
+    if (formId) {
+      const form = $(formId);
+      if (form) {
+        // Manually update the form state by dispatching an input event
+        form.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
   });
 }
 
@@ -331,15 +358,26 @@ function wireForms() {
       const formData = new FormData(formClinic);
       formData.append('action', 'update_clinic');
       
-      const result = await apiRequest('/PETVET/api/clinic-manager/settings.php', Object.fromEntries(formData));
-      if (result.success) {
-        toast(result.message);
-        captureFormState('#formClinic');
-        updateButtonState('#formClinic', '#formClinic button[type="submit"]');
-        // Reload page to show updated clinic name everywhere
-        setTimeout(() => location.reload(), 1500);
-      } else {
-        toast(result.message, 'error');
+      // Send FormData directly to preserve file uploads
+      try {
+        const response = await fetch('/PETVET/api/clinic-manager/settings.php', {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+          toast(result.message);
+          captureFormState('#formClinic');
+          updateButtonState('#formClinic', '#formClinic button[type="submit"]');
+          // Reload page to show updated clinic name everywhere
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          toast(result.message, 'error');
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast('Failed to update clinic profile', 'error');
       }
     });
   }
@@ -409,8 +447,8 @@ function wireForms() {
 
 // Init
 bindImagePreview('mgrAvatar', 'mgrAvatarPreview');
-bindImagePreview('clinicLogo', 'clinicLogoPreview');
-bindImagePreview('clinicCover', 'clinicCoverPreview');
+bindImagePreview('clinicLogo', 'clinicLogoPreview', '#formClinic');
+bindImagePreview('clinicCover', 'clinicCoverPreview', '#formClinic');
 initHoursToggles();
 initHolidays();
 initWeeklySchedule();
