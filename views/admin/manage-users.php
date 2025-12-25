@@ -239,9 +239,9 @@ $pending[] = [
         </div>
         <h3>Total Registered Users</h3>
         <div class="value-with-icon">
-          <p class="number animated-number" data-target="<?php echo htmlspecialchars($stats['totalUsers']); ?>">0</p>
+          <p class="number animated-number" data-target="<?php echo isset($stats['totalUsers']) ? htmlspecialchars($stats['totalUsers']) : 0; ?>">0</p>
         </div>
-        <span class="success"><span class="trend-up">↗</span> <?php echo htmlspecialchars($stats['usersGrowth']); ?> from last month</span>
+        <span class="success"><span class="trend-up">↗</span> <?php echo isset($stats['usersGrowth']) ? htmlspecialchars($stats['usersGrowth']) : '+0%'; ?> from last month</span>
       </div>
 
       <div class="card card-hover" data-stat="pending">
@@ -268,9 +268,9 @@ $pending[] = [
         </div>
         <h3>Verified Professionals</h3>
         <div class="value-with-icon">
-          <p class="number animated-number" data-target="<?php echo htmlspecialchars($stats['vets']); ?>">0</p>
+          <p class="number animated-number" data-target="<?php echo isset($stats['verifiedProfessionals']) ? htmlspecialchars($stats['verifiedProfessionals']) : 0; ?>">0</p>
         </div>
-        <span class="info-text">Active & Verified</span>
+        <span class="info-text">Vets: <?php echo $stats['vets'] ?? 0; ?> | Groomers: <?php echo $stats['groomers'] ?? 0; ?> | Breeders: <?php echo $stats['breeders'] ?? 0; ?> | Sitters: <?php echo $stats['sitters'] ?? 0; ?></span>
       </div>
 
       <div class="card card-hover" data-stat="clinics">
@@ -282,7 +282,7 @@ $pending[] = [
         </div>
         <h3>Active Clinics</h3>
         <div class="value-with-icon">
-          <p class="number animated-number" data-target="<?php echo htmlspecialchars($stats['clinics']); ?>">0</p>
+          <p class="number animated-number" data-target="<?php echo isset($stats['activeClinics']) ? htmlspecialchars($stats['activeClinics']) : 0; ?>">0</p>
         </div>
         <span class="info-text">Registered Partners</span>
       </div>
@@ -444,6 +444,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const counters = document.querySelectorAll('.animated-number');
   counters.forEach(counter => {
     const target = parseInt(counter.getAttribute('data-target'));
+    
+    // Reset to 0 first to prevent accumulation
+    counter.textContent = '0';
+    
     const duration = 2000;
     const step = target / (duration / 16);
     let current = 0;
@@ -796,23 +800,33 @@ document.addEventListener('click', function(e){
 
 <aside id="drawer" class="drawer">
   <div class="drawer-header">
-    <h2>Pending Requests (<?php echo count($pending); ?>)</h2>
+    <h2>Pending Requests (<?php echo isset($pendingRequests) ? count($pendingRequests) : 0; ?>)</h2>
     <button id="closeDrawer" class="icon-btn" aria-label="Close">✕</button>
   </div>
   <div class="drawer-body">
-    <?php if (!isset($pending) || !$pending) { $pending = []; } ?>
-    <?php if ($pending): foreach ($pending as $p): ?>
-      <div class="pending-item">
+    <?php 
+    $pendingRequests = $pendingRequests ?? [];
+    if (!empty($pendingRequests)): 
+      foreach ($pendingRequests as $p): 
+    ?>
+      <div class="pending-item" data-request-id="<?= htmlspecialchars($p['request_id']) ?>">
         <div class="row">
-          <div class="avatar-sm"><?= htmlspecialchars(strtoupper(substr($p['name'] ?? '-',0,1))) ?></div>
+          <div class="avatar-sm">
+            <?php if (!empty($p['avatar'])): ?>
+              <img src="<?= htmlspecialchars($p['avatar']) ?>" alt="<?= htmlspecialchars($p['name']) ?>" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+            <?php else: ?>
+              <?= htmlspecialchars(strtoupper(substr($p['name'] ?? '-',0,1))) ?>
+            <?php endif; ?>
+          </div>
           <div class="meta">
             <div class="name"><?= htmlspecialchars($p['name'] ?? 'Unknown') ?></div>
-            <div class="role"><?= htmlspecialchars($p['role'] . ($p['email'] ? ' • ' . $p['email'] : '')) ?></div>
+            <div class="role"><?= htmlspecialchars(($p['role'] ?? 'User') . ($p['email'] ? ' • ' . $p['email'] : '')) ?></div>
+            <div class="role" style="font-size:12px;color:#94a3b8;">Applied: <?= htmlspecialchars(date('M d, Y', strtotime($p['applied_at']))) ?></div>
           </div>
         </div>
         <div class="pending-actions">
-          <button class="btn-approve">✓ Approve</button>
-          <button class="btn-reject">✕ Reject</button>
+          <button class="btn-approve" onclick="approveRegistration(<?= htmlspecialchars($p['request_id']) ?>)">✓ Approve</button>
+          <button class="btn-reject" onclick="rejectRegistration(<?= htmlspecialchars($p['request_id']) ?>)">✕ Reject</button>
         </div>
       </div>
     <?php endforeach; else: ?>
@@ -1189,4 +1203,93 @@ document.getElementById('trainerModalClose').addEventListener('click', closeTrai
 document.getElementById('trainerModalDone').addEventListener('click', closeTrainerModal);
 document.querySelector('#trainerModal .cmc-modal-backdrop').addEventListener('click', closeTrainerModal);
 document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeTrainerModal(); });
+
+// Approve registration function
+async function approveRegistration(requestId) {
+  if (!confirm('Are you sure you want to approve this registration request?')) {
+    return;
+  }
+  
+  try {
+    const formData = new FormData();
+    formData.append('request_id', requestId);
+    formData.append('notes', 'Approved by admin');
+    
+    const response = await fetch('/PETVET/api/admin/approve-registration.php', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert('Registration approved successfully!');
+      // Remove the item from UI
+      const item = document.querySelector(`[data-request-id="${requestId}"]`);
+      if (item) item.remove();
+      
+      // Update pending count
+      const countEl = document.querySelector('#drawer .drawer-header h2');
+      if (countEl) {
+        const currentCount = parseInt(countEl.textContent.match(/\d+/)[0]);
+        countEl.textContent = `Pending Requests (${currentCount - 1})`;
+      }
+      
+      // Reload page to update stats
+      setTimeout(() => window.location.reload(), 1000);
+    } else {
+      alert('Error: ' + (result.message || 'Failed to approve registration'));
+    }
+  } catch (error) {
+    console.error('Error approving registration:', error);
+    alert('An error occurred while approving the registration');
+  }
+}
+
+// Reject registration function
+async function rejectRegistration(requestId) {
+  const reason = prompt('Please provide a reason for rejection (optional):');
+  if (reason === null) {
+    return; // User cancelled
+  }
+  
+  if (!confirm('Are you sure you want to reject this registration request?')) {
+    return;
+  }
+  
+  try {
+    const formData = new FormData();
+    formData.append('request_id', requestId);
+    formData.append('reason', reason || 'No reason provided');
+    
+    const response = await fetch('/PETVET/api/admin/reject-registration.php', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert('Registration rejected successfully');
+      // Remove the item from UI
+      const item = document.querySelector(`[data-request-id="${requestId}"]`);
+      if (item) item.remove();
+      
+      // Update pending count
+      const countEl = document.querySelector('#drawer .drawer-header h2');
+      if (countEl) {
+        const currentCount = parseInt(countEl.textContent.match(/\d+/)[0]);
+        countEl.textContent = `Pending Requests (${currentCount - 1})`;
+      }
+      
+      // Reload page to update stats
+      setTimeout(() => window.location.reload(), 1000);
+    } else {
+      alert('Error: ' + (result.message || 'Failed to reject registration'));
+    }
+  } catch (error) {
+    console.error('Error rejecting registration:', error);
+    alert('An error occurred while rejecting the registration');
+  }
+}
 </script>

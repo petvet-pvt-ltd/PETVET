@@ -1,12 +1,41 @@
 <?php
-// Admin Dashboard - simplified layout matching the design: top stat cards, large growth chart and role distribution donut.
-// Safe defaults for variables to avoid notices during early testing.
-$totalUsers = isset($totalUsers) ? $totalUsers : 1234;
-$usersGrowth = isset($usersGrowth) ? $usersGrowth : '+12%';
-$activeUsersToday = isset($activeUsersToday) ? $activeUsersToday : 89;
-$pendingRequests = isset($pendingRequests) ? $pendingRequests : 7;
-$totalClinics = isset($totalClinics) ? $totalClinics : 45;
+// Admin Dashboard - Load data with PHP (Simple version)
+require_once __DIR__ . '/../../config/connect.php';
+$pdo = db();
 
+// Get total users
+$stmt = $pdo->query("SELECT COUNT(DISTINCT u.id) as total FROM users u 
+    INNER JOIN user_roles ur ON u.id = ur.user_id 
+    INNER JOIN roles r ON ur.role_id = r.id 
+    WHERE r.role_name != 'admin' AND ur.verification_status = 'approved'");
+$totalUsers = $stmt->fetchColumn() ?: 0;
+
+// Get active users today
+$stmt = $pdo->query("SELECT COUNT(DISTINCT id) as active FROM users WHERE DATE(last_login) = CURDATE()");
+$activeUsersToday = $stmt->fetchColumn() ?: 0;
+
+// Get pending clinics
+$stmt = $pdo->query("SELECT COUNT(*) as pending FROM clinics WHERE verification_status = 'pending'");
+$pendingRequests = $stmt->fetchColumn() ?: 0;
+
+// Get total clinics
+$stmt = $pdo->query("SELECT COUNT(*) as total FROM clinics");
+$totalClinics = $stmt->fetchColumn() ?: 0;
+
+// Get today's appointments
+$stmt = $pdo->query("SELECT COUNT(*) as count FROM appointments WHERE DATE(appointment_date) = CURDATE()");
+$todayAppointments = $stmt->fetchColumn() ?: 0;
+
+// Get new users today
+$stmt = $pdo->query("SELECT COUNT(DISTINCT u.id) as count FROM users u 
+    INNER JOIN user_roles ur ON u.id = ur.user_id 
+    INNER JOIN roles r ON ur.role_id = r.id 
+    WHERE r.role_name != 'admin' AND DATE(u.created_at) = CURDATE()");
+$newUsersToday = $stmt->fetchColumn() ?: 0;
+
+// Get active clinics
+$stmt = $pdo->query("SELECT COUNT(*) as count FROM clinics WHERE is_active = 1");
+$activeClinics = $stmt->fetchColumn() ?: 0;
 ?>
 <link rel="stylesheet" href="/PETVET/public/css/admin/styles.css">
 <link rel="stylesheet" href="/PETVET/public/css/admin/dashboard.css">
@@ -20,7 +49,7 @@ $totalClinics = isset($totalClinics) ? $totalClinics : 45;
   <section class="overview">
     <!-- Enhanced Stat Cards -->
     <div class="dashboard-top-cards">
-      <div class="stat-card card-hover" data-count="<?php echo $totalUsers; ?>">
+      <div class="stat-card card-hover">
         <div class="stat-card-header">
           <div class="stat-icon users-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -29,17 +58,16 @@ $totalClinics = isset($totalClinics) ? $totalClinics : 45;
           </div>
           <h4>Total Users</h4>
         </div>
-        <div class="stat-value animated-number" data-target="<?php echo $totalUsers; ?>">0</div>
+        <div class="stat-value"><?= $totalUsers ?></div>
         <div class="stat-sub success">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle">
             <path d="M18 15l-6-6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <?php echo htmlspecialchars($usersGrowth); ?> since last month
+          <span>Approved users</span>
         </div>
-        <div class="stat-sparkline" data-type="users"></div>
       </div>
 
-      <div class="stat-card card-hover" data-count="<?php echo $activeUsersToday; ?>">
+      <div class="stat-card card-hover">
         <div class="stat-card-header">
           <div class="stat-icon active-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -49,17 +77,16 @@ $totalClinics = isset($totalClinics) ? $totalClinics : 45;
           </div>
           <h4>Active Users Today</h4>
         </div>
-        <div class="stat-value animated-number" data-target="<?php echo $activeUsersToday; ?>">0</div>
+        <div class="stat-value"><?= $activeUsersToday ?></div>
         <div class="stat-sub success">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle">
             <path d="M18 15l-6-6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          +5% since yesterday
+          Logged in today
         </div>
-        <div class="stat-sparkline" data-type="active"></div>
       </div>
 
-      <div class="stat-card card-hover <?php echo $pendingRequests > 0 ? 'has-pending' : ''; ?>" data-count="<?php echo $pendingRequests; ?>">
+      <div class="stat-card card-hover" id="pendingCard">
         <div class="stat-card-header">
           <div class="stat-icon pending-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -68,21 +95,17 @@ $totalClinics = isset($totalClinics) ? $totalClinics : 45;
           </div>
           <h4>Pending Requests</h4>
         </div>
-        <div class="stat-value animated-number" data-target="<?php echo $pendingRequests; ?>">0</div>
+        <div class="stat-value"><?= $pendingRequests ?></div>
         <div class="stat-sub warning">
-          <?php if($pendingRequests > 0): ?>
-            <span class="pulse-dot"></span>
-            Awaiting approval
-          <?php else: ?>
-            All caught up!
-          <?php endif; ?>
+          <span class="pulse-dot"></span>
+          Awaiting approval
         </div>
-        <?php if($pendingRequests > 0): ?>
-          <button class="stat-action-btn">Review Now →</button>
+        <?php if ($pendingRequests > 0): ?>
+        <button class="stat-action-btn" onclick="window.location.href='/PETVET/index.php?module=admin&page=manage-clinics&filter=pending'">Review Now →</button>
         <?php endif; ?>
       </div>
 
-      <div class="stat-card card-hover" data-count="<?php echo $totalClinics; ?>">
+      <div class="stat-card card-hover">
         <div class="stat-card-header">
           <div class="stat-icon clinics-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -91,14 +114,13 @@ $totalClinics = isset($totalClinics) ? $totalClinics : 45;
           </div>
           <h4>Total Clinics</h4>
         </div>
-        <div class="stat-value animated-number" data-target="<?php echo $totalClinics; ?>">0</div>
+        <div class="stat-value"><?= $totalClinics ?></div>
         <div class="stat-sub info">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle">
             <path d="M18 15l-6-6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          +1 since last week
+          Registered partners
         </div>
-        <div class="stat-sparkline" data-type="clinics"></div>
       </div>
     </div>
 
@@ -107,61 +129,80 @@ $totalClinics = isset($totalClinics) ? $totalClinics : 45;
       <div class="chart-large">
         <div class="chart-header">
           <div>
-            <h3>User Growth</h3>
-            <p class="muted">Monthly active users — last 12 months</p>
-          </div>
-          <div class="chart-controls">
-            <button class="chart-btn active" data-period="12m">12M</button>
-            <button class="chart-btn" data-period="6m">6M</button>
-            <button class="chart-btn" data-period="3m">3M</button>
-            <button class="chart-btn" data-period="1m">1M</button>
+            <h3>Quick Actions</h3>
+            <p class="muted">Common administrative tasks</p>
           </div>
         </div>
-        <div class="chart-placeholder" id="growthChart">
-          <div class="loading-spinner"></div>
+        <div style="padding: 30px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+            <a href="/PETVET/index.php?module=admin&page=manage-users-by-role" style="text-decoration: none;">
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 12px; color: white; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">Manage</div>
+                <div style="font-size: 20px; font-weight: 700;">Users</div>
+              </div>
+            </a>
+            <a href="/PETVET/index.php?module=admin&page=manage-clinics" style="text-decoration: none;">
+              <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 25px; border-radius: 12px; color: white; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">Manage</div>
+                <div style="font-size: 20px; font-weight: 700;">Clinics</div>
+              </div>
+            </a>
+            <a href="/PETVET/index.php?module=admin&page=reports" style="text-decoration: none;">
+              <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 25px; border-radius: 12px; color: white; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">View</div>
+                <div style="font-size: 20px; font-weight: 700;">Reports</div>
+              </div>
+            </a>
+            <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 25px; border-radius: 12px; color: white; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+              <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">System</div>
+              <div style="font-size: 20px; font-weight: 700;">Settings</div>
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="chart-side">
         <div class="chart-header">
           <div>
-            <h3>Role Distribution</h3>
-            <p class="muted">Active users by role</p>
+            <h3>System Status</h3>
+            <p class="muted">Platform health</p>
           </div>
         </div>
-        <div class="donut-placeholder" id="roleDonut">
-          <div class="loading-spinner"></div>
-        </div>
-        <div class="legend-list">
-          <div class="legend-item" data-role="owners">
-            <span class="legend-dot" style="background:#3b82f6"></span>
-            <span class="legend-label">Pet Owners</span>
-            <span class="legend-value">720</span>
-            <span class="legend-percent">58%</span>
+        <div style="padding: 20px;">
+          <div style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-size: 14px; color: #6B7280;">Database</span>
+              <span style="font-size: 14px; font-weight: 600; color: #059669;">Online</span>
+            </div>
+            <div style="height: 6px; background: #E5E7EB; border-radius: 3px; overflow: hidden;">
+              <div style="width: 100%; height: 100%; background: linear-gradient(90deg, #059669, #10B981);"></div>
+            </div>
           </div>
-          <div class="legend-item" data-role="sitters">
-            <span class="legend-dot" style="background:#60a5fa"></span>
-            <span class="legend-label">Pet Sitters</span>
-            <span class="legend-value">145</span>
-            <span class="legend-percent">12%</span>
+          <div style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-size: 14px; color: #6B7280;">Server</span>
+              <span style="font-size: 14px; font-weight: 600; color: #059669;">Healthy</span>
+            </div>
+            <div style="height: 6px; background: #E5E7EB; border-radius: 3px; overflow: hidden;">
+              <div style="width: 95%; height: 100%; background: linear-gradient(90deg, #059669, #10B981);"></div>
+            </div>
           </div>
-          <div class="legend-item" data-role="trainers">
-            <span class="legend-dot" style="background:#10b981"></span>
-            <span class="legend-label">Trainers</span>
-            <span class="legend-value">189</span>
-            <span class="legend-percent">15%</span>
+          <div style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-size: 14px; color: #6B7280;">API Status</span>
+              <span style="font-size: 14px; font-weight: 600; color: #059669;">Active</span>
+            </div>
+            <div style="height: 6px; background: #E5E7EB; border-radius: 3px; overflow: hidden;">
+              <div style="width: 100%; height: 100%; background: linear-gradient(90deg, #059669, #10B981);"></div>
+            </div>
           </div>
-          <div class="legend-item" data-role="groomers">
-            <span class="legend-dot" style="background:#f59e0b"></span>
-            <span class="legend-label">Groomers</span>
-            <span class="legend-value">135</span>
-            <span class="legend-percent">11%</span>
+          <div style="margin-top: 30px; padding: 15px; background: #F3F4F6; border-radius: 8px;">
+            <div style="font-size: 12px; color: #6B7280; margin-bottom: 5px;">Total Users</div>
+            <div style="font-size: 24px; font-weight: 700; color: #1F2937;"><?= $totalUsers ?></div>
           </div>
-          <div class="legend-item" data-role="clinics">
-            <span class="legend-dot" style="background:#ef4444"></span>
-            <span class="legend-label">Clinics</span>
-            <span class="legend-value">45</span>
-            <span class="legend-percent">4%</span>
+          <div style="margin-top: 15px; padding: 15px; background: #F3F4F6; border-radius: 8px;">
+            <div style="font-size: 12px; color: #6B7280; margin-bottom: 5px;">Active Clinics</div>
+            <div style="font-size: 24px; font-weight: 700; color: #1F2937;"><?= $activeClinics ?></div>
           </div>
         </div>
       </div>
@@ -176,8 +217,8 @@ $totalClinics = isset($totalClinics) ? $totalClinics : 45;
           </svg>
         </div>
         <div class="info-content">
-          <div class="info-title">Recent Activity</div>
-          <div class="info-value">1,428 actions today</div>
+          <div class="info-title">Appointments Today</div>
+          <div class="info-value"><?= $todayAppointments ?></div>
         </div>
       </div>
 
@@ -189,8 +230,8 @@ $totalClinics = isset($totalClinics) ? $totalClinics : 45;
           </svg>
         </div>
         <div class="info-content">
-          <div class="info-title">Avg. Response Time</div>
-          <div class="info-value">2.4 hours</div>
+          <div class="info-title">New Users Today</div>
+          <div class="info-value"><?= $newUsersToday ?></div>
         </div>
       </div>
 
@@ -202,8 +243,8 @@ $totalClinics = isset($totalClinics) ? $totalClinics : 45;
           </svg>
         </div>
         <div class="info-content">
-          <div class="info-title">User Satisfaction</div>
-          <div class="info-value">94.5%</div>
+          <div class="info-title">Active Clinics</div>
+          <div class="info-value"><?= $activeClinics ?></div>
         </div>
       </div>
 
@@ -214,8 +255,8 @@ $totalClinics = isset($totalClinics) ? $totalClinics : 45;
           </svg>
         </div>
         <div class="info-content">
-          <div class="info-title">Support Tickets</div>
-          <div class="info-value">12 open</div>
+          <div class="info-title">Total System Users</div>
+          <div class="info-value"><?= $totalUsers ?></div>
         </div>
       </div>
     </div>
@@ -227,12 +268,110 @@ $totalClinics = isset($totalClinics) ? $totalClinics : 45;
 (function() {
   'use strict';
 
+  let dashboardData = null;
+
+  // Load dashboard data on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+  });
+
+  async function loadDashboardData() {
+    try {
+      const response = await fetch('/PETVET/api/admin/get-dashboard-stats.php');
+      const data = await response.json();
+      
+      if (data.success) {
+        dashboardData = data;
+        updateDashboard(data);
+      } else {
+        console.error('Error loading dashboard:', data.error);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  function updateDashboard(data) {
+    // Update stat cards
+    updateStatCards(data.stats);
+    
+    // Update role distribution
+    updateRoleDistribution(data.roleDistribution);
+    
+    // Draw charts
+    setTimeout(() => {
+      animateNumbers(data.stats);
+      drawSparklines();
+      drawGrowthChart(data.growthData);
+      drawRoleDonut(data.roleDistribution);
+    }, 100);
+  }
+
+  function updateStatCards(stats) {
+    document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
+    document.getElementById('usersGrowth').textContent = stats.usersGrowth || '+0%';
+    document.getElementById('activeUsersToday').textContent = stats.activeUsersToday || 0;
+    document.getElementById('pendingRequests').textContent = stats.pendingRequests || 0;
+    document.getElementById('totalClinics').textContent = stats.totalClinics || 0;
+    
+    // Update info cards
+    document.getElementById('todayAppointments').textContent = stats.todayAppointments || 0;
+    document.getElementById('newUsersToday').textContent = stats.newUsersToday || 0;
+    document.getElementById('activeClinicsInfo').textContent = stats.totalClinics || 0;
+    document.getElementById('totalSystemUsers').textContent = stats.totalUsers || 0;
+    
+    // Update pending card status
+    const pendingCard = document.getElementById('pendingCard');
+    const pendingStatus = document.getElementById('pendingStatus');
+    const reviewBtn = document.getElementById('reviewBtn');
+    
+    if (stats.pendingRequests > 0) {
+      pendingCard.classList.add('has-pending');
+      pendingStatus.innerHTML = '<span class="pulse-dot"></span> Awaiting approval';
+      reviewBtn.style.display = 'block';
+    } else {
+      pendingCard.classList.remove('has-pending');
+      pendingStatus.innerHTML = 'All caught up!';
+      reviewBtn.style.display = 'none';
+    }
+  }
+
+  function updateRoleDistribution(roleDistribution) {
+    const legendList = document.getElementById('legendList');
+    const colors = {
+      'pet_owner': '#3b82f6',
+      'sitter': '#60a5fa',
+      'trainer': '#10b981',
+      'groomer': '#f59e0b',
+      'vet': '#ef4444',
+      'breeder': '#8b5cf6'
+    };
+    
+    legendList.innerHTML = roleDistribution.map(role => {
+      const color = colors[role.role_name] || '#6b7280';
+      return `
+        <div class="legend-item">
+          <span class="legend-dot" style="background:${color}"></span>
+          <span class="legend-label">${role.role_display_name}</span>
+          <span class="legend-value">${role.count}</span>
+          <span class="legend-percent">${role.percentage}%</span>
+        </div>
+      `;
+    }).join('');
+  }
+
   // ============================================
   // ANIMATED NUMBER COUNTERS
   // ============================================
-  function animateNumbers() {
+  function animateNumbers(stats) {
+    // Set data-target attributes from real data
+    document.getElementById('totalUsers').setAttribute('data-target', stats.totalUsers);
+    document.getElementById('activeUsersToday').setAttribute('data-target', stats.activeUsersToday);
+    document.getElementById('pendingRequests').setAttribute('data-target', stats.pendingRequests);
+    document.getElementById('totalClinics').setAttribute('data-target', stats.totalClinics);
+    
     document.querySelectorAll('.animated-number').forEach(elem => {
-      const target = parseInt(elem.dataset.target) || 0;
+      const target = parseInt(elem.getAttribute('data-target')) || 0;
       const duration = 1500;
       const startTime = performance.now();
       
@@ -296,8 +435,169 @@ $totalClinics = isset($totalClinics) ? $totalClinics : 45;
   // ============================================
   // GROWTH CHART
   // ============================================
-  function drawGrowthChart() {
+  function drawGrowthChart(growthData) {
     const growth = document.getElementById('growthChart');
+    if (!growth || !growthData || growthData.length === 0) return;
+
+    const width = growth.offsetWidth || 800;
+    const height = 300;
+    const padding = { top: 20, right: 30, bottom: 50, left: 60 };
+    const chartWidth = width - padding.left - padding.right;
+    const chartHeight = height - padding.top - padding.bottom;
+
+    // Format month data
+    const months = growthData.map(d => {
+      const date = new Date(d.month + '-01');
+      return date.toLocaleDateString('en-US', { month: 'short' });
+    });
+    
+    const data = growthData.map(d => parseInt(d.count));
+    const max = Math.max(...data);
+    const min = Math.min(...data);
+    const range = max - min;
+
+    // Calculate points with cumulative totals
+    let cumulative = 0;
+    const points = data.map((val, i) => {
+      cumulative += val;
+      const x = padding.left + (i / (data.length - 1)) * chartWidth;
+      const y = padding.top + chartHeight - ((cumulative - min) / (range || 1)) * chartHeight;
+      return { x, y, val: cumulative };
+    });
+
+    const pathData = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x},${p.y}`).join(' ');
+    const areaData = `M ${padding.left},${height - padding.bottom} ${pathData} L ${points[points.length - 1].x},${height - padding.bottom} Z`;
+
+    let svg = `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}">`;
+    
+    // Grid lines
+    svg += '<g class="grid">';
+    for (let i = 0; i <= 5; i++) {
+      const y = padding.top + (chartHeight / 5) * i;
+      const value = Math.round(max - (range / 5) * i);
+      svg += `<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="#e5e7eb" stroke-width="1"/>`;
+      svg += `<text x="${padding.left - 10}" y="${y + 4}" text-anchor="end" font-size="11" fill="#9ca3af">${value}</text>`;
+    }
+    svg += '</g>';
+
+    // Area gradient
+    svg += `<defs>
+      <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.2" />
+        <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0" />
+      </linearGradient>
+    </defs>`;
+    svg += `<path d="${areaData}" fill="url(#chartGradient)" />`;
+
+    // Line
+    svg += `<path d="${pathData}" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+    // Points
+    points.forEach((p, i) => {
+      svg += `<circle cx="${p.x}" cy="${p.y}" r="5" fill="#fff" stroke="#3b82f6" stroke-width="2" class="chart-point" data-value="${p.val}" data-month="${months[i]}"/>`;
+    });
+
+    // X-axis labels
+    months.forEach((month, i) => {
+      const x = padding.left + (i / (data.length - 1)) * chartWidth;
+      svg += `<text x="${x}" y="${height - padding.bottom + 25}" text-anchor="middle" font-size="11" fill="#64748b">${month}</text>`;
+    });
+
+    svg += '</svg>';
+    
+    growth.innerHTML = svg;
+
+    // Add hover effects
+    growth.querySelectorAll('.chart-point').forEach(point => {
+      point.addEventListener('mouseenter', function() {
+        const value = this.dataset.value;
+        const month = this.dataset.month;
+        
+        const tooltip = document.createElement('div');
+        tooltip.className = 'chart-tooltip';
+        tooltip.innerHTML = `<strong>${month}</strong><br>${parseInt(value).toLocaleString()} users`;
+        tooltip.style.cssText = `
+          position: absolute;
+          background: #0f172a;
+          color: white;
+          padding: 8px 12px;
+          border-radius: 6px;
+          font-size: 12px;
+          pointer-events: none;
+          z-index: 1000;
+          white-space: nowrap;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        `;
+        
+        const rect = this.getBoundingClientRect();
+        const containerRect = growth.getBoundingClientRect();
+        tooltip.style.left = (rect.left - containerRect.left + rect.width / 2) + 'px';
+        tooltip.style.top = (rect.top - containerRect.top - 10) + 'px';
+        tooltip.style.transform = 'translate(-50%, -100%)';
+        
+        growth.style.position = 'relative';
+        growth.appendChild(tooltip);
+        
+        this.setAttribute('r', '7');
+      });
+      
+      point.addEventListener('mouseleave', function() {
+        const tooltip = growth.querySelector('.chart-tooltip');
+        if (tooltip) tooltip.remove();
+        this.setAttribute('r', '5');
+      });
+    });
+  }
+
+  // ============================================
+  // DONUT CHART
+  // ============================================
+  function drawRoleDonut(roleDistribution) {
+    const donut = document.getElementById('roleDonut');
+    if (!donut || !roleDistribution || roleDistribution.length === 0) return;
+
+    const colors = {
+      'pet_owner': '#3b82f6',
+      'sitter': '#60a5fa',
+      'trainer': '#10b981',
+      'groomer': '#f59e0b',
+      'vet': '#ef4444',
+      'breeder': '#8b5cf6'
+    };
+
+    const data = roleDistribution.map(role => ({
+      label: role.role_display_name,
+      value: parseInt(role.count),
+      color: colors[role.role_name] || '#6b7280'
+    }));
+
+    const total = data.reduce((sum, d) => sum + d.value, 0);
+    if (total === 0) {
+      donut.innerHTML = '<div style="text-align:center;padding:40px;color:#9ca3af;">No data available</div>';
+      return;
+    }
+    
+    let cumulativePercent = 0;
+
+    let svg = `<svg width="220" height="220" viewBox="0 0 42 42" style="transform: rotate(-90deg)">`;
+    
+    // Background circle
+    svg += `<circle cx="21" cy="21" r="15.91549431" fill="transparent" stroke="#f1f5f9" stroke-width="4"></circle>`;
+
+    // Segments
+    data.forEach((item, index) => {
+      const percent = (item.value / total) * 100;
+      const offset = cumulativePercent;
+      cumulativePercent += percent;
+
+      svg += `<circle 
+        class="donut-segment" 
+        data-label="${item.label}" 
+        data-value="${item.value}"
+        cx="21" cy="21" r="15.91549431" 
+        fill="transparent" 
+        stroke="${item.color}" 
+        stroke-width="4"
     if (!growth) return;
 
     // Sample data for 12 months
@@ -470,8 +770,10 @@ $totalClinics = isset($totalClinics) ? $totalClinics : 45;
         
         // Highlight corresponding legend item
         const legendItems = document.querySelectorAll('.legend-item');
-        legendItems[index].style.background = '#f8fafc';
-        legendItems[index].style.transform = 'translateX(4px)';
+        if (legendItems[index]) {
+          legendItems[index].style.background = '#f8fafc';
+          legendItems[index].style.transform = 'translateX(4px)';
+        }
       });
       
       segment.addEventListener('mouseleave', function() {
@@ -479,164 +781,13 @@ $totalClinics = isset($totalClinics) ? $totalClinics : 45;
         
         // Reset legend item
         const legendItems = document.querySelectorAll('.legend-item');
-        legendItems[index].style.background = '';
-        legendItems[index].style.transform = '';
+        if (legendItems[index]) {
+          legendItems[index].style.background = '';
+          legendItems[index].style.transform = '';
+        }
       });
     });
   }
-
-  // ============================================
-  // REFRESH BUTTON
-  // ============================================
-  document.querySelector('.refresh-btn')?.addEventListener('click', function() {
-    this.style.transform = 'rotate(360deg)';
-    this.style.transition = 'transform 0.6s ease';
-    
-    setTimeout(() => {
-      this.style.transform = '';
-      animateNumbers();
-      showNotification('Dashboard data refreshed!', 'success');
-    }, 600);
-  });
-
-  // ============================================
-  // EXPORT BUTTON
-  // ============================================
-  document.querySelector('.export-btn')?.addEventListener('click', function() {
-    showNotification('Exporting dashboard report...', 'info');
-    
-    setTimeout(() => {
-      showNotification('Report exported successfully!', 'success');
-    }, 1500);
-  });
-
-  // ============================================
-  // CHART PERIOD BUTTONS
-  // ============================================
-  document.querySelectorAll('.chart-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      
-      const period = this.dataset.period;
-      showNotification(`Showing data for ${period}`, 'info');
-    });
-  });
-
-  // ============================================
-  // NOTIFICATION SYSTEM
-  // ============================================
-  function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.textContent = message;
-    notification.style.cssText = `
-      position: fixed;
-      top: 80px;
-      right: 20px;
-      padding: 12px 18px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      z-index: 10000;
-      animation: slideInRight 0.3s ease;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    `;
-    
-    if (type === 'success') {
-      notification.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-      notification.style.color = 'white';
-    } else if (type === 'info') {
-      notification.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
-      notification.style.color = 'white';
-    } else if (type === 'warning') {
-      notification.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
-      notification.style.color = 'white';
-    }
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-      notification.style.animation = 'slideOutRight 0.3s ease';
-      setTimeout(() => notification.remove(), 300);
-    }, 3000);
-  }
-
-  // ============================================
-  // CARD HOVER EFFECTS
-  // ============================================
-  document.querySelectorAll('.stat-card').forEach(card => {
-    card.addEventListener('mouseenter', function() {
-      this.style.transform = 'translateY(-4px)';
-      this.style.boxShadow = '0 12px 28px rgba(2,6,23,0.12)';
-    });
-    
-    card.addEventListener('mouseleave', function() {
-      this.style.transform = '';
-      this.style.boxShadow = '';
-    });
-  });
-
-  // ============================================
-  // LEGEND ITEM INTERACTIONS
-  // ============================================
-  document.querySelectorAll('.legend-item').forEach((item, index) => {
-    item.addEventListener('mouseenter', function() {
-      const segments = document.querySelectorAll('.donut-segment');
-      if (segments[index]) {
-        segments[index].style.strokeWidth = '5';
-        segments[index].style.opacity = '1';
-      }
-      this.style.background = '#f8fafc';
-      this.style.transform = 'translateX(4px)';
-    });
-    
-    item.addEventListener('mouseleave', function() {
-      const segments = document.querySelectorAll('.donut-segment');
-      if (segments[index]) {
-        segments[index].style.strokeWidth = '4';
-      }
-      this.style.background = '';
-      this.style.transform = '';
-    });
-  });
-
-  // ============================================
-  // INITIALIZE ON LOAD
-  // ============================================
-  window.addEventListener('load', function() {
-    // Stagger animations for better visual effect
-    setTimeout(() => animateNumbers(), 100);
-    setTimeout(() => drawSparklines(), 200);
-    setTimeout(() => drawGrowthChart(), 300);
-    setTimeout(() => drawDonutChart(), 400);
-    
-    // Fade in cards with stagger
-    document.querySelectorAll('.stat-card').forEach((card, index) => {
-      card.style.opacity = '0';
-      card.style.transform = 'translateY(20px)';
-      
-      setTimeout(() => {
-        card.style.transition = 'all 0.4s ease';
-        card.style.opacity = '1';
-        card.style.transform = 'translateY(0)';
-      }, index * 100);
-    });
-  });
-
-  // Add animation styles
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes slideInRight {
-      from { transform: translateX(400px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideOutRight {
-      from { transform: translateX(0); opacity: 1; }
-      to { transform: translateX(400px); opacity: 0; }
-    }
-  `;
-  document.head.appendChild(style);
 
 })();
 </script>

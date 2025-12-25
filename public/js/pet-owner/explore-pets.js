@@ -4,6 +4,131 @@ document.addEventListener('DOMContentLoaded', () => {
 	const qsa = (s, el=document) => Array.from(el.querySelectorAll(s));
 	const money = n => 'Rs ' + Number(n).toLocaleString();
 
+	// Leaflet map for sell pet modal
+	let sellMap = null;
+	let sellMarker = null;
+	
+	// Initialize Leaflet map for sell modal
+	function initSellMap(lat = 6.9271, lng = 79.8612) {
+		if (sellMap) {
+			sellMap.remove();
+		}
+		
+		sellMap = L.map('sellMapContainer').setView([lat, lng], 13);
+		
+		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+			maxZoom: 19
+		}).addTo(sellMap);
+		
+		// Add click handler
+		sellMap.on('click', function(e) {
+			const { lat, lng } = e.latlng;
+			
+			// Add or update marker
+			if (sellMarker) {
+				sellMarker.setLatLng([lat, lng]);
+			} else {
+				sellMarker = L.marker([lat, lng]).addTo(sellMap);
+			}
+			
+			// Update hidden inputs
+			qs('#sellLatitude').value = lat;
+			qs('#sellLongitude').value = lng;
+			
+			// Fetch address
+			fetchSellAddress(lat, lng);
+		});
+	}
+	
+	// Fetch address from coordinates for sell form
+	async function fetchSellAddress(lat, lng) {
+		const locationInput = qs('#sellLocation');
+		locationInput.value = 'Getting location...';
+		
+		try {
+			const response = await fetch(`/PETVET/api/pet-owner/reverse-geocode.php?lat=${lat}&lng=${lng}`);
+			const data = await response.json();
+			
+			console.log('Geocode response:', data);
+			
+			if (data.success && data.location) {
+				locationInput.value = data.location;
+			} else {
+				console.error('Geocoding failed:', data);
+				locationInput.value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+			}
+		} catch (error) {
+			console.error('Geocoding error:', error);
+			locationInput.value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+		}
+	}
+	
+	// Get current location button handler
+	qs('#getCurrentLocationBtn')?.addEventListener('click', function() {
+		if (!navigator.geolocation) {
+			alert('Geolocation is not supported by your browser');
+			return;
+		}
+		
+		this.disabled = true;
+		this.textContent = '📍 Getting location...';
+		
+		navigator.geolocation.getCurrentPosition(
+			(position) => {
+				const lat = position.coords.latitude;
+				const lng = position.coords.longitude;
+				
+				// Center map on current location
+				sellMap.setView([lat, lng], 15);
+				
+				// Add marker
+				if (sellMarker) {
+					sellMarker.setLatLng([lat, lng]);
+				} else {
+					sellMarker = L.marker([lat, lng]).addTo(sellMap);
+				}
+				
+				// Update inputs
+				qs('#sellLatitude').value = lat;
+				qs('#sellLongitude').value = lng;
+				
+				// Fetch address
+				fetchSellAddress(lat, lng);
+				
+				this.disabled = false;
+				this.textContent = '📍 Use My Current Location';
+			},
+			(error) => {
+				console.error('Geolocation error:', error);
+				let errorMessage = 'Unable to get your location. ';
+				
+				switch(error.code) {
+					case error.PERMISSION_DENIED:
+						errorMessage += 'Location permission was denied. Please enable location access in your browser settings or click on the map to select a location.';
+						break;
+					case error.POSITION_UNAVAILABLE:
+						errorMessage += 'Location information is unavailable. Please click on the map to select a location.';
+						break;
+					case error.TIMEOUT:
+						errorMessage += 'Location request timed out. Please try again or click on the map to select a location.';
+						break;
+					default:
+						errorMessage += 'Please click on the map to select a location.';
+				}
+				
+				alert(errorMessage);
+				this.disabled = false;
+				this.textContent = '📍 Use My Current Location';
+			},
+			{
+				enableHighAccuracy: true,
+				timeout: 10000,
+				maximumAge: 0
+			}
+		);
+	});
+
 	// Modal helpers (updated to work with both old and new modal structures)
 	function openModal(id){ 
 		const m=qs('#'+id); 
@@ -98,7 +223,13 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 	// Buttons
-	qs('#btnSellPet')?.addEventListener('click',()=>openModal('sellModal'));
+	qs('#btnSellPet')?.addEventListener('click',()=>{
+		openModal('sellModal');
+		// Initialize map when modal opens
+		setTimeout(() => {
+			initSellMap();
+		}, 100);
+	});
 	qs('#btnMyListings')?.addEventListener('click', async ()=>{
 		await fetchMyListings();
 		openModal('myListingsModal');
@@ -306,6 +437,13 @@ document.addEventListener('DOMContentLoaded', () => {
 		cards = qsa('.card', grid).filter(c=>c.style.display!=='none');
 		const mode = sortBy?.value;
 		cards.sort((a,b)=>{
+			if(mode==='nearest') {
+				const petIdA = a.dataset.petId;
+				const petIdB = b.dataset.petId;
+				const distA = petsWithDistance.get(petIdA)?.distance_km ?? 999999;
+				const distB = petsWithDistance.get(petIdB)?.distance_km ?? 999999;
+				return distA - distB;
+			}
 			const pa = +a.dataset.price, pb = +b.dataset.price;
 			if(mode==='priceLow') return pa - pb;
 			if(mode==='priceHigh') return pb - pa;
@@ -682,7 +820,19 @@ document.addEventListener('DOMContentLoaded', () => {
 				body: fd
 			});
 			
-			const data = await response.json();
+			// Get response as text first to see if it's valid JSON
+			const responseText = await response.text();
+			console.log('API Response:', responseText);
+			
+			let data;
+			try {
+				data = JSON.parse(responseText);
+			} catch (parseError) {
+				console.error('JSON Parse Error:', parseError);
+				console.error('Response was:', responseText);
+				alert('Server returned an invalid response. Check console for details.');
+				return;
+			}
 			
 			if (data.success) {
 				alert(data.message || 'Listing published successfully! It will be visible after admin approval.');
@@ -1132,6 +1282,125 @@ document.addEventListener('DOMContentLoaded', () => {
 	setupCarousels();
 	setupContactButtons();
 	
+	// Initialize distance calculation for explore pets
+	initPetDistanceCalculation();
+	
 	// Load My Listings data on page load (prepares localStorage)
 	loadMyListings();
 });
+
+// Distance calculation for explore pets
+let userPetLocation = null;
+let petsWithDistance = new Map(); // Map of pet_id => distance data
+
+function initPetDistanceCalculation() {
+	if (!navigator.geolocation) {
+		console.warn('Geolocation not supported');
+		hideAllPetDistanceLoaders();
+		return;
+	}
+
+	const options = {
+		enableHighAccuracy: false, // Changed to false for faster response
+		timeout: 15000, // Increased to 15 seconds
+		maximumAge: 300000 // 5 minutes
+	};
+
+	navigator.geolocation.getCurrentPosition(
+		(position) => {
+			userPetLocation = {
+				lat: position.coords.latitude,
+				lng: position.coords.longitude
+			};
+			console.log('User location obtained:', userPetLocation);
+			calculateAllPetDistances();
+		},
+		(error) => {
+			console.warn('Geolocation error:', error.message);
+			hideAllPetDistanceLoaders();
+			// Silently fail - distance features just won't be available
+		},
+		options
+	);
+}
+
+function calculateAllPetDistances() {
+	const cards = document.querySelectorAll('.card[data-latitude][data-longitude]');
+	
+	console.log('Found cards with coordinates:', cards.length);
+	
+	cards.forEach(card => {
+		const lat = parseFloat(card.getAttribute('data-latitude'));
+		const lng = parseFloat(card.getAttribute('data-longitude'));
+		const petId = card.getAttribute('data-pet-id');
+		
+		console.log(`Pet ${petId}: lat=${lat}, lng=${lng}`);
+		
+		if (!lat || !lng || !petId) {
+			console.log(`Skipping pet ${petId} - missing coordinates`);
+			return;
+		}
+		
+		const distance = calculateDistance(
+			userPetLocation.lat,
+			userPetLocation.lng,
+			lat,
+			lng
+		);
+		
+		console.log(`Distance to pet ${petId}: ${distance.toFixed(2)} km`);
+		
+		petsWithDistance.set(petId, {
+			distance_km: distance,
+			distance_formatted: distance < 1 ? `${(distance * 1000).toFixed(0)} m` : `${distance.toFixed(1)} km`
+		});
+	});
+	
+	console.log('Pets with distance calculated:', petsWithDistance.size);
+	updatePetDistanceDisplays();
+	
+	// Trigger sort if "nearest" is selected
+	const sortBy = document.querySelector('#sortBy');
+	if (sortBy && sortBy.value === 'nearest') {
+		sortBy.dispatchEvent(new Event('change'));
+	}
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+	const R = 6371; // Earth radius in km
+	const dLat = (lat2 - lat1) * Math.PI / 180;
+	const dLon = (lon2 - lon1) * Math.PI / 180;
+	const a = 
+		Math.sin(dLat/2) * Math.sin(dLat/2) +
+		Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+		Math.sin(dLon/2) * Math.sin(dLon/2);
+	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+	return R * c;
+}
+
+function updatePetDistanceDisplays() {
+	document.querySelectorAll('.pet-distance').forEach(el => {
+		const petId = el.getAttribute('data-pet-id');
+		const distanceData = petsWithDistance.get(petId);
+		
+		if (distanceData) {
+			el.innerHTML = `
+				<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
+					<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+					<circle cx="12" cy="10" r="3"></circle>
+				</svg>
+				${distanceData.distance_formatted} away
+			`;
+		} else {
+			el.innerHTML = '';
+		}
+	});
+}
+
+function hideAllPetDistanceLoaders() {
+	document.querySelectorAll('.pet-distance').forEach(el => {
+		if (el.querySelector('.distance-loader')) {
+			el.innerHTML = '';
+		}
+	});
+}

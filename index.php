@@ -183,6 +183,8 @@ switch ($module) {
         switch ($page) {
             case 'dashboard': $c->dashboard(); break;
             case 'manage-users': $c->manageUsers(); break;
+            case 'manage-users-by-role': $c->manageUsersByRole(); break;
+            case 'manage-clinics': $c->manageClinics(); break;
             case 'appointments': $c->appointments(); break;
             case 'medical-records': $c->medicalRecords(); break;
             case 'pet-listings': $c->petListings(); break;

@@ -1,6 +1,49 @@
 <?php /* Explore Pets marketplace - now uses controller data */ ?>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <link rel="stylesheet" href="/PETVET/public/css/pet-owner/explore-pets.css">
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+<style>
+  #sellMapContainer {
+    height: 450px;
+    width: 100%;
+    border-radius: 8px;
+    border: 2px solid #d1d5db;
+    margin-top: 8px;
+  }
+  
+  .location-input-readonly {
+    background-color: #f0f9ff !important;
+    cursor: default;
+    font-size: 15px;
+    padding: 12px;
+    border: 2px solid #3b82f6 !important;
+    color: #1e40af;
+    font-weight: 500;
+  }
+  
+  .map-location-btn {
+    margin-top: 8px;
+    padding: 8px 16px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .map-location-btn:hover {
+    background: #2563eb;
+  }
+  
+  .map-location-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+</style>
 <div class="main-content">
 <?php
 // Data comes from the controller via ExplorePetsModel
@@ -30,6 +73,7 @@ $availableSpecies = $availableSpecies ?? [];
     </div>
     <div class="field">
       <select id="sortBy">
+        <option value="nearest">Sort: Nearest</option>
         <option value="newest">Sort: Newest</option>
         <option value="priceLow">Price: Low → High</option>
         <option value="priceHigh">Price: High → Low</option>
@@ -43,7 +87,7 @@ $availableSpecies = $availableSpecies ?? [];
     $seller=$sellers[$pet['seller_id']] ?? ['name'=>'Unknown','location'=>'','phone'=>'','phone2'=>'','email'=>''];
     $images = $pet['images'] ?? [];
   ?>
-    <article class="card" data-species="<?= htmlspecialchars($pet['species']) ?>" data-price="<?= (int)$pet['price'] ?>">
+    <article class="card" data-species="<?= htmlspecialchars($pet['species']) ?>" data-price="<?= (int)$pet['price'] ?>" data-pet-id="<?= $pet['id'] ?>" data-latitude="<?= $pet['latitude'] ?? '' ?>" data-longitude="<?= $pet['longitude'] ?? '' ?>">
       <div class="media">
         <?php if(!empty($images)): ?>
           <img src="<?= htmlspecialchars($images[0]) ?>" alt="<?= htmlspecialchars($pet['name']) ?>" class="carousel-image" data-index="0">
@@ -73,8 +117,11 @@ $availableSpecies = $availableSpecies ?? [];
         </div>
         <div class="seller">
           <span class="seller-name">Posted by <strong><?= htmlspecialchars($seller['name']) ?></strong></span>
-          <span class="seller-loc"><?= htmlspecialchars($seller['location']) ?></span>
+          <span class="seller-loc"><?= htmlspecialchars($pet['location'] ?? '') ?></span>
         </div>
+        <p class="pet-distance" data-pet-id="<?= $pet['id'] ?>" style="color: #3b82f6; font-size: 0.9em; margin-top: 4px;">
+          <span class="distance-loader">⏳ Calculating distance...</span>
+        </p>
       </div>
       <div class="actions-row">
         <button class="btn ghost view" data-id="<?= $pet['id'] ?>">View Details</button>
@@ -132,7 +179,19 @@ $availableSpecies = $availableSpecies ?? [];
             <input type="number" name="price" id="sellPrice" min="0" step="500" required placeholder="e.g., 50000" autocomplete="off">
             <small class="field-hint">Enter price in Sri Lankan Rupees</small>
           </label>
-          <label class="full">Location<input type="text" name="location" required placeholder="e.g., Colombo 07"></label>
+          <label class="full">Location
+            <input type="text" name="location" id="sellLocation" readonly required
+              class="location-input-readonly"
+              placeholder="Click on the map to select location"
+              style="margin-bottom: 8px;">
+            <input type="hidden" name="latitude" id="sellLatitude">
+            <input type="hidden" name="longitude" id="sellLongitude">
+            <small style="display: block; margin-bottom: 8px; font-size: 12px; color: #64748b;">Click on the map to select where the pet is located</small>
+            <button type="button" id="getCurrentLocationBtn" class="map-location-btn">
+              📍 Use My Current Location
+            </button>
+            <div id="sellMapContainer"></div>
+          </label>
           <label class="full">Description<textarea name="desc" rows="3" required placeholder="Tell potential buyers about this pet's personality, behavior, health..."></textarea></label>
           <label class="full">
             <span style="font-weight:600;margin-bottom:6px;display:block;">Health Badges</span>
@@ -304,5 +363,9 @@ $availableSpecies = $availableSpecies ?? [];
   </div>
 </div>
 
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
 <script>window.EXPLORE_CURRENT_USER_NAME = <?= json_encode($currentUser['name']) ?>;</script>
 <script src="/PETVET/public/js/pet-owner/explore-pets.js"></script>

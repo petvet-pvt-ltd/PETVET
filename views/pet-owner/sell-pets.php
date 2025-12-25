@@ -1,5 +1,9 @@
 <?php /* Sell Pets page (enhanced with validation) */ ?>
 <link rel="stylesheet" href="/PETVET/public/css/pet-owner/explore-pets.css">
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
 <style>
   .field-hint {
     display: block;
@@ -57,6 +61,20 @@
   
   input[type="number"] {
     -moz-appearance: textfield;
+  }
+  
+  /* Map styling */
+  #sellMapContainer {
+    height: 450px;
+    width: 100%;
+    border-radius: 8px;
+    border: 2px solid #d1d5db;
+    margin-top: 8px;
+  }
+  
+  .location-input-readonly {
+    background-color: #f9fafb !important;
+    cursor: not-allowed;
   }
 </style>
 <div class="main-content">
@@ -141,6 +159,20 @@
           <small class="field-hint">Must be 10 digits, numbers only</small>
         </label>
 
+        <!-- Location -->
+        <label class="full">Pet Location
+          <input type="text" name="location" id="sellLocation" readonly required
+            class="location-input-readonly"
+            placeholder="Click on the map to select location">
+          <input type="hidden" name="latitude" id="sellLatitude">
+          <input type="hidden" name="longitude" id="sellLongitude">
+          <button type="button" id="getCurrentLocationBtn" class="btn outline" style="margin-top: 8px; width: auto;">
+            📍 Use My Current Location
+          </button>
+          <div id="sellMapContainer"></div>
+          <small class="field-hint">Click on the map to select where the pet is located</small>
+        </label>
+
         <!-- Health Badges -->
         <label class="full">Health Badges
           <div class="checks">
@@ -170,6 +202,11 @@
   </section>
 </div>
 
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   console.log('✅ Validation script loaded!');
@@ -180,6 +217,117 @@ document.addEventListener('DOMContentLoaded', () => {
   const age = document.getElementById('age');
   const phone = document.getElementById('phone');
   const price = document.getElementById('price');
+
+  console.log('Form elements found:', { form, petName, breed, age, phone, price });
+
+  // Leaflet map initialization
+  let sellMap = null;
+  let sellMarker = null;
+  
+  // Initialize map
+  function initSellMap(lat = 6.9271, lng = 79.8612) {
+    if (sellMap) {
+      sellMap.remove();
+    }
+    
+    sellMap = L.map('sellMapContainer').setView([lat, lng], 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(sellMap);
+    
+    // Add click handler
+    sellMap.on('click', function(e) {
+      const { lat, lng } = e.latlng;
+      
+      // Add or update marker
+      if (sellMarker) {
+        sellMarker.setLatLng([lat, lng]);
+      } else {
+        sellMarker = L.marker([lat, lng]).addTo(sellMap);
+      }
+      
+      // Update hidden inputs
+      document.getElementById('sellLatitude').value = lat;
+      document.getElementById('sellLongitude').value = lng;
+      
+      // Fetch address
+      fetchAddress(lat, lng);
+    });
+  }
+  
+  // Fetch address from coordinates
+  async function fetchAddress(lat, lng) {
+    const locationInput = document.getElementById('sellLocation');
+    locationInput.value = 'Getting location...';
+    
+    try {
+      const response = await fetch(`/PETVET/api/pet-owner/reverse-geocode.php?lat=${lat}&lon=${lng}`);
+      const data = await response.json();
+      
+      if (data.success && data.location) {
+        locationInput.value = data.location;
+      } else {
+        locationInput.value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      }
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      locationInput.value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+  }
+  
+  // Get current location button
+  document.getElementById('getCurrentLocationBtn').addEventListener('click', function() {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+    
+    this.disabled = true;
+    this.textContent = '📍 Getting location...';
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        
+        // Center map on current location
+        sellMap.setView([lat, lng], 15);
+        
+        // Add marker
+        if (sellMarker) {
+          sellMarker.setLatLng([lat, lng]);
+        } else {
+          sellMarker = L.marker([lat, lng]).addTo(sellMap);
+        }
+        
+        // Update inputs
+        document.getElementById('sellLatitude').value = lat;
+        document.getElementById('sellLongitude').value = lng;
+        
+        // Fetch address
+        fetchAddress(lat, lng);
+        
+        this.disabled = false;
+        this.textContent = '📍 Use My Current Location';
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        alert('Unable to get your location. Please click on the map to select a location.');
+        this.disabled = false;
+        this.textContent = '📍 Use My Current Location';
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  });
+  
+  // Initialize map on page load
+  initSellMap();
 
   console.log('Form elements found:', { form, petName, breed, age, phone, price });
 

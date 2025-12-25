@@ -1,14 +1,54 @@
 // Lost & Found interactions - Enhanced version
-document.addEventListener('DOMContentLoaded', () => {
-	const qs = s => document.querySelector(s);
-	const qsa = s => document.querySelectorAll(s);
+// Global distance tracking variables
+let userLocation = null;
+let reportsWithDistance = new Map(); // Map of report_id => distance data
 
+// Helper function for querySelector (global scope for use in async functions)
+const qs = s => document.querySelector(s);
+const qsa = s => document.querySelectorAll(s);
+
+// Calculate relative time (e.g., "2 hours ago", "30 minutes ago")
+function getRelativeTime(dateStr, timeStr) {
+	if (!dateStr) return '';
+	
+	// Combine date and time
+	const dateTimeStr = timeStr ? `${dateStr} ${timeStr}` : dateStr;
+	const reportDate = new Date(dateTimeStr);
+	const now = new Date();
+	
+	if (isNaN(reportDate.getTime())) return '';
+	
+	const diffMs = now - reportDate;
+	const diffSec = Math.floor(diffMs / 1000);
+	const diffMin = Math.floor(diffSec / 60);
+	const diffHour = Math.floor(diffMin / 60);
+	const diffDay = Math.floor(diffHour / 24);
+	const diffWeek = Math.floor(diffDay / 7);
+	const diffMonth = Math.floor(diffDay / 30);
+	const diffYear = Math.floor(diffDay / 365);
+	
+	if (diffSec < 60) return 'Just now';
+	if (diffMin < 60) return `${diffMin} minute${diffMin !== 1 ? 's' : ''} ago`;
+	if (diffHour < 24) return `${diffHour} hour${diffHour !== 1 ? 's' : ''} ago`;
+	if (diffDay < 7) return `${diffDay} day${diffDay !== 1 ? 's' : ''} ago`;
+	if (diffWeek < 4) return `${diffWeek} week${diffWeek !== 1 ? 's' : ''} ago`;
+	if (diffMonth < 12) return `${diffMonth} month${diffMonth !== 1 ? 's' : ''} ago`;
+	return `${diffYear} year${diffYear !== 1 ? 's' : ''} ago`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
 	const segBtns = qsa('.seg-btn');
 	const lostList  = qs('#lostList');
 	const foundList = qs('#foundList');
 	const searchInput = qs('#q');
 	const speciesSel  = qs('#species');
 	const sortSel     = qs('#sortBy');
+
+	// Leaflet map instances
+	let reportMap = null;
+	let reportMarker = null;
+	let editMap = null;
+	let editMarker = null;
 
 	// Report Pet Modal
 	const reportModal = qs('#reportModal');
@@ -45,6 +85,137 @@ document.addEventListener('DOMContentLoaded', () => {
 	let currentView = 'lost';
 	let currentDeleteId = null;
 	let myListings = []; // Demo data - in production, fetch from server
+
+	// Initialize Leaflet map for report modal
+	function initReportMap() {
+		if (reportMap) {
+			reportMap.remove();
+		}
+
+		// Default center - Sri Lanka (Colombo)
+		const defaultLat = 6.9271;
+		const defaultLng = 79.8612;
+
+		reportMap = L.map('mapContainer').setView([defaultLat, defaultLng], 13);
+
+		// Add OpenStreetMap tiles
+		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+			maxZoom: 19
+		}).addTo(reportMap);
+
+		// Add click handler
+		reportMap.on('click', function(e) {
+			const { lat, lng } = e.latlng;
+			
+			// Update hidden fields
+			qs('#rLatitude').value = lat.toFixed(6);
+			qs('#rLongitude').value = lng.toFixed(6);
+			
+			// Update marker
+			if (reportMarker) {
+				reportMarker.setLatLng([lat, lng]);
+			} else {
+				reportMarker = L.marker([lat, lng]).addTo(reportMap);
+			}
+
+			// Reverse geocode to get address
+			fetchAddress(lat, lng, 'rLocation');
+		});
+
+		// Try to get user's current location
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(
+				(position) => {
+					const { latitude, longitude } = position.coords;
+					reportMap.setView([latitude, longitude], 15);
+				},
+				(error) => {
+					console.log('Geolocation error:', error);
+				}
+			);
+		}
+	}
+
+	// Initialize Leaflet map for edit modal
+	function initEditMap(lat, lng) {
+		if (editMap) {
+			editMap.remove();
+		}
+
+		// Use provided coordinates or default
+		const centerLat = lat || 6.9271;
+		const centerLng = lng || 79.8612;
+
+		editMap = L.map('editMapContainer').setView([centerLat, centerLng], 13);
+
+		// Add OpenStreetMap tiles
+		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+			maxZoom: 19
+		}).addTo(editMap);
+
+		// Add marker if coordinates provided
+		if (lat && lng) {
+			editMarker = L.marker([lat, lng]).addTo(editMap);
+		}
+
+		// Add click handler
+		editMap.on('click', function(e) {
+			const { lat, lng } = e.latlng;
+			
+			// Update hidden fields
+			qs('#editLatitude').value = lat.toFixed(6);
+			qs('#editLongitude').value = lng.toFixed(6);
+			
+			// Update marker
+			if (editMarker) {
+				editMarker.setLatLng([lat, lng]);
+			} else {
+				editMarker = L.marker([lat, lng]).addTo(editMap);
+			}
+
+			// Reverse geocode to get address
+			fetchAddress(lat, lng, 'editLocation');
+		});
+	}
+
+	// Reverse geocode using Nominatim API via PHP proxy (to avoid CORS issues)
+	async function fetchAddress(lat, lng, targetInputId) {
+		const inputElement = qs('#' + targetInputId);
+		if (!inputElement) {
+			console.error('Input element not found:', targetInputId);
+			return;
+		}
+		
+		inputElement.value = 'Getting location...';
+		
+		try {
+			// Use PHP proxy to avoid CORS issues
+			const response = await fetch(
+				`/PETVET/api/pet-owner/reverse-geocode.php?lat=${lat}&lng=${lng}`
+			);
+			
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+			
+			const data = await response.json();
+			
+			if (data.success && data.location) {
+				inputElement.value = data.location;
+			} else if (data.fallback) {
+				inputElement.value = data.fallback;
+			} else {
+				// Fallback to coordinates
+				inputElement.value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+			}
+		} catch (error) {
+			console.error('Geocoding error:', error);
+			// On error, show coordinates
+			inputElement.value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+		}
+	}
 
 	const params = new URLSearchParams(location.search);
 	currentView = params.get('view') || localStorage.getItem('lfView') || 'lost';
@@ -185,11 +356,14 @@ document.addEventListener('DOMContentLoaded', () => {
 					color: report.color,
 					location: report.location,
 					date: report.date,
+					time: report.time || '',
 					notes: report.notes,
 					phone: report.contact.phone,
 					phone2: report.contact.phone2,
 					email: report.contact.email,
-					photos: report.photos || []
+					photos: report.photos || [],
+					latitude: report.latitude,
+					longitude: report.longitude
 				}));
 			} else {
 				console.error('Failed to load listings:', result.message);
@@ -269,10 +443,17 @@ document.addEventListener('DOMContentLoaded', () => {
 		qs('#editColor').value = listing.color || '';
 		qs('#editLocation').value = listing.location;
 		qs('#editDate').value = listing.date;
+		qs('#editTime').value = listing.time || '';
 		qs('#editNotes').value = listing.notes || '';
 		qs('#editPhone').value = listing.phone || '';
 		qs('#editPhone2').value = listing.phone2 || '';
 		qs('#editEmail').value = listing.email || '';
+		
+		// Set coordinates if available
+		if (listing.latitude && listing.longitude) {
+			qs('#editLatitude').value = listing.latitude;
+			qs('#editLongitude').value = listing.longitude;
+		}
 
 		// Display photos
 		const photoPreview = qs('#editPhotoPreview');
@@ -295,6 +476,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		myListingsModal.hidden = true;
 		editListingModal.hidden = false;
+		
+		// Initialize edit map with existing coordinates
+		setTimeout(() => {
+			initEditMap(listing.latitude, listing.longitude);
+		}, 100);
 	}
 
 	function openConfirmDialog(id, name) {
@@ -396,15 +582,44 @@ document.addEventListener('DOMContentLoaded', () => {
 			const hay = (card.textContent || '').toLowerCase();
 			const species = card.getAttribute('data-species');
 			const date = card.getAttribute('data-date') || '1970-01-01';
+			const time = card.getAttribute('data-time') || '';
+			const reportId = card.getAttribute('data-report-id');
 			const matchQ = q === '' || hay.includes(q);
 			const matchS = sp === '' || species === sp;
 			const visible = matchQ && matchS;
-			return { card, visible, date };
+			
+			// Get distance for nearby sorting
+			const view = currentView;
+			const key = `${view}-${reportId}`;
+			const distanceData = reportsWithDistance.get(key);
+			const distance = distanceData ? distanceData.distance_km : 999999;
+			
+			// Create datetime for sorting
+			const dateTimeStr = time ? `${date} ${time}` : date;
+			const datetime = new Date(dateTimeStr).getTime() || 0;
+			
+			return { card, visible, date, distance, datetime };
 		});
 		list.forEach(({card, visible}) => { card.style.display = visible ? '' : 'none'; });
 		const body = container;
 		const vis = list.filter(x=>x.visible);
-		vis.sort((a,b)=>{ const ta=Date.parse(a.date)||0; const tb=Date.parse(b.date)||0; return (sort==='old') ? (ta-tb):(tb-ta); });
+		
+		// Sort based on selection
+		if (sort === 'nearby') {
+			// Sort by distance (nearest first)
+			vis.sort((a,b) => a.distance - b.distance);
+		} else if (sort === 'latest') {
+			// Sort by datetime (latest first)
+			vis.sort((a,b) => b.datetime - a.datetime);
+		} else {
+			// Sort by date only
+			vis.sort((a,b)=>{ 
+				const ta=Date.parse(a.date)||0; 
+				const tb=Date.parse(b.date)||0; 
+				return (sort==='old') ? (ta-tb):(tb-ta); 
+			});
+		}
+		
 		vis.forEach(x=> body.appendChild(x.card));
 	}
 
@@ -414,7 +629,13 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 
 	// Modal events
-	openReportBtns.forEach(btn => btn.addEventListener('click', () => { reportModal.hidden=false; }));
+	openReportBtns.forEach(btn => btn.addEventListener('click', () => { 
+		reportModal.hidden=false; 
+		// Initialize map after modal is visible
+		setTimeout(() => {
+			initReportMap();
+		}, 100);
+	}));
 	cancelReportBtn && cancelReportBtn.addEventListener('click', () => { closeReportModal(); });
 	reportModal && reportModal.addEventListener('mousedown', e=>{ if(e.target===reportModal) closeReportModal(); });
 
@@ -462,6 +683,15 @@ document.addEventListener('DOMContentLoaded', () => {
 	reportForm && reportForm.addEventListener('submit', async (e) => { 
 		e.preventDefault();
 		
+		// Validate coordinates are selected
+		const latitude = qs('#rLatitude').value;
+		const longitude = qs('#rLongitude').value;
+		
+		if (!latitude || !longitude) {
+			alert('Please select a location on the map.');
+			return;
+		}
+		
 		// Create FormData from form
 		const formData = new FormData();
 		formData.append('type', qs('#rType').value);
@@ -469,7 +699,10 @@ document.addEventListener('DOMContentLoaded', () => {
 		formData.append('name', qs('#rName').value || '');
 		formData.append('color', qs('#rColor').value || '');
 		formData.append('location', qs('#rLocation').value);
+		formData.append('latitude', latitude);
+		formData.append('longitude', longitude);
 		formData.append('date', qs('#rDate').value);
+		formData.append('time', qs('#rTime').value || '');
 		formData.append('notes', qs('#rNotes').value || '');
 		formData.append('phone', qs('#rPhone').value || '');
 		formData.append('phone2', qs('#rPhone2').value || '');
@@ -524,6 +757,15 @@ document.addEventListener('DOMContentLoaded', () => {
 	editListingForm && editListingForm.addEventListener('submit', async (e) => { 
 		e.preventDefault();
 		
+		// Validate coordinates are selected
+		const latitude = qs('#editLatitude').value;
+		const longitude = qs('#editLongitude').value;
+		
+		if (!latitude || !longitude) {
+			alert('Please select a location on the map.');
+			return;
+		}
+		
 		try {
 			const reportId = qs('#editId').value;
 			
@@ -535,7 +777,10 @@ document.addEventListener('DOMContentLoaded', () => {
 			formData.append('name', qs('#editName').value);
 			formData.append('color', qs('#editColor').value);
 			formData.append('location', qs('#editLocation').value);
+			formData.append('latitude', latitude);
+			formData.append('longitude', longitude);
 			formData.append('date', qs('#editDate').value);
+			formData.append('time', qs('#editTime').value || '');
 			formData.append('notes', qs('#editNotes').value);
 			formData.append('phone', qs('#editPhone').value);
 			formData.append('phone2', qs('#editPhone2').value);
@@ -614,10 +859,160 @@ document.addEventListener('DOMContentLoaded', () => {
 			photoPreview.style.display = 'none';
 			photoPreview.innerHTML = '';
 		}
+		// Clear map and marker
+		if (reportMarker) {
+			reportMarker = null;
+		}
+		if (reportMap) {
+			reportMap.remove();
+			reportMap = null;
+		}
+		// Clear coordinate fields
+		qs('#rLatitude').value = '';
+		qs('#rLongitude').value = '';
+		qs('#rLocation').value = '';
 	}
 
 	// Initialize
 	setupCarousels();
 	setupContactButtons();
 	applyFilters();
+	
+	// Initialize distance calculation
+	initDistanceCalculation();
+	
+	// Initialize relative time display
+	updateAllRelativeTimes();
 });
+
+// Distance calculation functionality
+function initDistanceCalculation() {
+	// Check if geolocation is supported
+	if (!navigator.geolocation) {
+		console.warn('Geolocation not supported');
+		hideAllDistanceLoaders();
+		return;
+	}
+
+	// Request user location
+	const options = {
+		enableHighAccuracy: true,
+		timeout: 10000,
+		maximumAge: 300000 // Cache for 5 minutes
+	};
+
+	navigator.geolocation.getCurrentPosition(
+		onLocationSuccess,
+		onLocationError,
+		options
+	);
+}
+
+async function onLocationSuccess(position) {
+	userLocation = {
+		latitude: position.coords.latitude,
+		longitude: position.coords.longitude
+	};
+
+	// Load reports with distance from API
+	await loadReportsWithDistance();
+}
+
+function onLocationError(error) {
+	console.warn('Location error:', error.message);
+	hideAllDistanceLoaders();
+}
+
+async function loadReportsWithDistance() {
+	try {
+		// Load lost reports
+		const lostUrl = `/PETVET/api/pet-owner/get-reports-by-distance.php?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&type=lost`;
+		const lostResponse = await fetch(lostUrl);
+		const lostData = await lostResponse.json();
+
+		if (lostData.success && lostData.reports) {
+			lostData.reports.forEach(report => {
+				reportsWithDistance.set(`lost-${report.id}`, {
+					distance_km: report.distance_km,
+					distance_formatted: report.distance_formatted,
+					duration_formatted: report.duration_formatted
+				});
+			});
+		}
+
+		// Load found reports
+		const foundUrl = `/PETVET/api/pet-owner/get-reports-by-distance.php?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&type=found`;
+		const foundResponse = await fetch(foundUrl);
+		const foundData = await foundResponse.json();
+
+		if (foundData.success && foundData.reports) {
+			foundData.reports.forEach(report => {
+				reportsWithDistance.set(`found-${report.id}`, {
+					distance_km: report.distance_km,
+					distance_formatted: report.distance_formatted,
+					duration_formatted: report.duration_formatted
+				});
+			});
+		}
+
+		// Update distance badges
+		updateDistanceBadges();
+		
+		// Re-apply filters with distance data
+		applyFilters();
+	} catch (error) {
+		console.error('Error loading reports by distance:', error);
+		hideAllDistanceLoaders();
+	}
+}
+
+function updateDistanceBadges() {
+	document.querySelectorAll('.report-distance').forEach(el => {
+		const reportId = el.getAttribute('data-report-id');
+		const view = el.closest('#lostList') ? 'lost' : 'found';
+		const key = `${view}-${reportId}`;
+		
+		const distanceData = reportsWithDistance.get(key);
+		
+		if (distanceData && distanceData.distance_formatted !== 'Unknown') {
+			el.innerHTML = `
+				<span style="color: var(--primary, #4a90e2); font-size: 13px; display: inline-flex; align-items: center; gap: 4px;">
+					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+						<circle cx="12" cy="10" r="3"></circle>
+					</svg>
+					${distanceData.distance_formatted} away
+				</span>
+			`;
+		} else {
+			el.innerHTML = ''; // Hide if no distance data
+		}
+	});
+}
+
+function hideAllDistanceLoaders() {
+	document.querySelectorAll('.report-distance').forEach(el => {
+		if (el.querySelector('.distance-loader')) {
+			el.innerHTML = '';
+		}
+	});
+}
+
+// Update all relative time displays
+function updateAllRelativeTimes() {
+	document.querySelectorAll('.time-ago').forEach(el => {
+		const date = el.getAttribute('data-date');
+		const time = el.getAttribute('data-time');
+		const relativeTime = getRelativeTime(date, time);
+		
+		if (relativeTime) {
+			el.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+				<circle cx="12" cy="12" r="10"></circle>
+				<polyline points="12 6 12 12 16 14"></polyline>
+			</svg>${relativeTime}`;
+		}
+	});
+	
+	// Update every minute
+	setTimeout(updateAllRelativeTimes, 60000);
+}

@@ -290,6 +290,7 @@ if (isLoggedIn()) {
         </div>
     </div>
 </div>
+</style>
 
 <?php
 }

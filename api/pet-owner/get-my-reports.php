@@ -57,6 +57,9 @@ try {
             'color' => $description['color'] ?? '',
             'notes' => $description['notes'] ?? '',
             'photos' => $description['photos'] ?? [],
+            'latitude' => $description['latitude'] ?? null,
+            'longitude' => $description['longitude'] ?? null,
+            'time' => $description['time'] ?? null,
             'contact' => $description['contact'] ?? [
                 'phone' => '',
                 'phone2' => '',

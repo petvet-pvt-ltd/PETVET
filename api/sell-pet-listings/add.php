@@ -5,23 +5,23 @@ require_once __DIR__ . '/../../models/SellPetListingModel.php';
 
 // Enable error reporting for debugging
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Don't display errors in response
+ini_set('display_errors', 1); // Temporarily enable to see errors
 ini_set('log_errors', 1);
 
 header('Content-Type: application/json');
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['success' => false, 'message' => 'Please login to create a listing']);
-    exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['success' => false, 'message' => 'Invalid request method']);
-    exit;
-}
-
 try {
+    // Check if user is logged in
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(['success' => false, 'message' => 'Please login to create a listing']);
+        exit;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        echo json_encode(['success' => false, 'message' => 'Invalid request method']);
+        exit;
+    }
+
     $model = new SellPetListingModel();
     
     // Validate required fields
@@ -34,6 +34,14 @@ try {
     }
     
     // Prepare data
+    $latitude = null;
+    $longitude = null;
+    
+    if (!empty($_POST['latitude']) && !empty($_POST['longitude'])) {
+        $latitude = floatval($_POST['latitude']);
+        $longitude = floatval($_POST['longitude']);
+    }
+    
     $data = [
         'user_id' => $_SESSION['user_id'],
         'name' => trim($_POST['name']),
@@ -46,15 +54,18 @@ try {
         'description' => trim($_POST['desc'] ?? ''),
         'phone' => trim($_POST['phone']),
         'phone2' => trim($_POST['phone2'] ?? ''),
-        'email' => trim($_POST['email'] ?? '')
+        'email' => trim($_POST['email'] ?? ''),
+        'latitude' => $latitude,
+        'longitude' => $longitude
     ];
     
     // Create listing
     $listingId = $model->createListing($data);
     
     if (!$listingId) {
-        error_log("Failed to create listing in database");
-        echo json_encode(['success' => false, 'message' => 'Failed to create listing in database']);
+        $error = mysqli_error($GLOBALS['conn'] ?? null);
+        error_log("Failed to create listing in database: " . $error);
+        echo json_encode(['success' => false, 'message' => 'Failed to create listing in database', 'error' => $error]);
         exit;
     }
     
