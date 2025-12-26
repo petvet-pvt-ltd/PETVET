@@ -35,30 +35,75 @@ if (!isset($input['appointment_id']) || !isset($input['date']) || !isset($input[
 $appointmentId = intval($input['appointment_id']);
 $newDate = $input['date'];
 $newTime = $input['time'];
-$newVet = isset($input['vet']) ? $input['vet'] : null;
+$newVetId = isset($input['vet_id']) ? intval($input['vet_id']) : null;
+$newType = isset($input['appointment_type']) ? trim((string)$input['appointment_type']) : null;
 
 try {
     $pdo = db();
     
-    // Build update query
-    $updates = ["appointment_date = ?", "appointment_time = ?", "updated_at = NOW()"];
-    $params = [$newDate, $newTime];
+    // First, get the current appointment details to check clinic context
+    $checkStmt = $pdo->prepare("SELECT clinic_id, vet_id FROM appointments WHERE id = ?");
+    $checkStmt->execute([$appointmentId]);
+    $currentAppointment = $checkStmt->fetch(PDO::FETCH_ASSOC);
     
+    if (!$currentAppointment) {
+        echo json_encode(['success' => false, 'error' => 'Appointment not found']);
+        exit;
+    }
+    
+    $clinicId = $currentAppointment['clinic_id'];
+    
+    // Determine the final vet_id that will be used
+    $finalVetId = $newVetId !== null ? $newVetId : $currentAppointment['vet_id'];
+    
+    // Check for overlapping appointments (if a specific vet is assigned)
+    if ($finalVetId !== null) {
+        $overlapStmt = $pdo->prepare("
+            SELECT id, pet_id 
+            FROM appointments 
+            WHERE vet_id = ? 
+            AND clinic_id = ?
+            AND appointment_date = ? 
+            AND appointment_time = ? 
+            AND id != ? 
+            AND status != 'cancelled'
+            LIMIT 1
+        ");
+        $overlapStmt->execute([$finalVetId, $clinicId, $newDate, $newTime, $appointmentId]);
+        $overlap = $overlapStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($overlap) {
+            // Get vet name for error message
+            $vetNameStmt = $pdo->prepare("SELECT CONCAT(first_name, ' ', last_name) as name FROM users WHERE id = ?");
+            $vetNameStmt->execute([$finalVetId]);
+            $vetName = $vetNameStmt->fetchColumn();
+            
+            echo json_encode([
+                'success' => false, 
+                'error' => "Dr. {$vetName} already has an appointment at this time. Please select a different time or vet."
+            ]);
+            exit;
+        }
+    }
+    
+    // Build update query
+    $updates = ["appointment_date = ?", "appointment_time = ?", "updated_at = NOW()"]; 
+    $params = [$newDate, $newTime];
+
     // Handle vet update if provided
-    if ($newVet !== null) {
-        if ($newVet === 'Any Available Vet' || $newVet === '0') {
+    if ($newVetId !== null) {
+        if ($newVetId === 0) {
             $updates[] = "vet_id = NULL";
         } else {
-            // Get vet user ID by name
-            $vetStmt = $pdo->prepare("SELECT u.id FROM users u JOIN user_roles ur ON u.id = ur.user_id JOIN roles r ON ur.role_id = r.id WHERE CONCAT(u.first_name, ' ', u.last_name) = ? AND r.role_name = 'vet' LIMIT 1");
-            $vetStmt->execute([$newVet]);
-            $vetId = $vetStmt->fetchColumn();
-            
-            if ($vetId) {
-                $updates[] = "vet_id = ?";
-                $params[] = $vetId;
-            }
+            $updates[] = "vet_id = ?";
+            $params[] = $newVetId;
         }
+    }
+
+    // Handle appointment type update if provided
+    if ($newType !== null && $newType !== '') {
+        $updates[] = "appointment_type = ?";
+        $params[] = $newType;
     }
     
     $params[] = $appointmentId;

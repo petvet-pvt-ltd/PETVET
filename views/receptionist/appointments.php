@@ -21,6 +21,7 @@ $vetNames = $appointmentsModel->getVetNames();
 $weekDays = $appointmentsModel->getWeekDates();
 $monthDays = $appointmentsModel->getMonthDates();
 $moduleName = $appointmentsModel->getModuleName($userRole);
+$clinicId = $appointmentsModel->getUserClinicId() ?? 1;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -31,6 +32,7 @@ $moduleName = $appointmentsModel->getModuleName($userRole);
   <link rel="stylesheet" href="/PETVET/public/css/clinic-manager/enhanced-global.css">
   <link rel="stylesheet" href="/PETVET/public/css/clinic-manager/appointments.css">
   <link rel="stylesheet" href="/PETVET/public/css/shared/appointments.css">
+  <link rel="stylesheet" href="/PETVET/public/css/shared/appointments-dialogs.css">
   <link rel="stylesheet" href="/PETVET/public/css/receptionist/appointments-receptionist.css">
 </head>
 <body>
@@ -123,6 +125,10 @@ $moduleName = $appointmentsModel->getModuleName($userRole);
   </div>
 </div>
 
+<script>
+// Pass clinic ID to JavaScript
+window.CLINIC_ID = <?= $clinicId ?>;
+</script>
 <script src="/PETVET/public/js/shared/appointments.js"></script>
 <script src="/PETVET/public/js/receptionist/receptionist-booking.js"></script>
 <script src="/PETVET/public/js/receptionist/appointments-receptionist.js"></script>

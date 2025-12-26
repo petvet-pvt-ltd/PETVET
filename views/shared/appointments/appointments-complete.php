@@ -55,6 +55,7 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
                      data-animal="<?= htmlspecialchars($appt['animal']) ?>"
                      data-client="<?= htmlspecialchars($appt['client']) ?>"
                      data-vet="<?= htmlspecialchars($appt['vet']) ?>"
+                     data-vet-id="<?= $appt['vet_id'] ?>"
                      data-type="<?= htmlspecialchars($appt['type']) ?>"
                      data-phone="<?= htmlspecialchars($appt['client_phone'] ?? 'N/A') ?>"
                      data-date="<?= $todayStr ?>"
@@ -97,6 +98,7 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
                              data-animal="<?= htmlspecialchars($appt['animal']) ?>"
                              data-client="<?= htmlspecialchars($appt['client']) ?>"
                              data-vet="<?= htmlspecialchars($appt['vet']) ?>"
+                             data-vet-id="<?= $appt['vet_id'] ?>"
                              data-type="<?= htmlspecialchars($appt['type']) ?>"
                              data-phone="<?= htmlspecialchars($appt['client_phone'] ?? 'N/A') ?>"
                              data-date="<?= $dateStr ?>"
@@ -161,6 +163,7 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
                                      data-animal="<?= htmlspecialchars($appt['animal']) ?>"
                                      data-client="<?= htmlspecialchars($appt['client']) ?>"
                                      data-vet="<?= htmlspecialchars($appt['vet']) ?>"
+                                     data-vet-id="<?= $appt['vet_id'] ?>"
                                      data-type="<?= htmlspecialchars($appt['type']) ?>"
                                      data-phone="<?= htmlspecialchars($appt['client_phone'] ?? 'N/A') ?>"
                                      data-date="<?= $dateStr ?>"
@@ -209,40 +212,91 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
 // =====================================================
 ?>
 
-<!-- Details Modal -->
+<!-- Details/Reschedule Modal -->
 <div id="detailsModal" class="modal hidden">
-    <div class="modal-content">
+    <div class="modal-content receptionist-booking-modal">
         <span class="close" onclick="closeModal('detailsModal')">&times;</span>
-        <h3>Appointment Details</h3>
-        <p><strong>Pet:</strong> <span id="dPet"></span></p>
-        <p><strong>Species:</strong> <span id="dSpecies"></span></p>
-        <p><strong>Client:</strong> <span id="dClient"></span></p>
-        <p><strong>Type:</strong> <span id="dType"></span></p>
-        <p><strong>Phone:</strong> <span id="dPhone"></span></p>
-        <div class="form-group">
-            <label>Veterinarian</label>
-            <select id="dVet" class="select">
-                <?php foreach($vetNames as $vet): ?>
-                    <option value="<?= htmlspecialchars($vet['vet_name']); ?>"><?= htmlspecialchars($vet['vet_name']); ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div class="input-row">
-            <div>
-                <label>Date</label>
-                <input type="date" id="dDate">
-            </div>
-            <div>
-                <label>Time</label>
-                <input type="time" id="dTime">
+        <h3>Reschedule Appointment</h3>
+        
+        <!-- Current Appointment Info -->
+        <div style="background: #f0f9ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: 64px 1fr; gap: 6px 12px; font-size: 13px; color: #1e40af;">
+                <div><strong>Pet:</strong></div>
+                <div id="dPet"></div>
+
+                <div><strong>Client:</strong></div>
+                <div id="dClient"></div>
+
+                <div><strong>Species:</strong></div>
+                <div id="dSpecies"></div>
+
+                <div><strong>Phone:</strong></div>
+                <div id="dPhone"></div>
+
+                <div><strong>Time:</strong></div>
+                <div id="dApptTime"></div>
             </div>
         </div>
+
+        <!-- Step 1: Appointment Details -->
+        <div class="form-section" id="rescheduleVetSection">
+            <h4 class="section-title">Step 1: Appointment Details</h4>
+            <div class="form-group">
+                <label>Appointment Type</label>
+                <select id="dAppointmentType" class="select" required>
+                    <option value="">Select type</option>
+                    <option value="routine">Routine Check-up</option>
+                    <option value="vaccination">Vaccination</option>
+                    <option value="dental">Dental Cleaning</option>
+                    <option value="illness">Illness/Injury</option>
+                    <option value="emergency">Emergency</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Veterinarian</label>
+                <select id="dVet" class="select" required>
+                    <option value="">Choose a veterinarian</option>
+                    <?php foreach($vetNames as $vet): ?>
+                        <option value="<?= htmlspecialchars($vet['id']); ?>"><?= htmlspecialchars($vet['vet_name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+
+        <!-- Step 2: Date Selection -->
+        <div class="form-section" id="rescheduleDateSection" style="display:none;">
+            <h4 class="section-title">Step 2: Select Date</h4>
+            <div id="rescheduleCalendarWidget" class="calendar-widget">
+                <!-- Calendar will be generated here -->
+            </div>
+            <input type="hidden" id="dDate" required>
+            <p style="margin:12px 0 0; font-size:11px; color:#64748b;">
+                📅 Available dates: Next 30 days (excludes clinic closed days and blocked dates)
+            </p>
+        </div>
+
+        <!-- Step 3: Time Selection -->
+        <div class="form-section" id="rescheduleTimeSection" style="display:none;">
+            <h4 class="section-title">Step 3: Select Time</h4>
+            <div id="rescheduleTimeSlotsGrid" class="time-slots-grid">
+                <!-- Time slots will be loaded dynamically -->
+            </div>
+            <input type="hidden" id="dTime" required>
+            <p style="margin:12px 0 0; font-size:11px; color:#64748b;">
+                ⏱️ Slot duration: 20 minutes | Times show only available slots
+            </p>
+        </div>
+
         <div class="modal-actions">
-            <button class="btn btn-primary" id="rescheduleBtn" onclick="rescheduleAppointment()" disabled style="opacity: 0.5; cursor: not-allowed;">
-                Reschedule
+            <button class="btn btn-secondary" onclick="closeModal('detailsModal')">
+                Cancel
             </button>
             <button class="btn btn-danger" onclick="cancelAppointment()">
-                Cancel Appointment
+                Delete Appointment
+            </button>
+            <button class="btn btn-primary" id="rescheduleBtn" onclick="rescheduleAppointment()" disabled>
+                Save Changes
             </button>
         </div>
     </div>
@@ -335,7 +389,7 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
             <h3 id="confirmTitle">Confirm Action</h3>
         </div>
         <div class="confirmation-body">
-            <p id="confirmMessage">Are you sure you want to proceed?</p>
+            <div id="confirmMessage" class="confirm-message">Are you sure you want to proceed?</div>
         </div>
         <div class="modal-actions">
             <button class="btn btn-secondary" onclick="closeConfirmation()">

@@ -32,6 +32,7 @@ function getProductImageUrl($url) {
         .product-image {
             flex: 1;
             max-width: 450px;
+            position: relative;
         }
         
         /* Only target the direct image child (single image view) to avoid conflict with carousel */
@@ -315,6 +316,19 @@ function getProductImageUrl($url) {
         <?php if (!empty($product['images']) && count($product['images']) > 1): ?>
             <div class="product-detail-carousel">
                 <div class="main-image-wrapper">
+                    <?php if ($product['stock'] <= 0): ?>
+                        <div class="out-of-stock-banner">Out of Stock</div>
+                    <?php endif; ?>
+                    
+                    <div class="product-wishlist-indicator-detail" 
+                         data-product-id="<?php echo $product['id']; ?>"
+                         style="display: none;">
+                        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                            <line x1="4" y1="22" x2="4" y2="15"></line>
+                        </svg>
+                    </div>
+                    
                     <?php foreach ($product['images'] as $idx => $img): ?>
                         <img class="main-carousel-img <?php echo $idx === 0 ? 'active' : ''; ?>" src="<?php echo htmlspecialchars(getProductImageUrl($img)); ?>" alt="<?php echo htmlspecialchars($product['name']); ?> - Image <?php echo $idx + 1; ?>">
                     <?php endforeach; ?>
@@ -328,6 +342,19 @@ function getProductImageUrl($url) {
                 </div>
             </div>
         <?php else: ?>
+            <?php if ($product['stock'] <= 0): ?>
+                <div class="out-of-stock-banner">Out of Stock</div>
+            <?php endif; ?>
+            
+            <div class="product-wishlist-indicator-detail" 
+                 data-product-id="<?php echo $product['id']; ?>"
+                 style="display: none;">
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                    <line x1="4" y1="22" x2="4" y2="15"></line>
+                </svg>
+            </div>
+            
             <img src="<?php echo htmlspecialchars(getProductImageUrl($product['images'][0] ?? $product['image'])); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
         <?php endif; ?>
     </div>
@@ -348,13 +375,29 @@ function getProductImageUrl($url) {
            </div>
         </div>
 
-        <button class="add-to-cart" 
-                data-product-id="<?php echo $product['id']; ?>"
-                data-product-name="<?php echo htmlspecialchars($product['name']); ?>"
-                data-product-price="<?php echo $product['price']; ?>"
-                data-product-image="<?php echo htmlspecialchars($product['image']); ?>">
-            Add to Cart
-        </button>
+        <?php if ($product['stock'] <= 0): ?>
+            <button class="add-to-wishlist-detail" 
+                    data-product-id="<?php echo $product['id']; ?>"
+                    data-clinic-id="<?php echo $product['clinic_id']; ?>"
+                    onclick="addToWishlist(<?php echo $product['id']; ?>, <?php echo $product['clinic_id']; ?>, this)"
+                    style="display: none;">
+                Add to Wishlist
+            </button>
+            <button class="remove-from-wishlist-detail" 
+                    data-product-id="<?php echo $product['id']; ?>"
+                    onclick="removeFromWishlist(<?php echo $product['id']; ?>, this)"
+                    style="display: none;">
+                Remove from Wishlist
+            </button>
+        <?php else: ?>
+            <button class="add-to-cart" 
+                    data-product-id="<?php echo $product['id']; ?>"
+                    data-product-name="<?php echo htmlspecialchars($product['name']); ?>"
+                    data-product-price="<?php echo $product['price']; ?>"
+                    data-product-image="<?php echo htmlspecialchars($product['image']); ?>">
+                Add to Cart
+            </button>
+        <?php endif; ?>
     </div>
 </section>
 
@@ -402,5 +445,184 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="/PETVET/public/js/pet-owner/shop-product.js?v=<?php echo time(); ?>"></script>
 <link rel="stylesheet" href="/PETVET/public/css/pet-owner/cart-manager.css?v=<?php echo time(); ?>">
 <script src="/PETVET/public/js/pet-owner/cart-manager.js?v=<?php echo time(); ?>"></script>
+
+<!-- Wishlist Functionality -->
+<style>
+    /* Product Wishlist Indicator (Top Left of Product Image) - Non-clickable */
+    .product-wishlist-indicator-detail {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        width: 36px;
+        height: 36px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+        pointer-events: none;
+    }
+    
+    .product-wishlist-indicator-detail svg {
+        width: 20px;
+        height: 20px;
+        fill: #fbbf24;
+        stroke: #f59e0b;
+    }
+    
+    /* Out of Stock Banner */
+    .out-of-stock-banner {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(239, 68, 68, 0.95);
+        color: white;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        z-index: 10;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Add to Wishlist Button */
+    .add-to-wishlist-detail {
+        background: #ff00a3;
+        color: white;
+        border: none;
+        padding: 0.8rem 2rem;
+        font-size: 1.1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+        width: 100%;
+        max-width: 300px;
+        font-weight: 600;
+    }
+    
+    .add-to-wishlist-detail:hover {
+        background: #d6008a;
+        box-shadow: 0 4px 12px rgba(255, 0, 163, 0.3);
+    }
+    
+    /* Remove from Wishlist Button */
+    .remove-from-wishlist-detail {
+        background: #dc2626;
+        color: white;
+        border: none;
+        padding: 0.8rem 2rem;
+        font-size: 1.1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+        width: 100%;
+        max-width: 300px;
+        font-weight: 600;
+    }
+    
+    .remove-from-wishlist-detail:hover {
+        background: #b91c1c;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    }
+</style>
+
+<script>
+    const PRODUCT_ID = <?php echo $product['id']; ?>;
+    const CLINIC_ID = <?php echo $product['clinic_id']; ?>;
+    let isInWishlist = false;
+    
+    // Load wishlist status on page load
+    document.addEventListener('DOMContentLoaded', async function() {
+        await checkWishlistStatus();
+    });
+    
+    // Check if product is in wishlist
+    async function checkWishlistStatus() {
+        try {
+            const response = await fetch(`/PETVET/api/pet-owner/shop-wishlist.php?action=check&product_id=${PRODUCT_ID}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                isInWishlist = data.in_wishlist;
+                updateWishlistButtonUI();
+            }
+        } catch (error) {
+            console.error('Error checking wishlist status:', error);
+        }
+    }
+    
+    // Update wishlist button UI
+    function updateWishlistButtonUI() {
+        const indicator = document.querySelector('.product-wishlist-indicator-detail');
+        const addBtn = document.querySelector('.add-to-wishlist-detail');
+        const removeBtn = document.querySelector('.remove-from-wishlist-detail');
+        
+        // Show/hide indicator
+        if (indicator) {
+            indicator.style.display = isInWishlist ? 'flex' : 'none';
+        }
+        
+        // Show/hide add/remove buttons for out-of-stock items
+        if (addBtn && removeBtn) {
+            if (isInWishlist) {
+                addBtn.style.display = 'none';
+                removeBtn.style.display = 'block';
+            } else {
+                addBtn.style.display = 'block';
+                removeBtn.style.display = 'none';
+            }
+        }
+    }
+    
+    // Remove from wishlist
+    async function removeFromWishlist(productId, button) {
+        try {
+            const formData = new FormData();
+            formData.append('action', 'remove');
+            formData.append('product_id', productId);
+            
+            const response = await fetch('/PETVET/api/pet-owner/shop-wishlist.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                isInWishlist = false;
+                updateWishlistButtonUI();
+            }
+        } catch (error) {
+            console.error('Error removing from wishlist:', error);
+        }
+    }
+    
+    // Add to wishlist (for out-of-stock items)
+    async function addToWishlist(productId, clinicId, button) {
+        try {
+            const formData = new FormData();
+            formData.append('action', 'add');
+            formData.append('product_id', productId);
+            formData.append('clinic_id', clinicId);
+            
+            const response = await fetch('/PETVET/api/pet-owner/shop-wishlist.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                isInWishlist = true;
+                updateWishlistButtonUI();
+            }
+        } catch (error) {
+            console.error('Error adding to wishlist:', error);
+        }
+    }
+</script>
+
 </body>
 </html>

@@ -44,7 +44,8 @@ try {
             p.name as pet,
             p.species as animal,
             CONCAT(u.first_name, ' ', u.last_name) as client,
-            u.phone,
+            u.phone as client_phone,
+            a.vet_id,
             CONCAT(vet.first_name, ' ', vet.last_name) as vet
         FROM appointments a
         JOIN pets p ON a.pet_id = p.id

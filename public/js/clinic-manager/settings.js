@@ -445,6 +445,262 @@ function wireForms() {
   }
 }
 
+// ========== Shop & Delivery Settings ==========
+function initShopSettings() {
+  const addBtn = $('#btnAddDeliveryRule');
+  const rulesList = $('#deliveryRulesList');
+  const template = $('#deliveryRuleTemplate');
+  const baseChargeInput = $('#baseDeliveryCharge');
+  const maxDistanceInput = $('#maxDeliveryDistance');
+  const previewBase = $('#previewBase');
+  const previewList = $('#deliveryPreview .preview-list');
+  const form = $('#formShopSettings');
+  
+  if (!addBtn || !rulesList || !template) return;
+  
+  let ruleCount = 0;
+  
+  // Load existing settings from database
+  async function loadSettings() {
+    try {
+      const response = await apiRequest('/PETVET/api/clinic-manager/delivery-settings.php', { action: 'get_settings' });
+      if (response.success && response.settings) {
+        const settings = response.settings;
+        
+        // Set base values
+        if (baseChargeInput) baseChargeInput.value = settings.base_delivery_charge || 0;
+        if (maxDistanceInput) maxDistanceInput.value = settings.max_delivery_distance || 0;
+        if ($('#maxItemsPerOrder')) $('#maxItemsPerOrder').value = settings.max_items_per_order || 10;
+        
+        // Load delivery rules
+        if (settings.delivery_rules && settings.delivery_rules.length > 0) {
+          // Clear empty state
+          rulesList.innerHTML = '';
+          
+          settings.delivery_rules.forEach(rule => {
+            addRuleFromData(rule.distance, rule.charge_per_km);
+          });
+        }
+        
+        // Capture initial form state after loading
+        setTimeout(() => {
+          captureFormState('#formShopSettings');
+          updateButtonState('#formShopSettings', '#formShopSettings button[type="submit"]');
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error loading delivery settings:', error);
+    }
+  }
+  
+  // Add a rule with pre-filled data
+  function addRuleFromData(distance, charge) {
+    const clone = template.content.cloneNode(true);
+    const ruleItem = clone.querySelector('.delivery-rule-item');
+    ruleItem.dataset.ruleId = ruleCount++;
+    
+    const distanceInput = clone.querySelector('.distance-value');
+    const chargeInput = clone.querySelector('.charge-value');
+    
+    distanceInput.value = distance;
+    chargeInput.value = charge;
+    
+    rulesList.appendChild(clone);
+    
+    // Wire up the rule after adding to DOM
+    const addedRule = rulesList.querySelector(`[data-rule-id="${ruleCount - 1}"]`);
+    if (addedRule) wireDeliveryRule(addedRule);
+  }
+  
+  // Load settings on initialization
+  loadSettings();
+  
+  // Update preview when base charge changes
+  if (baseChargeInput && previewBase) {
+    baseChargeInput.addEventListener('input', () => {
+      previewBase.textContent = parseFloat(baseChargeInput.value || 0).toFixed(2);
+    });
+  }
+  
+  // Revalidate all rules when max distance changes
+  if (maxDistanceInput) {
+    maxDistanceInput.addEventListener('input', () => {
+      const allRules = rulesList.querySelectorAll('.delivery-rule-item');
+      allRules.forEach(rule => validateDistanceOrder(rule));
+    });
+  }
+  
+  // Add new delivery rule
+  addBtn.addEventListener('click', () => {
+    const clone = template.content.cloneNode(true);
+    const ruleItem = clone.querySelector('.delivery-rule-item');
+    ruleItem.dataset.ruleId = ruleCount++;
+    
+    // Remove empty state if exists
+    const emptyState = rulesList.querySelector('.empty-state');
+    if (emptyState) emptyState.remove();
+    
+    rulesList.appendChild(clone);
+    
+    // Wire up the new rule
+    const newRule = rulesList.querySelector(`[data-rule-id="${ruleCount - 1}"]`);
+    wireDeliveryRule(newRule);
+    
+    // Update preview
+    updateDeliveryPreview();
+    
+    // Trigger form change
+    if (form) form.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  
+  // Wire a delivery rule item
+  function wireDeliveryRule(ruleItem) {
+    const removeBtn = ruleItem.querySelector('.btn-remove-rule');
+    const distanceInput = ruleItem.querySelector('.distance-value');
+    const chargeInput = ruleItem.querySelector('.charge-value');
+    const exampleCharge = ruleItem.querySelector('.example-charge');
+    const exampleCondition = ruleItem.querySelector('.example-condition');
+    
+    // Remove rule
+    removeBtn.addEventListener('click', () => {
+      ruleItem.remove();
+      updateDeliveryPreview();
+      
+      // Show empty state if no rules left
+      if (!rulesList.querySelector('.delivery-rule-item')) {
+        rulesList.innerHTML = '<div class="empty-state">No delivery rules yet. Click "Add Rule" to create distance-based pricing.</div>';
+      }
+      
+      // Trigger form change
+      if (form) form.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    
+    // Update example text
+    function updateExample() {
+      const distance = distanceInput.value || '5';
+      const charge = chargeInput.value || '10';
+      
+      exampleCharge.textContent = charge;
+      exampleCondition.textContent = `> ${distance} km`;
+    }
+    
+    // Validate distance is greater than previous rules
+    distanceInput.addEventListener('input', () => {
+      validateDistanceOrder(ruleItem);
+      updateExample();
+      updateDeliveryPreview();
+      if (form) form.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    
+    chargeInput.addEventListener('input', () => {
+      updateExample();
+      updateDeliveryPreview();
+      if (form) form.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    
+    // Initial example update
+    updateExample();
+  }
+  
+  // Validate that distance values are in increasing order
+  function validateDistanceOrder(currentRule) {
+    const allRules = Array.from(rulesList.querySelectorAll('.delivery-rule-item'));
+    const currentIndex = allRules.indexOf(currentRule);
+    const currentInput = currentRule.querySelector('.distance-value');
+    const currentValue = parseFloat(currentInput.value);
+    
+    if (isNaN(currentValue)) return;
+    
+    // Check against maximum delivery distance
+    const maxDistance = parseFloat(maxDistanceInput?.value || 0);
+    if (maxDistance > 0 && currentValue >= maxDistance) {
+      currentInput.setCustomValidity(`Distance must be less than maximum delivery distance (${maxDistance} km)`);
+      currentInput.reportValidity();
+      return;
+    }
+    
+    // Check previous rule
+    if (currentIndex > 0) {
+      const prevRule = allRules[currentIndex - 1];
+      const prevValue = parseFloat(prevRule.querySelector('.distance-value').value);
+      
+      if (!isNaN(prevValue) && currentValue <= prevValue) {
+        currentInput.setCustomValidity(`Distance must be greater than ${prevValue} km`);
+        currentInput.reportValidity();
+        return;
+      }
+    }
+    
+    // Check next rule
+    if (currentIndex < allRules.length - 1) {
+      const nextRule = allRules[currentIndex + 1];
+      const nextInput = nextRule.querySelector('.distance-value');
+      const nextValue = parseFloat(nextInput.value);
+      
+      if (!isNaN(nextValue) && currentValue >= nextValue) {
+        currentInput.setCustomValidity(`Distance must be less than ${nextValue} km`);
+        currentInput.reportValidity();
+        return;
+      }
+    }
+    
+    currentInput.setCustomValidity('');
+  }
+  
+  // Update delivery preview (removed since preview section was deleted)
+  function updateDeliveryPreview() {
+    // Preview section removed - this function kept for compatibility
+  }
+  
+  // Form submission
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving...';
+      
+      const baseCharge = parseFloat(baseChargeInput?.value || 0);
+      const maxDistance = parseFloat(maxDistanceInput?.value || 0);
+      const maxItems = parseInt($('#maxItemsPerOrder')?.value || 10);
+      const rules = Array.from(rulesList.querySelectorAll('.delivery-rule-item')).map(item => {
+        return {
+          distance: parseFloat(item.querySelector('.distance-value').value || 0),
+          charge_per_km: parseFloat(item.querySelector('.charge-value').value || 0)
+        };
+      }).filter(r => r.distance > 0 && r.charge_per_km >= 0).sort((a, b) => a.distance - b.distance);
+      
+      const data = {
+        action: 'save_settings',
+        base_delivery_charge: baseCharge,
+        max_delivery_distance: maxDistance,
+        max_items_per_order: maxItems,
+        delivery_rules: JSON.stringify(rules)
+      };
+      
+      const result = await apiRequest('/PETVET/api/clinic-manager/delivery-settings.php', data);
+      
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+      
+      if (result.success) {
+        toast('Delivery settings saved successfully!', 'success');
+        captureFormState('#formShopSettings');
+        updateButtonState('#formShopSettings', '#formShopSettings button[type="submit"]');
+      } else {
+        toast(result.message || 'Failed to save delivery settings', 'error');
+      }
+    });
+    
+    // Track form changes for submit button state
+    form.addEventListener('input', () => {
+      updateButtonState('#formShopSettings', '#formShopSettings button[type="submit"]');
+    });
+  }
+}
+
 // Init
 bindImagePreview('mgrAvatar', 'mgrAvatarPreview');
 bindImagePreview('clinicLogo', 'clinicLogoPreview', '#formClinic');
@@ -453,6 +709,7 @@ initHoursToggles();
 initHolidays();
 initWeeklySchedule();
 initBlockedDays();
+initShopSettings();
 wireForms();
 
 // Hook custom uploader buttons to hidden inputs

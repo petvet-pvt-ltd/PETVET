@@ -91,6 +91,13 @@
                         <input type="text" id="productSearch" placeholder="Search products..." onkeyup="filterProducts()" />
                     </div>
                     <div class="filter-controls">
+                        <button class="wishlist-toggle-btn" id="wishlistToggle" onclick="toggleWishlistFilter()">
+                            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                                <line x1="4" y1="22" x2="4" y2="15"></line>
+                            </svg>
+                            <span>Wishlist</span>
+                        </button>
                         <div class="sort-control">
                             <label for="sortBy">📊 Sort by:</label>
                             <select id="sortBy" onchange="filterProducts()">
@@ -118,10 +125,24 @@
                              data-product-id="<?php echo $product['id']; ?>"
                              data-name="<?php echo htmlspecialchars(strtolower($product['name'])); ?>"
                              data-price="<?php echo $product['price']; ?>"
-                             data-created="<?php echo strtotime($product['created_at']); ?>">
+                             data-created="<?php echo strtotime($product['created_at']); ?>"
+                             data-stock="<?php echo $product['stock'] ?? 0; ?>">
                             
                             <a href="/PETVET/index.php?module=pet-owner&page=shop-product&id=<?php echo $product['id']; ?>" style="text-decoration: none; color: inherit; display: block;">
                                 <div class="product-image-container">
+                                    <?php if ($product['stock'] <= 0): ?>
+                                        <div class="out-of-stock-banner">Out of Stock</div>
+                                    <?php endif; ?>
+                                    
+                                    <div class="product-wishlist-indicator" 
+                                         data-product-id="<?php echo $product['id']; ?>"
+                                         style="display: none;">
+                                        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                                            <line x1="4" y1="22" x2="4" y2="15"></line>
+                                        </svg>
+                                    </div>
+                                    
                                     <?php if (!empty($product['images']) && count($product['images']) > 1): ?>
                                       <div class="product-carousel" data-current="0">
                                         <?php foreach ($product['images'] as $idx => $img): ?>
@@ -153,9 +174,26 @@
                             </a>
 
                             <div class="product-actions">
-                                <button class="add-to-cart" data-product-id="<?php echo $product['id']; ?>">
-                                    Add to Cart
-                                </button>
+                                <?php if ($product['stock'] <= 0): ?>
+                                    <button class="add-to-wishlist" 
+                                            data-product-id="<?php echo $product['id']; ?>"
+                                            data-clinic-id="<?php echo $clinic['id']; ?>"
+                                            onclick="addToWishlist(<?php echo $product['id']; ?>, <?php echo $clinic['id']; ?>, this)"
+                                            style="display: none;">
+                                        Add to Wishlist
+                                    </button>
+                                    <button class="remove-from-wishlist" 
+                                            data-product-id="<?php echo $product['id']; ?>"
+                                            data-clinic-id="<?php echo $clinic['id']; ?>"
+                                            onclick="removeFromWishlist(<?php echo $product['id']; ?>, this)"
+                                            style="display: none;">
+                                        Remove from Wishlist
+                                    </button>
+                                <?php else: ?>
+                                    <button class="add-to-cart" data-product-id="<?php echo $product['id']; ?>">
+                                        Add to Cart
+                                    </button>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -173,5 +211,336 @@
     <!-- <script src="/PETVET/public/js/cart.js?v=<?php echo time(); ?>"></script> -->
     <link rel="stylesheet" href="/PETVET/public/css/pet-owner/cart-manager.css?v=<?php echo time(); ?>">
     <script src="/PETVET/public/js/pet-owner/cart-manager.js?v=<?php echo time(); ?>"></script>
+    
+    <!-- Wishlist Functionality -->
+    <style>
+        /* Wishlist Toggle Button */
+        .wishlist-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            color: #64748b;
+            height: fit-content;
+            align-self: flex-end;
+        }
+        
+        .wishlist-toggle-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            transition: all 0.2s ease;
+        }
+        
+        .wishlist-toggle-btn:hover {
+            border-color: #fbbf24;
+            color: #f59e0b;
+            background: #fffbeb;
+        }
+        
+        .wishlist-toggle-btn.active {
+            background: #fbbf24;
+            border-color: #f59e0b;
+            color: white;
+        }
+        
+        .wishlist-toggle-btn.active svg {
+            fill: white;
+            stroke: white;
+        }
+        
+        /* Product Wishlist Indicator (Top Left of Product Image) - Non-clickable */
+        .product-wishlist-indicator {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            width: 32px;
+            height: 32px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .product-wishlist-indicator svg {
+            width: 18px;
+            height: 18px;
+            fill: #fbbf24;
+            stroke: #f59e0b;
+        }
+        
+        /* Out of Stock Banner */
+        .out-of-stock-banner {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(239, 68, 68, 0.95);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Add to Wishlist Button */
+        .add-to-wishlist {
+            background: #ff00a3;
+            color: white;
+            border: none;
+            padding: 0.65rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+        
+        .add-to-wishlist:hover {
+            background: #d6008a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 0, 163, 0.3);
+        }
+        
+        .add-to-wishlist:active {
+            transform: translateY(0);
+        }
+        
+        /* Remove from Wishlist Button */
+        .remove-from-wishlist {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 0.65rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+        
+        @media (max-width: 480px) {
+            .remove-from-wishlist {
+                font-size: 0.7rem;
+                padding: 0.6rem 0.8rem;
+            }
+        }
+        
+        .remove-from-wishlist:hover {
+            background: #b91c1c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        }
+        
+        .remove-from-wishlist:active {
+            transform: translateY(0);
+        }
+        
+        /* Filter controls container */
+        .filter-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .wishlist-toggle-btn {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+                gap: 6px;
+            }
+            
+            .wishlist-toggle-btn svg {
+                width: 16px;
+                height: 16px;
+            }
+            
+            .sort-control {
+                flex: 1;
+            }
+            
+            .sort-control label {
+                font-size: 0.8rem;
+            }
+            
+            .sort-control select {
+                font-size: 0.85rem;
+                padding: 0.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .wishlist-toggle-btn {
+                padding: 8px 10px;
+                font-size: 0.8rem;
+            }
+            
+            .wishlist-toggle-btn span {
+                display: none;
+            }
+            
+            .wishlist-toggle-btn svg {
+                width: 20px;
+                height: 20px;
+            }
+        }
+    </style>
+    
+    <script>
+        const CLINIC_ID = <?php echo $clinic['id']; ?>;
+        let wishlistedProducts = new Set();
+        let showWishlistOnly = false;
+        
+        // Load wishlisted products on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadWishlistedProducts();
+        });
+        
+        // Load wishlisted product IDs
+        async function loadWishlistedProducts() {
+            try {
+                const response = await fetch(`/PETVET/api/pet-owner/shop-wishlist.php?action=get_ids&clinic_id=${CLINIC_ID}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    wishlistedProducts = new Set(data.product_ids.map(id => parseInt(id)));
+                    updateWishlistUI();
+                }
+            } catch (error) {
+                console.error('Error loading wishlist:', error);
+            }
+        }
+        
+        // Update UI to show wishlisted items
+        function updateWishlistUI() {
+            document.querySelectorAll('.product-card').forEach(card => {
+                const productId = parseInt(card.dataset.productId);
+                const stock = parseInt(card.dataset.stock);
+                const isWishlisted = wishlistedProducts.has(productId);
+                
+                // Show/hide wishlist indicator (only for wishlisted items)
+                const indicator = card.querySelector('.product-wishlist-indicator');
+                if (indicator) {
+                    indicator.style.display = isWishlisted ? 'flex' : 'none';
+                }
+                
+                // Show/hide add/remove buttons for out-of-stock items
+                if (stock <= 0) {
+                    const addBtn = card.querySelector('.add-to-wishlist');
+                    const removeBtn = card.querySelector('.remove-from-wishlist');
+                    
+                    if (addBtn && removeBtn) {
+                        if (isWishlisted) {
+                            addBtn.style.display = 'none';
+                            removeBtn.style.display = 'block';
+                        } else {
+                            addBtn.style.display = 'block';
+                            removeBtn.style.display = 'none';
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Remove from wishlist
+        async function removeFromWishlist(productId, button) {
+            try {
+                const formData = new FormData();
+                formData.append('action', 'remove');
+                formData.append('product_id', productId);
+                
+                const response = await fetch('/PETVET/api/pet-owner/shop-wishlist.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    wishlistedProducts.delete(productId);
+                    updateWishlistUI();
+                    
+                    // If wishlist filter is active, re-filter
+                    if (showWishlistOnly) {
+                        filterProducts();
+                    }
+                }
+            } catch (error) {
+                console.error('Error removing from wishlist:', error);
+            }
+        }
+        
+        // Add to wishlist (for out-of-stock items)
+        async function addToWishlist(productId, clinicId, button) {
+            try {
+                const formData = new FormData();
+                formData.append('action', 'add');
+                formData.append('product_id', productId);
+                formData.append('clinic_id', clinicId);
+                
+                const response = await fetch('/PETVET/api/pet-owner/shop-wishlist.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    wishlistedProducts.add(productId);
+                    updateWishlistUI();
+                }
+            } catch (error) {
+                console.error('Error adding to wishlist:', error);
+            }
+        }
+        
+        // Toggle wishlist filter
+        function toggleWishlistFilter() {
+            showWishlistOnly = !showWishlistOnly;
+            const toggleBtn = document.getElementById('wishlistToggle');
+            
+            if (showWishlistOnly) {
+                toggleBtn.classList.add('active');
+            } else {
+                toggleBtn.classList.remove('active');
+            }
+            
+            filterProducts();
+        }
+        
+        // Override or extend the existing filterProducts function
+        const originalFilterProducts = window.filterProducts;
+        window.filterProducts = function() {
+            if (typeof originalFilterProducts === 'function') {
+                originalFilterProducts();
+            }
+            
+            // Apply wishlist filter
+            if (showWishlistOnly) {
+                const cards = document.querySelectorAll('.product-card');
+                cards.forEach(card => {
+                    const productId = parseInt(card.dataset.productId);
+                    if (!wishlistedProducts.has(productId)) {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+        };
+    </script>
 </body>
 </html>

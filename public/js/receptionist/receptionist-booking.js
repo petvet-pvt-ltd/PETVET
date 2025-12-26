@@ -167,7 +167,8 @@ async function loadReceptionistTimeSlots(dateString) {
   try {
     // Use selected vet ID, or 'any' if not selected yet
     const vetId = receptionistSelectedVet || 'any';
-    const response = await fetch(`/PETVET/api/appointments/get-available-times.php?clinic_id=1&vet_id=${vetId}&date=${dateString}`);
+    const clinicId = window.CLINIC_ID || 1;
+    const response = await fetch(`/PETVET/api/appointments/get-available-times.php?clinic_id=${clinicId}&vet_id=${vetId}&date=${dateString}`);
     const data = await response.json();
     
     if (data.success) {
@@ -265,7 +266,8 @@ function selectReceptionistTimeSlot(slotElement, timeString) {
 async function loadReceptionistDisabledDates() {
   try {
     // Get clinic_id from receptionist's session/context
-    const response = await fetch('/PETVET/api/appointments/get-available-dates.php?clinic_id=1');
+    const clinicId = window.CLINIC_ID || 1;
+    const response = await fetch(`/PETVET/api/appointments/get-available-dates.php?clinic_id=${clinicId}`);
     const data = await response.json();
     
     if (data.success) {

@@ -683,7 +683,26 @@
   max-width: 400px;
 }
 
+/* Reschedule calendar should match Add New Appointment calendar exactly */
+#rescheduleCalendarWidget {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+  max-width: 400px;
+}
+
 #receptionistCalendarWidget .calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+#rescheduleCalendarWidget .calendar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -698,7 +717,18 @@
   color: #1e293b;
 }
 
+#rescheduleCalendarWidget .calendar-month {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
 #receptionistCalendarWidget .calendar-nav {
+  display: flex;
+  gap: 6px;
+}
+
+#rescheduleCalendarWidget .calendar-nav {
   display: flex;
   gap: 6px;
 }
@@ -718,7 +748,27 @@
   justify-content: center;
 }
 
+#rescheduleCalendarWidget .calendar-nav button {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: #f1f5f9;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #475569;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 #receptionistCalendarWidget .calendar-nav button:hover:not(:disabled) {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+#rescheduleCalendarWidget .calendar-nav button:hover:not(:disabled) {
   background: #e2e8f0;
   color: #1e293b;
 }
@@ -728,7 +778,19 @@
   cursor: not-allowed;
 }
 
+#rescheduleCalendarWidget .calendar-nav button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 #receptionistCalendarWidget .calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-bottom: 6px;
+}
+
+#rescheduleCalendarWidget .calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 3px;
@@ -744,7 +806,22 @@
   text-transform: uppercase;
 }
 
+#rescheduleCalendarWidget .calendar-weekday {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  padding: 4px 2px;
+  text-transform: uppercase;
+}
+
 #receptionistCalendarWidget .calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+#rescheduleCalendarWidget .calendar-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 3px;
@@ -768,13 +845,44 @@
   max-height: 32px;
 }
 
+#rescheduleCalendarWidget .calendar-day {
+  aspect-ratio: 1;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1e293b;
+  transition: all 0.2s;
+  position: relative;
+  height: 32px;
+  max-height: 32px;
+}
+
 #receptionistCalendarWidget .calendar-day:hover:not(.disabled):not(.empty):not(.selected) {
   border-color: #2563eb;
   background: #eff6ff;
   transform: scale(1.05);
 }
 
+#rescheduleCalendarWidget .calendar-day:hover:not(.disabled):not(.empty):not(.selected) {
+  border-color: #2563eb;
+  background: #eff6ff;
+  transform: scale(1.05);
+}
+
 #receptionistCalendarWidget .calendar-day.selected {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+#rescheduleCalendarWidget .calendar-day.selected {
   background: #2563eb;
   border-color: #2563eb;
   color: #ffffff;
@@ -788,7 +896,21 @@
   transform: none !important;
 }
 
+#rescheduleCalendarWidget .calendar-day.selected:hover {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+  transform: none !important;
+}
+
 #receptionistCalendarWidget .calendar-day.today:not(.selected) {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+#rescheduleCalendarWidget .calendar-day.today:not(.selected) {
   border-color: #2563eb;
   background: #eff6ff;
   color: #2563eb;
@@ -802,7 +924,20 @@
   border-color: #f1f5f9;
 }
 
+#rescheduleCalendarWidget .calendar-day.disabled {
+  background: #f8fafc;
+  color: #cbd5e1;
+  cursor: not-allowed;
+  border-color: #f1f5f9;
+}
+
 #receptionistCalendarWidget .calendar-day.empty {
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+#rescheduleCalendarWidget .calendar-day.empty {
   border: none;
   background: transparent;
   cursor: default;
@@ -810,6 +945,13 @@
 
 /* Time Slots Grid */
 #receptionistTimeSlotsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+#rescheduleTimeSlotsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   gap: 6px;
@@ -829,7 +971,26 @@
   transition: all 0.2s;
 }
 
+#rescheduleTimeSlotsGrid .time-slot {
+  padding: 8px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: pointer;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  transition: all 0.2s;
+}
+
 #receptionistTimeSlotsGrid .time-slot:hover:not(.disabled):not(.selected) {
+  border-color: #2563eb;
+  background: #eff6ff;
+  transform: scale(1.05);
+}
+
+#rescheduleTimeSlotsGrid .time-slot:hover:not(.disabled):not(.selected) {
   border-color: #2563eb;
   background: #eff6ff;
   transform: scale(1.05);
@@ -841,13 +1002,32 @@
   color: #ffffff;
 }
 
+#rescheduleTimeSlotsGrid .time-slot.selected {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
 #receptionistTimeSlotsGrid .time-slot.selected:hover {
   background: #2563eb;
   border-color: #2563eb;
   transform: none;
 }
 
+#rescheduleTimeSlotsGrid .time-slot.selected:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  transform: none;
+}
+
 #receptionistTimeSlotsGrid .time-slot.disabled {
+  background: #f8fafc;
+  color: #cbd5e1;
+  cursor: not-allowed;
+  border-color: #f1f5f9;
+}
+
+#rescheduleTimeSlotsGrid .time-slot.disabled {
   background: #f8fafc;
   color: #cbd5e1;
   cursor: not-allowed;

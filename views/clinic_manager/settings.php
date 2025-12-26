@@ -34,6 +34,7 @@ $blockedDays = $blockedDays ?? [];
 			<nav class="quick-nav" aria-label="Quick navigation">
 				<a href="#section-profile">Profile</a>
 				<a href="#section-clinic">Clinic</a>
+				<a href="#section-shop">Shop</a>
 				<a href="#section-preferences">Preferences</a>
 				<a href="#section-availability">Availability</a>
 				<a href="#section-password">Password</a>
@@ -152,6 +153,95 @@ $blockedDays = $blockedDays ?? [];
             </div>
           </form>
         </section>
+
+				<!-- Shop & Delivery Settings -->
+				<section class="card" id="section-shop" data-section>
+					<div class="card-head">
+						<h2>Shop & Delivery Settings</h2>
+					</div>
+					<form id="formShopSettings" class="form">
+						<p style="padding-bottom : 15px" class="muted" style="margin-top:0">Configure delivery charges and distance-based pricing rules</p>
+						
+						<!-- Base Delivery Charge, Maximum Distance & Maximum Items Per Order -->
+						<div class="row three">
+							<label>Base Delivery Charge (Rs.)
+								<input type="number" name="base_delivery_charge" id="baseDeliveryCharge" 
+								       value="0" min="0" step="0.01" 
+								       placeholder="e.g., 200" />
+								<small class="field-hint">Default delivery fee for standard distances</small>
+							</label>
+							<label>Maximum Delivery Distance (km)
+								<input type="number" name="max_delivery_distance" id="maxDeliveryDistance" 
+								       value="0" min="0" step="0.1" 
+								       placeholder="e.g., 25" />
+								<small class="field-hint">Set to 0 for no limit.</small>
+							</label>
+							<label>Maximum Items Per Order
+								<input type="number" name="max_items_per_order" id="maxItemsPerOrder" 
+								       value="10" min="5" max="10" step="1" 
+								       placeholder="e.g., 10" required />
+								<small class="field-hint">Maximum total quantity of items allowed per order (5-10 items)</small>
+							</label>
+						</div>
+						<!-- Distance-based Rules -->
+						<div class="delivery-rules-section">
+							<div class="section-header">
+								<h3>Distance-based Delivery Rules</h3>
+								<button type="button" class="btn btn-sm outline" id="btnAddDeliveryRule">
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<line x1="12" y1="5" x2="12" y2="19"></line>
+										<line x1="5" y1="12" x2="19" y2="12"></line>
+									</svg>
+									Add Rule
+								</button>
+							</div>
+
+							<div class="delivery-rules-list" id="deliveryRulesList">
+								<!-- Rules will be added here dynamically -->
+								<div class="empty-state">
+									No delivery rules yet. Click "Add Rule" to create distance-based pricing.
+								</div>
+							</div>
+						</div>
+
+						<!-- Rule Template (hidden, used for cloning) -->
+						<template id="deliveryRuleTemplate">
+							<div class="delivery-rule-item">
+								<div class="rule-inputs">
+									<div class="input-group">
+										<label>Distance
+											<div class="distance-input-wrapper">
+												<span class="distance-operator">&gt;</span>
+												<input type="number" class="distance-value" name="distance[]" 
+												       placeholder="5" min="0" step="0.1" required />
+												<span class="unit">km</span>
+											</div>
+										</label>
+									</div>
+									<div class="input-group">
+										<label>Charge per km (Rs./km)
+											<input type="number" class="charge-value" name="charge[]" 
+											       placeholder="10" min="0" step="0.01" required />
+										</label>
+									</div>
+									<button type="button" class="btn-remove-rule" title="Remove rule">
+										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+											<line x1="18" y1="6" x2="6" y2="18"></line>
+											<line x1="6" y1="6" x2="18" y2="18"></line>
+										</svg>
+									</button>
+								</div>
+								<div class="rule-example">
+									<span class="example-text">Example: For deliveries <span class="example-condition">&gt; 5 km</span>, charge Rs. <span class="example-charge">10</span> per km</span>
+								</div>
+							</div>
+						</template>
+
+						<div class="actions">
+							<button class="btn btn-primary" type="submit">Save Shop Settings</button>
+						</div>
+					</form>
+				</section>
 
 				<!-- Preferences Card -->
 				<section class="card" id="section-preferences" data-section>

@@ -38,13 +38,25 @@ if ($method === 'GET') {
     }
 
     try {
+        // Get clinic's max items per order setting
+        $settingsStmt = $db->prepare("SELECT max_items_per_order FROM clinic_shop_settings WHERE clinic_id = ?");
+        $settingsStmt->execute([$clinicId]);
+        $settings = $settingsStmt->fetch();
+        $maxItemsPerOrder = $settings ? (int)$settings['max_items_per_order'] : 10;
+        
         // Get cart ID
         $stmt = $db->prepare("SELECT id FROM carts WHERE user_id = ? AND clinic_id = ?");
         $stmt->execute([$userId, $clinicId]);
         $cartId = $stmt->fetchColumn();
 
         if (!$cartId) {
-            echo json_encode(['success' => true, 'items' => [], 'total' => 0]);
+            echo json_encode([
+                'success' => true, 
+                'items' => [], 
+                'total' => 0, 
+                'totalQuantity' => 0,
+                'maxItemsPerOrder' => $maxItemsPerOrder
+            ]);
             exit;
         }
 
@@ -96,11 +108,19 @@ if ($method === 'GET') {
 
         // Calculate total
         $total = 0;
+        $totalQuantity = 0;
         foreach ($validItems as $item) {
             $total += $item['price'] * $item['quantity'];
+            $totalQuantity += $item['quantity'];
         }
 
-        echo json_encode(['success' => true, 'items' => $validItems, 'total' => $total]);
+        echo json_encode([
+            'success' => true, 
+            'items' => $validItems, 
+            'total' => $total,
+            'totalQuantity' => $totalQuantity,
+            'maxItemsPerOrder' => $maxItemsPerOrder
+        ]);
 
     } catch (Exception $e) {
         http_response_code(500);
@@ -126,6 +146,12 @@ if ($method === 'GET') {
         if ($action === 'add' || $action === 'update') {
             if (!$productId) throw new Exception("Product ID required");
 
+            // Get clinic's max items per order setting
+            $settingsStmt = $db->prepare("SELECT max_items_per_order FROM clinic_shop_settings WHERE clinic_id = ?");
+            $settingsStmt->execute([$clinicId]);
+            $settings = $settingsStmt->fetch();
+            $maxItemsPerOrder = $settings ? (int)$settings['max_items_per_order'] : 10;
+
             // Check stock
             $stmt = $db->prepare("SELECT stock, is_active FROM products WHERE id = ? AND clinic_id = ?");
             $stmt->execute([$productId, $clinicId]);
@@ -145,6 +171,11 @@ if ($method === 'GET') {
                 throw new Exception("Quantity must be at least 1");
             }
 
+            // Check total cart quantity including this addition
+            $cartTotalStmt = $db->prepare("SELECT COALESCE(SUM(quantity), 0) as total FROM cart_items WHERE cart_id = ? AND product_id != ?");
+            $cartTotalStmt->execute([$cartId, $productId]);
+            $currentCartTotal = (int)$cartTotalStmt->fetchColumn();
+
             if ($action === 'add') {
                 // Check if exists, if so update
                 $check = $db->prepare("SELECT id, quantity FROM cart_items WHERE cart_id = ? AND product_id = ?");
@@ -152,31 +183,33 @@ if ($method === 'GET') {
                 $existing = $check->fetch();
 
                 if ($existing) {
-                    // For 'add' from shop page, we usually just increment or set? 
-                    // Requirement: "if from shop-clinic page, quantity = 1" (implies add 1 or set to 1?)
-                    // Usually "Add to Cart" means "Add this quantity to existing".
-                    // But let's follow: "if from shop-product page, quantity = whatever".
-                    // Let's assume the frontend sends the *desired final quantity* or we handle logic there.
-                    // Actually, safer to handle "set quantity" for update, and "add" logic here.
-                    
-                    // Let's treat 'add' as "Insert or Update to specific quantity" or "Increment"?
-                    // To keep it simple: The frontend will send the *target* quantity for 'update'.
-                    // For 'add', let's assume it means "Add this amount to current".
-                    
-                    // Wait, requirement: "if from shop-clinic page, quantity = 1".
-                    // If I click add to cart twice, should it be 2? Yes.
-                    
                     $newQty = $existing['quantity'] + $quantity;
+                    
+                    // Check against max items per order
+                    if (($currentCartTotal + $newQty) > $maxItemsPerOrder) {
+                        throw new Exception("Cannot add more items. This shop allows maximum {$maxItemsPerOrder} items per order.");
+                    }
+                    
                     if ($newQty > 5) $newQty = 5;
                     if ($newQty > $product['stock']) $newQty = $product['stock'];
                     
                     $upd = $db->prepare("UPDATE cart_items SET quantity = ? WHERE id = ?");
                     $upd->execute([$newQty, $existing['id']]);
                 } else {
+                    // Check against max items per order
+                    if (($currentCartTotal + $quantity) > $maxItemsPerOrder) {
+                        throw new Exception("Cannot add more items. This shop allows maximum {$maxItemsPerOrder} items per order.");
+                    }
+                    
                     $ins = $db->prepare("INSERT INTO cart_items (cart_id, product_id, quantity) VALUES (?, ?, ?)");
                     $ins->execute([$cartId, $productId, $quantity]);
                 }
             } elseif ($action === 'update') {
+                // Check against max items per order
+                if (($currentCartTotal + $quantity) > $maxItemsPerOrder) {
+                    throw new Exception("Cannot update quantity. This shop allows maximum {$maxItemsPerOrder} items per order.");
+                }
+                
                 // Direct set quantity (from cart edit)
                 $upd = $db->prepare("UPDATE cart_items SET quantity = ? WHERE cart_id = ? AND product_id = ?");
                 $upd->execute([$quantity, $cartId, $productId]);

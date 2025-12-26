@@ -805,14 +805,19 @@ body, html {
   }
   
   .filter-controls {
-    flex-direction: column;
-    gap: 0.75rem;
+    flex-direction: row;
+    gap: 0.5rem;
     width: 100%;
+    justify-content: space-between;
   }
   
   .price-filter, .sort-control {
-    width: 100%;
-    min-width: 100%;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .wishlist-toggle-btn {
+    flex-shrink: 0;
   }
 }
 

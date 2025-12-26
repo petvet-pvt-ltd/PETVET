@@ -125,17 +125,7 @@ class SharedAppointmentsModel extends BaseModel {
             $params = [];
             
             if (isset($_SESSION['user_id'])) {
-                // Check clinic_staff for receptionists
-                $checkClinic = $this->db->prepare("SELECT clinic_id FROM clinic_staff WHERE user_id = ?");
-                $checkClinic->execute([$_SESSION['user_id']]);
-                $clinicId = $checkClinic->fetchColumn();
-                
-                // If not found, check vets table
-                if (!$clinicId) {
-                    $checkVet = $this->db->prepare("SELECT clinic_id FROM vets WHERE user_id = ?");
-                    $checkVet->execute([$_SESSION['user_id']]);
-                    $clinicId = $checkVet->fetchColumn();
-                }
+                $clinicId = $this->getUserClinicId();
                 
                 if ($clinicId) {
                     $clinicFilter = " AND v.clinic_id = ?";
@@ -163,6 +153,37 @@ class SharedAppointmentsModel extends BaseModel {
             error_log("Error fetching vet names: " . $e->getMessage());
             return [];
         }
+    }
+
+    /**
+     * Get the clinic ID for the current user
+     * @return int|null Clinic ID or null if not found
+     */
+    public function getUserClinicId() {
+        if (!isset($_SESSION['user_id'])) {
+            return null;
+        }
+
+        // Check clinic_staff for receptionists
+        $checkClinic = $this->db->prepare("SELECT clinic_id FROM clinic_staff WHERE user_id = ?");
+        $checkClinic->execute([$_SESSION['user_id']]);
+        $clinicId = $checkClinic->fetchColumn();
+        
+        // If not found, check vets table
+        if (!$clinicId) {
+            $checkVet = $this->db->prepare("SELECT clinic_id FROM vets WHERE user_id = ?");
+            $checkVet->execute([$_SESSION['user_id']]);
+            $clinicId = $checkVet->fetchColumn();
+        }
+
+        // If still not found, check clinic_manager_profiles table (for clinic manager)
+        if (!$clinicId) {
+            $checkManager = $this->db->prepare("SELECT clinic_id FROM clinic_manager_profiles WHERE user_id = ?");
+            $checkManager->execute([$_SESSION['user_id']]);
+            $clinicId = $checkManager->fetchColumn();
+        }
+
+        return $clinicId ?: null;
     }
     
     /**
