@@ -15,6 +15,24 @@
     <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
     
     <div class="main-content">
+        <!-- Shop Navigation Bar -->
+        <div class="shop-nav-bar" style="background: white; padding: 1rem 2rem; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center;">
+            <a href="/PETVET/index.php?module=pet-owner&page=shop" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 6px; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;" onmouseover="this.style.background='#e5e7eb';" onmouseout="this.style.background='#f3f4f6';">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Back to Shops
+            </a>
+            <a href="/PETVET/index.php?module=pet-owner&page=orders" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(102,126,234,0.3)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+                My Orders
+            </a>
+        </div>
+
         <!-- Clinic Header -->
         <div class="clinic-header-card">
             <?php 
@@ -541,6 +559,14 @@
                 });
             }
         };
+        
+        // Store clinic name in sessionStorage for checkout
+        (function() {
+            const clinicName = '<?php echo htmlspecialchars($clinic['clinic_name'] ?? 'PetVet Shop', ENT_QUOTES); ?>';
+            if (clinicName) {
+                sessionStorage.setItem('petvet_clinic_name', clinicName);
+            }
+        })();
     </script>
 </body>
 </html>

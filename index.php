@@ -146,6 +146,9 @@ switch ($module) {
             case 'shop': $c->shop(); break;
             case 'shop-clinic': $c->shopClinic(); break;
             case 'shop-product': $c->shopProduct(); break;
+            case 'payment-success': $c->paymentSuccess(); break;
+            case 'payment-cancel': $c->paymentCancel(); break;
+            case 'orders': $c->orders(); break;
             default: show404("This pet owner page doesn't exist."); break;
         }
         break;

@@ -296,4 +296,21 @@ class PetOwnerController extends BaseController {
         
         $this->view('pet-owner', 'shop-product', $data);
     }
+
+    public function paymentSuccess() {
+        // Simply render the payment success page
+        // The page itself handles cart clearing and order saving via JavaScript
+        $this->viewStandalone('pet-owner', 'payment-success', []);
+    }
+
+    public function paymentCancel() {
+        // Simply render the payment cancel page
+        $this->viewStandalone('pet-owner', 'payment-cancel', []);
+    }
+
+    public function orders() {
+        // Render the orders page
+        // Orders are loaded from localStorage via JavaScript
+        $this->view('pet-owner', 'orders', []);
+    }
 }

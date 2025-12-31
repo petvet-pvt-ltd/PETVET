@@ -13,7 +13,8 @@ function getProductImageUrl($url) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="clinic-id" content="<?php echo $product['clinic_id']; ?>">
+    <meta name="clinic-id" content="<?php echo htmlspecialchars($product['clinic_id']); ?>">
+    <meta name="clinic-name" content="<?php echo htmlspecialchars($product['clinic_name'] ?? 'PetVet Shop'); ?>">
     <title>Product Details | PetVet</title>
     <link rel="stylesheet" href="/PETVET/public/css/guest/shop.css">
     <link rel="stylesheet" href="/PETVET/public/css/cart.css">
@@ -622,6 +623,14 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error adding to wishlist:', error);
         }
     }
+    
+    // Store clinic name in sessionStorage for checkout
+    (function() {
+        const clinicName = '<?php echo htmlspecialchars($product['clinic_name'] ?? 'PetVet Shop', ENT_QUOTES); ?>';
+        if (clinicName) {
+            sessionStorage.setItem('petvet_clinic_name', clinicName);
+        }
+    })();
 </script>
 
 </body>

@@ -18,6 +18,22 @@
   <img src="/PETVET/views/shared/images/shop-banner.png" alt="Pet Shop Banner - Best Pet Products">
 </div>
 
+<!-- Shop Navigation Bar -->
+<div class="shop-nav-bar" style="background: white; padding: 1rem 2rem; border-radius: 12px; margin: 1.5rem 0; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center;">
+  <div>
+    <h2 style="margin: 0; color: #1f2937; font-size: 1.5rem;">🛍️ Shop</h2>
+    <p style="margin: 0.25rem 0 0 0; color: #6b7280; font-size: 0.9rem;">Browse products from nearby pet shops</p>
+  </div>
+  <a href="/PETVET/index.php?module=pet-owner&page=orders" class="btn-my-orders" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(102,126,234,0.3)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <path d="M16 10a4 4 0 0 1-8 0"></path>
+    </svg>
+    My Orders
+  </a>
+</div>
+
 <!-- Info Cards Section -->
 <section class="info-strip">
   <div class="info-box">
