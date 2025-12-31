@@ -66,7 +66,10 @@ try {
     $name = $_POST['name'] ?? $existingDescription['name'];
     $color = $_POST['color'] ?? $existingDescription['color'];
     $location = $_POST['location'] ?? $existingReport['location'];
+    $latitude = $_POST['latitude'] ?? $existingDescription['latitude'];
+    $longitude = $_POST['longitude'] ?? $existingDescription['longitude'];
     $date = $_POST['date'] ?? $existingReport['date_reported'];
+    $time = $_POST['time'] ?? $existingDescription['time'];
     $notes = $_POST['notes'] ?? $existingDescription['notes'];
     $phone = $_POST['phone'] ?? $existingDescription['contact']['phone'];
     $phone2 = $_POST['phone2'] ?? $existingDescription['contact']['phone2'];
@@ -147,12 +150,15 @@ try {
         'name' => $name,
         'color' => $color,
         'notes' => $notes,
+        'time' => $time,
         'contact' => [
             'phone' => $phone,
             'phone2' => $phone2,
             'email' => $email
         ],
         'photos' => $photoPaths,
+        'latitude' => $latitude,
+        'longitude' => $longitude,
         'user_id' => $userId,
         'submitted_at' => $existingDescription['submitted_at'] ?? date('Y-m-d H:i:s'),
         'updated_at' => date('Y-m-d H:i:s')

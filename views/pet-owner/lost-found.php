@@ -1,6 +1,10 @@
 <?php /* Lost & Found - now consolidated without partials */ ?>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <link rel="stylesheet" href="/PETVET/public/css/pet-owner/lost-found.css">
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
 
 <div class="main-content">
 <?php
@@ -45,6 +49,8 @@ function lf_fmtDate($ymd){
 			<option>Dog</option><option>Cat</option><option>Bird</option>
 		</select>
 		<select id="sortBy">
+			<option value="nearby">Nearest to me</option>
+			<option value="latest">Latest to Oldest</option>
 			<option value="new">Newest first</option>
 			<option value="old">Oldest first</option>
 		</select>
@@ -60,8 +66,8 @@ function lf_fmtDate($ymd){
 			<button type="button" class="btn outline" id="emptyReportLost">+ Report Pet</button>
 		</div>
 	<?php else: ?>
-		<?php foreach ($lostReports as $r): ?>
-			<article class="card" data-species="<?php echo lf_esc($r['species']); ?>" data-date="<?php echo lf_esc($r['date']); ?>" data-color="<?php echo lf_esc($r['color']); ?>">
+			<?php foreach ($lostReports as $r): ?>
+			<article class="card" data-report-id="<?php echo lf_esc($r['id']); ?>" data-species="<?php echo lf_esc($r['species']); ?>" data-date="<?php echo lf_esc($r['date']); ?>" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-color="<?php echo lf_esc($r['color']); ?>">
 				<div class="card-media">
 				<?php 
 				$photos = !empty($r['photo']) ? (is_array($r['photo']) ? $r['photo'] : [$r['photo']]) : [];
@@ -92,7 +98,10 @@ function lf_fmtDate($ymd){
 						<span class="muted">• <?php echo lf_esc($r['species']); ?><?php echo $r['breed']? ' · '.lf_esc($r['breed']) : ''; ?><?php echo $r['age']? ' · '.lf_esc($r['age']) : ''; ?></span>
 					</h4>
 					<p class="meta"><strong>Last seen:</strong> <?php echo lf_esc($r['last_seen']); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
-					<?php if(!empty($r['notes'])): ?><p class="notes"><?php echo lf_esc($r['notes']); ?></p><?php endif; ?>
+				<p class="time-ago" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-date="<?php echo lf_esc($r['date']); ?>" style="color: var(--primary); font-weight: 500; font-size: 0.9em; margin-top: 4px;"></p>
+				<p class="report-distance" data-report-id="<?php echo lf_esc($r['id']); ?>">
+					<span class="distance-loader">⏳ Calculating distance...</span>
+				</p>					<?php if(!empty($r['notes'])): ?><p class="notes"><?php echo lf_esc($r['notes']); ?></p><?php endif; ?>
 					<div class="actions">
 						<button class="btn outline contact-owner-btn" 
 							data-name="<?php echo lf_esc($r['name'] ?: 'Pet Owner'); ?>"
@@ -118,7 +127,7 @@ function lf_fmtDate($ymd){
 		</div>
 	<?php else: ?>
 		<?php foreach ($foundReports as $r): ?>
-			<article class="card" data-species="<?php echo lf_esc($r['species']); ?>" data-date="<?php echo lf_esc($r['date']); ?>" data-color="<?php echo lf_esc($r['color']); ?>">
+			<article class="card" data-report-id="<?php echo lf_esc($r['id']); ?>" data-species="<?php echo lf_esc($r['species']); ?>" data-date="<?php echo lf_esc($r['date']); ?>" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-color="<?php echo lf_esc($r['color']); ?>">
 				<div class="card-media">
 				<?php 
 				$photos = !empty($r['photo']) ? (is_array($r['photo']) ? $r['photo'] : [$r['photo']]) : [];
@@ -148,8 +157,11 @@ function lf_fmtDate($ymd){
 						<?php echo lf_esc($r['name'] ?: 'Unknown Name'); ?>
 						<span class="muted">• <?php echo lf_esc($r['species']); ?><?php echo $r['breed']? ' · '.lf_esc($r['breed']) : ''; ?><?php echo $r['age']? ' · '.lf_esc($r['age']) : ''; ?></span>
 					</h4>
-					<p class="meta"><strong>Found at:</strong> <?php echo lf_esc($r['last_seen']); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
-					<?php if(!empty($r['notes'])): ?><p class="notes"><?php echo lf_esc($r['notes']); ?></p><?php endif; ?>
+				<p class="meta"><strong>Found at:</strong> <?php echo lf_esc($r['last_seen']); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
+				<p class="time-ago" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-date="<?php echo lf_esc($r['date']); ?>" style="color: var(--primary); font-weight: 500; font-size: 0.9em; margin-top: 4px;"></p>
+				<p class="report-distance" data-report-id="<?php echo lf_esc($r['id']); ?>">
+					<span class="distance-loader">⏳ Calculating distance...</span>
+				</p>					<?php if(!empty($r['notes'])): ?><p class="notes"><?php echo lf_esc($r['notes']); ?></p><?php endif; ?>
 					<div class="actions">
 						<button class="btn outline contact-owner-btn" 
 							data-name="<?php echo lf_esc($r['name'] ?: 'Pet Finder'); ?>"
@@ -190,12 +202,19 @@ function lf_fmtDate($ymd){
 					<input type="text" id="rColor" placeholder="Golden / Black">
 				</label>
 			</div>
+			<label class="field">Select location on map
+				<div id="mapContainer" style="height: 450px; width: 100%; border-radius: 8px; margin-top: 8px; border: 1px solid var(--line, #e0e0e0);"></div>
+				<input type="hidden" id="rLatitude" required>
+				<input type="hidden" id="rLongitude" required>
+				<input type="text" id="rLocation" readonly placeholder="Click on map to select location" style="margin-top: 8px; cursor: pointer;" required>
+				<small class="muted" style="display: block; margin-top: 4px;">Click on the map to select the location where the pet was last seen.</small>
+			</label>
 			<div class="row">
-				<label class="field flex-2">Last seen location
-					<input type="text" id="rLocation" required placeholder="Street, Area">
-				</label>
-				<label class="field">Date
+				<label class="field">Date Last Seen
 					<input type="date" id="rDate" required>
+				</label>
+				<label class="field">Time Last Seen (Optional)
+					<input type="time" id="rTime" placeholder="e.g., 14:30">
 				</label>
 			</div>
 			<label class="field">Notes
@@ -283,12 +302,19 @@ function lf_fmtDate($ymd){
 					<input type="text" id="editColor" placeholder="Golden / Black">
 				</label>
 			</div>
+			<label class="field">Select location on map
+				<div id="editMapContainer" style="height: 450px; width: 100%; border-radius: 8px; margin-top: 8px; border: 1px solid var(--line, #e0e0e0);"></div>
+				<input type="hidden" id="editLatitude" required>
+				<input type="hidden" id="editLongitude" required>
+				<input type="text" id="editLocation" readonly placeholder="Click on map to select location" style="margin-top: 8px; cursor: pointer;" required>
+				<small class="muted" style="display: block; margin-top: 4px;">Click on the map to select the location where the pet was last seen.</small>
+			</label>
 			<div class="row">
-				<label class="field flex-2">Last seen location
-					<input type="text" id="editLocation" required placeholder="Street, Area">
-				</label>
-				<label class="field">Date
+				<label class="field">Date Last Seen
 					<input type="date" id="editDate" required>
+				</label>
+				<label class="field">Time Last Seen (Optional)
+					<input type="time" id="editTime" placeholder="e.g., 14:30">
 				</label>
 			</div>
 			<label class="field">Notes
@@ -332,4 +358,8 @@ function lf_fmtDate($ymd){
 </div>
 
 </div>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
 <script src="/PETVET/public/js/pet-owner/lost-found.js"></script>

@@ -101,19 +101,29 @@ echo "<!-- activeModule: $activeModule -->";
       <a href="/PETVET/index.php?module=admin&page=dashboard" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'dashboard.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/meter.png" class="icon"> Overview</li>
       </a>
-      <a href="/PETVET/index.php?module=admin&page=manage-users" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'manage-users.php') ? 'active' : '' ?>">
+      <a href="/PETVET/index.php?module=admin&page=manage-users-by-role" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'manage-users-by-role.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/staff.png" class="icon"> Manage Users</li>
       </a>
+      <a href="/PETVET/index.php?module=admin&page=manage-clinics" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'manage-clinics.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/vets.png" class="icon"> Manage Clinics</li>
+      </a>
       <!-- Appointments and Medical Records intentionally hidden for admin -->
+      <a href="/PETVET/index.php?module=admin&page=reports" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'reports.php') ? 'active' : '' ?>">
+        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/reports.png" class="icon"> Reports</li>
+      </a>
       <a href="/PETVET/index.php?module=admin&page=pet-listings" class="<?= (isset($GLOBALS['currentPage']) && ($GLOBALS['currentPage'] == 'pet-listings.php' || $GLOBALS['currentPage'] == 'pet-listings-modern.php')) ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/pets.png" class="icon"> Pet Listings</li>
       </a>
+      <!-- Lost & Found section commented out
       <a href="/PETVET/index.php?module=admin&page=lost-found" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'lost-found.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/compass.png" class="icon"> Lost & Found</li>
       </a>
+      -->
+      <!-- Finance Panel commented out
       <a href="/PETVET/index.php?module=admin&page=finance-panel" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'finance-panel.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/package-box.png" class="icon"> Finance Panel</li>
       </a>
+      -->
     </ul>
     <?php
   } elseif ($activeModule == 'receptionist') {

@@ -10,15 +10,26 @@ require_once __DIR__ . '/../models/Admin/FinancePanelModel.php';
 
 class AdminController extends BaseController {
     public function dashboard() {
-        $model = new DashboardModel();
-        $data = $model->fetchDashboardData();
-        $this->view('admin', 'dashboard', $data);
+        // Dashboard now loads data via JavaScript API
+        $this->view('admin', 'dashboard', []);
     }
 
     public function manageUsers() {
         $model = new ManageUsersModel();
         $data = $model->fetchUsersData();
         $this->view('admin', 'manage-users', $data);
+    }
+
+    public function manageUsersByRole() {
+        $this->view('admin', 'manage-users-by-role');
+    }
+
+    public function manageClinics() {
+        $this->view('admin', 'manage-clinics');
+    }
+
+    public function reports() {
+        $this->view('admin', 'reports');
     }
 
     public function appointments() {
@@ -46,11 +57,6 @@ class AdminController extends BaseController {
 
     public function settings() {
         $this->view('admin', 'settings');
-    }
-
-    // Optional placeholders to avoid 404s for menu items we don't have yet
-    public function reports() {
-        $this->view('admin', 'reports');
     }
 
     public function lostFound() {

@@ -35,7 +35,10 @@ try {
     $name = $_POST['name'] ?? '';
     $color = $_POST['color'] ?? '';
     $location = $_POST['location'] ?? '';
+    $latitude = $_POST['latitude'] ?? null;
+    $longitude = $_POST['longitude'] ?? null;
     $date = $_POST['date'] ?? '';
+    $time = $_POST['time'] ?? '';
     $notes = $_POST['notes'] ?? '';
     $phone = $_POST['phone'] ?? '';
     $phone2 = $_POST['phone2'] ?? '';
@@ -114,12 +117,15 @@ try {
         'name' => $name,
         'color' => $color,
         'notes' => $notes,
+        'time' => $time,
         'contact' => [
             'phone' => $phone,
             'phone2' => $phone2,
             'email' => $email
         ],
         'photos' => $photoPaths,
+        'latitude' => $latitude,
+        'longitude' => $longitude,
         'user_id' => $_SESSION['user_id'],
         'submitted_at' => date('Y-m-d H:i:s')
     ];

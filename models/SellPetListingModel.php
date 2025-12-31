@@ -38,15 +38,25 @@ class SellPetListingModel {
     
     // Create new listing
     public function createListing($data) {
+        // Handle NULL values for latitude/longitude
+        $lat = $data['latitude'];
+        $lng = $data['longitude'];
+        
         $query = "INSERT INTO sell_pet_listings (
             user_id, name, species, breed, age, gender, price, location, 
-            description, phone, phone2, email, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')";
+            description, phone, phone2, email, latitude, longitude, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')";
         
         $stmt = mysqli_prepare($this->conn, $query);
+        
+        if (!$stmt) {
+            error_log("Prepare failed: " . mysqli_error($this->conn));
+            return false;
+        }
+        
         mysqli_stmt_bind_param(
             $stmt, 
-            "isssssdsssss",
+            "isssssdsssssdd",
             $data['user_id'],
             $data['name'],
             $data['species'],
@@ -58,11 +68,19 @@ class SellPetListingModel {
             $data['description'],
             $data['phone'],
             $data['phone2'],
-            $data['email']
+            $data['email'],
+            $lat,
+            $lng
         );
         
         $success = mysqli_stmt_execute($stmt);
-        return $success ? mysqli_insert_id($this->conn) : false;
+        
+        if (!$success) {
+            error_log("Execute failed: " . mysqli_stmt_error($stmt));
+            return false;
+        }
+        
+        return mysqli_insert_id($this->conn);
     }
     
     // Update listing

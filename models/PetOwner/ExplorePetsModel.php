@@ -54,6 +54,8 @@ class ExplorePetsModel extends BaseModel {
                     l.price, 
                     l.description as `desc`, 
                     l.location,
+                    l.latitude,
+                    l.longitude,
                     l.user_id as seller_id,
                     l.created_at as date_posted,
                     CONCAT(u.first_name, ' ', u.last_name) as seller_name,
@@ -109,6 +111,9 @@ class ExplorePetsModel extends BaseModel {
                 'badges' => $badges,
                 'price' => $row['price'],
                 'desc' => $row['desc'] ?? '',
+                'location' => $row['location'] ?? '',
+                'latitude' => $row['latitude'] ?? null,
+                'longitude' => $row['longitude'] ?? null,
                 'images' => $images,
                 'seller_id' => $row['seller_id'],
                 'date_posted' => $row['date_posted']
