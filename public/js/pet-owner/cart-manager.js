@@ -14,13 +14,25 @@ class CartManager {
         // Try to get from URL params
         const urlParams = new URLSearchParams(window.location.search);
         let id = urlParams.get('clinic_id');
+        let name = null;
         
         // If not in URL, maybe we are on product page, try to find a data attribute or hidden input
         if (!id) {
             // On shop-product page, we might need to pass clinic_id from PHP
             const meta = document.querySelector('meta[name="clinic-id"]');
-            if (meta) id = meta.content;
+            if (meta) {
+                id = meta.content;
+                // Also get clinic name
+                const nameMeta = document.querySelector('meta[name="clinic-name"]');
+                if (nameMeta) name = nameMeta.content;
+            }
         }
+        
+        // Store clinic name in sessionStorage for later use
+        if (name) {
+            sessionStorage.setItem('petvet_clinic_name', name);
+        }
+        
         return id;
     }
 
@@ -89,7 +101,7 @@ class CartManager {
                         <div class="cart-summary" id="cart-summary">
                             <!-- Summary will be populated by JS -->
                         </div>
-                        <button class="btn-checkout" onclick="alert('Checkout feature coming soon!')">Checkout</button>
+                        <button class="btn-checkout" id="petvet-checkout-btn">Checkout</button>
                     </div>
                 </div>
             </div>
@@ -105,6 +117,12 @@ class CartManager {
         this.cartModal.addEventListener('click', (e) => {
             if (e.target === this.cartModal) this.closeCart();
         });
+
+        // Checkout Button
+        const checkoutBtn = document.getElementById('petvet-checkout-btn');
+        if (checkoutBtn) {
+            checkoutBtn.addEventListener('click', () => this.checkout());
+        }
 
         // Add to Cart Buttons (Global delegation)
         document.addEventListener('click', (e) => {
@@ -486,6 +504,105 @@ class CartManager {
                     cartIcon.classList.remove('cart-limit-reached');
                 }
             }
+        }
+    }
+
+    async checkout() {
+        const checkoutBtn = document.getElementById('petvet-checkout-btn');
+        
+        if (!checkoutBtn || checkoutBtn.disabled) {
+            return;
+        }
+
+        // Show loading state
+        const originalText = checkoutBtn.textContent;
+        checkoutBtn.textContent = 'Processing...';
+        checkoutBtn.disabled = true;
+
+        try {
+            // First, get the current cart items from database
+            const cartResponse = await fetch(`/PETVET/api/pet-owner/cart.php?clinic_id=${this.clinicId}`);
+            const cartData = await cartResponse.json();
+
+            if (!cartData.success || !cartData.items || cartData.items.length === 0) {
+                throw new Error('Your cart is empty');
+            }
+
+            // Prepare cart data for Stripe
+            const checkoutData = {
+                cart: cartData.items.map(item => ({
+                    name: item.name,
+                    price: parseFloat(item.price),
+                    quantity: parseInt(item.quantity),
+                    image: item.image || 'https://via.placeholder.com/150'
+                })),
+                clinic_id: this.clinicId,
+                subtotal: cartData.total
+            };
+
+            // Add delivery info if available
+            if (this.deliveryInfo && !this.deliveryInfo.exceeds_max_distance) {
+                checkoutData.delivery = {
+                    charge: this.deliveryInfo.delivery_charge,
+                    distance: this.deliveryInfo.distance,
+                    latitude: this.userLocation.latitude,
+                    longitude: this.userLocation.longitude
+                };
+            }
+
+            // Create Stripe checkout session
+            const stripeResponse = await fetch('/PETVET/api/payments/create-checkout-session.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(checkoutData)
+            });
+
+            // Check if response is JSON
+            const contentType = stripeResponse.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Server returned invalid response. Please check if Stripe is configured correctly.');
+            }
+
+            const stripeData = await stripeResponse.json();
+
+            if (stripeData.success && stripeData.url) {
+                // Store cart info in sessionStorage for success page
+                sessionStorage.setItem('petvet_checkout_clinic', this.clinicId);
+                
+                // Store clinic name if available
+                const clinicName = sessionStorage.getItem('petvet_clinic_name');
+                if (clinicName) {
+                    sessionStorage.setItem('petvet_checkout_clinic_name', clinicName);
+                }
+                
+                // Store delivery charge if available
+                if (this.deliveryInfo && this.deliveryInfo.delivery_charge) {
+                    sessionStorage.setItem('petvet_delivery_charge', this.deliveryInfo.delivery_charge);
+                }
+                
+                // Redirect to Stripe Checkout
+                window.location.href = stripeData.url;
+            } else {
+                throw new Error(stripeData.error || 'Failed to create checkout session');
+            }
+
+        } catch (error) {
+            console.error('Checkout error:', error);
+            
+            let errorMessage = 'Unable to proceed to checkout.\n\n';
+            errorMessage += 'Error: ' + error.message;
+            
+            if (error.message.includes('Stripe is configured')) {
+                errorMessage += '\n\nPlease ensure Stripe API keys are properly configured.';
+            }
+            
+            alert(errorMessage);
+            
+            // Restore button state
+            checkoutBtn.textContent = originalText;
+            checkoutBtn.disabled = false;
         }
     }
 }

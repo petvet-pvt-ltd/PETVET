@@ -36,10 +36,11 @@ class GuestShopModel extends BaseModel {
     public function getProductById(int $id): ?array {
         try {
             $stmt = $this->db->prepare("
-                SELECT id, clinic_id, name, description, price, category, image_url as image, 
-                       stock, sold, is_active
-                FROM products 
-                WHERE id = ? AND is_active = TRUE
+                SELECT p.id, p.clinic_id, p.name, p.description, p.price, p.category, p.image_url as image, 
+                       p.stock, p.sold, p.is_active, c.name as clinic_name
+                FROM products p
+                LEFT JOIN clinics c ON p.clinic_id = c.id
+                WHERE p.id = ? AND p.is_active = TRUE
             ");
             $stmt->execute([$id]);
             $product = $stmt->fetch(PDO::FETCH_ASSOC);
