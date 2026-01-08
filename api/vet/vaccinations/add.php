@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../../config/connect.php';
 require_once __DIR__ . '/../../../config/auth_helper.php';
+require_once __DIR__ . '/../../../config/MedicalFileUploader.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -12,17 +13,16 @@ if (empty($_SESSION['clinic_id']) || empty($_SESSION['user_id'])) {
     exit;
 }
 
-$payload = json_decode(file_get_contents('php://input'), true);
-
+// Handle both multipart/form-data and JSON
 $appointmentId = 0;
-if (isset($payload['appointment_id'])) $appointmentId = (int)$payload['appointment_id'];
-if (isset($payload['appointmentId'])) $appointmentId = (int)$payload['appointmentId'];
+if (isset($_POST['appointment_id'])) $appointmentId = (int)$_POST['appointment_id'];
+if (isset($_POST['appointmentId'])) $appointmentId = (int)$_POST['appointmentId'];
 
-$vaccine = trim($payload['vaccine'] ?? '');
+$vaccine = trim($_POST['vaccine'] ?? '');
 
 $nextDue = null;
-if (!empty($payload['next_due'])) $nextDue = $payload['next_due'];
-if (!empty($payload['nextDue'])) $nextDue = $payload['nextDue'];
+if (!empty($_POST['next_due'])) $nextDue = $_POST['next_due'];
+if (!empty($_POST['nextDue'])) $nextDue = $_POST['nextDue'];
 
 if ($appointmentId <= 0 || $vaccine === '') {
     echo json_encode(['success' => false, 'error' => 'Missing required fields']);
@@ -75,17 +75,32 @@ try {
         exit;
     }
 
+    // Handle file uploads
+    $reports = null;
+    if (isset($_FILES['reports']) && !empty($_FILES['reports']['name'][0])) {
+        $uploader = new MedicalFileUploader();
+        $uploadResult = $uploader->uploadFiles($_FILES['reports']);
+        
+        if ($uploadResult['success'] && !empty($uploadResult['files'])) {
+            $reports = json_encode($uploadResult['files']);
+        } elseif (!$uploadResult['success']) {
+            echo json_encode(['success' => false, 'error' => 'File upload error: ' . implode(', ', $uploadResult['errors'])]);
+            exit;
+        }
+    }
+
     $stmt = $pdo->prepare("
-        INSERT INTO vaccinations (appointment_id, vaccine, next_due, created_at)
-        VALUES (:appointment_id, :vaccine, :next_due, NOW())
+        INSERT INTO vaccinations (appointment_id, vaccine, next_due, reports, created_at)
+        VALUES (:appointment_id, :vaccine, :next_due, :reports, NOW())
     ");
     $stmt->execute([
         'appointment_id' => $appointmentId,
         'vaccine' => $vaccine,
         'next_due' => $nextDue,
+        'reports' => $reports
     ]);
 
     echo json_encode(['success' => true, 'id' => (int)$pdo->lastInsertId()]);
 } catch (Throwable $e) {
-    echo json_encode(['success' => false, 'error' => 'Server error']);
+    echo json_encode(['success' => false, 'error' => 'Server error: ' . $e->getMessage()]);
 }

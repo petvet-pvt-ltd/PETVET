@@ -38,7 +38,7 @@ $GLOBALS['module'] = 'vet';
       </div>
       <div class="card">
         <h3 id="kpi-total">—</h3>
-        <p>Total Appointments</p>
+        <p>This Week (Last 7 Days)</p>
       </div>
     </div>
 
@@ -49,12 +49,12 @@ $GLOBALS['module'] = 'vet';
 
     <section>
       <h3>Today's Upcoming Appointments</h3>
-      <input id="searchBar" placeholder="Search by pet, owner, reason...">
+      <input id="searchBar" placeholder="Search appointments...">
       <div class="simple-mobile-table">
         <table id="upcomingTable">
           <thead>
             <tr>
-              <th>ID</th><th>Time</th><th>Pet</th><th>Owner</th><th>Reason</th><th>Action</th>
+              <th>Time</th><th>Pet</th><th>Owner</th><th>Reason</th><th>Action</th>
             </tr>
           </thead>
           <tbody></tbody>

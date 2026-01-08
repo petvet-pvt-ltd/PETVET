@@ -38,28 +38,45 @@ function renderRecords(list){
     <table>
       <thead>
         <tr>
-          <th>ID</th>
           <th>Date</th>
           <th>Pet</th>
           <th>Owner</th>
           <th>Symptoms</th>
           <th>Diagnosis</th>
           <th>Treatment</th>
+          <th>Reports</th>
         </tr>
       </thead>
       <tbody>
   `;
 
   list.forEach(r => {
+    let reportsHtml = '';
+    if (r.reports) {
+      try {
+        const files = JSON.parse(r.reports);
+        if (files && files.length > 0) {
+          reportsHtml = files.map(f => {
+            const filename = f.split('/').pop();
+            const ext = filename.split('.').pop().toLowerCase();
+            const icon = ['jpg','jpeg','png','gif','webp'].includes(ext) ? '🖼️' : '📄';
+            return `<a href="/PETVET/${f}" target="_blank" title="${filename}">${icon}</a>`;
+          }).join(' ');
+        }
+      } catch(e) {
+        reportsHtml = '';
+      }
+    }
+
     html += `
       <tr>
-        <td>${r.id}</td>
         <td>${r.date || r.created_at || ''}</td>
         <td>${r.pet_name || r.petName || ''}</td>
         <td>${r.owner_name || r.ownerName || ''}</td>
         <td>${r.symptoms || ''}</td>
         <td>${r.diagnosis || ''}</td>
         <td>${r.treatment || ''}</td>
+        <td>${reportsHtml || '-'}</td>
       </tr>
     `;
   });
@@ -77,7 +94,13 @@ document.addEventListener('DOMContentLoaded', () => {
   let apptId = url.searchParams.get('appointment');
   apptId = apptId ? Number(apptId) : null;
 
-  function filterRecords(){
+  function filterRecordsByPet(petName){
+    return d.medicalRecords.filter(r =>
+      (r.pet_name || r.petName) === petName
+    );
+  }
+
+  function filterRecordsByAppointment(){
     return d.medicalRecords.filter(r =>
       Number(r.appointment_id || r.appointmentId) === apptId
     );
@@ -85,10 +108,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if(from === 'ongoing' && apptId){
     showForm(true, apptId);
-    renderRecords(filterRecords());
+    // Show all records for this pet
+    const appt = d.appointments.find(a => Number(a.id) === apptId);
+    if(appt){
+      const petName = appt.pet_name || appt.petName;
+      renderRecords(filterRecordsByPet(petName));
+    } else {
+      renderRecords(d.medicalRecords);
+    }
   } else if(from === 'completed' && apptId){
     showForm(false);
-    renderRecords(filterRecords());
+    renderRecords(filterRecordsByAppointment());
   } else {
     showForm(false);
     renderRecords(d.medicalRecords);
@@ -106,24 +136,51 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ✅ REAL SAVE (DB)
+  // ✅ REAL SAVE (DB) with file upload
   const form = document.getElementById('medicalRecordForm');
   if(form){
+    // File preview
+    const fileInput = form.querySelector('input[type="file"]');
+    const filePreview = document.getElementById('filePreview');
+    
+    if (fileInput && filePreview) {
+      fileInput.addEventListener('change', (e) => {
+        filePreview.innerHTML = '';
+        const files = Array.from(e.target.files);
+        
+        if (files.length > 0) {
+          filePreview.innerHTML = '<h4>Selected Files:</h4>';
+          files.forEach((file, idx) => {
+            const div = document.createElement('div');
+            div.className = 'file-item';
+            div.innerHTML = `
+              <span>${idx + 1}. ${file.name} (${(file.size / 1024).toFixed(2)} KB)</span>
+            `;
+            filePreview.appendChild(div);
+          });
+        }
+      });
+    }
+
     form.addEventListener('submit', async e => {
       e.preventDefault();
 
-      const payload = {
-        appointment_id: form.elements['appointmentId'].value,
-        symptoms: form.elements['symptoms'].value,
-        diagnosis: form.elements['diagnosis'].value,
-        treatment: form.elements['treatment'].value
-      };
+      const formData = new FormData();
+      formData.append('appointment_id', form.elements['appointmentId'].value);
+      formData.append('symptoms', form.elements['symptoms'].value);
+      formData.append('diagnosis', form.elements['diagnosis'].value);
+      formData.append('treatment', form.elements['treatment'].value);
+
+      // Add files
+      const files = form.elements['reports[]'].files;
+      for (let i = 0; i < files.length; i++) {
+        formData.append('reports[]', files[i]);
+      }
 
       try {
         const res = await fetch('/PETVET/api/vet/medical-records/add.php', {
           method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify(payload)
+          body: formData
         });
 
         const json = await res.json();
@@ -132,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
-        alert('Medical record saved.');
+        alert('Medical record saved successfully.');
         location.reload();
       } catch(err){
         console.error(err);

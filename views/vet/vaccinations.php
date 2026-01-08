@@ -20,6 +20,8 @@ $data = [
 <?php include 'views/shared/sidebar/sidebar.php'; ?>
 
 <div class="main-content">
+  <?php include __DIR__ . '/../shared/components/user-welcome-header.php'; ?>
+
   <div class="page-frame">
     <div class="page-header">
       <div>
@@ -31,11 +33,8 @@ $data = [
     <section id="vaccFormSection" class="form-section" style="display:none">
       <h3>Add Vaccination</h3>
       <form id="vaccinationForm">
+        <input type="hidden" name="appointmentId">
         <div class="form-row">
-          <label>
-            Appointment ID
-            <input name="appointmentId" readonly>
-          </label>
           <label>
             Pet Name
             <input name="petName" readonly>
@@ -56,6 +55,16 @@ $data = [
             <input type="date" name="nextDue">
           </label>
         </div>
+
+        <div class="form-row">
+          <label>
+            Reports & Documents
+            <input type="file" name="reports[]" multiple accept="image/*,.pdf,.doc,.docx,.txt">
+            <small>Upload vaccination certificates, batch information, medical images, etc.</small>
+          </label>
+        </div>
+
+        <div id="filePreview" class="file-preview"></div>
 
         <button class="btn success" type="submit">💉 Save Vaccination</button>
       </form>

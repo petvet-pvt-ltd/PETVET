@@ -31,6 +31,8 @@ $data = [
 <?php include 'views/shared/sidebar/sidebar.php'; ?>
 
 <div class="main-content">
+  <?php include __DIR__ . '/../shared/components/user-welcome-header.php'; ?>
+
   <div class="page-frame">
     <div class="page-header">
       <div>
@@ -41,25 +43,25 @@ $data = [
 
     <section>
       <h3>Ongoing Appointments</h3>
-      <input id="searchBarOngoing" placeholder="Search...">
+      <input id="searchBarOngoing" placeholder="Search appointments...">
       <div id="ongoingTableContainer" class="table-wrap"></div>
     </section>
 
     <section>
       <h3>Upcoming Appointments</h3>
-      <input id="searchBarUpcoming" placeholder="Search...">
+      <input id="searchBarUpcoming" placeholder="Search appointments...">
       <div id="upcomingTableContainer" class="table-wrap"></div>
     </section>
 
     <section>
       <h3>Completed Appointments</h3>
-      <input id="searchBarCompleted" placeholder="Search...">
+      <input id="searchBarCompleted" placeholder="Search appointments...">
       <div id="completedTableContainer" class="table-wrap"></div>
     </section>
 
     <section>
       <h3>Cancelled Appointments</h3>
-      <input id="searchBarCancelled" placeholder="Search...">
+      <input id="searchBarCancelled" placeholder="Search appointments...">
       <div id="cancelledTableContainer" class="table-wrap"></div>
     </section>
   </div>

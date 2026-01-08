@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f7fa;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #0ea5e9; }
+        h2 { color: #64748b; margin-top: 0; }
+        .status { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 4px; 
+        }
+        .success { background: #d1fae5; color: #065f46; }
+        .error { background: #fee2e2; color: #991b1b; }
+        .warning { background: #fef3c7; color: #92400e; }
+        .info { background: #dbeafe; color: #1e40af; }
+        pre { 
+            background: #1e293b; 
+            color: #e2e8f0; 
+            padding: 15px; 
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background: #0ea5e9;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover { background: #0284c7; }
+        .file-input {
+            margin: 15px 0;
+            padding: 10px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏥 Medical Reports Upload - System Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Database Structure Test</h2>
+        <p>Testing if the reports columns were added successfully...</p>
+        <div id="dbTest">
+            <button onclick="testDatabase()">Run Database Test</button>
+            <div id="dbResult"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. File Upload Directory Test</h2>
+        <p>Checking if upload directory exists and is writable...</p>
+        <div id="dirTest">
+            <button onclick="testDirectory()">Check Directory</button>
+            <div id="dirResult"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. File Upload Test</h2>
+        <p>Test actual file upload functionality:</p>
+        <div class="file-input">
+            <input type="file" id="testFile" accept="image/*,.pdf">
+            <button onclick="testFileUpload()">Upload Test File</button>
+        </div>
+        <div id="uploadResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. PHP Configuration Check</h2>
+        <div id="phpConfig">
+            <button onclick="checkPHPConfig()">Check PHP Settings</button>
+            <div id="phpResult"></div>
+        </div>
+    </div>
+
+    <script>
+        async function testDatabase() {
+            const result = document.getElementById('dbResult');
+            result.innerHTML = '<div class="status info">Testing...</div>';
+            
+            try {
+                const response = await fetch('/PETVET/DevTools/test-reports-setup.php?test=database');
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.innerHTML = `
+                        <div class="status success">✅ Database test passed!</div>
+                        <pre>${JSON.stringify(data.results, null, 2)}</pre>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div class="status error">❌ Database test failed!</div>
+                        <p>${data.error}</p>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="status error">❌ Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function testDirectory() {
+            const result = document.getElementById('dirResult');
+            result.innerHTML = '<div class="status info">Checking...</div>';
+            
+            try {
+                const response = await fetch('/PETVET/DevTools/test-reports-setup.php?test=directory');
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.innerHTML = `
+                        <div class="status success">✅ Directory test passed!</div>
+                        <pre>${JSON.stringify(data.results, null, 2)}</pre>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div class="status warning">⚠️ ${data.message}</div>
+                        <p>${data.suggestion || ''}</p>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="status error">❌ Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function testFileUpload() {
+            const fileInput = document.getElementById('testFile');
+            const result = document.getElementById('uploadResult');
+            
+            if (!fileInput.files.length) {
+                result.innerHTML = '<div class="status warning">⚠️ Please select a file first</div>';
+                return;
+            }
+            
+            result.innerHTML = '<div class="status info">Uploading...</div>';
+            
+            const formData = new FormData();
+            formData.append('testFile', fileInput.files[0]);
+            
+            try {
+                const response = await fetch('/PETVET/DevTools/test-reports-setup.php?test=upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.innerHTML = `
+                        <div class="status success">✅ File uploaded successfully!</div>
+                        <pre>${JSON.stringify(data.results, null, 2)}</pre>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div class="status error">❌ Upload failed!</div>
+                        <p>${data.error}</p>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="status error">❌ Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function checkPHPConfig() {
+            const result = document.getElementById('phpResult');
+            result.innerHTML = '<div class="status info">Checking...</div>';
+            
+            try {
+                const response = await fetch('/PETVET/DevTools/test-reports-setup.php?test=php');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const config = data.results;
+                    let warnings = [];
+                    
+                    if (parseInt(config.upload_max_filesize) < 10) {
+                        warnings.push('upload_max_filesize is less than 10MB');
+                    }
+                    if (parseInt(config.post_max_size) < 20) {
+                        warnings.push('post_max_size is less than 20MB');
+                    }
+                    
+                    result.innerHTML = `
+                        <div class="status ${warnings.length ? 'warning' : 'success'}">
+                            ${warnings.length ? '⚠️ Configuration needs attention' : '✅ PHP configuration looks good'}
+                        </div>
+                        <pre>${JSON.stringify(config, null, 2)}</pre>
+                        ${warnings.length ? '<p><strong>Warnings:</strong><br>' + warnings.join('<br>') + '</p>' : ''}
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div class="status error">❌ Could not check PHP config</div>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="status error">❌ Error: ${error.message}</div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

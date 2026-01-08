@@ -22,6 +22,8 @@ $data = [
 <?php include 'views/shared/sidebar/sidebar.php'; ?>
 
 <div class="main-content">
+  <?php include __DIR__ . '/../shared/components/user-welcome-header.php'; ?>
+
   <div class="page-frame">
     <div class="page-header">
       <div>
@@ -33,11 +35,8 @@ $data = [
     <section id="formSection" class="form-section" style="display:none">
       <h3>Add Medical Record</h3>
       <form id="medicalRecordForm">
+        <input type="hidden" name="appointmentId">
         <div class="form-row">
-          <label>
-            Appointment ID
-            <input name="appointmentId" readonly>
-          </label>
           <label>
             Pet Name
             <input name="petName" readonly>
@@ -65,6 +64,16 @@ $data = [
             <textarea name="treatment" rows="3" required placeholder="Describe the treatment plan..."></textarea>
           </label>
         </div>
+
+        <div class="form-row">
+          <label>
+            Reports & Documents
+            <input type="file" name="reports[]" multiple accept="image/*,.pdf,.doc,.docx,.txt">
+            <small>Upload medical reports, images, lab results, X-rays, etc. (Multiple files allowed)</small>
+          </label>
+        </div>
+
+        <div id="filePreview" class="file-preview"></div>
 
         <button class="btn primary" type="submit">💾 Save Record</button>
       </form>
