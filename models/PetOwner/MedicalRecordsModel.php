@@ -1,116 +1,160 @@
 <?php
 // models/PetOwner/MedicalRecordsModel.php
+require_once __DIR__ . '/../BaseModel.php';
 
-class MedicalRecordsModel {
+class MedicalRecordsModel extends BaseModel {
 
-    // ---- Mock data store (replace with DB queries later) ----
-    private array $pets = [
-        1 => [
-            'id' => 1,
-            'name' => 'Rocky',
-            'species' => 'Dog',
-            'breed' => 'Golden Retriever',
-            'age' => 3,
-            'microchip' => true,
-            'vaccinated' => true,
-            'last_vaccination' => '2025-05-10',
-            'vet_contact' => 'Dr. Smith (555-1234)',
-            'allergies' => 'Chicken',
-            'blood_type' => 'B+',
-        ],
-        2 => [
-            'id' => 2,
-            'name' => 'Whiskers',
-            'species' => 'Cat',
-            'breed' => 'Siamese',
-            'age' => 2,
-            'microchip' => false,
-            'vaccinated' => true,
-            'last_vaccination' => '2025-06-15',
-            'vet_contact' => 'Dr. Lee (555-5678)',
-            'allergies' => 'Fish',
-            'blood_type' => 'A-',
-        ],
-        3 => [
-            'id' => 3,
-            'name' => 'Tweety',
-            'species' => 'Bird',
-            'breed' => 'Canary',
-            'age' => 1,
-            'microchip' => false,
-            'vaccinated' => false,
-            'last_vaccination' => 'N/A',
-            'vet_contact' => 'Dr. Brown (555-9012)',
-            'allergies' => 'None',
-            'blood_type' => 'O+',
-        ],
-    ];
+    /** Get pet info by ID with owner verification */
+    public function getPetById(int $petId, int $ownerId): ?array {
+        try {
+            $sql = "SELECT p.*, 
+                           TIMESTAMPDIFF(YEAR, p.date_of_birth, CURDATE()) AS age
+                    FROM pets p
+                    WHERE p.id = :pet_id AND p.user_id = :user_id
+                    LIMIT 1";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute(['pet_id' => $petId, 'user_id' => $ownerId]);
+            return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        } catch (Exception $e) {
+            error_log("MedicalRecordsModel::getPetById Error: " . $e->getMessage());
+            return null;
+        }
+    }
 
-    private array $clinicVisits = [
-        1 => [
-            ['date' => '2025-04-12', 'title' => 'General Checkup',      'details' => 'Healthy, routine check.'],
-            ['date' => '2025-03-05', 'title' => 'Allergy Treatment',   'details' => 'Prescribed antihistamines.'],
-        ],
-        2 => [
-            ['date' => '2025-05-10', 'title' => 'Diet Consultation',   'details' => 'Recommended special diet.'],
-        ],
-        3 => [
-            ['date' => '2025-07-01', 'title' => 'Wing Injury',         'details' => 'Bandaged and healed.'],
-        ],
-    ];
+    /** Get all appointments (clinic visits) for a pet */
+    public function getClinicVisitsByPetId(int $petId): array {
+        try {
+            $sql = "SELECT 
+                        a.*,
+                        a.appointment_date,
+                        a.appointment_time,
+                        a.appointment_type,
+                        a.status,
+                        a.symptoms,
+                        CONCAT(uv.first_name, ' ', uv.last_name) AS vet_name,
+                        c.clinic_name,
+                        mr.diagnosis,
+                        mr.treatment
+                    FROM appointments a
+                    LEFT JOIN users uv ON uv.id = a.vet_id
+                    LEFT JOIN clinics c ON c.id = a.clinic_id
+                    LEFT JOIN medical_records mr ON mr.appointment_id = a.id
+                    WHERE a.pet_id = :pet_id
+                    ORDER BY a.appointment_date DESC, a.appointment_time DESC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute(['pet_id' => $petId]);
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("getClinicVisitsByPetId: Pet $petId returned " . count($result) . " visits");
+            return $result;
+        } catch (Exception $e) {
+            error_log("MedicalRecordsModel::getClinicVisitsByPetId Error: " . $e->getMessage());
+            return [];
+        }
+    }
 
-    private array $vaccinations = [
-        1 => [
-            ['vaccine' => 'Rabies', 'date' => '2025-05-10', 'nextDue' => '2026-05-10', 'vet' => 'Dr. Smith'],
-        ],
-        2 => [
-            ['vaccine' => 'Feline Leukemia', 'date' => '2025-06-15', 'nextDue' => '2026-06-15', 'vet' => 'Dr. Lee'],
-        ],
-        3 => [
-            // none
-        ],
-    ];
+    /** Get all medical records for a pet */
+    public function getMedicalRecordsByPetId(int $petId): array {
+        try {
+            $sql = "SELECT 
+                        mr.*,
+                        a.appointment_date AS date,
+                        p.name AS pet_name,
+                        CONCAT(u.first_name, ' ', u.last_name) AS owner_name,
+                        CONCAT(uv.first_name, ' ', uv.last_name) AS vet_name
+                    FROM medical_records mr
+                    JOIN appointments a ON a.id = mr.appointment_id
+                    JOIN pets p ON p.id = a.pet_id
+                    JOIN users u ON u.id = p.user_id
+                    LEFT JOIN users uv ON uv.id = a.vet_id
+                    WHERE a.pet_id = :pet_id
+                    ORDER BY mr.id DESC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute(['pet_id' => $petId]);
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("getMedicalRecordsByPetId: Pet $petId returned " . count($result) . " records");
+            return $result;
+        } catch (Exception $e) {
+            error_log("MedicalRecordsModel::getMedicalRecordsByPetId Error: " . $e->getMessage());
+            return [];
+        }
+    }
 
-    private array $reports = [
-        1 => [
-            [
-                'date' => '2025-04-20',
-                'title' => 'X-Ray',
-                'details' => 'Fracture healing well.',
-                'images' => [
-                    'https://www.nylabone.com/-/media/project/oneweb/nylabone/images/dog101/activities-fun/10-great-small-dog-breeds/maltese-portrait.jpg?h=448&w=740&hash=B111F1998758CA0ED2442A4928D5105D',
-                    'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=800&q=80'
-                ],
-            ],
-        ],
-        2 => [
-            [
-                'date' => '2025-06-20',
-                'title' => 'Ultrasound',
-                'details' => 'No abnormalities detected.',
-                'images' => [],
-            ],
-        ],
-        3 => [
-            // none
-        ],
-    ];
-    // --------------------------------------------------------
+    /** Get all vaccinations for a pet */
+    public function getVaccinationsByPetId(int $petId): array {
+        try {
+            $sql = "SELECT 
+                        vax.*,
+                        a.appointment_date AS date,
+                        p.name AS pet_name,
+                        CONCAT(u.first_name, ' ', u.last_name) AS owner_name,
+                        CONCAT(uv.first_name, ' ', uv.last_name) AS vet_name
+                    FROM vaccinations vax
+                    JOIN appointments a ON a.id = vax.appointment_id
+                    JOIN pets p ON p.id = a.pet_id
+                    JOIN users u ON u.id = p.user_id
+                    LEFT JOIN users uv ON uv.id = a.vet_id
+                    WHERE a.pet_id = :pet_id
+                    ORDER BY vax.id DESC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute(['pet_id' => $petId]);
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("getVaccinationsByPetId: Pet $petId returned " . count($result) . " vaccinations");
+            return $result;
+        } catch (Exception $e) {
+            error_log("MedicalRecordsModel::getVaccinationsByPetId Error: " . $e->getMessage());
+            return [];
+        }
+    }
 
-    public function getPetById(int $petId): ?array {
-        return $this->pets[$petId] ?? null;
+    /** Get all prescriptions for a pet */
+    public function getPrescriptionsByPetId(int $petId): array {
+        try {
+            $sql = "SELECT 
+                        pr.*,
+                        a.appointment_date AS date,
+                        p.name AS pet_name,
+                        CONCAT(u.first_name, ' ', u.last_name) AS owner_name,
+                        CONCAT(uv.first_name, ' ', uv.last_name) AS vet_name
+                    FROM prescriptions pr
+                    JOIN appointments a ON a.id = pr.appointment_id
+                    JOIN pets p ON p.id = a.pet_id
+                    JOIN users u ON u.id = p.user_id
+                    LEFT JOIN users uv ON uv.id = a.vet_id
+                    WHERE a.pet_id = :pet_id
+                    ORDER BY pr.id DESC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute(['pet_id' => $petId]);
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("getPrescriptionsByPetId: Pet $petId returned " . count($result) . " prescriptions");
+            return $result;
+        } catch (Exception $e) {
+            error_log("MedicalRecordsModel::getPrescriptionsByPetId Error: " . $e->getMessage());
+            return [];
+        }
     }
 
     /** Returns a full record set for the medical-records page */
-    public function getFullMedicalRecordByPetId(int $petId): ?array {
-        $pet = $this->getPetById($petId);
-        if (!$pet) return null;
+    public function getFullMedicalRecordByPetId(int $petId, int $ownerId): ?array {
+        $pet = $this->getPetById($petId, $ownerId);
+        if (!$pet) {
+            error_log("MedicalRecordsModel: Pet not found - Pet ID: $petId, Owner ID: $ownerId");
+            return null;
+        }
+
+        $clinic_visits = $this->getClinicVisitsByPetId($petId);
+        $medical_records = $this->getMedicalRecordsByPetId($petId);
+        $vaccinations = $this->getVaccinationsByPetId($petId);
+        $prescriptions = $this->getPrescriptionsByPetId($petId);
+
+        // DEBUG LOG
+        error_log("MedicalRecordsModel: Pet ID $petId - Clinic Visits: " . count($clinic_visits) . ", Medical Records: " . count($medical_records) . ", Vaccinations: " . count($vaccinations) . ", Prescriptions: " . count($prescriptions));
 
         return [
-            'pet'            => $pet,
-            'clinic_visits'  => $this->clinicVisits[$petId] ?? [],
-            'vaccinations'   => $this->vaccinations[$petId] ?? [],
-            'reports'        => $this->reports[$petId] ?? [],
+            'pet'               => $pet,
+            'clinic_visits'     => $clinic_visits,
+            'medical_records'   => $medical_records,
+            'vaccinations'      => $vaccinations,
+            'prescriptions'     => $prescriptions,
         ];
     }
 }

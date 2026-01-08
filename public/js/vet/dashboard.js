@@ -1,8 +1,27 @@
 function renderKPIs(data){
   const today = window.PETVET_TODAY;
-  const todayCount = data.appointments.filter(a=>a.appointment_date===today && a.status!=='cancelled').length;
+  
+  // Count today's appointments (approved + ongoing only, exclude completed and cancelled)
+  const todayCount = data.appointments.filter(a => {
+    const dateMatches = a.appointment_date === today;
+    const validStatus = ['approved', 'ongoing'].includes(a.status);
+    return dateMatches && validStatus;
+  }).length;
+  
+  // Count this week's appointments (all non-cancelled)
+  const todayDate = new Date(today);
+  const weekAgo = new Date(todayDate);
+  weekAgo.setDate(todayDate.getDate() - 7);
+  const weekAgoStr = weekAgo.toISOString().split('T')[0];
+  
+  const weekCount = data.appointments.filter(a => {
+    const apptDate = a.appointment_date;
+    const notCancelled = a.status !== 'cancelled';
+    return apptDate >= weekAgoStr && apptDate <= today && notCancelled;
+  }).length;
+  
   document.getElementById('kpi-today').textContent = todayCount;
-  document.getElementById('kpi-total').textContent = data.appointments.length;
+  document.getElementById('kpi-total').textContent = weekCount;
 }
 
 function renderOngoing(data){
@@ -14,7 +33,6 @@ function renderOngoing(data){
   if(!ongoing){ container.innerHTML = '<p>No ongoing appointment currently.</p>'; return; }
 
   container.innerHTML = `
-    <p><strong>ID:</strong> ${ongoing.id}</p>
     <p><strong>Time:</strong> ${ongoing.appointment_time}</p>
     <p><strong>Pet:</strong> ${ongoing.pet_name}</p>
     <p><strong>Owner:</strong> ${ongoing.owner_name}</p>
@@ -44,7 +62,7 @@ function renderUpcoming(data){
 
   rows.forEach(a=>{
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${a.id}</td><td>${a.appointment_time}</td><td>${a.pet_name}</td><td>${a.owner_name}</td><td>${a.appointment_type}</td>
+    tr.innerHTML = `<td>${a.appointment_time}</td><td>${a.pet_name}</td><td>${a.owner_name}</td><td>${a.appointment_type}</td>
       <td>
         <button class="btn navy" onclick="startAppointment('${a.id}')">Start</button>
         <button class="btn red" onclick="updateStatus('${a.id}','cancelled')">Cancel</button>
@@ -52,7 +70,7 @@ function renderUpcoming(data){
     tbody.appendChild(tr);
   });
 
-  if(rows.length===0) tbody.innerHTML = '<tr><td colspan="6">No upcoming appointments for today.</td></tr>';
+  if(rows.length===0) tbody.innerHTML = '<tr><td colspan="5">No upcoming appointments for today.</td></tr>';
 }
 
 function goToForm(page, apptId){

@@ -27,25 +27,28 @@ class PetOwnerController extends BaseController {
     // /PETVET/?module=pet-owner&page=medical-records&pet=1
     public function medicalRecords() {
         $petId = isset($_GET['pet']) ? (int)$_GET['pet'] : 0;
-        if ($petId <= 0) {
+        $ownerId = $_SESSION['user_id'] ?? 0;
+        
+        if ($petId <= 0 || $ownerId <= 0) {
             header("Location: /PETVET/?module=pet-owner&page=my-pets");
             exit;
         }
 
         $model = new MedicalRecordsModel();
-        $full  = $model->getFullMedicalRecordByPetId($petId);
+        $full  = $model->getFullMedicalRecordByPetId($petId, $ownerId);
         if (!$full) {
             http_response_code(404);
-            $this->view('errors', '404', ['message' => 'Pet not found']);
+            $this->view('errors', '404', ['message' => 'Pet not found or access denied']);
             return;
         }
 
-        // Match variables used by the view exactly
+        // Pass all data to view
         $data = [
-            'pet'            => $full['pet'],
-            'clinic_visits'  => $full['clinic_visits'],
-            'vaccinations'   => $full['vaccinations'],
-            'reports'        => $full['reports'],
+            'pet'               => $full['pet'],
+            'clinic_visits'     => $full['clinic_visits'],
+            'medical_records'   => $full['medical_records'],
+            'vaccinations'      => $full['vaccinations'],
+            'prescriptions'     => $full['prescriptions'],
         ];
 
         $this->view('pet-owner', 'medical-records', $data);

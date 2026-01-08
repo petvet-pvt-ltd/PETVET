@@ -890,7 +890,7 @@ function calculateAge($dob) {
           <a href="pet-profile.php?id=<?php echo $pet['id']; ?>" class="btn outline">View Profile</a>
 
           <!-- ✅ Route through the controller (no direct /views/ link) -->
-          <a href="/PETVET/?module=pet-owner&page=medical-records&pet=1" class="btn outline">Medical Records</a>
+          <a href="/PETVET/?module=pet-owner&page=medical-records&pet=<?php echo $pet['id']; ?>" class="btn outline">Medical Records</a>
 
           <?php if ($pet['has_upcoming_appointment']): ?>
             <button class="btn primary" disabled style="opacity: 0.5; cursor: not-allowed;" title="This pet already has an upcoming appointment">Has Upcoming Appointment</button>

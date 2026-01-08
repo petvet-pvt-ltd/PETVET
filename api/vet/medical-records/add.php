@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../../config/connect.php';
 require_once __DIR__ . '/../../../config/auth_helper.php';
+require_once __DIR__ . '/../../../config/MedicalFileUploader.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -12,12 +13,11 @@ if (empty($_SESSION['clinic_id']) || empty($_SESSION['user_id'])) {
     exit;
 }
 
-$payload = json_decode(file_get_contents('php://input'), true);
-
-$appointmentId = isset($payload['appointment_id']) ? (int)$payload['appointment_id'] : 0;
-$symptoms = trim($payload['symptoms'] ?? '');
-$diagnosis = trim($payload['diagnosis'] ?? '');
-$treatment = trim($payload['treatment'] ?? '');
+// Handle both multipart/form-data and JSON
+$appointmentId = isset($_POST['appointment_id']) ? (int)$_POST['appointment_id'] : 0;
+$symptoms = trim($_POST['symptoms'] ?? '');
+$diagnosis = trim($_POST['diagnosis'] ?? '');
+$treatment = trim($_POST['treatment'] ?? '');
 
 if ($appointmentId <= 0 || $symptoms === '' || $diagnosis === '' || $treatment === '') {
     echo json_encode(['success' => false, 'error' => 'Missing required fields']);
@@ -59,18 +59,33 @@ try {
         exit;
     }
 
+    // Handle file uploads
+    $reports = null;
+    if (isset($_FILES['reports']) && !empty($_FILES['reports']['name'][0])) {
+        $uploader = new MedicalFileUploader();
+        $uploadResult = $uploader->uploadFiles($_FILES['reports']);
+        
+        if ($uploadResult['success'] && !empty($uploadResult['files'])) {
+            $reports = json_encode($uploadResult['files']);
+        } elseif (!$uploadResult['success']) {
+            echo json_encode(['success' => false, 'error' => 'File upload error: ' . implode(', ', $uploadResult['errors'])]);
+            exit;
+        }
+    }
+
     $stmt = $pdo->prepare("
-        INSERT INTO medical_records (appointment_id, symptoms, diagnosis, treatment, created_at)
-        VALUES (:appointment_id, :symptoms, :diagnosis, :treatment, NOW())
+        INSERT INTO medical_records (appointment_id, symptoms, diagnosis, treatment, reports, created_at)
+        VALUES (:appointment_id, :symptoms, :diagnosis, :treatment, :reports, NOW())
     ");
     $stmt->execute([
         'appointment_id' => $appointmentId,
         'symptoms' => $symptoms,
         'diagnosis' => $diagnosis,
-        'treatment' => $treatment
+        'treatment' => $treatment,
+        'reports' => $reports
     ]);
 
     echo json_encode(['success' => true, 'id' => (int)$pdo->lastInsertId()]);
 } catch (Throwable $e) {
-    echo json_encode(['success' => false, 'error' => 'Server error']);
+    echo json_encode(['success' => false, 'error' => 'Server error: ' . $e->getMessage()]);
 }

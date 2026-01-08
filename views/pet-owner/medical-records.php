@@ -1,55 +1,32 @@
 <?php
-// Sample data - Replace with actual database queries
-$pet = [
-  'name' => 'Max',
-  'species' => 'Dog',
-  'breed' => 'Golden Retriever',
-  'age' => '3',
-  'microchip' => true,
-  'vaccinated' => true,
-  'last_vaccination' => 'October 5, 2025',
-  'vet_contact' => 'Dr. Smith - (555) 123-4567',
-  'allergies' => 'Chicken, Dairy',
-  'blood_type' => 'DEA 1.1 Positive'
-];
+// Extract data passed from controller
+$pet = $pet ?? [];
+$clinic_visits = $clinic_visits ?? [];
+$medical_records = $medical_records ?? [];
+$vaccinations = $vaccinations ?? [];
+$prescriptions = $prescriptions ?? [];
 
-$clinic_visits = [
-  ['date' => 'October 10, 2025', 'title' => 'Regular Checkup', 'details' => 'All vitals normal. Weight: 32kg'],
-  ['date' => 'September 15, 2025', 'title' => 'Skin Irritation', 'details' => 'Prescribed topical cream for rash']
-];
+// Pet info with fallbacks
+$petName = htmlspecialchars($pet['name'] ?? 'Unknown');
+$species = htmlspecialchars($pet['species'] ?? '');
+$breed = htmlspecialchars($pet['breed'] ?? '');
+$age = htmlspecialchars($pet['age'] ?? 'N/A');
+$microchip = !empty($pet['microchip_id']);
+$vaccinated = count($vaccinations) > 0;
 
-$vaccinations = [
-  ['pet' => 'Max', 'vaccine' => 'Rabies', 'date' => 'October 5, 2025', 'nextDue' => 'October 5, 2026', 'vet' => 'Dr. Smith'],
-  ['pet' => 'Max', 'vaccine' => 'DHPP', 'date' => 'October 5, 2025', 'nextDue' => 'October 5, 2026', 'vet' => 'Dr. Smith'],
-  ['pet' => 'Max', 'vaccine' => 'Bordetella', 'date' => 'April 10, 2025', 'nextDue' => 'April 10, 2026', 'vet' => 'Dr. Johnson']
-];
-
-$prescriptions = [
-  ['pet' => 'Max', 'medication' => 'Amoxicillin', 'dosage' => '250mg', 'frequency' => 'Twice daily', 'startDate' => 'September 15, 2025', 'endDate' => 'September 25, 2025', 'vet' => 'Dr. Smith'],
-  ['pet' => 'Max', 'medication' => 'Anti-inflammatory Cream', 'dosage' => 'Apply thin layer', 'frequency' => 'Twice daily', 'startDate' => 'September 15, 2025', 'endDate' => 'September 30, 2025', 'vet' => 'Dr. Smith']
-];
-
-$reports = [
-  ['date' => 'October 10, 2025', 'title' => 'Blood Test Results', 'details' => 'All parameters within normal range', 'images' => [
-    '/PETVET/views/shared/images/petser.jpg',
-    '/PETVET/views/shared/images/vet-reg-cover.jpg',
-    '/PETVET/views/shared/images/vet-reg-cover2.jpg'
-  ]],
-  ['date' => 'September 15, 2025', 'title' => 'X-Ray Report', 'details' => 'No abnormalities detected', 'images' => [
-    'https://www.pommri.com/blog/wp-content/uploads/2019/03/hand-xray-177559095.jpg',
-    '/PETVET/views/shared/images/petser.jpg'
-  ]],
-  ['date' => 'August 20, 2025', 'title' => 'Ultrasound Scan', 'details' => 'Abdominal scan completed successfully', 'images' => [
-    '/PETVET/views/shared/images/vet-reg-cover.jpg'
-  ]]
-];
+// Get latest vaccination date
+$lastVaccination = 'N/A';
+if (!empty($vaccinations)) {
+    $latest = $vaccinations[0];
+    $lastVaccination = htmlspecialchars($latest['date'] ?? 'N/A');
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Medical Records</title>
+  <title>Medical Records - <?php echo $petName; ?></title>
   <link rel="stylesheet" href="/PETVET/public/css/pet-owner/medical-records.css"/>
 </head>
 <body>
@@ -58,35 +35,204 @@ $reports = [
   <!-- Header -->
   <header class="top-card">
     <div>
-      <h1 id="petName"><?php echo htmlspecialchars($pet['name']); ?></h1>
-      <p id="petInfo"><?php echo htmlspecialchars($pet['species'] . ' • ' . $pet['breed'] . ' • ' . $pet['age'] . 'y'); ?></p>
-      <?php if (!empty($pet['microchip'])): ?><span class="badge microchip">Microchipped</span><?php endif; ?>
-      <?php if (!empty($pet['vaccinated'])): ?><span class="badge vaccine">Vaccinated</span><?php endif; ?>
+      <h1 id="petName"><?php echo $petName; ?></h1>
+      <p id="petInfo"><?php echo $species . ($breed ? ' • ' . $breed : '') . ' • ' . $age . 'y'; ?></p>
+      <?php if ($microchip): ?><span class="badge microchip">Microchipped</span><?php endif; ?>
+      <?php if ($vaccinated): ?><span class="badge vaccine">Vaccinated</span><?php endif; ?>
     </div>
-    <button class="btn" onclick="openForm()">+ Add Record</button>
   </header>
 
   <!-- Overview -->
   <div class="section">
     <h2>Overview</h2>
-    <p><b>Last Vaccination:</b> <?php echo htmlspecialchars($pet['last_vaccination']); ?></p>
-    <p><b>Vet Contact:</b> <?php echo htmlspecialchars($pet['vet_contact']); ?></p>
-    <p><b>Allergies:</b> <?php echo htmlspecialchars($pet['allergies']); ?></p>
-    <div class="emergency">Blood Type: <?php echo htmlspecialchars($pet['blood_type']); ?></div>
+    <p><b>Last Vaccination:</b> <?php echo $lastVaccination; ?></p>
+    <p><b>Medical Records:</b> <?php echo count($medical_records); ?> records on file</p>
+    <p><b>Prescriptions:</b> <?php echo count($prescriptions); ?> prescriptions</p>
+    <p><b>Clinic Visits:</b> <?php echo count($clinic_visits); ?> visits</p>
   </div>
 
-  <!-- Clinic Visits -->
+  <!-- Clinic Visits & Appointments -->
   <div class="section">
-    <h2>Clinic Visits</h2>
-    <div id="clinicVisits">
-      <?php if (empty($clinic_visits)): ?>
-        <p class="empty-state">No clinic visits recorded yet.</p>
-      <?php else: ?>
-        <?php foreach ($clinic_visits as $v): ?>
-          <div class="visit-card"><b><?php echo htmlspecialchars($v['date']); ?>:</b> <?php echo htmlspecialchars($v['title']); ?><br><?php echo htmlspecialchars($v['details']); ?></div>
-        <?php endforeach; ?>
+    <h2>Clinic Visits & Appointments</h2>
+    <?php if (empty($clinic_visits)): ?>
+      <p class="empty-state">No clinic visits or appointments recorded yet.</p>
+    <?php else: ?>
+      <?php
+      // Separate appointments by status and date
+      $upcoming = [];
+      $ongoing = [];
+      $completed = [];
+      $today = date('Y-m-d');
+      
+      foreach ($clinic_visits as $visit) {
+        $status = strtolower($visit['status'] ?? '');
+        $appointmentDate = $visit['appointment_date'] ?? '';
+        
+        // Upcoming: pending/approved AND date is today or in the future
+        if (in_array($status, ['pending', 'approved']) && $appointmentDate >= $today) {
+          $upcoming[] = $visit;
+        } 
+        // Ongoing
+        elseif ($status === 'ongoing') {
+          $ongoing[] = $visit;
+        } 
+        // Completed
+        elseif ($status === 'completed') {
+          $completed[] = $visit;
+        }
+        // Old approved appointments (date passed) are treated as completed
+        elseif (in_array($status, ['approved']) && $appointmentDate < $today) {
+          // Don't show old approved appointments that never happened
+        }
+      }
+      ?>
+
+      <!-- Upcoming Appointments -->
+      <?php if (!empty($upcoming)): ?>
+        <h3 style="margin-top: 20px; color: #2563eb;">📅 Upcoming Appointments</h3>
+        <div class="simple-mobile-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Type</th>
+                <th>Vet</th>
+                <th>Status</th>
+                <th>Symptoms</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($upcoming as $visit): ?>
+              <tr>
+                <td><?php echo htmlspecialchars($visit['appointment_date'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($visit['appointment_time'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($visit['appointment_type'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($visit['vet_name'] ?? 'N/A'); ?></td>
+                <td><span class="status-<?php echo strtolower($visit['status'] ?? ''); ?>"><?php echo htmlspecialchars($visit['status'] ?? ''); ?></span></td>
+                <td><?php echo htmlspecialchars($visit['symptoms'] ?? '-'); ?></td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
       <?php endif; ?>
-    </div>
+
+      <!-- Ongoing Appointments -->
+      <?php if (!empty($ongoing)): ?>
+        <h3 style="margin-top: 20px; color: #f59e0b;">🏥 Ongoing Appointments</h3>
+        <div class="simple-mobile-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Type</th>
+                <th>Vet</th>
+                <th>Status</th>
+                <th>Diagnosis</th>
+                <th>Treatment</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($ongoing as $visit): ?>
+              <tr>
+                <td><?php echo htmlspecialchars($visit['appointment_date'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($visit['appointment_time'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($visit['appointment_type'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($visit['vet_name'] ?? 'N/A'); ?></td>
+                <td><span class="status-<?php echo strtolower($visit['status'] ?? ''); ?>"><?php echo htmlspecialchars($visit['status'] ?? ''); ?></span></td>
+                <td><?php echo htmlspecialchars($visit['diagnosis'] ?? '-'); ?></td>
+                <td><?php echo htmlspecialchars($visit['treatment'] ?? '-'); ?></td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
+
+      <!-- Completed Appointments -->
+      <?php if (!empty($completed)): ?>
+        <h3 style="margin-top: 20px; color: #10b981;">✅ Completed Appointments</h3>
+        <div class="simple-mobile-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Type</th>
+                <th>Vet</th>
+                <th>Diagnosis</th>
+                <th>Treatment</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($completed as $visit): ?>
+              <tr>
+                <td><?php echo htmlspecialchars($visit['appointment_date'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($visit['appointment_time'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($visit['appointment_type'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($visit['vet_name'] ?? 'N/A'); ?></td>
+                <td><?php echo htmlspecialchars($visit['diagnosis'] ?? '-'); ?></td>
+                <td><?php echo htmlspecialchars($visit['treatment'] ?? '-'); ?></td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
+    <?php endif; ?>
+  </div>
+
+  <!-- Medical Records -->
+  <div class="section">
+    <h2>Medical Records</h2>
+    <?php if (empty($medical_records)): ?>
+      <p class="empty-state">No medical records available.</p>
+    <?php else: ?>
+      <div class="simple-mobile-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Symptoms</th>
+              <th>Diagnosis</th>
+              <th>Treatment</th>
+              <th>Vet</th>
+              <th>Reports</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($medical_records as $record): ?>
+            <tr>
+              <td><?php echo htmlspecialchars($record['date'] ?? ''); ?></td>
+              <td><?php echo htmlspecialchars($record['symptoms'] ?? ''); ?></td>
+              <td><?php echo htmlspecialchars($record['diagnosis'] ?? ''); ?></td>
+              <td><?php echo htmlspecialchars($record['treatment'] ?? ''); ?></td>
+              <td><?php echo htmlspecialchars($record['vet_name'] ?? 'N/A'); ?></td>
+              <td>
+                <?php
+                if (!empty($record['reports'])) {
+                  $files = json_decode($record['reports'], true);
+                  if ($files && is_array($files)) {
+                    foreach ($files as $file) {
+                      $filename = basename($file);
+                      $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                      $icon = in_array($ext, ['jpg','jpeg','png','gif','webp']) ? '🖼️' : '📄';
+                      echo '<a href="/PETVET/' . htmlspecialchars($file) . '" target="_blank" title="' . htmlspecialchars($filename) . '">' . $icon . '</a> ';
+                    }
+                  }
+                } else {
+                  echo '-';
+                }
+                ?>
+              </td>
+            </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
   </div>
 
   <!-- Vaccinations -->
@@ -95,19 +241,41 @@ $reports = [
     <?php if (empty($vaccinations)): ?>
       <p class="empty-state">No vaccination records available.</p>
     <?php else: ?>
-      <div class="table-wrapper">
-        <table id="vaccinationTable">
+      <div class="simple-mobile-table">
+        <table>
           <thead>
-            <tr><th>Pet</th><th>Vaccine</th><th>Date</th><th>Next Due</th><th>Vet</th></tr>
+            <tr>
+              <th>Date</th>
+              <th>Vaccine</th>
+              <th>Next Due</th>
+              <th>Vet</th>
+              <th>Reports</th>
+            </tr>
           </thead>
           <tbody>
-            <?php foreach ($vaccinations as $v): ?>
+            <?php foreach ($vaccinations as $vax): ?>
             <tr>
-              <td><?php echo htmlspecialchars($v['pet']); ?></td>
-              <td><?php echo htmlspecialchars($v['vaccine']); ?></td>
-              <td><?php echo htmlspecialchars($v['date']); ?></td>
-              <td><?php echo htmlspecialchars($v['nextDue']); ?></td>
-              <td><?php echo htmlspecialchars($v['vet']); ?></td>
+              <td><?php echo htmlspecialchars($vax['date'] ?? ''); ?></td>
+              <td><?php echo htmlspecialchars($vax['vaccine'] ?? ''); ?></td>
+              <td><?php echo htmlspecialchars($vax['next_due'] ?? '-'); ?></td>
+              <td><?php echo htmlspecialchars($vax['vet_name'] ?? 'N/A'); ?></td>
+              <td>
+                <?php
+                if (!empty($vax['reports'])) {
+                  $files = json_decode($vax['reports'], true);
+                  if ($files && is_array($files)) {
+                    foreach ($files as $file) {
+                      $filename = basename($file);
+                      $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                      $icon = in_array($ext, ['jpg','jpeg','png','gif','webp']) ? '🖼️' : '📄';
+                      echo '<a href="/PETVET/' . htmlspecialchars($file) . '" target="_blank" title="' . htmlspecialchars($filename) . '">' . $icon . '</a> ';
+                    }
+                  }
+                } else {
+                  echo '-';
+                }
+                ?>
+              </td>
             </tr>
             <?php endforeach; ?>
           </tbody>
@@ -122,21 +290,43 @@ $reports = [
     <?php if (empty($prescriptions)): ?>
       <p class="empty-state">No prescription records available.</p>
     <?php else: ?>
-      <div class="table-wrapper">
-        <table id="prescriptionTable">
+      <div class="simple-mobile-table">
+        <table>
           <thead>
-            <tr><th>Pet</th><th>Medication</th><th>Dosage</th><th>Frequency</th><th>Start Date</th><th>End Date</th><th>Vet</th></tr>
+            <tr>
+              <th>Date</th>
+              <th>Medication</th>
+              <th>Dosage</th>
+              <th>Notes</th>
+              <th>Vet</th>
+              <th>Reports</th>
+            </tr>
           </thead>
           <tbody>
-            <?php foreach ($prescriptions as $p): ?>
+            <?php foreach ($prescriptions as $rx): ?>
             <tr>
-              <td><?php echo htmlspecialchars($p['pet']); ?></td>
-              <td><?php echo htmlspecialchars($p['medication']); ?></td>
-              <td><?php echo htmlspecialchars($p['dosage']); ?></td>
-              <td><?php echo htmlspecialchars($p['frequency']); ?></td>
-              <td><?php echo htmlspecialchars($p['startDate']); ?></td>
-              <td><?php echo htmlspecialchars($p['endDate']); ?></td>
-              <td><?php echo htmlspecialchars($p['vet']); ?></td>
+              <td><?php echo htmlspecialchars($rx['date'] ?? ''); ?></td>
+              <td><?php echo htmlspecialchars($rx['medication'] ?? ''); ?></td>
+              <td><?php echo htmlspecialchars($rx['dosage'] ?? ''); ?></td>
+              <td><?php echo htmlspecialchars($rx['notes'] ?? ''); ?></td>
+              <td><?php echo htmlspecialchars($rx['vet_name'] ?? 'N/A'); ?></td>
+              <td>
+                <?php
+                if (!empty($rx['reports'])) {
+                  $files = json_decode($rx['reports'], true);
+                  if ($files && is_array($files)) {
+                    foreach ($files as $file) {
+                      $filename = basename($file);
+                      $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                      $icon = in_array($ext, ['jpg','jpeg','png','gif','webp']) ? '🖼️' : '📄';
+                      echo '<a href="/PETVET/' . htmlspecialchars($file) . '" target="_blank" title="' . htmlspecialchars($filename) . '">' . $icon . '</a> ';
+                    }
+                  }
+                } else {
+                  echo '-';
+                }
+                ?>
+              </td>
             </tr>
             <?php endforeach; ?>
           </tbody>
@@ -145,180 +335,6 @@ $reports = [
     <?php endif; ?>
   </div>
 
-  <!-- Reports -->
-  <div class="section">
-    <h2>Reports</h2>
-    <div id="reports">
-      <?php if (empty($reports)): ?>
-        <p class="empty-state">No reports uploaded yet.</p>
-      <?php else: ?>
-        <?php foreach ($reports as $index => $r): ?>
-          <div class="report-card">
-            <div>
-              <b><?php echo htmlspecialchars($r['date']); ?>:</b> <?php echo htmlspecialchars($r['title']); ?><br><?php echo htmlspecialchars($r['details']); ?>
-            </div>
-            <button class="btn" onclick="previewReport(<?php echo (int)$index; ?>)">Preview</button>
-          </div>
-        <?php endforeach; ?>
-      <?php endif; ?>
-    </div>
-  </div>
-
-  <!-- Add Record Modal -->
-  <div class="modal-overlay" id="recordModal" hidden>
-    <div class="modal-card record" role="dialog" aria-modal="true" aria-labelledby="recordModalTitle">
-      <button class="close-btn" onclick="closeForm()" aria-label="Close">×</button>
-      <div class="modal-header"><h3 id="recordModalTitle">Add New Record</h3></div>
-      <form id="recordForm" class="modal-body form-grid" autocomplete="off">
-        <div class="grid-2">
-          <div class="field"><label for="recordType">Record Type</label><select id="recordType" class="input" required><option value="clinic">Clinic Visit</option><option value="vaccination">Vaccination</option><option value="report">Report</option></select></div>
-          <div class="field"><label for="recordDate">Date</label><input type="date" id="recordDate" class="input" required></div>
-        </div>
-        <div class="field"><label for="recordTitle">Title</label><input type="text" id="recordTitle" class="input" required placeholder="eg. Annual Vaccination"></div>
-        <div class="field"><label for="recordDetails">Details</label><textarea id="recordDetails" class="input" rows="4" placeholder="Notes, dosage, follow-up..." ></textarea><div class="help-text">Keep it concise. You can edit later.</div></div>
-        <div class="field"><label for="recordFile">File Upload</label><input type="file" id="recordFile" class="input" accept="image/*"><div id="filePreview"></div><div class="help-text">Optional image of prescription, report, etc.</div></div>
-        <div class="modal-actions"><button type="button" class="btn secondary" onclick="closeForm()">Cancel</button><button type="submit" class="btn" id="saveRecordBtn">Save Record</button></div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Preview Modal -->
-  <div class="modal-overlay" id="previewModal" hidden>
-    <div class="modal-card preview-modal" role="dialog" aria-modal="true" aria-labelledby="previewModalTitle">
-      <button class="close-btn" onclick="closePreview()" aria-label="Close">×</button>
-      <div class="modal-header">
-        <h3 id="previewModalTitle">Report Preview</h3>
-        <div id="previewImageCounter" style="font-size: 14px; color: #64748b;"></div>
-      </div>
-      <div class="modal-body preview-body">
-        <div id="previewContent"></div>
-      </div>
-      <div class="modal-actions preview-actions" id="previewNavigation">
-        <button class="btn" onclick="prevPreviewImg()" id="prevBtn">Previous</button>
-        <button class="btn" onclick="nextPreviewImg()" id="nextBtn">Next</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // Modal helpers (re-usable) with body scroll lock
-    function showOverlay(id){
-      const el=document.getElementById(id); 
-      if(!el) return;
-      // close others
-      document.querySelectorAll('.modal-overlay:not([hidden])').forEach(o=>{ 
-        if(o.id!==id){
-          o.hidden=true;
-        }
-      });
-      el.hidden=false; 
-      el.querySelector('[role="dialog"]').focus?.(); 
-      document.body.classList.add('modal-open');
-    }
-    
-    function hideOverlay(id){
-      const el=document.getElementById(id); 
-      if(el){
-        el.hidden=true; 
-        if(!document.querySelector('.modal-overlay:not([hidden])')) {
-          document.body.classList.remove('modal-open');
-        }
-      }
-    }
-    
-    function openForm(){
-      hideOverlay('previewModal'); 
-      showOverlay('recordModal');
-    }
-    
-    function closeForm(){
-      hideOverlay('recordModal');
-    }
-    
-    function closePreview(){
-      hideOverlay('previewModal');
-    }
-
-    // Preview state
-    const previewState={images:[],current:0};
-    function previewReport(index){
-      hideOverlay('recordModal'); 
-      const reports=<?php echo json_encode($reports); ?>; 
-      const report=reports[index]; 
-      previewState.images=report.images||[]; 
-      previewState.current=0; 
-      renderPreviewImage(); 
-      showOverlay('previewModal');
-    }
-    
-    function renderPreviewImage(){
-      const content=document.getElementById('previewContent'); 
-      const counter=document.getElementById('previewImageCounter');
-      const prevBtn=document.getElementById('prevBtn');
-      const nextBtn=document.getElementById('nextBtn');
-      const navigation=document.getElementById('previewNavigation');
-      
-      if(previewState.images.length){
-        // Update image
-        content.innerHTML=`<img src="${previewState.images[previewState.current]}" alt="Report Image" class="preview-image">`;
-        
-        // Update counter
-        if(previewState.images.length > 1){
-          counter.textContent = `Image ${previewState.current+1} of ${previewState.images.length}`;
-          counter.style.display = 'block';
-        } else {
-          counter.style.display = 'none';
-        }
-        
-        // Update navigation buttons
-        prevBtn.disabled = previewState.current === 0;
-        nextBtn.disabled = previewState.current === previewState.images.length - 1;
-        
-        // Hide navigation if only one image
-        if(previewState.images.length === 1){
-          prevBtn.style.display = 'none';
-          nextBtn.style.display = 'none';
-        } else {
-          prevBtn.style.display = 'inline-block';
-          nextBtn.style.display = 'inline-block';
-        }
-      } else {
-        content.innerHTML='<p style="text-align:center;color:#64748b;">No images available</p>';
-        counter.style.display = 'none';
-        prevBtn.style.display = 'none';
-        nextBtn.style.display = 'none';
-      }
-    }
-    
-    function prevPreviewImg(){ 
-      if(previewState.current>0){
-        previewState.current--; 
-        renderPreviewImage();
-      }
-    }
-    
-    function nextPreviewImg(){ 
-      if(previewState.current<previewState.images.length-1){
-        previewState.current++; 
-        renderPreviewImage();
-      }
-    }
-    
-    // Keyboard navigation for preview
-    window.addEventListener('keydown', function(e){
-      if(!document.getElementById('previewModal').hidden){
-        if(e.key === 'ArrowLeft') prevPreviewImg();
-        if(e.key === 'ArrowRight') nextPreviewImg();
-      }
-    });
-
-    // Close on Esc
-    window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!document.getElementById('previewModal').hidden) closePreview(); if(!document.getElementById('recordModal').hidden) closeForm();}});
-    // Backdrop click close
-    document.addEventListener('click',e=>{if(e.target.classList.contains('modal-overlay')){hideOverlay(e.target.id);}});
-    // File preview
-    document.getElementById('recordFile').addEventListener('change',function(){const preview=document.getElementById('filePreview'); preview.innerHTML=''; const file=this.files[0]; if(file){const reader=new FileReader(); reader.onload=e=>{preview.innerHTML=`<img src='${e.target.result}' alt='Preview' style='max-width:100%;margin-top:8px;border-radius:12px;'>`;}; reader.readAsDataURL(file);}});
-  </script>
   </main>
 </body>
 </html>

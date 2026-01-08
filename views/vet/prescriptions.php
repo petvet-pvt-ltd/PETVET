@@ -20,6 +20,8 @@ $data = [
 <?php include 'views/shared/sidebar/sidebar.php'; ?>
 
 <div class="main-content">
+  <?php include __DIR__ . '/../shared/components/user-welcome-header.php'; ?>
+
   <div class="page-frame">
     <div class="page-header">
       <div>
@@ -31,11 +33,8 @@ $data = [
     <section id="prescriptionFormSection" class="form-section" style="display:none">
       <h3>Add Prescription</h3>
       <form id="prescriptionForm">
+        <input type="hidden" name="appointmentId">
         <div class="form-row">
-          <label>
-            Appointment ID
-            <input name="appointmentId" readonly>
-          </label>
           <label>
             Pet Name
             <input name="petName" readonly>
@@ -63,6 +62,16 @@ $data = [
             <textarea name="notes" rows="3" placeholder="Additional instructions or notes..."></textarea>
           </label>
         </div>
+
+        <div class="form-row">
+          <label>
+            Reports & Documents
+            <input type="file" name="reports[]" multiple accept="image/*,.pdf,.doc,.docx,.txt">
+            <small>Upload prescription images, pharmacy documents, medication guides, etc.</small>
+          </label>
+        </div>
+
+        <div id="filePreview" class="file-preview"></div>
 
         <button class="btn secondary" type="submit">💊 Save Prescription</button>
       </form>

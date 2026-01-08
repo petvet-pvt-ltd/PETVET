@@ -4,15 +4,15 @@
 
 function buildTableHTML(rows, includeActions=false){
     if(rows.length===0) 
-        return '<div class="simple-mobile-table"><table><thead><tr><th>ID</th><th>Date</th><th>Time</th><th>Pet</th><th>Owner</th><th>Reason</th>' + 
+        return '<div class="simple-mobile-table"><table><thead><tr><th>Date</th><th>Time</th><th>Pet</th><th>Owner</th><th>Reason</th>' + 
                (includeActions? '<th>Actions</th>':'') + 
-               '</tr></thead><tbody><tr><td colspan="'+ (includeActions?7:6) +'">No records</td></tr></tbody></table></div>';
+               '</tr></thead><tbody><tr><td colspan="'+ (includeActions?6:5) +'">No records</td></tr></tbody></table></div>';
     
-    let html = '<div class="simple-mobile-table"><table><thead><tr><th>ID</th><th>Date</th><th>Time</th><th>Pet</th><th>Owner</th><th>Reason</th>' + 
+    let html = '<div class="simple-mobile-table"><table><thead><tr><th>Date</th><th>Time</th><th>Pet</th><th>Owner</th><th>Reason</th>' + 
                (includeActions? '<th>Actions</th>':'') + '</tr></thead><tbody>';
     
     rows.forEach(r=>{
-        html += `<tr><td>${r.id}</td><td>${r.appointment_date||r.date}</td><td>${r.appointment_time||r.time}</td><td>${r.pet_name||r.petName}</td><td>${r.owner_name||r.ownerName}</td><td>${r.appointment_type||r.reason}</td>`;
+        html += `<tr><td>${r.appointment_date||r.date}</td><td>${r.appointment_time||r.time}</td><td>${r.pet_name||r.petName}</td><td>${r.owner_name||r.ownerName}</td><td>${r.appointment_type||r.reason}</td>`;
         
         if(includeActions){
             const hasRec = window.PETVET_INITIAL_DATA.medicalRecords.some(m =>m.appointmentId == r.id || m.appointment_id == r.id);
