@@ -6,19 +6,72 @@ $currentPage = 'availability.php';
 $GLOBALS['module'] = $module;
 $GLOBALS['currentPage'] = $currentPage;
 require_once dirname(__DIR__, 2) . '/config/config.php';
+require_once dirname(__DIR__, 2) . '/config/connect.php';
 
-// Simulated data - replace with DB calls
-$weeklySchedule = [
-    ['day' => 'Monday', 'enabled' => true, 'start' => '09:00', 'end' => '18:00'],
-    ['day' => 'Tuesday', 'enabled' => true, 'start' => '09:00', 'end' => '18:00'],
-    ['day' => 'Wednesday', 'enabled' => true, 'start' => '09:00', 'end' => '18:00'],
-    ['day' => 'Thursday', 'enabled' => true, 'start' => '09:00', 'end' => '18:00'],
-    ['day' => 'Friday', 'enabled' => true, 'start' => '09:00', 'end' => '18:00'],
-    ['day' => 'Saturday', 'enabled' => true, 'start' => '10:00', 'end' => '16:00'],
-    ['day' => 'Sunday', 'enabled' => false, 'start' => '10:00', 'end' => '14:00'],
-];
+// Make database connection available
+global $conn;
 
-$unavailableDates = ['2025-12-25', '2026-01-01', '2025-10-28']; // Example blocked dates
+// Load weekly schedule from database
+$weeklySchedule = [];
+$user_id = $_SESSION['user_id'];
+$role_type = 'trainer';
+
+$stmt = $conn->prepare("
+    SELECT day_of_week, is_available, start_time, end_time
+    FROM service_provider_weekly_schedule
+    WHERE user_id = ? AND role_type = ?
+    ORDER BY FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
+");
+$stmt->bind_param('is', $user_id, $role_type);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+$existing = [];
+while ($row = $result->fetch_assoc()) {
+    $existing[$row['day_of_week']] = [
+        'day' => $row['day_of_week'],
+        'enabled' => (bool)$row['is_available'],
+        'start' => substr($row['start_time'], 0, 5),
+        'end' => substr($row['end_time'], 0, 5)
+    ];
+}
+
+// Return all days with defaults for missing days
+foreach ($days as $day) {
+    if (isset($existing[$day])) {
+        $weeklySchedule[] = $existing[$day];
+    } else {
+        // Default schedule
+        $weeklySchedule[] = [
+            'day' => $day,
+            'enabled' => in_array($day, ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']),
+            'start' => $day === 'Saturday' ? '10:00' : '09:00',
+            'end' => $day === 'Saturday' ? '16:00' : '18:00'
+        ];
+    }
+}
+
+// Load blocked dates from database
+$unavailableDates = [];
+$stmt = $conn->prepare("
+    SELECT blocked_date, block_type, block_time, reason
+    FROM service_provider_blocked_dates
+    WHERE user_id = ? AND role_type = ?
+    ORDER BY blocked_date ASC
+");
+$stmt->bind_param('is', $user_id, $role_type);
+$stmt->execute();
+$result = $stmt->get_result();
+while ($row = $result->fetch_assoc()) {
+    $unavailableDates[] = [
+        'date' => $row['blocked_date'],
+        'type' => $row['block_type'],
+        'time' => $row['block_time'] ? substr($row['block_time'], 0, 5) : null,
+        'reason' => $row['reason']
+    ];
+}
+
 $pageTitle = "Availability";
 ?>
 
@@ -144,14 +197,22 @@ $pageTitle = "Availability";
                                     <p>No blocked dates yet. Add dates when you're unavailable.</p>
                                 </div>
                             <?php else: ?>
-                                <?php foreach ($unavailableDates as $date): ?>
-                                <div class="blocked-date-item" data-date="<?= $date ?>" data-type="full-day">
+                                <?php foreach ($unavailableDates as $blockedDate): ?>
+                                <?php
+                                    $typeText = '🚫 Full Day Unavailable';
+                                    if ($blockedDate['type'] === 'before') {
+                                        $typeText = '⏰ Available Before ' . date('g:i A', strtotime($blockedDate['time']));
+                                    } elseif ($blockedDate['type'] === 'after') {
+                                        $typeText = '⏰ Available After ' . date('g:i A', strtotime($blockedDate['time']));
+                                    }
+                                ?>
+                                <div class="blocked-date-item" data-date="<?= $blockedDate['date'] ?>" data-type="<?= $blockedDate['type'] ?>" <?= $blockedDate['time'] ? 'data-time="'.$blockedDate['time'].'"' : '' ?>>
                                     <div class="blocked-date-info">
-                                        <span class="blocked-date-value"><?= date('F j, Y', strtotime($date)) ?></span>
-                                        <span class="blocked-date-type">🚫 Full Day Unavailable</span>
-                                        <span class="blocked-date-reason">Personal</span>
+                                        <span class="blocked-date-value"><?= date('F j, Y', strtotime($blockedDate['date'])) ?></span>
+                                        <span class="blocked-date-type"><?= $typeText ?></span>
+                                        <span class="blocked-date-reason"><?= htmlspecialchars($blockedDate['reason'] ?? 'Personal') ?></span>
                                     </div>
-                                    <button class="btn-remove" onclick="removeBlockedDate('<?= $date ?>')">
+                                    <button class="btn-remove" onclick="removeBlockedDate('<?= $blockedDate['date'] ?>')">
                                         <span>✕</span>
                                     </button>
                                 </div>

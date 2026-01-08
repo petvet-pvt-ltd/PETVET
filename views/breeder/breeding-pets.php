@@ -54,7 +54,7 @@ $pageTitle = "Breeding Pets";
                     <?php if (!empty($breedingPets)): ?>
                         <?php foreach ($breedingPets as $pet): ?>
                         <tr data-pet-id="<?php echo $pet['id']; ?>">
-                            <td>
+                            <td data-label="Photo">
                                 <div class="pet-photo">
                                     <?php if (!empty($pet['photo'])): ?>
                                         <img src="<?php echo htmlspecialchars($pet['photo']); ?>" alt="<?php echo htmlspecialchars($pet['name']); ?>">
@@ -65,18 +65,18 @@ $pageTitle = "Breeding Pets";
                                     <?php endif; ?>
                                 </div>
                             </td>
-                            <td>
+                            <td data-label="Name">
                                 <strong><?php echo htmlspecialchars($pet['name']); ?></strong>
                             </td>
-                            <td><?php echo htmlspecialchars($pet['breed']); ?></td>
-                            <td>
+                            <td data-label="Breed"><?php echo htmlspecialchars($pet['breed']); ?></td>
+                            <td data-label="Gender">
                                 <span class="gender-badge gender-<?php echo strtolower($pet['gender']); ?>">
                                     <?php echo htmlspecialchars($pet['gender']); ?>
                                 </span>
                             </td>
-                            <td><?php echo date('M d, Y', strtotime($pet['dob'])); ?></td>
-                            <td><?php echo $pet['age']; ?></td>
-                            <td>
+                            <td data-label="Date of Birth"><?php echo date('M d, Y', strtotime($pet['dob'])); ?></td>
+                            <td data-label="Age"><?php echo $pet['age']; ?></td>
+                            <td data-label="Status">
                                 <label class="toggle-switch">
                                     <input type="checkbox" 
                                            <?php echo $pet['is_active'] ? 'checked' : ''; ?>
@@ -85,7 +85,7 @@ $pageTitle = "Breeding Pets";
                                 </label>
                                 <span class="status-text"><?php echo $pet['is_active'] ? 'Active' : 'Inactive'; ?></span>
                             </td>
-                            <td>
+                            <td data-label="Actions">
                                 <div class="action-buttons">
                                     <button class="btn-icon-action" onclick="showEditPetModal(<?php echo $pet['id']; ?>)" title="Edit">
                                         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -166,7 +166,7 @@ $pageTitle = "Breeding Pets";
 
                         <div class="form-group">
                             <label for="petDob">Date of Birth *</label>
-                            <input type="date" id="petDob" name="dob" class="form-control" required>
+                            <input type="date" id="petDob" name="dob" class="form-control" required max="<?php echo date('Y-m-d'); ?>">
                         </div>
 
                         <div class="form-group full-width">

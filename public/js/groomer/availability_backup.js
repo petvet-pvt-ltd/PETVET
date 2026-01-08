@@ -1,9 +1,9 @@
-// Sitter Availability Management JavaScript
+// Trainer Availability Management JavaScript
 
 // State management
 let weeklySchedule = [];
 let blockedDates = [];
-const ROLE_TYPE = 'sitter'; // Role type for this page
+const ROLE_TYPE = 'trainer'; // Role type for this page
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -142,6 +142,8 @@ function initializeWeeklySchedule() {
                 timeControls.classList.add('disabled');
                 timeInputs.forEach(input => input.disabled = true);
             }
+            
+            renderCalendar(); // Refresh calendar to reflect changes
         });
 
         startTime.addEventListener('change', (e) => {
@@ -317,6 +319,7 @@ function initializeBlockedDatesUI() {
     setupBlockedDatesEventListeners();
 }
 
+function setupBlockedDatesEventListeners() {
 function setupBlockedDatesEventListeners() {
     // Block type selector
     const blockTypeSelect = document.getElementById('blockType');

@@ -1,17 +1,117 @@
-// Sitter Availability Management JavaScript
+// Trainer Availability Management JavaScript
 
 // State management
 let weeklySchedule = [];
 let blockedDates = [];
+const ROLE_TYPE = 'trainer'; // Role type for this page
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    initializeWeeklySchedule();
-    initializeBlockedDates();
+    loadWeeklyScheduleFromAPI();
+    loadBlockedDatesFromAPI();
     setupQuickNav();
 });
 
+// ========== API Functions ==========
+
+async function loadWeeklyScheduleFromAPI() {
+    try {
+        const response = await fetch(`/PETVET/api/service-provider-availability.php?action=get_schedule&role_type=${ROLE_TYPE}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            weeklySchedule = data.schedule;
+            initializeWeeklyScheduleUI();
+        } else {
+            console.error('Failed to load schedule:', data.message);
+            // Fall back to default schedule
+            initializeWeeklySchedule();
+        }
+    } catch (error) {
+        console.error('Error loading schedule:', error);
+        // Fall back to default schedule
+        initializeWeeklySchedule();
+    }
+}
+
+async function loadBlockedDatesFromAPI() {
+    try {
+        const response = await fetch(`/PETVET/api/service-provider-availability.php?action=get_blocked_dates&role_type=${ROLE_TYPE}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            blockedDates = data.blocked_dates;
+            initializeBlockedDatesUI();
+        } else {
+            console.error('Failed to load blocked dates:', data.message);
+            initializeBlockedDates();
+        }
+    } catch (error) {
+        console.error('Error loading blocked dates:', error);
+        initializeBlockedDates();
+    }
+}
+
 // ========== Weekly Schedule Functions ==========
+
+function initializeWeeklyScheduleUI() {
+    // Initialize UI with loaded schedule data
+    const scheduleRows = document.querySelectorAll('.schedule-row');
+    scheduleRows.forEach((row, index) => {
+        const scheduleData = weeklySchedule[index];
+        if (!scheduleData) return;
+        
+        const checkbox = row.querySelector('.day-checkbox');
+        const startTime = row.querySelector('.start-time');
+        const endTime = row.querySelector('.end-time');
+        const timeControls = row.querySelector('.time-controls');
+
+        checkbox.checked = scheduleData.enabled;
+        startTime.value = scheduleData.start;
+        endTime.value = scheduleData.end;
+        
+        if (scheduleData.enabled) {
+            timeControls.classList.remove('disabled');
+            startTime.disabled = false;
+            endTime.disabled = false;
+        } else {
+            timeControls.classList.add('disabled');
+            startTime.disabled = true;
+            endTime.disabled = true;
+        }
+
+        // Event listeners
+        checkbox.addEventListener('change', (e) => {
+            weeklySchedule[index].enabled = e.target.checked;
+            const timeInputs = timeControls.querySelectorAll('.time-input');
+            
+            if (e.target.checked) {
+                timeControls.classList.remove('disabled');
+                timeInputs.forEach(input => input.disabled = false);
+            } else {
+                timeControls.classList.add('disabled');
+                timeInputs.forEach(input => input.disabled = true);
+            }
+        });
+
+        startTime.addEventListener('change', (e) => {
+            weeklySchedule[index].start = e.target.value;
+        });
+
+        endTime.addEventListener('change', (e) => {
+            weeklySchedule[index].end = e.target.value;
+        });
+    });
+
+    // Apply to all days button
+    document.getElementById('applyToAll').addEventListener('click', applyToAllDays);
+
+    // Save schedule button
+    document.getElementById('saveSchedule').addEventListener('click', saveSchedule);
+
+    // Reset schedule button
+    document.getElementById('resetSchedule').addEventListener('click', resetSchedule);
+}
 
 function initializeWeeklySchedule() {
     // Load schedule from DOM
@@ -42,8 +142,6 @@ function initializeWeeklySchedule() {
                 timeControls.classList.add('disabled');
                 timeInputs.forEach(input => input.disabled = true);
             }
-            
-            renderCalendar(); // Refresh calendar to reflect changes
         });
 
         startTime.addEventListener('change', (e) => {
@@ -124,13 +222,26 @@ function saveSchedule() {
         }
     }
 
-    // Here you would send to backend
-    console.log('Saving schedule:', weeklySchedule);
-    
-    // Simulate API call
-    setTimeout(() => {
-        showToast('Weekly schedule saved successfully!', 'success');
-    }, 300);
+    // Send to backend API
+    fetch(`/PETVET/api/service-provider-availability.php?action=save_schedule&role_type=${ROLE_TYPE}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ schedule: weeklySchedule })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Weekly schedule saved successfully!', 'success');
+        } else {
+            showToast('Failed to save schedule: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving schedule:', error);
+        showToast('Error saving schedule. Please try again.', 'error');
+    });
 }
 
 function resetSchedule() {
@@ -185,8 +296,52 @@ function resetSchedule() {
 
 // ========== Blocked Dates Functions ==========
 
+function initializeBlockedDatesUI() {
+    const list = document.getElementById('blockedDatesList');
+    
+    // Clear existing content
+    list.innerHTML = '<h3>Currently Blocked Dates</h3>';
+    
+    if (blockedDates.length === 0) {
+        list.innerHTML += `
+            <div class="empty-state">
+                <p>No blocked dates yet. Add dates when you're unavailable.</p>
+            </div>
+        `;
+    } else {
+        blockedDates.forEach(blockedDate => {
+            addBlockedDateToList(blockedDate);
+        });
+    }
+
+    setupBlockedDatesEventListeners();
+}
+
+function setupBlockedDatesEventListeners() {
+    // Block type selector
+    const blockTypeSelect = document.getElementById('blockType');
+    const timeInputGroup = document.getElementById('timeInputGroup');
+    const timeLabel = document.getElementById('timeLabel');
+
+    blockTypeSelect.addEventListener('change', function() {
+        if (this.value === 'full-day') {
+            timeInputGroup.style.display = 'none';
+        } else {
+            timeInputGroup.style.display = 'block';
+            if (this.value === 'before') {
+                timeLabel.textContent = 'Available Before';
+            } else {
+                timeLabel.textContent = 'Available After';
+            }
+        }
+    });
+
+    // Add blocked date button
+    document.getElementById('addBlockedDate').addEventListener('click', addBlockedDate);
+}
+
 function initializeBlockedDates() {
-    // Load existing blocked dates
+    // Legacy initialization for fallback
     const blockedItems = document.querySelectorAll('.blocked-date-item');
     blockedItems.forEach(item => {
         const date = item.getAttribute('data-date');
@@ -251,21 +406,40 @@ function addBlockedDate() {
         return;
     }
 
-    // Add to blocked dates
-    const blockedDate = { date, type, time, reason };
-    blockedDates.push(blockedDate);
+    // Send to backend API
+    fetch(`/PETVET/api/service-provider-availability.php?action=add_blocked_date&role_type=${ROLE_TYPE}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ date, type, time, reason })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Add to local array
+            const blockedDate = { date, type, time, reason, id: data.id };
+            blockedDates.push(blockedDate);
 
-    // Update UI
-    addBlockedDateToList(blockedDate);
+            // Update UI
+            addBlockedDateToList(blockedDate);
 
-    // Clear inputs
-    dateInput.value = '';
-    reasonInput.value = '';
-    blockTypeSelect.value = 'full-day';
-    timeInput.value = '';
-    document.getElementById('timeInputGroup').style.display = 'none';
+            // Clear inputs
+            dateInput.value = '';
+            reasonInput.value = '';
+            blockTypeSelect.value = 'full-day';
+            timeInput.value = '';
+            document.getElementById('timeInputGroup').style.display = 'none';
 
-    showToast('Date blocked successfully', 'success');
+            showToast('Date blocked successfully', 'success');
+        } else {
+            showToast('Failed to block date: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error blocking date:', error);
+        showToast('Error blocking date. Please try again.', 'error');
+    });
 }
 
 function addBlockedDateToList(blockedDate) {
@@ -328,29 +502,47 @@ function removeBlockedDate(date) {
     const confirmed = confirm('Remove this blocked date?');
     if (!confirmed) return;
 
-    // Remove from arrays
-    blockedDates = blockedDates.filter(b => b.date !== date);
-    unavailableDates.delete(date);
+    // Send to backend API
+    fetch(`/PETVET/api/service-provider-availability.php?action=remove_blocked_date&role_type=${ROLE_TYPE}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ date })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove from arrays
+            blockedDates = blockedDates.filter(b => b.date !== date);
 
-    // Remove from UI
-    const item = document.querySelector(`.blocked-date-item[data-date="${date}"]`);
-    if (item) {
-        item.remove();
-    }
+            // Remove from UI
+            const item = document.querySelector(`.blocked-date-item[data-date="${date}"]`);
+            if (item) {
+                item.remove();
+            }
 
-    // Check if list is empty
-    const list = document.getElementById('blockedDatesList');
-    const items = list.querySelectorAll('.blocked-date-item');
-    if (items.length === 0) {
-        list.innerHTML = `
-            <h3>Currently Blocked Dates</h3>
-            <div class="empty-state">
-                <p>No blocked dates yet. Add dates when you're unavailable.</p>
-            </div>
-        `;
-    }
+            // Check if list is empty
+            const list = document.getElementById('blockedDatesList');
+            const items = list.querySelectorAll('.blocked-date-item');
+            if (items.length === 0) {
+                list.innerHTML = `
+                    <h3>Currently Blocked Dates</h3>
+                    <div class="empty-state">
+                        <p>No blocked dates yet. Add dates when you're unavailable.</p>
+                    </div>
+                `;
+            }
 
-    showToast('Blocked date removed', 'success');
+            showToast('Blocked date removed', 'success');
+        } else {
+            showToast('Failed to remove blocked date: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error removing blocked date:', error);
+        showToast('Error removing blocked date. Please try again.', 'error');
+    });
 }
 
 // ========== Quick Navigation ==========

@@ -69,47 +69,93 @@ function savePet() {
         return;
     }
     
+    // Validate date of birth is not in the future
+    const dob = document.getElementById('petDob').value;
+    if (dob) {
+        const dobDate = new Date(dob);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (dobDate > today) {
+            alert('Date of birth cannot be in the future');
+            return;
+        }
+    }
+    
     // Collect form data
     const formData = new FormData(form);
-    const petData = {
-        id: document.getElementById('petId').value,
-        name: document.getElementById('petName').value,
-        breed: document.getElementById('petBreed').value,
-        gender: document.getElementById('petGender').value,
-        dob: document.getElementById('petDob').value,
-        description: document.getElementById('petDescription').value,
-        is_active: document.getElementById('petActive').checked
-    };
+    formData.append('action', editingPetId ? 'update' : 'add');
     
-    // Here you would make an API call to save the pet
-    console.log(editingPetId ? 'Updating pet:' : 'Adding new pet:', petData);
-    
-    // Show success message
-    alert(editingPetId ? 'Pet updated successfully!' : 'Pet added successfully!');
-    
-    // Close modal
-    closePetModal();
-    
-    // Refresh page or update UI
-    location.reload();
+    // Make API call to save the pet
+    fetch('/PETVET/api/breeder/manage-breeding-pets.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        // Check if response is ok
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(`Server error (${response.status}): ${text}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            closePetModal();
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while saving the pet: ' + error.message);
+    });
 }
 
 // Toggle Pet Status
 function togglePetStatus(petId, isActive) {
-    // Here you would make an API call to update the pet status
-    console.log('Toggling pet status:', { petId, isActive });
+    // Make API call to update the pet status
+    const formData = new FormData();
+    formData.append('action', 'toggle_status');
+    formData.append('pet_id', petId);
+    formData.append('is_active', isActive ? 1 : 0);
     
-    // Update status text
-    const row = document.querySelector(`tr[data-pet-id="${petId}"]`);
-    if (row) {
-        const statusText = row.querySelector('.status-text');
-        if (statusText) {
-            statusText.textContent = isActive ? 'Active' : 'Inactive';
+    fetch('/PETVET/api/breeder/manage-breeding-pets.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update status text
+            const row = document.querySelector(`tr[data-pet-id="${petId}"]`);
+            if (row) {
+                const statusText = row.querySelector('.status-text');
+                if (statusText) {
+                    statusText.textContent = isActive ? 'Active' : 'Inactive';
+                }
+            }
+            showToast(data.message);
+        } else {
+            alert('Error: ' + data.message);
+            // Revert checkbox
+            const checkbox = document.querySelector(`tr[data-pet-id="${petId}"] input[type="checkbox"]`);
+            if (checkbox) {
+                checkbox.checked = !isActive;
+            }
         }
-    }
-    
-    // Show toast notification
-    showToast(`Pet ${isActive ? 'activated' : 'deactivated'} successfully`);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while updating the pet status');
+        // Revert checkbox
+        const checkbox = document.querySelector(`tr[data-pet-id="${petId}"] input[type="checkbox"]`);
+        if (checkbox) {
+            checkbox.checked = !isActive;
+        }
+    });
 }
 
 // Show Delete Confirmation
@@ -130,17 +176,29 @@ function closeDeleteModal() {
 function confirmDelete() {
     const petId = document.getElementById('deletePetId').value;
     
-    // Here you would make an API call to delete the pet
-    console.log('Deleting pet:', petId);
+    // Make API call to delete the pet
+    const formData = new FormData();
+    formData.append('action', 'delete');
+    formData.append('pet_id', petId);
     
-    // Show success message
-    alert('Pet deleted successfully!');
-    
-    // Close modal
-    closeDeleteModal();
-    
-    // Refresh page or update UI
-    location.reload();
+    fetch('/PETVET/api/breeder/manage-breeding-pets.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            closeDeleteModal();
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while deleting the pet');
+    });
 }
 
 // Show Toast Notification

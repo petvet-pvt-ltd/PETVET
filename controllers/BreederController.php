@@ -8,7 +8,7 @@ class BreederController extends BaseController {
 
     public function dashboard() {
         $model = new BreederDashboardModel();
-        $breederId = 1; // Mock breeder ID
+        $breederId = $_SESSION['user_id'] ?? 1;
         
         $data = [
             'stats' => $model->getStats($breederId),
@@ -20,7 +20,7 @@ class BreederController extends BaseController {
 
     public function requests() {
         $model = new BreederDashboardModel();
-        $breederId = 1; // Mock breeder ID
+        $breederId = $_SESSION['user_id'] ?? 1;
         
         $data = [
             'pendingRequests' => $model->getPendingRequests($breederId),
@@ -33,7 +33,7 @@ class BreederController extends BaseController {
 
     public function breedingPets() {
         $model = new BreederPetsModel();
-        $breederId = 1; // Mock breeder ID
+        $breederId = $_SESSION['user_id'] ?? 1;
         
         $data = [
             'breedingPets' => $model->getBreedingPets($breederId)
