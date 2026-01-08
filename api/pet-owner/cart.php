@@ -38,6 +38,12 @@ if ($method === 'GET') {
     }
 
     try {
+        // Get clinic name and settings
+        $clinicStmt = $db->prepare("SELECT clinic_name FROM clinics WHERE id = ?");
+        $clinicStmt->execute([$clinicId]);
+        $clinic = $clinicStmt->fetch();
+        $clinicName = $clinic ? $clinic['clinic_name'] : 'PetVet Shop';
+        
         // Get clinic's max items per order setting
         $settingsStmt = $db->prepare("SELECT max_items_per_order FROM clinic_shop_settings WHERE clinic_id = ?");
         $settingsStmt->execute([$clinicId]);
@@ -55,7 +61,8 @@ if ($method === 'GET') {
                 'items' => [], 
                 'total' => 0, 
                 'totalQuantity' => 0,
-                'maxItemsPerOrder' => $maxItemsPerOrder
+                'maxItemsPerOrder' => $maxItemsPerOrder,
+                'clinic_name' => $clinicName
             ]);
             exit;
         }
@@ -119,7 +126,8 @@ if ($method === 'GET') {
             'items' => $validItems, 
             'total' => $total,
             'totalQuantity' => $totalQuantity,
-            'maxItemsPerOrder' => $maxItemsPerOrder
+            'maxItemsPerOrder' => $maxItemsPerOrder,
+            'clinic_name' => $clinicName
         ]);
 
     } catch (Exception $e) {
