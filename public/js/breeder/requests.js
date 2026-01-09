@@ -44,27 +44,33 @@ function closeAcceptModal() {
 }
 
 function loadBreedingPets() {
-    // This would normally fetch from server
-    // For now, using mock data
-    const select = document.getElementById('selectBreedingPet');
-    select.innerHTML = '<option value="">Choose a pet...</option>';
-    
-    // Mock breeding pets - replace with actual API call
-    const mockPets = [
-        { id: 1, name: 'Max', breed: 'Golden Retriever' },
-        { id: 2, name: 'Daisy', breed: 'Golden Retriever' },
-        { id: 3, name: 'Duke', breed: 'German Shepherd' },
-        { id: 4, name: 'Bella', breed: 'Labrador Retriever' },
-        { id: 5, name: 'Rex', breed: 'Golden Retriever' },
-        { id: 6, name: 'Molly', breed: 'Labrador Retriever' }
-    ];
-    
-    mockPets.forEach(pet => {
-        const option = document.createElement('option');
-        option.value = pet.id;
-        option.textContent = `${pet.name} (${pet.breed})`;
-        select.appendChild(option);
-    });
+    // Fetch breeding pets from server
+    fetch('/PETVET/api/breeder/manage-requests.php?action=get_active_pets')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const select = document.getElementById('selectBreedingPet');
+                select.innerHTML = '<option value="">Choose a pet...</option>';
+                
+                if (data.pets && data.pets.length > 0) {
+                    data.pets.forEach(pet => {
+                        const option = document.createElement('option');
+                        option.value = pet.id;
+                        option.textContent = `${pet.name} (${pet.breed})`;
+                        select.appendChild(option);
+                    });
+                } else {
+                    select.innerHTML = '<option value="">No active breeding pets available</option>';
+                }
+            } else {
+                console.error('Failed to load breeding pets:', data.message);
+                alert('Failed to load breeding pets. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading breeding pets:', error);
+            alert('Error loading breeding pets: ' + error.message);
+        });
 }
 
 function confirmAcceptRequest() {
@@ -75,20 +81,30 @@ function confirmAcceptRequest() {
         return;
     }
     
-    // Here you would make an API call to accept the request
-    console.log('Accepting request:', {
-        requestId: currentRequestId,
-        breedingPetId
+    // Make API call to accept the request
+    const formData = new FormData();
+    formData.append('action', 'accept');
+    formData.append('request_id', currentRequestId);
+    formData.append('breeder_pet_id', breedingPetId);
+    
+    fetch('/PETVET/api/breeder/manage-requests.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            closeAcceptModal();
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while accepting the request');
     });
-    
-    // Show success message
-    alert('Request accepted successfully!');
-    
-    // Close modal
-    closeAcceptModal();
-    
-    // Refresh page or update UI
-    location.reload();
 }
 
 // Show Decline Request Modal
@@ -108,20 +124,30 @@ function closeDeclineModal() {
 function confirmDeclineRequest() {
     const reason = document.getElementById('declineReason').value;
     
-    // Here you would make an API call to decline the request
-    console.log('Declining request:', {
-        requestId: currentRequestId,
-        reason
+    // Make API call to decline the request
+    const formData = new FormData();
+    formData.append('action', 'decline');
+    formData.append('request_id', currentRequestId);
+    formData.append('reason', reason);
+    
+    fetch('/PETVET/api/breeder/manage-requests.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            closeDeclineModal();
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while declining the request');
     });
-    
-    // Show success message
-    alert('Request declined successfully!');
-    
-    // Close modal
-    closeDeclineModal();
-    
-    // Refresh page or update UI
-    location.reload();
 }
 
 // Show Mark Complete Modal
@@ -141,20 +167,30 @@ function closeCompleteModal() {
 function confirmCompleteRequest() {
     const notes = document.getElementById('completeNotes').value;
     
-    // Here you would make an API call to mark as complete
-    console.log('Marking request as complete:', {
-        requestId: currentRequestId,
-        notes
+    // Make API call to mark as complete
+    const formData = new FormData();
+    formData.append('action', 'complete');
+    formData.append('request_id', currentRequestId);
+    formData.append('final_notes', notes);
+    
+    fetch('/PETVET/api/breeder/manage-requests.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            closeCompleteModal();
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while completing the request');
     });
-    
-    // Show success message
-    alert('Breeding marked as complete successfully!');
-    
-    // Close modal
-    closeCompleteModal();
-    
-    // Refresh page or update UI
-    location.reload();
 }
 
 // Contact Owner Modal

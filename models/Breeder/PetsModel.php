@@ -1,7 +1,15 @@
 <?php
 require_once __DIR__ . '/../BaseModel.php';
+require_once __DIR__ . '/../../config/connect.php';
 
 class BreederPetsModel extends BaseModel {
+    protected $conn;
+    
+    public function __construct() {
+        parent::__construct();
+        global $conn;
+        $this->conn = $conn;
+    }
     
     public function getAllPets($breederId) {
         return array_merge($this->getAvailablePets($breederId), [
@@ -69,73 +77,26 @@ class BreederPetsModel extends BaseModel {
     }
 
     public function getBreedingPets($breederId) {
-        return [
-            [
-                'id' => 1,
-                'name' => 'Max',
-                'breed' => 'Golden Retriever',
-                'gender' => 'Male',
-                'dob' => '2021-05-15',
-                'age' => '4 years',
-                'photo' => 'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=300&h=300&fit=crop',
-                'is_active' => true,
-                'description' => 'Champion bloodline Golden Retriever with excellent temperament'
-            ],
-            [
-                'id' => 2,
-                'name' => 'Daisy',
-                'breed' => 'Golden Retriever',
-                'gender' => 'Female',
-                'dob' => '2020-08-20',
-                'age' => '5 years',
-                'photo' => 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=300&h=300&fit=crop',
-                'is_active' => true,
-                'description' => 'Award-winning female with multiple championships'
-            ],
-            [
-                'id' => 3,
-                'name' => 'Duke',
-                'breed' => 'German Shepherd',
-                'gender' => 'Male',
-                'dob' => '2021-03-10',
-                'age' => '4 years',
-                'photo' => 'https://images.unsplash.com/photo-1568572933382-74d440642117?w=300&h=300&fit=crop',
-                'is_active' => true,
-                'description' => 'Working line German Shepherd with strong protective instincts'
-            ],
-            [
-                'id' => 4,
-                'name' => 'Bella',
-                'breed' => 'Labrador Retriever',
-                'gender' => 'Female',
-                'dob' => '2022-01-25',
-                'age' => '2 years',
-                'photo' => 'https://images.unsplash.com/photo-1510771463146-e89e6e86560e?w=300&h=300&fit=crop',
-                'is_active' => true,
-                'description' => 'Friendly and energetic Labrador, excellent with families'
-            ],
-            [
-                'id' => 5,
-                'name' => 'Rex',
-                'breed' => 'Golden Retriever',
-                'gender' => 'Male',
-                'dob' => '2020-11-05',
-                'age' => '4 years',
-                'photo' => 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=300&h=300&fit=crop',
-                'is_active' => true,
-                'description' => 'Show quality Golden Retriever with perfect conformation'
-            ],
-            [
-                'id' => 6,
-                'name' => 'Molly',
-                'breed' => 'Labrador Retriever',
-                'gender' => 'Female',
-                'dob' => '2021-07-12',
-                'age' => '4 years',
-                'photo' => 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=300&h=300&fit=crop',
-                'is_active' => false,
-                'description' => 'Currently unavailable for breeding - health checkup'
-            ]
-        ];
+        $stmt = $this->conn->prepare("
+            SELECT id, name, breed, gender, date_of_birth as dob, 
+                   photo, description, is_active,
+                   TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) as age_years
+            FROM breeder_pets
+            WHERE breeder_id = ?
+            ORDER BY created_at DESC
+        ");
+        $stmt->bind_param("i", $breederId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $pets = [];
+        while ($row = $result->fetch_assoc()) {
+            $row['is_active'] = (bool)$row['is_active'];
+            $row['age'] = $row['age_years'] . ' ' . ($row['age_years'] == 1 ? 'year' : 'years');
+            unset($row['age_years']);
+            $pets[] = $row;
+        }
+        
+        return $pets;
     }
 }
