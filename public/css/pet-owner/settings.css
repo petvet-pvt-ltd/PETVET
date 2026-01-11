@@ -51,7 +51,7 @@ body{margin:0; background:var(--bg); color:var(--text); line-height:1.55; width:
 .row.two{grid-template-columns:1fr 1fr}
 @media (max-width:640px){.row.two{grid-template-columns:1fr}}
 label{display:flex; flex-direction:column; gap:8px; font-weight:600; font-size:14px}
-input[type=text],input[type=email],input[type=tel],input[type=password],select,textarea{padding:12px 14px; border:1px solid var(--border); border-radius:12px; background:var(--card); color:var(--text); outline:none; transition:var(--transition); box-shadow:0 1px 0 rgba(0,0,0,.02)}
+input[type=text],input[type=email],input[type=tel],input[type=password],input[type=number],input[type=url],select,textarea{padding:12px 14px; border:1px solid var(--border); border-radius:12px; background:var(--card); color:var(--text); outline:none; transition:var(--transition); box-shadow:0 1px 0 rgba(0,0,0,.02)}
 input:focus,select:focus,textarea:focus{border-color:var(--primary); box-shadow:0 0 0 4px var(--ring)}
 textarea{resize:vertical; min-height:96px}
 .actions{display:flex; gap:10px; justify-content:flex-end; margin-top:var(--space-3)}
@@ -61,7 +61,7 @@ textarea{resize:vertical; min-height:96px}
 .pref-simplified{display:flex; flex-direction:column; gap:22px; margin-bottom:10px}
 .pref-row{display:flex; flex-direction:column; gap:10px; background:var(--bg-soft); padding:18px 20px; border:1px solid var(--border); border-radius:16px; position:relative}
 .pref-row:hover{border-color:var(--primary); box-shadow:0 0 0 4px var(--ring)}
-.toggle{display:flex; align-items:center; gap:16px; cursor:pointer; font-weight:600}
+.toggle{display:flex; flex-direction:row; align-items:center; gap:16px; cursor:pointer; font-weight:600}
 .toggle input{position:absolute; opacity:0; pointer-events:none}
 .toggle-track{--w:56px; --h:30px; position:relative; width:var(--w); height:var(--h); background:#e2e8f0; border:1px solid var(--border-strong); border-radius:var(--h); transition:var(--transition); flex-shrink:0; box-shadow:inset 0 0 0 2px rgba(255,255,255,.4)}
 .toggle-handle{position:absolute; top:3px; left:3px; width:24px; height:24px; background:#fff; border-radius:50%; box-shadow:0 4px 10px rgba(0,0,0,.18); transition:var(--transition)}

@@ -47,7 +47,7 @@ $GLOBALS['module'] = 'groomer';
 <?php 
 $services = explode(',', $package['included_services']);
 foreach ($services as $service): ?>
-<li>✓ <?php echo trim(htmlspecialchars($service)); ?></li>
+<li><?php echo trim(htmlspecialchars($service)); ?></li>
 <?php endforeach; ?>
 </ul>
 </div>
@@ -115,17 +115,23 @@ foreach ($services as $service): ?>
 <textarea id="packageDescription" name="description" rows="2" placeholder="Describe your package..."></textarea>
 </div>
 <div class="form-group">
-<label for="includedServices">Included Services *</label>
-<textarea id="includedServices" name="included_services" rows="3" required placeholder="List services separated by commas&#10;e.g., Bath & Brush, Full Grooming, Nail Trim"></textarea>
+<label>Included Services *</label>
+<div id="serviceSelector" class="service-selector">
+<div class="service-selector-loading">Loading your services...</div>
+</div>
+<input type="hidden" id="includedServices" name="included_services" required>
+<p class="form-hint">Select at least one service to include in this package</p>
 </div>
 <div class="form-row">
 <div class="form-group">
 <label for="originalPrice">Regular Price (LKR) *</label>
-<input type="number" id="originalPrice" name="original_price" step="0.01" min="0" required placeholder="0.00">
+<input type="number" id="originalPrice" name="original_price" step="0.01" min="0" required placeholder="0.00" readonly>
+<p class="form-hint">Auto-calculated from selected services</p>
 </div>
 <div class="form-group">
 <label for="discountedPrice">Package Price (LKR) *</label>
 <input type="number" id="discountedPrice" name="discounted_price" step="0.01" min="0" required placeholder="0.00">
+<p class="form-hint">Set your discounted package price</p>
 </div>
 </div>
 <div class="discount-preview">

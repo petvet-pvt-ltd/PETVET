@@ -120,24 +120,22 @@ try {
     ");
     $stmt->execute([$newUserId, $receptionistRoleId]);
     
-    // Add to clinic_staff table
-    $fullName = $data['first_name'] . ' ' . $data['last_name'];
+    // Add to clinic_staff table (only store link - clinic_id and user_id)
+    // Don't duplicate name, email, phone - those come from users table
     $stmt = $pdo->prepare("
         INSERT INTO clinic_staff (user_id, clinic_id, name, role, email, phone, status) 
-        VALUES (?, ?, ?, 'Receptionist', ?, ?, 'Active')
+        VALUES (?, ?, '', 'Receptionist', '', '', 'Active')
     ");
     $stmt->execute([
         $newUserId,
-        $clinicId,
-        $fullName,
-        $data['email'],
-        $data['phone']
+        $clinicId
     ]);
     
     // Commit transaction
     $pdo->commit();
     
     // Return success with receptionist data
+    $fullName = $data['first_name'] . ' ' . $data['last_name'];
     echo json_encode([
         'success' => true,
         'message' => 'Receptionist account created successfully',

@@ -15,16 +15,23 @@ class ClinicManagerController extends BaseController {
         $model = new OverviewModel();
         $overviewData = $model->fetchOverviewData();
         
+        // Get clinic_id for logged-in clinic manager
+        $userId = $_SESSION['user_id'] ?? 0;
+        $pdo = db();
+        $stmt = $pdo->prepare("SELECT clinic_id FROM clinic_manager_profiles WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        $clinicId = $stmt->fetchColumn() ?: 1;
+        
         // Get all staff members for the edit modal
         $staffModel = new StaffModel();
-        $allStaff = $staffModel->all();
+        $allStaff = $staffModel->all($clinicId);
         
         $data = [
             'kpis' => $overviewData['kpis'],
             'appointments' => $overviewData['appointments'],
             'ongoingAppointments' => $overviewData['ongoingAppointments'] ?? [],
             'staff' => $overviewData['staff'],
-            'allStaff' => $allStaff, // All staff for the edit modal
+            'allStaff' => $allStaff,
             'badgeClasses' => $overviewData['badgeClasses']
         ];
         $this->view('clinic_manager', 'overview', $data);

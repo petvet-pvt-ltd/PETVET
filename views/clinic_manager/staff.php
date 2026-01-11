@@ -20,6 +20,19 @@ $total_staff = count($staff);
 <link rel="stylesheet" href="/PETVET/public/css/clinic-manager/vets.css">
 <link rel="stylesheet" href="/PETVET/public/css/clinic-manager/staff.css">
 <style>
+  .cell-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .avatar-sm {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
   .role-badge {
     display: inline-block;
     background: var(--blue-100);
@@ -97,21 +110,24 @@ $total_staff = count($staff);
   <thead><tr><th>Name</th><th>Role</th><th>Contact</th><th class="col-actions">Actions</th></tr></thead>
         <tbody>
         <?php if($filtered): foreach($filtered as $s): 
-          // Check if this is a receptionist with system access (has user_id)
-          $hasSystemAccess = !empty($s['user_id']) && strtolower($s['role']) === 'receptionist';
+          // Check if this is a receptionist from user_roles (has source field)
+          $isReceptionist = ($s['source'] ?? 'clinic_staff') === 'user_roles';
         ?>
-          <tr data-staff-id="<?= $s['id'] ?>">
+          <tr data-staff-id="<?= $s['id'] ?>" data-source="<?= $s['source'] ?? 'clinic_staff' ?>">
             <td>
-              <span class="link"><?= htmlspecialchars($s['name']) ?></span>
-              <?php if($hasSystemAccess): ?>
-                <span style="display:inline-block;margin-left:8px;background:#10b981;color:white;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">SYSTEM ACCESS</span>
-              <?php endif; ?>
+              <div class="cell-user">
+                <img class="avatar-sm" src="<?= htmlspecialchars($s['photo'] ?? '/PETVET/public/images/emptyProfPic.png') ?>" alt="<?= htmlspecialchars($s['name']) ?>">
+                <span class="link"><?= htmlspecialchars($s['name']) ?></span>
+                <?php if($isReceptionist): ?>
+                  <span style="display:inline-block;margin-left:8px;background:#10b981;color:white;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">SYSTEM ACCESS</span>
+                <?php endif; ?>
+              </div>
             </td>
             <td><?= htmlspecialchars($s['role']) ?></td>
             <td><div><?= htmlspecialchars($s['phone']) ?></div><div class="muted"><?= htmlspecialchars($s['email']) ?></div></td>
             <td>
               <div class="row-actions">
-                <?php if(!$hasSystemAccess): ?>
+                <?php if(!$isReceptionist): ?>
                   <button class="action-btn staff-edit" 
                           data-id="<?= $s['id'] ?>" 
                           data-name="<?= htmlspecialchars($s['name']) ?>" 
@@ -129,8 +145,8 @@ $total_staff = count($staff);
                 <button class="action-btn staff-delete" 
                         data-id="<?= $s['id'] ?>" 
                         data-name="<?= htmlspecialchars($s['name']) ?>"
-                        data-has-system-access="<?= $hasSystemAccess ? '1' : '0' ?>"
-                        title="<?= $hasSystemAccess ? 'Remove from clinic' : 'Delete' ?>">🗑️</button>
+                        data-source="<?= $s['source'] ?? 'clinic_staff' ?>"
+                        title="<?= $isReceptionist ? 'Delete receptionist account' : 'Delete' ?>">🗑️</button>
               </div>
             </td>
           </tr>
@@ -504,10 +520,11 @@ function bindEditButtons() {
 // ============================================
 // DELETE STAFF MEMBER
 // ============================================
-async function deleteStaff(id, name, hasSystemAccess) {
-  const action = hasSystemAccess ? 'remove from the clinic' : 'delete';
-  const message = hasSystemAccess 
-    ? `Remove ${name} from this clinic?\n\nNote: This will only remove them from your clinic staff list. Their system account and profile will remain active.`
+async function deleteStaff(id, name, source) {
+  const isReceptionist = source === 'user_roles';
+  const action = isReceptionist ? 'delete this receptionist account' : 'delete';
+  const message = isReceptionist 
+    ? `PERMANENTLY DELETE ${name}'s account?\n\nWARNING: This will:\n- Delete their user account\n- Prevent them from logging in\n- Remove all their data\n\nThis action CANNOT be undone!`
     : `Delete ${name}? This cannot be undone.`;
     
   if (!confirm(message)) {
@@ -515,15 +532,22 @@ async function deleteStaff(id, name, hasSystemAccess) {
   }
   
   try {
-    const response = await fetch(`/PETVET/api/clinic-manager/staff.php?id=${id}`, {
-      method: 'DELETE'
+    const response = await fetch(`/PETVET/api/clinic-manager/staff.php`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id: id,
+        source: source
+      })
     });
     
     const result = await response.json();
     
     if (result.success) {
-      const successMsg = hasSystemAccess 
-        ? 'Staff member removed from clinic successfully!' 
+      const successMsg = isReceptionist 
+        ? 'Receptionist account permanently deleted!' 
         : 'Staff member deleted successfully!';
       alert(successMsg);
       
@@ -547,8 +571,8 @@ function bindDeleteButtons() {
     btn.onclick = () => {
       const id = btn.dataset.id;
       const name = btn.dataset.name || 'this staff member';
-      const hasSystemAccess = btn.dataset.hasSystemAccess === '1';
-      deleteStaff(id, name, hasSystemAccess);
+      const source = btn.dataset.source || 'clinic_staff';
+      deleteStaff(id, name, source);
     };
   });
 }

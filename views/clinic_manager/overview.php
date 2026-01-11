@@ -134,8 +134,16 @@ $today = date('l, F j, Y');
         <button class="modal-close" onclick="closeEditStaffModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="modal-note">Select staff members working today and assign their shift times. (Veterinarians managed separately)</p>
+        <p class="modal-note">Select staff members working today and assign their shift times. At least 1 receptionist is required.</p>
         
+        <!-- Receptionists -->
+        <div class="staff-section">
+          <h3>Receptionists <span style="color: #ef4444;">*</span></h3>
+          <div id="receptionists-list" class="editable-staff-list">
+            <!-- Dynamic content will be loaded here -->
+          </div>
+        </div>
+
         <!-- Veterinary Assistants -->
         <div class="staff-section">
           <h3>Veterinary Assistants</h3>
@@ -167,7 +175,6 @@ $today = date('l, F j, Y');
     </div>
   </div>
 
-  <!-- Debug Info (Remove in production) -->
   <?php if (!empty($allStaff)): ?>
     <!-- All Staff Count: <?php echo count($allStaff); ?> -->
   <?php else: ?>
@@ -175,16 +182,11 @@ $today = date('l, F j, Y');
   <?php endif; ?>
 
   <script>
-    // All staff from database
     const allStaffMembers = <?php echo json_encode($allStaff ?? []); ?>;
-    
-    // Current staff on duty today (structured by role)
     const currentDutyStaff = <?php echo json_encode($staff ?? []); ?>;
-    
 
-    
-    // Map role names to category keys
     const roleMapping = {
+      'Receptionist': 'receptionists',
       'Veterinary Assistant': 'assistants',
       'Front Desk': 'frontdesk',
       'Support Staff': 'support'
@@ -200,25 +202,22 @@ $today = date('l, F j, Y');
     }
 
     function loadStaffMembers() {
-      // Group all staff by role
       const staffByRole = {
+        'receptionists': [],
         'assistants': [],
         'frontdesk': [],
         'support': []
       };
       
-      // Get current duty staff IDs and their times
       const onDutyMap = new Map();
       Object.keys(currentDutyStaff).forEach(roleKey => {
         const staffList = currentDutyStaff[roleKey];
-        // Convert to array if it's an object (handles both array and object formats)
         const staffArray = Array.isArray(staffList) ? staffList : Object.values(staffList);
         staffArray.forEach(staff => {
           onDutyMap.set(staff.name, staff.time || '08:00 – 16:00');
         });
       });
       
-      // Group all staff members by their role
       allStaffMembers.forEach(member => {
         const category = roleMapping[member.role];
         if (category && member.status === 'Active') {
@@ -234,8 +233,7 @@ $today = date('l, F j, Y');
         }
       });
       
-      // Render each category
-      ['assistants', 'frontdesk', 'support'].forEach(category => {
+      ['receptionists', 'assistants', 'frontdesk', 'support'].forEach(category => {
         const container = document.getElementById(`${category}-list`);
         container.innerHTML = '';
         
@@ -274,7 +272,6 @@ $today = date('l, F j, Y');
                ${member.checked ? '' : 'disabled'}>
       `;
       
-      // Add event listener to enable/disable time input based on checkbox
       const checkbox = div.querySelector('.staff-checkbox');
       const timeInput = div.querySelector('.staff-time-input');
       checkbox.addEventListener('change', function() {
@@ -288,7 +285,6 @@ $today = date('l, F j, Y');
     }
 
     function saveStaffChanges() {
-      // Collect selected staff members and their times
       const selectedStaff = [];
       document.querySelectorAll('.staff-checkbox:checked').forEach(checkbox => {
         const id = checkbox.dataset.id;
@@ -305,33 +301,50 @@ $today = date('l, F j, Y');
         });
       });
 
-      // In a real application, send this data to the server
-      console.log('Saving today\'s staff schedule:', selectedStaff);
-      
-      // Send to server via AJAX (uncomment in production)
-      /*
-      fetch('/PETVET/clinic-manager/save-duty-staff', {
+      // Check if at least one receptionist is selected
+      const receptionistCount = selectedStaff.filter(s => s.role === 'Receptionist').length;
+      if (receptionistCount === 0) {
+        alert('At least 1 receptionist must be on duty!');
+        return;
+      }
+
+      if (selectedStaff.length === 0) {
+        alert('Please select at least one staff member');
+        return;
+      }
+
+      // Save to database
+      fetch('/PETVET/api/clinic-manager/save-duty-staff.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ staff: selectedStaff, date: '<?php echo date('Y-m-d'); ?>' })
+        body: JSON.stringify({ 
+          staff: selectedStaff, 
+          date: '<?php echo date('Y-m-d'); ?>' 
+        })
       })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(err => {
+            throw new Error(err.message || 'Server error');
+          });
+        }
+        return response.json();
+      })
       .then(data => {
         if (data.success) {
-          alert('Staff schedule updated successfully!');
+          alert('Staff schedule saved successfully! (' + data.count + ' staff members on duty)');
+          closeEditStaffModal();
           location.reload();
+        } else {
+          alert('Error: ' + (data.message || 'Failed to save staff schedule'));
         }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred: ' + error.message);
       });
-      */
-      
-      alert('Staff schedule saved! (' + selectedStaff.length + ' staff members on duty)\n\nNote: This is demo mode. In production, this would save to the database.');
-      closeEditStaffModal();
-      
-      // Reload to show updated staff
-      // location.reload();
     }
 
-    // Close modal when clicking outside
     window.onclick = function(event) {
       const modal = document.getElementById('editStaffModal');
       if (event.target === modal) {
@@ -406,16 +419,6 @@ $today = date('l, F j, Y');
       padding: 24px;
       overflow-y: auto;
       flex: 1;
-    }
-
-    .modal-note {
-      background: #fef3c7;
-      border-left: 4px solid #f59e0b;
-      padding: 12px 16px;
-      margin-bottom: 24px;
-      border-radius: 6px;
-      color: #92400e;
-      font-size: 0.9rem;
     }
 
     .modal-note {
@@ -522,21 +525,6 @@ $today = date('l, F j, Y');
       font-style: italic;
       text-align: center;
       padding: 20px;
-    }
-
-    .btn-remove {
-      background: #fee2e2;
-      border: none;
-      color: #dc2626;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 1.2rem;
-      transition: all 0.2s;
-    }
-
-    .btn-remove:hover {
-      background: #fecaca;
     }
 
     .modal-footer {

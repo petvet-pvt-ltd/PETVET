@@ -234,14 +234,10 @@ function handlePut($staffModel, $clinicId) {
  */
 function handleDelete($staffModel, $clinicId) {
     // Parse DELETE request - ID can come from query string or request body
-    $id = null;
+    $data = json_decode(file_get_contents('php://input'), true);
     
-    if (isset($_GET['id'])) {
-        $id = (int)$_GET['id'];
-    } else {
-        $data = json_decode(file_get_contents('php://input'), true);
-        $id = isset($data['id']) ? (int)$data['id'] : null;
-    }
+    $id = isset($data['id']) ? (int)$data['id'] : null;
+    $source = $data['source'] ?? 'clinic_staff'; // 'clinic_staff' or 'user_roles'
     
     if (!$id) {
         http_response_code(400);
@@ -249,65 +245,45 @@ function handleDelete($staffModel, $clinicId) {
         return;
     }
     
-    // Check if staff exists
-    $existing = $staffModel->findById($id, $clinicId);
-    if (!$existing) {
-        http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'Staff member not found']);
-        return;
-    }
+    $pdo = db();
     
-    // Check if this is a receptionist with system access (has user_id)
-    // Also check if user exists by email in case clinic_staff record was already deleted
-    $hasSystemAccess = !empty($existing['user_id']) && strtolower($existing['role']) === 'receptionist';
-    
-    // If no user_id but it's a receptionist, try to find user by email
-    if (!$hasSystemAccess && strtolower($existing['role']) === 'receptionist' && !empty($existing['email'])) {
-        $pdo = db();
-        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-        $stmt->execute([$existing['email']]);
-        $userId = $stmt->fetchColumn();
-        if ($userId) {
-            $existing['user_id'] = $userId;
-            $hasSystemAccess = true;
-        }
-    }
-    
-    if ($hasSystemAccess) {
-        // For receptionists with system access:
-        // 1. Deactivate their user account
-        // 2. Remove receptionist role
-        // 3. Remove from clinic_staff
-        
-        $pdo = db();
-        
-        try {
+    try {
+        if ($source === 'user_roles') {
+            // This is a receptionist from user_roles - delete from users table completely
+            // First, get the user_id from clinic_staff using the clinic_staff id
+            $stmt = $pdo->prepare("SELECT user_id FROM clinic_staff WHERE id = ? AND clinic_id = ?");
+            $stmt->execute([$id, $clinicId]);
+            $userId = $stmt->fetchColumn();
+            
+            if (!$userId) {
+                throw new Exception('Receptionist not found in clinic staff');
+            }
+            
             $pdo->beginTransaction();
             
-            // Permanently delete receptionist account and all related data
-            
-            // 1. Delete from user_roles
-            $stmt = $pdo->prepare("DELETE FROM user_roles WHERE user_id = ?");
-            $stmt->execute([$existing['user_id']]);
+            // 1. Delete from clinic_staff (the link record)
+            $stmt = $pdo->prepare("DELETE FROM clinic_staff WHERE id = ? AND clinic_id = ?");
+            $stmt->execute([$id, $clinicId]);
             
             // 2. Delete from favorite_clinics (if exists)
             $stmt = $pdo->prepare("DELETE FROM favorite_clinics WHERE user_id = ?");
-            $stmt->execute([$existing['user_id']]);
+            $stmt->execute([$userId]);
             
             // 3. Delete any sessions
             $stmt = $pdo->prepare("DELETE FROM sessions WHERE user_id = ?");
-            $stmt->execute([$existing['user_id']]);
+            $stmt->execute([$userId]);
             
-            // 4. Delete from clinic_staff
-            $success = $staffModel->delete($id, $clinicId);
+            // 4. Delete from user_roles
+            $stmt = $pdo->prepare("DELETE FROM user_roles WHERE user_id = ?");
+            $stmt->execute([$userId]);
             
-            if (!$success) {
-                throw new Exception('Failed to remove from clinic_staff');
-            }
-            
-            // 5. Finally delete the user account
+            // 5. Finally delete the user account (prevents login)
             $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
-            $stmt->execute([$existing['user_id']]);
+            $result = $stmt->execute([$userId]);
+            
+            if (!$result) {
+                throw new Exception('Failed to delete user account');
+            }
             
             $pdo->commit();
             
@@ -315,24 +291,26 @@ function handleDelete($staffModel, $clinicId) {
                 'success' => true, 
                 'message' => 'Receptionist account permanently deleted'
             ]);
-        } catch (Exception $e) {
-            $pdo->rollBack();
-            error_log("Delete receptionist error: " . $e->getMessage());
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Failed to delete receptionist: ' . $e->getMessage()]);
-        }
-    } else {
-        // For regular staff without system access, just delete the record
-        $success = $staffModel->delete($id, $clinicId);
-        
-        if ($success) {
-            echo json_encode([
-                'success' => true, 
-                'message' => 'Staff member deleted successfully'
-            ]);
         } else {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Failed to delete staff member']);
+            // This is regular staff from clinic_staff - just delete the record
+            $success = $staffModel->delete($id, $clinicId);
+            
+            if ($success) {
+                echo json_encode([
+                    'success' => true, 
+                    'message' => 'Staff member deleted successfully'
+                ]);
+            } else {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Failed to delete staff member']);
+            }
         }
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log("Delete staff error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to delete: ' . $e->getMessage()]);
     }
 }
