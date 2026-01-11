@@ -261,6 +261,41 @@ function calculateAge($dob) {
         min-width: 100%;
       }
     }
+
+    /* ========================================
+       DIALOG CLOSE BUTTON STYLES
+       ======================================== */
+    .dialog-close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0, 0, 0, 0.05);
+      color: #6b7280;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      z-index: 10;
+    }
+
+    .dialog-close-btn:hover {
+      background: rgba(0, 0, 0, 0.1);
+      color: #374151;
+      transform: scale(1.1);
+    }
+
+    .dialog-close-btn:active {
+      transform: scale(0.95);
+    }
+
+    .dialog-card {
+      position: relative;
+    }
     
     @media (max-width: 480px) {
       .delete-confirm-card {
@@ -710,6 +745,112 @@ function calculateAge($dob) {
         max-height: calc(100vh - 200px);
       }
     }
+
+    /* ========================================
+       EMPTY STATE STYLES
+       ======================================== */
+    .empty-state {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px;
+      text-align: center;
+      min-height: 500px;
+    }
+
+    .empty-state-icon {
+      width: 120px;
+      height: 120px;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      animation: floatAnimation 3s ease-in-out infinite;
+    }
+
+    @keyframes floatAnimation {
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    .empty-state-icon svg {
+      color: #9ca3af;
+    }
+
+    .empty-state-title {
+      margin: 0 0 12px;
+      font-size: 28px;
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .empty-state-description {
+      margin: 0 0 32px;
+      font-size: 16px;
+      color: #6b7280;
+      max-width: 480px;
+      line-height: 1.6;
+    }
+
+    .empty-state-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .empty-state-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .empty-state-btn:active {
+      transform: translateY(0);
+    }
+
+    .empty-state-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .empty-state {
+        padding: 60px 20px;
+        min-height: 400px;
+      }
+
+      .empty-state-icon {
+        width: 100px;
+        height: 100px;
+      }
+
+      .empty-state-icon svg {
+        width: 100px;
+        height: 100px;
+      }
+
+      .empty-state-title {
+        font-size: 24px;
+      }
+
+      .empty-state-description {
+        font-size: 15px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -862,7 +1003,29 @@ function calculateAge($dob) {
     </script>
 
     <section class="pets-grid" id="petsGrid">
-      <?php foreach ($pets as $pet): ?>
+      <?php if (empty($pets)): ?>
+        <!-- Empty State Placeholder -->
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M20 21c0-2.5-3.5-4.5-8-4.5S4 18.5 4 21"/>
+              <path d="M8 8.5c-1-1-1-2.5 0-3.5"/>
+              <path d="M16 8.5c1-1 1-2.5 0-3.5"/>
+            </svg>
+          </div>
+          <h2 class="empty-state-title">No Pets Yet</h2>
+          <p class="empty-state-description">Start by adding your first pet to manage their health, appointments, and medical records all in one place.</p>
+          <button type="button" class="btn primary empty-state-btn" id="addFirstPetBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Your First Pet
+          </button>
+        </div>
+      <?php else: ?>
+        <?php foreach ($pets as $pet): ?>
       <article class="pet-card" data-pet-id="<?php echo $pet['id']; ?>">
         <div class="pet-hero">
           <img src="<?php echo $pet['photo']; ?>" alt="<?php echo $pet['name']; ?>">
@@ -901,12 +1064,19 @@ function calculateAge($dob) {
         </div>
       </article>
       <?php endforeach; ?>
+      <?php endif; ?>
     </section>
   </main>
 
   <!-- Add Pet Dialog -->
   <dialog id="addPetDialog" class="dialog">
     <form method="dialog" class="dialog-card" id="addPetForm" enctype="multipart/form-data">
+      <button type="button" class="dialog-close-btn" onclick="document.getElementById('addPetDialog').close()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
       <header class="dialog-header">
         <h3>Add New Pet</h3>
         <p class="dialog-subtitle">Fill in your pet's details</p>
@@ -1514,6 +1684,16 @@ function calculateAge($dob) {
       };
     })();
 
+    // Handle "Add Your First Pet" button in empty state
+    const addFirstPetBtn = document.getElementById('addFirstPetBtn');
+    if (addFirstPetBtn) {
+      addFirstPetBtn.addEventListener('click', function() {
+        const addPetDialog = document.getElementById('addPetDialog');
+        if (addPetDialog) {
+          addPetDialog.showModal();
+        }
+      });
+    }
 
   </script>
 </body>

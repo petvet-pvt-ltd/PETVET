@@ -23,84 +23,139 @@ class ServicesModel extends BaseModel {
     }
     
     /**
-     * Get trainers with filters (Mock Data)
+     * Get trainers with filters (Real Data from Database)
      */
     private function getTrainers($filters) {
-        // Mock trainer data
-        $allTrainers = [
-            [
-                'id' => 1,
-                'name' => 'John Anderson',
-                'business_name' => 'Elite K9 Training Academy',
-                'email' => 'john.anderson@petvet.com',
-                'phone' => '555-0100',
-                'specialization' => 'Obedience & Agility',
-                'experience_years' => 8,
-                'certifications' => 'Certified Dog Trainer (CDT)',
-                'city' => 'Colombo',
-                'avatar' => 'https://i.pravatar.cc/150?img=12',
-                'base_rate' => 1500,
-                'training_types' => ['Basic', 'Intermediate', 'Advanced']
-            ],
-            [
-                'id' => 2,
-                'name' => 'Sarah Mitchell',
-                'business_name' => 'Pawsitive Training Center',
-                'email' => 'sarah.mitchell@petvet.com',
-                'phone' => '555-0101',
-                'specialization' => 'Behavior Modification',
-                'experience_years' => 6,
-                'certifications' => 'Certified Professional Dog Trainer',
-                'city' => 'Kandy',
-                'avatar' => 'https://i.pravatar.cc/150?img=45',
-                'base_rate' => 1800,
-                'training_types' => ['Basic', 'Intermediate', 'Advanced']
-            ],
-            [
-                'id' => 3,
-                'name' => 'Michael Chen',
-                'business_name' => 'Champion Dog Sports',
-                'email' => 'michael.chen@petvet.com',
-                'phone' => '555-0102',
-                'specialization' => 'Agility & Competition',
-                'experience_years' => 10,
-                'certifications' => 'Master Dog Trainer, Agility Specialist',
-                'city' => 'Galle',
-                'avatar' => 'https://i.pravatar.cc/150?img=33',
-                'base_rate' => 2000,
-                'training_types' => ['Intermediate', 'Advanced']
-            ],
-            [
-                'id' => 4,
-                'name' => 'Emma Thompson',
-                'business_name' => 'Happy Paws Puppy School',
-                'email' => 'emma.thompson@petvet.com',
-                'phone' => '555-0103',
-                'specialization' => 'Puppy Training & Socialization',
-                'experience_years' => 4,
-                'certifications' => 'Certified Dog Behavior Consultant',
-                'city' => 'Colombo',
-                'avatar' => 'https://i.pravatar.cc/150?img=9',
-                'base_rate' => 1200,
-                'training_types' => ['Basic', 'Intermediate']
-            ],
-            [
-                'id' => 5,
-                'name' => 'David Roberts',
-                'business_name' => 'Guardian K9 Training',
-                'email' => 'david.roberts@petvet.com',
-                'phone' => '555-0104',
-                'specialization' => 'Obedience & Protection',
-                'experience_years' => 12,
-                'certifications' => 'Professional Dog Trainer, K9 Handler',
-                'city' => 'Negombo',
-                'avatar' => 'https://i.pravatar.cc/150?img=15',
-                'base_rate' => 2500,
-                'training_types' => ['Basic', 'Intermediate', 'Advanced']
-            ]
-        ];
+        $pdo = db();
         
-        return $this->applyFilters($allTrainers, $filters);
+        // Build SQL query
+        $sql = "SELECT 
+                    u.id,
+                    CONCAT(u.first_name, ' ', u.last_name) as name,
+                    u.email,
+                    u.phone,
+                    u.avatar,
+                    u.address,
+                    spp.business_name,
+                    spp.service_area,
+                    spp.experience_years,
+                    spp.certifications,
+                    spp.specializations as specialization,
+                    spp.bio,
+                    spp.phone_primary,
+                    spp.phone_secondary,
+                    spp.training_basic_enabled,
+                    spp.training_basic_charge,
+                    spp.training_intermediate_enabled,
+                    spp.training_intermediate_charge,
+                    spp.training_advanced_enabled,
+                    spp.training_advanced_charge
+                FROM users u
+                INNER JOIN service_provider_profiles spp ON u.id = spp.user_id
+                INNER JOIN user_roles ur ON u.id = ur.user_id
+                INNER JOIN roles r ON ur.role_id = r.id
+                WHERE r.role_name = 'trainer' 
+                AND ur.verification_status = 'approved'
+                AND ur.is_active = 1
+                AND spp.role_type = 'trainer'
+                AND COALESCE(TRIM(spp.business_name), '') <> ''
+                AND COALESCE(TRIM(spp.service_area), '') <> ''
+                AND spp.experience_years IS NOT NULL
+                AND COALESCE(TRIM(spp.specializations), '') <> ''
+                AND COALESCE(TRIM(spp.phone_primary), '') <> ''
+                AND (
+                    spp.training_basic_enabled = 1
+                    OR spp.training_intermediate_enabled = 1
+                    OR spp.training_advanced_enabled = 1
+                )";
+        
+        // Apply filters
+        $params = [];
+        
+        if (!empty($filters['search'])) {
+            $sql .= " AND (u.first_name LIKE ? OR u.last_name LIKE ? OR spp.business_name LIKE ? OR spp.service_area LIKE ?)";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+        
+        if (!empty($filters['city'])) {
+            $sql .= " AND spp.service_area LIKE ?";
+            $params[] = '%' . $filters['city'] . '%';
+        }
+        
+        if (!empty($filters['experience'])) {
+            $sql .= " AND spp.experience_years >= ?";
+            $params[] = (int)$filters['experience'];
+        }
+        
+        if (!empty($filters['specialization'])) {
+            $sql .= " AND spp.specializations LIKE ?";
+            $params[] = '%' . $filters['specialization'] . '%';
+        }
+        
+        if (!empty($filters['training_type'])) {
+            $trainingType = $filters['training_type'];
+            if ($trainingType === 'Basic') {
+                $sql .= " AND spp.training_basic_enabled = 1";
+            } elseif ($trainingType === 'Intermediate') {
+                $sql .= " AND spp.training_intermediate_enabled = 1";
+            } elseif ($trainingType === 'Advanced') {
+                $sql .= " AND spp.training_advanced_enabled = 1";
+            }
+        }
+        
+        $sql .= " ORDER BY spp.experience_years DESC, u.first_name";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $trainers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Process trainers to add training_types array based on enabled flags
+        foreach ($trainers as &$trainer) {
+            // Normalize service areas: service_area can be JSON array string (new) or comma string (legacy)
+            $trainer['service_areas'] = [];
+            if (!empty($trainer['service_area'])) {
+                $areaStr = trim((string)$trainer['service_area']);
+                if (str_starts_with($areaStr, '[')) {
+                    $decoded = json_decode($areaStr, true);
+                    if (is_array($decoded)) {
+                        $trainer['service_areas'] = array_values(array_filter(array_map(function($v){
+                            $v = trim((string)$v);
+                            return $v === '' ? null : $v;
+                        }, $decoded)));
+                    }
+                }
+                if (empty($trainer['service_areas'])) {
+                    $parts = array_map('trim', explode(',', $areaStr));
+                    $trainer['service_areas'] = array_values(array_filter($parts, fn($p) => $p !== ''));
+                }
+            }
+
+            $training_types = [];
+            if ($trainer['training_basic_enabled']) {
+                $training_types[] = 'Basic';
+            }
+            if ($trainer['training_intermediate_enabled']) {
+                $training_types[] = 'Intermediate';
+            }
+            if ($trainer['training_advanced_enabled']) {
+                $training_types[] = 'Advanced';
+            }
+            $trainer['training_types'] = $training_types;
+            
+            // For compact UI meta, keep a single "city" value as the first working area
+            $trainer['city'] = $trainer['service_areas'][0] ?? '';
+            
+            // Set default avatar if none exists
+            if (empty($trainer['avatar'])) {
+                $trainer['avatar'] = '/PETVET/public/images/emptyProfPic.png';
+            }
+        }
+        
+        return $trainers;
     }
     
     /**
@@ -959,12 +1014,79 @@ class ServicesModel extends BaseModel {
     }
     
     /**
-     * Get all unique cities for filter dropdown (Mock Data)
+     * Get all unique cities for filter dropdown (Real Data from Database)
      */
     public function getCities($serviceType) {
-        // Mock cities data
-        $allCities = ['Colombo', 'Kandy', 'Galle', 'Negombo', 'Mount Lavinia'];
-        return $allCities;
+        $pdo = db();
+        
+        $roleMap = [
+            'trainers' => 'trainer',
+            'sitters' => 'sitter',
+            'breeders' => 'breeder',
+            'groomers' => 'groomer'
+        ];
+        
+        $roleType = $roleMap[$serviceType] ?? 'trainer';
+        
+        // Extract cities from service_area field - ONLY from providers that are publicly visible
+        // Use the SAME visibility rules as the public listing
+        $sql = "SELECT DISTINCT spp.service_area 
+                FROM service_provider_profiles spp
+                INNER JOIN users u ON spp.user_id = u.id
+                INNER JOIN user_roles ur ON u.id = ur.user_id
+                INNER JOIN roles r ON ur.role_id = r.id
+                WHERE r.role_name = ? 
+                AND ur.verification_status = 'approved'
+                AND ur.is_active = 1
+                AND spp.role_type = ?
+                AND spp.service_area IS NOT NULL 
+                AND spp.service_area != ''";
+        
+        // Apply service-specific visibility requirements
+        if ($roleType === 'trainer') {
+            $sql .= " AND COALESCE(TRIM(spp.business_name), '') <> ''
+                     AND spp.experience_years IS NOT NULL
+                     AND COALESCE(TRIM(spp.specializations), '') <> ''
+                     AND COALESCE(TRIM(spp.phone_primary), '') <> ''
+                     AND (
+                         spp.training_basic_enabled = 1
+                         OR spp.training_intermediate_enabled = 1
+                         OR spp.training_advanced_enabled = 1
+                     )";
+        }
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$roleType, $roleType]);
+        $results = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        // Extract city/district names from service_area. Supports JSON arrays or comma strings.
+        $cities = [];
+        foreach ($results as $area) {
+            $areaStr = trim((string)$area);
+            if ($areaStr === '') continue;
+
+            if (str_starts_with($areaStr, '[')) {
+                $decoded = json_decode($areaStr, true);
+                if (is_array($decoded)) {
+                    foreach ($decoded as $d) {
+                        $d = trim((string)$d);
+                        if ($d !== '' && !in_array($d, $cities)) {
+                            $cities[] = $d;
+                        }
+                    }
+                    continue;
+                }
+            }
+
+            $parts = explode(',', $areaStr);
+            $city = trim($parts[0]);
+            if (!empty($city) && !in_array($city, $cities)) {
+                $cities[] = $city;
+            }
+        }
+        
+        sort($cities);
+        return $cities;
     }
     
     /**

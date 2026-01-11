@@ -1,157 +1,445 @@
-// Groomer Settings JavaScript
-document.addEventListener('DOMContentLoaded', function() {
-    const toast = document.getElementById('toast');
+// Groomer Settings JS
+(function(){
+    const $ = s=>document.querySelector(s);
+    const $$ = s=>Array.from(document.querySelectorAll(s));
+    const toastEl = $('#toast');
+    function showToast(msg){
+        if(!toastEl) return;
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(()=>toastEl.classList.remove('show'),2600);
+    }
 
-    // Quick navigation smooth scroll
-    document.querySelectorAll('.quick-nav a').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href');
-            const targetSection = document.querySelector(targetId);
-            
-            if (targetSection) {
-                targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                
-                // Update active state
-                document.querySelectorAll('.quick-nav a').forEach(l => l.classList.remove('active'));
-                this.classList.add('active');
+    // Scroll spy
+    const navLinks = $$('.quick-nav a');
+    const sectionMap = new Map();
+    navLinks.forEach(a=>{
+        const id = a.getAttribute('href').replace('#','');
+        const sec = document.getElementById(id);
+        if(sec) sectionMap.set(sec, a);
+    });
+    const observer = new IntersectionObserver(entries=>{
+        entries.forEach(entry=>{
+            if(entry.isIntersecting){
+                const link = sectionMap.get(entry.target);
+                if(link){ navLinks.forEach(l=>l.classList.remove('active')); link.classList.add('active'); }
             }
         });
+    }, {rootMargin:'-40% 0px -50% 0px', threshold:[0, .25, .5, 1]});
+    sectionMap.forEach((_, sec)=>observer.observe(sec));
+    navLinks.forEach(a=>a.addEventListener('click', e=>{
+        const id = a.getAttribute('href');
+        if(id && id.startsWith('#')){
+            e.preventDefault();
+            const target = document.querySelector(id);
+            if(target){ target.scrollIntoView({behavior:'smooth', block:'start'}); }
+        }
+    }));
+
+    // Avatar preview
+    const avatarInput = $('#groomerAvatar');
+    const avatarPreview = $('#groomerAvatarPreview .image-preview-item img');
+    document.addEventListener('click', e=>{
+        const btn = e.target.closest('[data-for="groomerAvatar"]');
+        if(btn && avatarInput){ avatarInput.click(); }
     });
+    if(avatarInput){
+        avatarInput.addEventListener('change', ()=>{
+            const file = avatarInput.files && avatarInput.files[0];
+            if(!file) return;
+            if(!file.type.startsWith('image/')){ showToast('Please select an image file'); return; }
+            const url = URL.createObjectURL(file);
+            if(avatarPreview){ avatarPreview.src = url; }
+        });
+    }
 
-    // Update active nav on scroll
-    const observerOptions = {
-        root: null,
-        rootMargin: '-100px 0px -50% 0px',
-        threshold: 0
-    };
+    // Business logo preview
+    const businessLogoInput = $('#businessLogoInput');
+    const businessLogoPreview = $('#businessLogoPreview .image-preview-item img');
+    if(businessLogoInput){
+        businessLogoInput.addEventListener('change', ()=>{
+            const file = businessLogoInput.files && businessLogoInput.files[0];
+            if(!file) return;
+            if(!file.type.startsWith('image/')){ showToast('Please select an image file'); return; }
+            const url = URL.createObjectURL(file);
+            if(businessLogoPreview){ businessLogoPreview.src = url; }
+        });
+    }
 
-    const observer = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const id = entry.target.getAttribute('id');
-                document.querySelectorAll('.quick-nav a').forEach(link => {
-                    link.classList.remove('active');
-                    if (link.getAttribute('href') === `#${id}`) {
-                        link.classList.add('active');
+    // Real-time profile phone validation (07xxxxxxxx)
+    const phoneInput = $('#phoneInput');
+    const phoneError = $('#phoneError');
+    if(phoneInput && phoneError){
+        phoneInput.addEventListener('input', ()=>{
+            const phone = phoneInput.value.trim();
+            if(phone === ''){
+                phoneError.textContent = '';
+                phoneError.classList.remove('show');
+                phoneInput.classList.remove('error');
+                return;
+            }
+            const phoneRegex = /^07\d{8}$/;
+            if(!phoneRegex.test(phone)){
+                phoneError.textContent = 'Phone number must be 10 digits starting with 07';
+                phoneError.classList.add('show');
+                phoneInput.classList.add('error');
+            } else {
+                phoneError.textContent = '';
+                phoneError.classList.remove('show');
+                phoneInput.classList.remove('error');
+            }
+        });
+    }
+
+    // Groomer phone validation (0xxxxxxxxx)
+    const phonePrimary = $('#phonePrimary');
+    const phonePrimaryError = $('#phonePrimaryError');
+    const phoneSecondary = $('#phoneSecondary');
+    const phoneSecondaryError = $('#phoneSecondaryError');
+    const servicePhoneRegex = /^0\d{9}$/;
+
+    function validateServicePhone(input, errorEl, isRequired){
+        if(!input || !errorEl) return true;
+        const val = input.value.trim();
+        if(val === ''){
+            if(isRequired){
+                errorEl.textContent = 'Phone number is required';
+                errorEl.classList.add('show');
+                input.classList.add('error');
+                return false;
+            }
+            errorEl.textContent = '';
+            errorEl.classList.remove('show');
+            input.classList.remove('error');
+            return true;
+        }
+        if(!servicePhoneRegex.test(val)){
+            errorEl.textContent = 'Phone number must be 10 digits starting with 0';
+            errorEl.classList.add('show');
+            input.classList.add('error');
+            return false;
+        }
+        errorEl.textContent = '';
+        errorEl.classList.remove('show');
+        input.classList.remove('error');
+        return true;
+    }
+
+    if(phonePrimary && phonePrimaryError){
+        phonePrimary.addEventListener('input', ()=>validateServicePhone(phonePrimary, phonePrimaryError, true));
+    }
+    if(phoneSecondary && phoneSecondaryError){
+        phoneSecondary.addEventListener('input', ()=>validateServicePhone(phoneSecondary, phoneSecondaryError, false));
+    }
+
+    // Load settings from API
+    async function loadSettings() {
+        try {
+            const response = await fetch('/PETVET/api/groomer/get-settings.php');
+            const data = await response.json();
+            
+            if (data.success) {
+                // Populate profile
+                if (data.profile) {
+                    const firstName = $('#first_name');
+                    const lastName = $('#last_name');
+                    const email = $('#email');
+                    const phone = $('#phone');
+                    const address = $('#address');
+                    
+                    if (firstName) firstName.value = data.profile.first_name || '';
+                    if (lastName) lastName.value = data.profile.last_name || '';
+                    if (email) email.value = data.profile.email || '';
+                    if (phone) phone.value = data.profile.phone || '';
+                    if (address) address.value = data.profile.address || '';
+                    
+                    // Update avatar
+                    const avatarImg = document.querySelector('#groomerAvatarPreview img');
+                    if (avatarImg) avatarImg.src = data.profile.avatar || '/PETVET/public/images/emptyProfPic.png';
+                }
+                
+                // Populate groomer section
+                if (data.groomer) {
+                    const businessName = document.querySelector('input[name="business_name"]');
+                    const workArea = document.querySelector('input[name="work_area"]');
+                    const experience = document.querySelector('input[name="experience"]');
+                    const specializations = document.querySelector('input[name="specializations"]');
+                    const certifications = document.querySelector('input[name="certifications"]');
+                    const bio = document.querySelector('textarea[name="bio"]');
+                    
+                    if (businessName) businessName.value = data.groomer.business_name || '';
+                    if (workArea) workArea.value = data.groomer.service_area || '';
+                    if (experience) experience.value = data.groomer.experience_years || '';
+                    if (specializations) specializations.value = data.groomer.specializations || '';
+                    if (certifications) certifications.value = data.groomer.certifications || '';
+                    if (bio) bio.value = data.groomer.bio || '';
+                    if(phonePrimary) phonePrimary.value = data.groomer.phone_primary || '';
+                    if(phoneSecondary) phoneSecondary.value = data.groomer.phone_secondary || '';
+                    
+                    // Update business logo
+                    if (data.groomer.business_logo) {
+                        const businessLogoImg = document.querySelector('#businessLogoPreview img');
+                        if (businessLogoImg) businessLogoImg.src = data.groomer.business_logo;
+                    }
+                }
+                
+                // Populate preferences
+                if (data.preferences) {
+                    const emailNotif = document.querySelector('input[name="email_notifications"]');
+                    const smsNotif = document.querySelector('input[name="sms_notifications"]');
+                    const bookingReq = document.querySelector('input[name="booking_requests"]');
+                    
+                    if (emailNotif) emailNotif.checked = data.preferences.email_notifications;
+                    if (smsNotif) smsNotif.checked = data.preferences.sms_notifications;
+                    if (bookingReq) bookingReq.checked = data.preferences.auto_accept_bookings;
+                }
+                
+                ['#formProfile','#formPassword','#formGroomer','#formPrefs'].forEach(id=>{
+                    const f=$(id); 
+                    if(f) {
+                        const originalState = captureFormState(f);
+                        f.dataset.originalState = originalState;
+                        f.dataset.clean='true';
+                        const btn = f.querySelector('button[type="submit"]');
+                        if(btn) updateButtonState(f, btn);
                     }
                 });
             }
-        });
-    }, observerOptions);
-
-    document.querySelectorAll('[data-section]').forEach(section => {
-        observer.observe(section);
-    });
-
-    // File upload handlers
-    document.querySelectorAll('button[data-for]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const inputId = this.dataset.for;
-            const input = document.getElementById(inputId);
-            if (input) input.click();
-        });
-    });
-
-    // Avatar preview
-    const avatarInput = document.getElementById('groomerAvatar');
-    if (avatarInput) {
-        avatarInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const preview = document.querySelector('#groomerAvatarPreview img');
-                    if (preview) {
-                        preview.src = event.target.result;
-                        showToast('Avatar updated (not saved yet)');
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+            showToast('Failed to load settings');
+        }
     }
 
-    // Cover photo preview
-    const coverPhotoInput = document.getElementById('coverPhoto');
-    if (coverPhotoInput) {
-        coverPhotoInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const preview = document.querySelector('#coverPhotoPreview img');
-                    if (preview) {
-                        preview.src = event.target.result;
-                        showToast('Cover photo updated (not saved yet)');
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-
-    // Profile form submission
-    const profileForm = document.getElementById('formProfile');
-    if (profileForm) {
-        profileForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            
-            // In real app, send to server
-            console.log('Profile data:', Object.fromEntries(formData));
-            
-            showToast('Profile updated successfully');
-            
-            // Simulate server response
-            setTimeout(() => {
-                // Update UI or reload
-            }, 1000);
-        });
-    }
-
-    // Password form submission
-    const passwordForm = document.getElementById('formPassword');
-    if (passwordForm) {
-        passwordForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const newPassword = this.querySelector('input[name="new_password"]').value;
-            const confirmPassword = this.querySelector('input[name="confirm_password"]').value;
-            
-            if (newPassword !== confirmPassword) {
-                showToast('Passwords do not match!');
+    // Save settings function
+    async function saveSettings(formId, dataKey) {
+        console.log('Saving settings:', formId, dataKey);
+        const form = $(formId);
+        if (!form) return;
+        
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+        
+        const formData = {};
+        
+        if (formId === '#formProfile') {
+            const phoneVal = ($('#phone')?.value || '').trim();
+            const phoneRegex = /^07\d{8}$/;
+            if (phoneVal !== '' && !phoneRegex.test(phoneVal)) {
+                showToast('Phone must be 10 digits starting with 07');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
                 return;
             }
             
-            const formData = new FormData(this);
+            formData.profile = {
+                first_name: $('#first_name').value.trim(),
+                last_name: $('#last_name').value.trim(),
+                phone: phoneVal,
+                address: $('#address').value.trim()
+            };
+        } else if (formId === '#formPassword') {
+            const np = form.querySelector('input[name="new_password"]').value.trim();
+            const cp = form.querySelector('input[name="confirm_password"]').value.trim();
+            if(np.length < 6){ showToast('Password too short (min 6)'); return; }
+            if(np !== cp){ showToast('Passwords do not match'); return; }
             
-            // In real app, send to server
-            console.log('Password change requested');
+            formData.password = {
+                current_password: form.querySelector('input[name="current_password"]').value,
+                new_password: np
+            };
+        } else if (formId === '#formGroomer') {
+            const okPrimary = validateServicePhone(phonePrimary, phonePrimaryError, true);
+            const okSecondary = validateServicePhone(phoneSecondary, phoneSecondaryError, false);
+            if(!okPrimary || !okSecondary){
+                showToast('Please fix phone number errors');
+                return;
+            }
             
-            showToast('Password updated successfully');
-            this.reset();
-        });
+            const businessName = form.querySelector('input[name="business_name"]');
+            const workArea = form.querySelector('input[name="work_area"]');
+            const experience = form.querySelector('input[name="experience"]');
+            const specializations = form.querySelector('input[name="specializations"]');
+            const certifications = form.querySelector('input[name="certifications"]');
+            const bio = form.querySelector('textarea[name="bio"]');
+            
+            // Use FormData for file upload support
+            const fd = new FormData();
+            fd.append('groomer[business_name]', businessName ? businessName.value.trim() : '');
+            fd.append('groomer[service_area]', workArea ? workArea.value.trim() : '');
+            fd.append('groomer[experience_years]', experience ? experience.value.trim() : '');
+            fd.append('groomer[specializations]', specializations ? specializations.value.trim() : '');
+            fd.append('groomer[certifications]', certifications ? certifications.value.trim() : '');
+            fd.append('groomer[bio]', bio ? bio.value.trim() : '');
+            fd.append('groomer[phone_primary]', phonePrimary ? phonePrimary.value.trim() : '');
+            fd.append('groomer[phone_secondary]', phoneSecondary ? phoneSecondary.value.trim() : '');
+            
+            // Add business logo if selected
+            const businessLogoInput = $('#businessLogoInput');
+            if (businessLogoInput && businessLogoInput.files && businessLogoInput.files[0]) {
+                fd.append('business_logo', businessLogoInput.files[0]);
+            }
+            
+            // For groomer form, send FormData instead of JSON
+            try {
+                const response = await fetch('/PETVET/api/groomer/update-settings.php', {
+                    method: 'POST',
+                    body: fd
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Groomer settings saved successfully');
+                    form.dataset.clean = 'true';
+                    updateButtonState(form, submitBtn);
+                } else {
+                    showToast(result.message || 'Failed to save');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showToast('Error saving settings');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+            return;
+        } else if (formId === '#formPrefs') {
+            const emailNotif = form.querySelector('input[name="email_notifications"]');
+            const smsNotif = form.querySelector('input[name="sms_notifications"]');
+            const bookingReq = form.querySelector('input[name="booking_requests"]');
+            
+            formData.preferences = {
+                email_notifications: emailNotif ? emailNotif.checked : true,
+                sms_notifications: smsNotif ? smsNotif.checked : true,
+                push_notifications: false,
+                auto_accept_bookings: bookingReq ? bookingReq.checked : false,
+                require_deposit: false,
+                show_availability_calendar: true,
+                accept_emergency_bookings: false,
+                show_phone_in_profile: true,
+                show_address_in_profile: false,
+                accept_online_payments: true
+            };
+        }
+        
+        try {
+            const response = await fetch('/PETVET/api/groomer/update-settings.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast(dataKey + ' saved successfully');
+                form.dataset.clean = 'true';
+                updateButtonState(form, submitBtn);
+                if (formId === '#formPassword') {
+                    form.reset();
+                }
+            } else {
+                showToast(result.message || 'Failed to save');
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+            showToast('Error saving settings');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
     }
 
-    // Preferences form submission
-    const prefsForm = document.getElementById('formPrefs');
-    if (prefsForm) {
-        prefsForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            
-            // In real app, send to server
-            console.log('Preferences:', Object.fromEntries(formData));
-            
-            showToast('Preferences saved successfully');
-        });
+    const formProfile = $('#formProfile');
+    const formPassword = $('#formPassword');
+    const formGroomer = $('#formGroomer');
+    const formPrefs = $('#formPrefs');
+    
+    if (formProfile) formProfile.addEventListener('submit', e => { e.preventDefault(); saveSettings('#formProfile', 'Profile'); });
+    if (formPassword) formPassword.addEventListener('submit', e => { e.preventDefault(); saveSettings('#formPassword', 'Password'); });
+    if (formGroomer) formGroomer.addEventListener('submit', e => { e.preventDefault(); saveSettings('#formGroomer', 'Groomer Info'); });
+    if (formPrefs) formPrefs.addEventListener('submit', e => { e.preventDefault(); saveSettings('#formPrefs', 'Preferences'); });
+    
+    loadSettings();
+
+    // Button state management functions
+    function updateButtonState(form, button) {
+        if (form.dataset.clean === 'true') {
+            button.disabled = true;
+            button.style.opacity = '0.5';
+            button.style.cursor = 'not-allowed';
+            button.style.pointerEvents = 'none';
+        } else {
+            button.disabled = false;
+            button.style.opacity = '1';
+            button.style.cursor = 'pointer';
+            button.style.pointerEvents = 'auto';
+        }
     }
 
-    // Role form submission - NO CONFIRMATION for groomer
-    const roleForm = document.getElementById('formRole');
+    function captureFormState(form) {
+        const formData = new FormData(form);
+        const state = {};
+        for (let [key, value] of formData.entries()) {
+            state[key] = value;
+        }
+        return JSON.stringify(state);
+    }
+
+    function hasFormChanged(form, originalState) {
+        const currentState = captureFormState(form);
+        return currentState !== originalState;
+    }
+
+    // Initialize all forms with disabled buttons
+    setTimeout(() => {
+        ['#formProfile','#formPassword','#formGroomer','#formPrefs'].forEach(id=>{
+            const f = $(id);
+            if(!f) return;
+            
+            // Capture original state
+            const originalState = captureFormState(f);
+            f.dataset.originalState = originalState;
+            f.dataset.clean='true';
+            
+            const btn = f.querySelector('button[type="submit"]');
+            if(btn) {
+                updateButtonState(f, btn);
+            }
+            
+            f.addEventListener('input', ()=>{ 
+                const changed = hasFormChanged(f, f.dataset.originalState);
+                f.dataset.clean = changed ? 'false' : 'true';
+                if(btn) updateButtonState(f, btn);
+            });
+            
+            // Also track file input changes
+            const fileInputs = f.querySelectorAll('input[type="file"]');
+            fileInputs.forEach(inp => {
+                inp.addEventListener('change', () => {
+                    if(inp.files && inp.files.length > 0) {
+                        f.dataset.clean='false';
+                        if(btn) updateButtonState(f, btn);
+                    }
+                });
+            });
+        });
+    }, 100);
+    
+    window.addEventListener('beforeunload', e=>{
+        const dirty = ['#formProfile','#formPassword','#formGroomer','#formPrefs'].some(id=>{
+            const f=$(id); return f && f.dataset.clean==='false';
+        });
+        if(dirty){ e.preventDefault(); e.returnValue=''; }
+    });
+
+    // Role switching
+    const roleOptions = $$('.role-option');
+    const roleForm = $('#formRole');
     const roleMap = {
         'pet_owner': '/PETVET/index.php?module=pet-owner&page=my-pets',
         'trainer': '/PETVET/index.php?module=trainer&page=dashboard',
@@ -163,79 +451,44 @@ document.addEventListener('DOMContentLoaded', function() {
         'receptionist': '/PETVET/index.php?module=receptionist&page=dashboard',
         'admin': '/PETVET/index.php?module=admin&page=dashboard'
     };
-    
-    if (roleForm) {
-        roleForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const selectedRole = this.querySelector('input[name="active_role"]:checked');
-            if (selectedRole) {
-                const roleName = selectedRole.nextElementSibling.querySelector('.role-name').textContent;
-                const roleValue = selectedRole.value;
-                const redirectUrl = roleMap[roleValue];
-                
-                if (redirectUrl) {
-                    try {
-                        console.log('Switching to role:', roleValue);
-                        showToast(`Switching to ${roleName}...`);
-                        
-                        // Call API to switch role in session
-                        const response = await fetch('/PETVET/api/switch-role.php', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ role: roleValue })
-                        });
-                        
-                        const result = await response.json();
-                        
-                        if (result.success) {
-                            // Redirect to the new role's dashboard
-                            window.location.href = redirectUrl;
-                        } else {
-                            showToast(result.message || 'Failed to switch role', 'error');
-                        }
-                    } catch (error) {
-                        showToast('Error switching role', 'error');
-                        console.error('Role switch error:', error);
-                    }
-                }
-            }
-        });
-    }
 
-    // Role option click (make entire card clickable)
-    document.querySelectorAll('.role-option').forEach(option => {
-        option.addEventListener('click', function() {
-            const radio = this.querySelector('input[type="radio"]');
-            if (radio) {
+    roleOptions.forEach(opt=>{
+        const radio = opt.querySelector('input[type=radio]');
+        opt.addEventListener('click', ()=>{
+            if(radio && !radio.checked){
                 radio.checked = true;
-                
-                // Update active state
-                document.querySelectorAll('.role-option').forEach(opt => {
-                    opt.classList.remove('active');
-                });
-                this.classList.add('active');
+                roleOptions.forEach(o=>o.classList.remove('active'));
+                opt.classList.add('active');
             }
         });
     });
 
-    // Toast notification
-    function showToast(message) {
-        toast.textContent = message;
-        toast.classList.add('show');
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
-    }
+    if(roleForm){
+        roleForm.addEventListener('submit', async e=>{
+            e.preventDefault();
+            const selected = roleForm.querySelector('input[name="active_role"]:checked');
+            if(!selected) return;
+            const roleValue = selected.value;
+            const redirectUrl = roleMap[roleValue];
+            if(!redirectUrl) return;
 
-    // Toggle animations
-    document.querySelectorAll('label.toggle input[type="checkbox"]').forEach(toggle => {
-        toggle.addEventListener('change', function() {
-            const track = this.nextElementSibling;
-            track.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                track.style.transform = 'scale(1)';
-            }, 150);
+            try {
+                showToast('Switching to ' + roleValue.replace('_', ' ') + '...');
+                const response = await fetch('/PETVET/api/switch-role.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role: roleValue })
+                });
+                const result = await response.json();
+                if(result.success){
+                    window.location.href = redirectUrl;
+                } else {
+                    showToast(result.message || 'Failed to switch role');
+                }
+            } catch (err) {
+                showToast('Error switching role');
+                console.error('Role switch error:', err);
+            }
         });
-    });
-});
+    }
+})();

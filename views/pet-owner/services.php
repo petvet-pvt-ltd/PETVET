@@ -67,8 +67,20 @@ $GLOBALS['currentPage'] = 'services.php';
             </button>
         </section>
 
+        <!-- Mobile Filter Toggle Button -->
+        <button class="mobile-filter-toggle" id="mobileFilterToggle" onclick="toggleMobileFilters()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <span class="filter-badge" id="filterBadge" style="display:none;">0</span>
+        </button>
+
         <!-- Filters Section -->
-        <section class="filters-section">
+        <section class="filters-section" id="filtersSection">
+            <div class="filters-header">
+                <h3>Filter Options</h3>
+                <button type="button" class="filters-close" onclick="toggleMobileFilters()">&times;</button>
+            </div>
             <form id="filterForm" method="GET" action="/PETVET/index.php">
                 <input type="hidden" name="module" value="pet-owner">
                 <input type="hidden" name="page" value="services">
@@ -111,16 +123,6 @@ $GLOBALS['currentPage'] = 'services.php';
 
                 <!-- Service-Specific Filters -->
                 <div class="filters-row specific-filters" id="trainerFilters" <?= $serviceType !== 'trainers' ? 'style="display:none;"' : '' ?>>
-                    <div class="filter-group">
-                        <label for="trainerSpecialization">Specialization</label>
-                        <select id="trainerSpecialization" name="specialization">
-                            <option value="">Any Specialization</option>
-                            <option value="Obedience" <?= ($filters['specialization'] ?? '') === 'Obedience' ? 'selected' : '' ?>>Obedience</option>
-                            <option value="Agility" <?= ($filters['specialization'] ?? '') === 'Agility' ? 'selected' : '' ?>>Agility</option>
-                            <option value="Behavior" <?= ($filters['specialization'] ?? '') === 'Behavior' ? 'selected' : '' ?>>Behavior Modification</option>
-                        </select>
-                    </div>
-                    
                     <div class="filter-group">
                         <label for="trainingTypeFilter">Training Type</label>
                         <select id="trainingTypeFilter" name="training_type">
@@ -204,6 +206,7 @@ $GLOBALS['currentPage'] = 'services.php';
                 </div>
             </form>
         </section>
+        <div class="filters-overlay" id="filtersOverlay" onclick="toggleMobileFilters()"></div>
 
         <!-- Results Section -->
         <section class="results-section">
@@ -396,7 +399,7 @@ $GLOBALS['currentPage'] = 'services.php';
                                             <?php endif; ?>
                                         <?php endif; ?>
                                         <div class="provider-meta">
-                                            <?php if (!empty($provider['city'])): ?>
+                                            <?php if ($serviceType !== 'trainers' && !empty($provider['city'])): ?>
                                                 <span class="location">📍 <?= htmlspecialchars($provider['city']) ?></span>
                                             <?php endif; ?>
                                             <?php if (!empty($provider['experience_years'])): ?>
@@ -412,15 +415,39 @@ $GLOBALS['currentPage'] = 'services.php';
                                             <div class="trainer-specialization">
                                                 <span class="specialization-icon">🎯</span>
                                                 <div class="specialization-content">
-                                                    <span class="specialization-label">Specialization</span>
+                                                    <!-- <span class="specialization-label">Specialization</span> -->
                                                     <span class="specialization-value"><?= htmlspecialchars($provider['specialization']) ?></span>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <?php
+                                        $areas = $provider['service_areas'] ?? [];
+                                        if (!is_array($areas)) { $areas = []; }
+                                        $areas = array_values(array_filter(array_map('strval', $areas)));
+                                        ?>
+                                        <?php if (!empty($areas)): ?>
+                                            <div class="work-areas">
+                                                <span class="work-areas-label" aria-label="Working areas">
+                                                    <!-- <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                                                        <path d="M12 22s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                        <path d="M12 14a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg> -->
+                                                </span>
+                                                <div class="work-areas-chips">
+                                                    <?php foreach (array_slice($areas, 0, 3) as $a): ?>
+                                                        <span class="area-chip"><?= htmlspecialchars($a) ?></span>
+                                                    <?php endforeach; ?>
+                                                    <?php if (count($areas) > 3): ?>
+                                                        <span class="area-chip more">+<?= (int)(count($areas) - 3) ?></span>
+                                                    <?php endif; ?>
                                                 </div>
                                             </div>
                                         <?php endif; ?>
                                         
                                         <!-- Training Types Offered -->
                                         <div class="training-types-offered">
-                                            <span class="training-types-label">Training Types:</span>
+                                            <!-- <span class="training-types-label">Training Types:</span> -->
                                             <div class="training-types-list">
                                                 <?php 
                                                 // Assume all trainers offer all types by default
@@ -512,10 +539,19 @@ $GLOBALS['currentPage'] = 'services.php';
                                             "avatar" => $provider["avatar"] ?? "/PETVET/public/images/default-avatar.png",
                                             "specialization" => $provider["specialization"] ?? "",
                                             "city" => $provider["city"] ?? "",
+                                            "service_areas" => $provider["service_areas"] ?? [],
                                             "experience_years" => $provider["experience_years"] ?? 0,
-                                            "base_rate" => $provider["base_rate"] ?? 1500,
+                                            "phone_primary" => $provider["phone_primary"] ?? "",
+                                            "bio" => $provider["bio"] ?? "",
+                                            "certifications" => $provider["certifications"] ?? "",
+                                            "training_basic_enabled" => $provider["training_basic_enabled"] ?? false,
+                                            "training_basic_charge" => $provider["training_basic_charge"] ?? 0,
+                                            "training_intermediate_enabled" => $provider["training_intermediate_enabled"] ?? false,
+                                            "training_intermediate_charge" => $provider["training_intermediate_charge"] ?? 0,
+                                            "training_advanced_enabled" => $provider["training_advanced_enabled"] ?? false,
+                                            "training_advanced_charge" => $provider["training_advanced_charge"] ?? 0,
                                             "training_types" => $provider["training_types"] ?? ["Basic", "Intermediate", "Advanced"]
-                                        ]) ?>)'>
+                                        ]) ?>, event); return false;'>
                                             View Details
                                         </button>
                                     <?php elseif ($serviceType === 'sitters'): ?>
@@ -529,7 +565,7 @@ $GLOBALS['currentPage'] = 'services.php';
                                             "city" => $provider["city"] ?? "",
                                             "experience_years" => $provider["experience_years"] ?? 0,
                                             "base_rate" => $provider["base_rate"] ?? 1500
-                                        ]) ?>)'>
+                                        ]) ?>, event); return false;'>
                                             Book Now
                                         </button>
                                     <?php elseif ($serviceType === 'breeders'): ?>
@@ -544,7 +580,7 @@ $GLOBALS['currentPage'] = 'services.php';
                                             "breeding_pets" => array_filter($provider["breeding_pets"] ?? [], function($pet) {
                                                 return $pet['is_active'];
                                             })
-                                        ]) ?>)'>
+                                        ]) ?>, event); return false;'>
                                             View Details
                                         </button>
                                     <?php elseif ($serviceType === 'groomers'): ?>
@@ -559,7 +595,12 @@ $GLOBALS['currentPage'] = 'services.php';
                                             View Profile
                                         </button>
                                     <?php endif; ?>
-                                    <button class="btn outline" onclick="contactProvider(<?= (int)$provider['id'] ?>)">
+                                    <button class="btn outline" onclick='contactProvider(<?= json_encode([
+                                        "name" => $provider["name"],
+                                        "business_name" => $provider["business_name"] ?? "",
+                                        "phone" => $provider["phone_primary"] ?? "",
+                                        "phone2" => $provider["phone_secondary"] ?? ""
+                                    ]) ?>, event); return false;'>
                                         Contact
                                     </button>
                                 </div>
@@ -571,19 +612,58 @@ $GLOBALS['currentPage'] = 'services.php';
         </section>
     </div>
 
-    <!-- Contact Modal -->
-    <div id="contactModal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Contact Owner</h3>
+    <!-- Contact Modal / Bottom Drawer -->
+    <div id="contactModal" class="modal-overlay contact-overlay">
+        <div class="modal-content contact-drawer">
+            <div class="drawer-handle"></div>
+            <div class="modal-header contact-header">
+                <h3>Contact</h3>
                 <button class="modal-close" onclick="closeContactModal()">&times;</button>
             </div>
-            <div class="owner-name" id="modalOwnerName"></div>
-            <div class="phone-list" id="phoneList"></div>
+            <div class="contact-info">
+                <div class="owner-name" id="modalOwnerName"></div>
+                <div class="phone-list" id="phoneList"></div>
+            </div>
         </div>
     </div>
 
     <script>
+        // Mobile Filter Toggle Functions
+        function toggleMobileFilters() {
+            const filtersSection = document.getElementById('filtersSection');
+            const filtersOverlay = document.getElementById('filtersOverlay');
+            const body = document.body;
+            
+            filtersSection.classList.toggle('active');
+            filtersOverlay.classList.toggle('active');
+            body.classList.toggle('filters-open');
+        }
+
+        function updateFilterBadge() {
+            const form = document.getElementById('filterForm');
+            const inputs = form.querySelectorAll('input[type="text"], select');
+            let activeFilters = 0;
+            
+            inputs.forEach(input => {
+                if (input.name !== 'module' && input.name !== 'page' && input.name !== 'type' && input.value) {
+                    activeFilters++;
+                }
+            });
+            
+            const badge = document.getElementById('filterBadge');
+            if (activeFilters > 0) {
+                badge.textContent = activeFilters;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Initialize filter badge on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateFilterBadge();
+        });
+
         function changeService(serviceType) {
             // Update the hidden input and submit the form
             document.getElementById('serviceTypeInput').value = serviceType;
@@ -656,19 +736,34 @@ $GLOBALS['currentPage'] = 'services.php';
             window.location.href = currentUrl.toString();
         }
 
-        function contactProvider(providerId) {
-            // Show contact modal or navigate to contact page (to be implemented)
-            alert('Contact functionality coming soon! Provider ID: ' + providerId);
+        function contactProvider(providerData, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            showContactModal(
+                providerData.name,
+                providerData.business_name || '',
+                providerData.phone,
+                providerData.phone2 || ''
+            );
         }
 
         // Contact Modal Functions (Reused from Sitter Bookings)
-        function showContactModal(businessName, phone1, phone2) {
+        function showContactModal(name, businessName, phone1, phone2) {
             const modal = document.getElementById('contactModal');
             const modalOwnerName = document.getElementById('modalOwnerName');
             const phoneList = document.getElementById('phoneList');
             
-            // Set business name
-            modalOwnerName.textContent = businessName;
+            // Set name and business name
+            if (businessName && businessName.trim() !== '') {
+                modalOwnerName.innerHTML = `
+                    <div class="contact-person-name">${name}</div>
+                    <div class="contact-business-name">${businessName}</div>
+                `;
+            } else {
+                modalOwnerName.innerHTML = `<div class="contact-person-name">${name}</div>`;
+            }
             
             // Clear previous phone numbers
             phoneList.innerHTML = '';
@@ -678,9 +773,15 @@ $GLOBALS['currentPage'] = 'services.php';
                 const phoneItem = document.createElement('div');
                 phoneItem.className = 'phone-item';
                 phoneItem.innerHTML = `
-                    <div class="phone-number">${phone1}</div>
+                    <div class="phone-info">
+                        <span class="phone-label">Phone</span>
+                        <span class="phone-number">${phone1}</span>
+                    </div>
                     <a href="tel:${phone1}" class="call-btn">
-                        Call
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                        <span>Call</span>
                     </a>
                 `;
                 phoneList.appendChild(phoneItem);
@@ -691,15 +792,25 @@ $GLOBALS['currentPage'] = 'services.php';
                 const phoneItem = document.createElement('div');
                 phoneItem.className = 'phone-item';
                 phoneItem.innerHTML = `
-                    <div class="phone-number">${phone2}</div>
+                    <div class="phone-info">
+                        <span class="phone-label">Phone 2</span>
+                        <span class="phone-number">${phone2}</span>
+                    </div>
                     <a href="tel:${phone2}" class="call-btn">
-                        Call
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                        <span>Call</span>
                     </a>
                 `;
                 phoneList.appendChild(phoneItem);
             }
             
-            // Show modal and freeze background
+            // Lock scroll and save position
+            savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'relative';
             modal.classList.add('active');
             document.body.classList.add('modal-open');
         }
@@ -708,6 +819,12 @@ $GLOBALS['currentPage'] = 'services.php';
             const modal = document.getElementById('contactModal');
             modal.classList.remove('active');
             document.body.classList.remove('modal-open');
+            
+            // Restore scroll and position
+            document.documentElement.style.overflow = '';
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            window.scrollTo(0, savedScrollPosition);
         }
 
         // Close modal when clicking outside
@@ -732,7 +849,11 @@ $GLOBALS['currentPage'] = 'services.php';
         let currentTrainer = null;
         let pendingAppointmentData = null;
 
-        function openTrainerDetails(trainerData) {
+        function openTrainerDetails(trainerData, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
             currentTrainer = trainerData;
             const modal = document.getElementById('trainerDetailsModal');
             
@@ -741,21 +862,60 @@ $GLOBALS['currentPage'] = 'services.php';
             document.getElementById('trainerModalName').textContent = trainerData.name;
             document.getElementById('trainerModalBusiness').textContent = trainerData.business_name || '';
             document.getElementById('trainerModalSpecialization').textContent = trainerData.specialization;
-            document.getElementById('trainerModalCity').textContent = trainerData.city;
             document.getElementById('trainerModalExperience').textContent = trainerData.experience_years + ' years';
+
+            // Render working areas (compact chips)
+            const areasWrap = document.getElementById('trainerModalAreas');
+            if (areasWrap) {
+                const areas = Array.isArray(trainerData.service_areas) ? trainerData.service_areas : [];
+                areasWrap.innerHTML = '';
+                areas.slice(0, 5).forEach(a => {
+                    const chip = document.createElement('span');
+                    chip.className = 'area-chip';
+                    chip.textContent = a;
+                    areasWrap.appendChild(chip);
+                });
+            }
             
-            // Populate training rates
-            const baseRate = parseFloat(trainerData.base_rate) || 1500;
-            document.getElementById('basicRate').textContent = 'LKR ' + baseRate.toFixed(2) + '/hr';
-            document.getElementById('intermediateRate').textContent = 'LKR ' + (baseRate * 1.5).toFixed(2) + '/hr';
-            document.getElementById('advancedRate').textContent = 'LKR ' + (baseRate * 2).toFixed(2) + '/hr';
+            // Populate training rates with real data and hide/show based on what's enabled
+            const basicOption = document.querySelector('label[class="rate-option"]:nth-child(1)');
+            const intermediateOption = document.querySelector('label[class="rate-option"]:nth-child(2)');
+            const advancedOption = document.querySelector('label[class="rate-option"]:nth-child(3)');
+            
+            // Basic Training
+            if (trainerData.training_basic_enabled && parseFloat(trainerData.training_basic_charge) > 0) {
+                basicOption.style.display = 'block';
+                document.getElementById('basicRate').textContent = 'LKR ' + parseFloat(trainerData.training_basic_charge).toFixed(2) + '/hr';
+            } else {
+                basicOption.style.display = 'none';
+            }
+            
+            // Intermediate Training
+            if (trainerData.training_intermediate_enabled && parseFloat(trainerData.training_intermediate_charge) > 0) {
+                intermediateOption.style.display = 'block';
+                document.getElementById('intermediateRate').textContent = 'LKR ' + parseFloat(trainerData.training_intermediate_charge).toFixed(2) + '/hr';
+            } else {
+                intermediateOption.style.display = 'none';
+            }
+            
+            // Advanced Training
+            if (trainerData.training_advanced_enabled && parseFloat(trainerData.training_advanced_charge) > 0) {
+                advancedOption.style.display = 'block';
+                document.getElementById('advancedRate').textContent = 'LKR ' + parseFloat(trainerData.training_advanced_charge).toFixed(2) + '/hr';
+            } else {
+                advancedOption.style.display = 'none';
+            }
             
             // Reset form
             document.getElementById('appointmentForm').style.display = 'none';
             document.querySelectorAll('input[name="trainingType"]').forEach(radio => radio.checked = false);
             document.getElementById('bookingForm').reset();
             
-            // Show modal
+            // Lock scroll and save position
+            savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'relative';
             modal.classList.add('active');
             document.body.classList.add('modal-open');
         }
@@ -764,6 +924,12 @@ $GLOBALS['currentPage'] = 'services.php';
             const modal = document.getElementById('trainerDetailsModal');
             modal.classList.remove('active');
             document.body.classList.remove('modal-open');
+            
+            // Restore scroll and position
+            document.documentElement.style.overflow = '';
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            window.scrollTo(0, savedScrollPosition);
             currentTrainer = null;
         }
 
@@ -975,7 +1141,11 @@ $GLOBALS['currentPage'] = 'services.php';
             }
         }
 
-        function openSitterBooking(sitterData) {
+        function openSitterBooking(sitterData, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
             currentSitter = sitterData;
             const modal = document.getElementById('sitterBookingModal');
             
@@ -996,7 +1166,11 @@ $GLOBALS['currentPage'] = 'services.php';
             document.getElementById('petBreed').required = true;
             document.querySelector('[for="petBreed"]').parentElement.style.display = 'block';
             
-            // Show modal
+            // Lock scroll and save position
+            savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'relative';
             modal.classList.add('active');
             document.body.classList.add('modal-open');
         }
@@ -1005,6 +1179,12 @@ $GLOBALS['currentPage'] = 'services.php';
             const modal = document.getElementById('sitterBookingModal');
             modal.classList.remove('active');
             document.body.classList.remove('modal-open');
+            
+            // Restore scroll and position
+            document.documentElement.style.overflow = '';
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            window.scrollTo(0, savedScrollPosition);
             currentSitter = null;
         }
 
@@ -1189,7 +1369,11 @@ $GLOBALS['currentPage'] = 'services.php';
         let currentBreeder = null;
         let pendingBreedingData = null;
 
-        function openBreederDetails(breederData) {
+        function openBreederDetails(breederData, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
             currentBreeder = breederData;
             const modal = document.getElementById('breederDetailsModal');
             
@@ -1204,7 +1388,11 @@ $GLOBALS['currentPage'] = 'services.php';
             // Reset form
             document.getElementById('breedingBookingForm').reset();
             
-            // Show modal
+            // Lock scroll and save position
+            savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'relative';
             modal.classList.add('active');
             document.body.classList.add('modal-open');
         }
@@ -1213,6 +1401,12 @@ $GLOBALS['currentPage'] = 'services.php';
             const modal = document.getElementById('breederDetailsModal');
             modal.classList.remove('active');
             document.body.classList.remove('modal-open');
+            
+            // Restore scroll and position
+            document.documentElement.style.overflow = '';
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            window.scrollTo(0, savedScrollPosition);
             currentBreeder = null;
         }
 
@@ -1309,9 +1503,9 @@ $GLOBALS['currentPage'] = 'services.php';
                     <p id="trainerModalBusiness" class="trainer-modal-business"></p>
                     <div class="trainer-modal-meta">
                         <span class="trainer-modal-spec">🎯 <span id="trainerModalSpecialization"></span></span>
-                        <span class="trainer-modal-location">📍 <span id="trainerModalCity"></span></span>
                         <span class="trainer-modal-exp">⭐ <span id="trainerModalExperience"></span></span>
                     </div>
+                    <div class="trainer-modal-areas" id="trainerModalAreas"></div>
                 </div>
             </div>
 

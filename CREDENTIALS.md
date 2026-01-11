@@ -56,24 +56,29 @@
 |--------|-------|------|
 | Happy Paws Veterinary Clinic | happy@recep.com | Agent 007 |
 | Akila Veterenary Clinic | akila@recep.com | Akila Receptionist |
+| BestCare Animal Hospital | bestcare@recep.com | Kaveen Sasmina |
 
 ---
 
-## 🐾 Pet Owners (Sample Accounts)
+## Other Roles
 
-- peterpoker@gmail.com
-- allinone@gmail.com
-- amindasithummal@gmail.com
+- 🐾 PetOwner - petowner@gmail.com
+- 🐾 Trainer  - trainer@gmail.com
+- 🐾 Sitter   - sitter@gmail.com
+- 🐾 Groomer  - groomer@gmail.com
+- 🐾 Breeder  - breeder@gmail.com
+- 🐾 AllRoles - multirole.user@petvet.com
+
 
 ---
 
 ## 📝 Notes
 
 - All accounts use the default password: `password123`
-- Each clinic has its own manager, vets, and staff
+- Each clinic has its own manager, Receptionist, vets, and staff
 - Pet owners can book appointments with any approved clinic
 - Vets can only access appointments from their assigned clinic
 
 ---
 
-**Last Updated**: December 23, 2025
+**Last Updated**: December 26, 2025

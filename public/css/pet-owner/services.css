@@ -129,7 +129,13 @@ body{margin:0; background:var(--bg); color:var(--text); line-height:1.55; overfl
 /* Results Section */
 .results-section{margin-bottom:var(--space-6)}
 .results-header{margin-bottom:var(--space-4)}
-.results-header h3{font-size:20px; font-weight:600; color:var(--text)}
+/* .results-header h3{font-size:20px; font-weight:600; color:var(--text)} */
+.results-header h3 {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 100;
+    color: #0000008a;
+}
 
 /* Provider Cards Grid */
 .providers-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:var(--space-4)}
@@ -266,6 +272,55 @@ body{margin:0; background:var(--bg); color:var(--text); line-height:1.55; overfl
     display:flex;
     flex-direction:column;
     gap:6px
+}
+
+/* Trainer Working Areas (compact chips) */
+.work-areas{
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    flex-wrap:wrap
+}
+
+.work-areas-label{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--muted);
+    line-height:1;
+    margin-top:2px
+}
+
+.work-areas-label svg{
+    width:14px;
+    height:14px;
+    display:block
+}
+
+.work-areas-chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px
+}
+
+.area-chip{
+    display:inline-flex;
+    align-items:center;
+    padding:3px 8px;
+    border-radius:999px;
+    background:#f1f5f9;
+    border:1px solid var(--border);
+    font-size:10px;
+    font-weight:700;
+    color:#334155;
+    line-height:1.2;
+    white-space:nowrap
+}
+
+.area-chip.more{
+    background:#e0e7ff;
+    border-color:#c7d2fe;
+    color:#3730a3
 }
 
 .training-types-label{
@@ -612,45 +667,460 @@ body{margin:0; background:var(--bg); color:var(--text); line-height:1.55; overfl
 .no-results h3{font-size:22px; margin-bottom:10px; color:var(--text)}
 .no-results p{color:var(--muted); font-size:14px}
 
-/* Modal Adjustments - Fix bottom gap */
-#contactModal .modal-content{padding:24px 30px 24px 30px}
-#contactModal .owner-name{margin-bottom:16px}
-#contactModal .phone-list{margin-bottom:0}
+/* Contact Modal - Desktop Default */
+.contact-overlay .modal-content{
+    padding:0;
+    border-radius:var(--radius);
+    max-width:400px;
+}
 
-/* Fix mobile modal gap issue */
+.contact-header{
+    padding:20px 24px;
+    border-bottom:2px solid var(--border);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.contact-header h3{
+    margin:0;
+    font-size:20px;
+    font-weight:700;
+    color:var(--text);
+}
+
+.contact-info{
+    padding:24px;
+}
+
+.owner-name{
+    margin-bottom:20px;
+}
+
+.contact-person-name{
+    font-size:18px;
+    font-weight:700;
+    color:var(--text);
+    line-height:1.3;
+}
+
+.contact-business-name{
+    font-size:13px;
+    font-weight:500;
+    color:var(--muted);
+    margin-top:4px;
+    line-height:1.3;
+}
+
+.phone-list{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+}
+
+.phone-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:16px;
+    background:var(--bg-soft);
+    border-radius:12px;
+    border:1px solid var(--border);
+}
+
+.phone-info{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+}
+
+.phone-label{
+    font-size:11px;
+    color:var(--muted);
+    font-weight:600;
+    text-transform:uppercase;
+}
+
+.phone-number{
+    font-size:16px;
+    font-weight:600;
+    color:var(--text);
+}
+
+.call-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 20px;
+    background:#10b981;
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    font-weight:600;
+    font-size:14px;
+    text-decoration:none;
+    transition:var(--transition);
+    cursor:pointer;
+}
+
+.call-btn:hover{
+    background:#059669;
+    transform:translateY(-1px);
+}
+
+.call-btn svg{
+    stroke:#fff;
+}
+
+/* Drawer Handle - Hidden on Desktop */
+.drawer-handle{
+    display:none;
+}
+
+/* Fix mobile modal gap issue - Preserve scroll position */
 body.modal-open{
     overflow:hidden;
-    position:fixed;
-    width:100%;
-    height:100%
 }
-#contactModal.active{
+
+.contact-overlay.active{
     overflow-y:auto;
-    -webkit-overflow-scrolling:touch
+    -webkit-overflow-scrolling:touch;
 }
 
 .page-header{
     margin-bottom: 0px;
 }
 
+/* Mobile Filter Toggle Button - Hidden on Desktop */
+.mobile-filter-toggle{
+    display:none;
+}
+
+/* Filters Overlay - Hidden on Desktop */
+.filters-overlay{
+    display:none;
+}
+
+/* Filters Header - Hidden on Desktop */
+.filters-header{
+    display:none;
+}
+
 /* Responsive */
 @media (max-width:768px){
+    /* Use more screen width on mobile */
+    .main-content{padding-left:8px; padding-right:8px}
+    .page-wrap{padding:0}
+
+    /* Mobile Filter Toggle Button - Floating Top Right (Matching Sidebar Toggle) */
+    .mobile-filter-toggle{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        width:40px;
+        height:40px;
+        padding:0;
+        background-color:#17293F;
+        border:none;
+        border-radius:50%;
+        cursor:pointer;
+        transition:background-color 0.2s ease;
+        color:#fff;
+        position:fixed;
+        top:20px;
+        right:20px;
+        z-index:1500;
+        box-shadow:0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    .mobile-filter-toggle:hover{
+        background-color:#374B5F;
+    }
+
+    .mobile-filter-toggle:active{
+        transform:scale(0.95);
+    }
+
+    .mobile-filter-toggle svg{
+        flex-shrink:0;
+        stroke:#fff;
+    }
+
+    .filter-badge{
+        display:none !important;
+    }
+
+    /* Filters Overlay */
+    .filters-overlay{
+        display:none;
+        position:fixed;
+        top:0;
+        left:0;
+        right:0;
+        bottom:0;
+        background:rgba(0, 0, 0, 0.5);
+        z-index:998;
+        opacity:0;
+        transition:opacity 0.3s ease;
+    }
+
+    .filters-overlay.active{
+        display:block;
+        opacity:1;
+    }
+
+    /* Mobile Filters Section - Slide-in Panel */
+    .filters-section{
+        position:fixed;
+        top:0;
+        right:-100%;
+        width:90%;
+        max-width:400px;
+        height:100vh;
+        background:var(--card);
+        box-shadow:-4px 0 20px rgba(0, 0, 0, 0.15);
+        z-index:999;
+        transition:right 0.3s ease;
+        overflow-y:auto;
+        padding:0;
+        margin:0;
+        border-radius:0;
+    }
+
+    .filters-section.active{
+        right:0;
+    }
+
+    /* Prevent body scroll when filters open */
+    body.filters-open{
+        overflow:hidden;
+    }
+
+    /* Filters Header */
+    .filters-header{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        padding:16px;
+        border-bottom:2px solid var(--border);
+        background:linear-gradient(135deg, #f8faff 0%, #fff 100%);
+        position:sticky;
+        top:0;
+        z-index:10;
+    }
+
+    .filters-header h3{
+        margin:0;
+        font-size:18px;
+        font-weight:700;
+        color:var(--text);
+    }
+
+    .filters-close{
+        background:none;
+        border:none;
+        font-size:32px;
+        line-height:1;
+        color:var(--muted);
+        cursor:pointer;
+        padding:0;
+        width:32px;
+        height:32px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:50%;
+        transition:var(--transition);
+    }
+
+    .filters-close:hover{
+        background:var(--bg-soft);
+        color:var(--text);
+    }
+
+    /* Filters Form Content */
+    .filters-section form{
+        padding:16px;
+    }
+
     .service-selector{grid-template-columns:repeat(2, 1fr); gap:var(--space-2)}
     .service-btn{padding:10px 8px}
     .service-icon{font-size:28px}
     .service-label{font-size:12px}
-    .filters-section{padding:var(--space-3)}
-    .filters-row{grid-template-columns:1fr; gap:var(--space-2)}
-    .filter-group{gap:4px}
-    .filter-group label{font-size:11px}
-    .filter-group input, .filter-group select{padding:7px 10px; font-size:12px}
-    .filters-actions{margin-top:var(--space-2); gap:8px}
-    .btn{padding:8px 16px; font-size:12px}
-    .providers-grid{grid-template-columns:1fr}
-    .provider-header{flex-direction:column; align-items:center; text-align:center}
-    .provider-actions{flex-direction:column}
-    .provider-actions .btn{width:100%}
+    
+    .filters-row{
+        grid-template-columns:1fr;
+        gap:12px;
+        margin-bottom:16px;
+    }
+    
+    .filters-row:last-of-type{
+        margin-bottom:0;
+    }
+    
+    .filter-group{
+        gap:6px;
+    }
+    
+    .filter-group label{
+        font-size:12px;
+        font-weight:600;
+    }
+    
+    .filter-group input, .filter-group select{
+        padding:10px 12px;
+        font-size:13px;
+        border-radius:8px;
+    }
+    
+    /* Filters Actions - Single Row on Mobile */
+    .filters-actions{
+        margin-top:20px;
+        gap:10px;
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        position:sticky;
+        bottom:0;
+        background:var(--card);
+        padding:12px 0 0 0;
+        border-top:2px solid var(--border);
+        padding-top:16px;
+    }
+    
+    .filters-actions .btn{
+        padding:12px 20px;
+        font-size:14px;
+        border-radius:10px;
+        width:100%;
+        justify-content:center;
+    }
+    
+    /* Keep font sizes the same; only tighten spacing */
+    .btn{padding:8px 16px}
+
+    /* Center cards & match the screenshot proportions (layout only) */
+    .providers-grid{grid-template-columns:1fr; gap:16px; justify-items:center}
+    .provider-card{width:100%; max-width:560px}
+
+    .provider-header{
+        padding:18px 16px 14px 16px;
+        gap:14px;
+        flex-direction:row;
+        align-items:flex-start;
+        text-align:left
+    }
+
+    .provider-avatar{width:74px; height:74px; border-radius:16px; flex-shrink:0}
+    .provider-info{flex:1; min-width:0}
+    .provider-meta{gap:10px}
+
+    .provider-body{padding:14px 16px 16px 16px; gap:12px}
+
+    .trainer-specialization{width:100%}
+    .specialization-content{flex:1; min-width:0}
+    
+    /* Work areas - optimized for mobile */
+    .work-areas{gap:10px}
+    .work-areas-label{margin-top:2px}
+    .training-types-offered{gap:8px}
+    .training-types-list{gap:8px}
+
+    /* Buttons stay visually identical; only spacing/placement changes */
+    .provider-actions{padding:14px 16px 16px 16px; gap:14px; flex-direction:row}
+    .provider-actions .btn{flex:1; justify-content:center}
+    
     .package-meta{flex-direction:column; align-items:flex-start}
+
+    /* Contact Modal as Bottom Drawer on Mobile */
+    .contact-overlay{
+        align-items:flex-end;
+    }
+
+    .contact-drawer{
+        position:fixed;
+        bottom:-100%;
+        left:0;
+        right:0;
+        width:100%;
+        max-width:100%;
+        max-height:70vh;
+        border-radius:20px 20px 0 0;
+        box-shadow:0 -4px 20px rgba(0, 0, 0, 0.2);
+        transition:bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow:hidden;
+        display:flex;
+        flex-direction:column;
+    }
+
+    .contact-overlay.active .contact-drawer{
+        bottom:0;
+    }
+
+    /* Drawer Handle */
+    .drawer-handle{
+        display:block;
+        width:40px;
+        height:4px;
+        background:var(--border-strong);
+        border-radius:2px;
+        margin:12px auto 8px auto;
+    }
+
+    .contact-header{
+        padding:16px 20px;
+        border-bottom:2px solid var(--border);
+        flex-shrink:0;
+    }
+
+    .contact-header h3{
+        font-size:18px;
+        flex: auto; /*new*/
+        text-align: center;/*new*/
+    }
+
+    .contact-info{
+        padding:20px;
+        overflow-y:auto;
+        flex:1;
+    }
+
+    .owner-name{
+        margin-bottom:16px;
+    }
+
+    .contact-person-name{
+        font-size:16px;
+    }
+
+    .contact-business-name{
+        font-size:12px;
+        margin-top:3px;
+    }
+
+    .phone-item{
+        padding:14px;
+        margin-bottom:12px;
+    }
+
+    .phone-info{
+        flex:1;
+    }
+
+    .phone-number{
+        font-size:15px;
+    }
+
+    .call-btn{
+        padding:10px 16px;
+        font-size:13px;
+        gap:6px;
+        flex-shrink:0;
+    }
+
+    .call-btn svg{
+        width:16px;
+        height:16px;
+    }
 }
 
 @media (max-width:480px){
@@ -664,6 +1134,15 @@ body.modal-open{
     .filters-section{padding:var(--space-3); margin-bottom:var(--space-3)}
     .filters-actions{flex-direction:column}
     .filters-actions .btn{width:100%}
+
+    /* Keep the same content styling; only tighten layout a bit */
+    .main-content{padding-left:6px; padding-right:6px}
+    .providers-grid{gap:14px}
+    .provider-card{max-width:520px}
+    .provider-header{padding:16px 14px 12px 14px; gap:12px}
+    .provider-avatar{width:70px; height:70px; border-radius:16px}
+    .provider-body{padding:12px 14px 14px 14px; gap:10px}
+    .provider-actions{padding:12px 14px 14px 14px; gap:12px; flex-direction:row}
 }
 
 /* Trainer Details Modal */
@@ -758,6 +1237,13 @@ body.modal-open{
     flex-wrap:wrap;
     gap:8px;
     font-size:12px
+}
+
+.trainer-modal-areas{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:8px
 }
 
 .trainer-modal-content .provider-meta .meta-badge{

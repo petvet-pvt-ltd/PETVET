@@ -1,7 +1,20 @@
 <?php
 require_once __DIR__ . '/../BaseModel.php';
-require_once __DIR__ . '/ClinicData.php';
+
 class OverviewModel extends BaseModel {
+    
+    /**
+     * Get clinic_id for the logged-in clinic manager
+     */
+    private function getClinicId() {
+        $userId = $_SESSION['user_id'] ?? 0;
+        if (!$userId) return 0;
+
+        $stmt = $this->db->prepare("SELECT clinic_id FROM clinic_manager_profiles WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        return $stmt->fetchColumn() ?: 0;
+    }
+    
     public function fetchOverviewData(): array {
         // Load configuration
         $cfgPath = __DIR__ . '/../../config/clinic_manager.php';
@@ -10,32 +23,25 @@ class OverviewModel extends BaseModel {
             'slot_duration_minutes' => 60
         ];
         date_default_timezone_set($cfg['timezone'] ?? 'Asia/Colombo');
-        $vets = ClinicData::getVets();
-        $vetsById = [];
-        foreach($vets as $v){ $vetsById[$v['id']] = $v; }
-        $schedule = ClinicData::getAppointmentsSchedule();
-        $today = date('Y-m-d');
-        $todayAppointmentsRaw = $schedule[$today] ?? [];
-        $appointments = [];
-        foreach($todayAppointmentsRaw as $a){
-            $vid = $a['vet_id'];
-            $appointments[] = [
-                'time' => $a['time'],
-                'pet' => $a['pet'],
-                'animal' => $a['animal'] ?? 'Pet',
-                'client' => $a['client'],
-                'vet' => $vetsById[$vid]['name'] ?? 'Unknown Vet',
-                'status' => $a['status'],
-                'type' => $a['type'] ?? 'Checkup'
+        
+        $clinicId = $this->getClinicId();
+        if (!$clinicId) {
+            return [
+                'kpis' => [],
+                'appointments' => [],
+                'ongoingAppointments' => [],
+                'pendingVetRequests' => [],
+                'badgeClasses' => []
             ];
         }
-        // Build ongoing appointments by vet (current timeslot, 60 min window)
+        
+        $today = date('Y-m-d');
         $nowTs = time();
-    $slotMinutes = (int)($cfg['slot_duration_minutes'] ?? 60);
+        $slotMinutes = (int)($cfg['slot_duration_minutes'] ?? 60);
+        
         // Optional debug override: pass ?debugNow=HH:MM or YYYY-MM-DD HH:MM to preview ongoing logic
         if (!empty($_GET['debugNow'])) {
             $debug = trim($_GET['debugNow']);
-            $today = date('Y-m-d');
             if (preg_match('/^\d{2}:\d{2}$/', $debug)) {
                 $ts = strtotime($today . ' ' . $debug);
                 if ($ts !== false) { $nowTs = $ts; }
@@ -44,101 +50,190 @@ class OverviewModel extends BaseModel {
                 if ($ts !== false) { $nowTs = $ts; }
             }
         }
-        // Build map for quick lookup: for each vet today's entries
-        $byVet = [];
-        foreach ($todayAppointmentsRaw as $a) {
-            $vid = $a['vet_id'];
-            $startTs = strtotime($today . ' ' . $a['time']);
-            $endTs = $startTs + ($slotMinutes * 60);
-            $isOngoing = ($nowTs >= $startTs && $nowTs < $endTs && $a['status'] !== 'Completed');
-            if ($isOngoing) {
-                $byVet[$vid] = [
-                    'vet' => $vetsById[$vid]['name'] ?? 'Unknown Vet',
-                    'animal' => $a['animal'] ?? 'Pet',
-                    'client' => $a['client'],
-                    'type' => $a['type'] ?? 'Checkup',
-                    'time_range' => date('H:i', $startTs) . ' – ' . date('H:i', $endTs)
-                ];
-            }
-        }
-        // Determine staff on duty (vets) and compose normalized list
-        $activeVets = array_filter($vets, fn($v)=>$v['status']==='Active');
-        // Staff on duty vets from on_duty_dates
-        $dutyVets = array_filter($vets, fn($v)=>in_array($today, $v['on_duty_dates']));
-        $staff = [
-            'Veterinarians' => array_map(fn($v)=>[
-                'name'=>$v['name'],
-                'time'=>'09:00 – 17:00',
-                'status'=>'online'
-            ], $dutyVets)
-        ];
         
-        // Get actual staff from StaffModel
-        require_once __DIR__ . '/StaffModel.php';
-        $staffModel = new StaffModel();
-        $allStaff = $staffModel->all();
+        // Get today's appointments count
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) as count
+            FROM appointments
+            WHERE clinic_id = ? AND appointment_date = ?
+        ");
+        $stmt->execute([$clinicId, $today]);
+        $todayAppointmentsCount = $stmt->fetch()['count'];
         
-        // TODO: Replace with actual duty schedule from database
-        // For now, manually set which staff are on duty today (for demo purposes)
-        // In production, this would come from a staff_duty_schedule table
-        $todayDutyStaffIds = [1, 3, 5, 7, 8]; // Anushka, Kavinda, Malini, Ruwan, Dilani are on duty today
-        // Not on duty: Nimasha (2), Sachini (4), Tharindu (6), Kasun (9), Chamika (10)
+        // Get active vets count
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) as count
+            FROM vets v
+            JOIN users u ON v.user_id = u.id
+            WHERE v.clinic_id = ? AND v.available = 1 AND u.is_active = 1 AND u.is_blocked = 0
+        ");
+        $stmt->execute([$clinicId]);
+        $activeVetsCount = $stmt->fetch()['count'];
         
-        // Group only the staff who are scheduled for duty today
-        foreach ($allStaff as $member) {
-            if ($member['status'] === 'Active' && in_array($member['id'], $todayDutyStaffIds)) {
-                $roleKey = $member['role'];
-                if ($roleKey === 'Veterinary Assistant') {
-                    $roleKey = 'Veterinary Assistants'; // Pluralize for consistency
-                }
-                if (!isset($staff[$roleKey])) {
-                    $staff[$roleKey] = [];
-                }
-                $staff[$roleKey][] = [
-                    'name' => $member['name'],
-                    'time' => '08:00 – 16:00', // Default time (later from duty schedule)
-                    'status' => 'online'
-                ];
-            }
-        }
-        $staffCount = 0; foreach($staff as $group){ $staffCount += count($group); }
+        // Get pending shop orders count (if shop exists for this clinic)
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) as count
+            FROM orders
+            WHERE clinic_id = ? AND status = 'pending'
+        ");
+        $stmt->execute([$clinicId]);
+        $pendingOrdersCount = $stmt->fetch()['count'];
+        
+        // Get pending vet requests (vets with is_active = 0 or email_verified = 0)
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) as count
+            FROM vets v
+            JOIN users u ON v.user_id = u.id
+            WHERE v.clinic_id = ? AND (u.is_active = 0 OR u.email_verified = 0)
+        ");
+        $stmt->execute([$clinicId]);
+        $pendingVetRequestsCount = $stmt->fetch()['count'];
+        
+        // Build KPIs
         $kpis = [
-            ['label'=>'Appointments Today','value'=>count($appointments)],
-            ['label'=>'Active Vets','value'=>count($activeVets)],
-            ['label'=>'Pending Shop Orders','value'=>4],
-            ['label'=>'Staff on Duty Today','value'=>$staffCount],
+            ['label'=>'Appointments Today','value'=>$todayAppointmentsCount],
+            ['label'=>'Active Vets','value'=>$activeVetsCount],
+            ['label'=>'Pending Shop Orders','value'=>$pendingOrdersCount],
+            ['label'=>'Pending Vet Requests','value'=>$pendingVetRequestsCount],
         ];
-        $badgeClasses = [
-            'Confirmed'=>'badge-confirmed',
-            'Completed'=>'badge-completed',
-        ];
-        // Normalized list of ongoing appointments by vet on duty
+        
+        // Get today's appointments with details
+        $stmt = $this->db->prepare("
+            SELECT 
+                a.id,
+                a.appointment_time,
+                a.appointment_type,
+                a.status,
+                a.duration_minutes,
+                p.name as pet_name,
+                p.species,
+                CONCAT(u_owner.first_name, ' ', u_owner.last_name) as owner_name,
+                CONCAT(u_vet.first_name, ' ', u_vet.last_name) as vet_name,
+                a.vet_id
+            FROM appointments a
+            JOIN pets p ON a.pet_id = p.id
+            JOIN users u_owner ON a.pet_owner_id = u_owner.id
+            LEFT JOIN users u_vet ON a.vet_id = u_vet.id
+            WHERE a.clinic_id = ? AND a.appointment_date = ?
+            ORDER BY a.appointment_time ASC
+        ");
+        $stmt->execute([$clinicId, $today]);
+        $appointments = $stmt->fetchAll();
+        
+        // Get ongoing appointments (appointments where current time is within the appointment window)
+        $stmt = $this->db->prepare("
+            SELECT 
+                a.id,
+                a.appointment_time,
+                a.appointment_type,
+                a.duration_minutes,
+                p.name as pet_name,
+                p.species,
+                CONCAT(u_owner.first_name, ' ', u_owner.last_name) as owner_name,
+                CONCAT(u_vet.first_name, ' ', u_vet.last_name) as vet_name,
+                a.vet_id
+            FROM appointments a
+            JOIN pets p ON a.pet_id = p.id
+            JOIN users u_owner ON a.pet_owner_id = u_owner.id
+            JOIN users u_vet ON a.vet_id = u_vet.id
+            WHERE a.clinic_id = ? 
+            AND a.appointment_date = ?
+            AND a.status IN ('approved', 'ongoing')
+            ORDER BY a.appointment_time ASC
+        ");
+        $stmt->execute([$clinicId, $today]);
+        $appointmentsData = $stmt->fetchAll();
+        
+        // Build ongoing appointments list
         $ongoing = [];
-        foreach ($dutyVets as $v) {
-            $vid = $v['id'];
-            if (isset($byVet[$vid])) {
-                $rec = $byVet[$vid];
+        $currentTime = date('H:i:s', $nowTs);
+        
+        foreach ($appointmentsData as $appt) {
+            $startTime = $appt['appointment_time'];
+            $duration = $appt['duration_minutes'] ?? $slotMinutes;
+            $endTime = date('H:i:s', strtotime($startTime) + ($duration * 60));
+            
+            // Check if current time is within appointment window
+            $isOngoing = ($currentTime >= $startTime && $currentTime < $endTime);
+            
+            if ($isOngoing) {
                 $ongoing[] = [
-                    'vet' => $rec['vet'],
+                    'vet' => $appt['vet_name'] ?? 'Unknown Vet',
                     'hasAppointment' => true,
-                    'animal' => $rec['animal'],
-                    'client' => $rec['client'],
-                    'type' => $rec['type'],
-                    'time_range' => $rec['time_range']
+                    'animal' => $appt['species'] ?? 'Pet',
+                    'client' => $appt['owner_name'] ?? 'Unknown',
+                    'type' => $appt['appointment_type'] ?? 'Checkup',
+                    'time_range' => date('H:i', strtotime($startTime)) . ' – ' . date('H:i', strtotime($endTime))
                 ];
-            } else {
+            }
+        }
+        
+        // If no ongoing appointments, show vets with no current appointments
+        if (empty($ongoing)) {
+            $stmt = $this->db->prepare("
+                SELECT CONCAT(u.first_name, ' ', u.last_name) as vet_name
+                FROM vets v
+                JOIN users u ON v.user_id = u.id
+                WHERE v.clinic_id = ? AND v.available = 1 AND u.is_active = 1 AND u.is_blocked = 0
+                LIMIT 3
+            ");
+            $stmt->execute([$clinicId]);
+            $availableVets = $stmt->fetchAll();
+            
+            foreach ($availableVets as $vet) {
                 $ongoing[] = [
-                    'vet' => $v['name'],
+                    'vet' => $vet['vet_name'],
                     'hasAppointment' => false
                 ];
             }
         }
+        
+        // Get staff on duty for today from staff_duty_schedule table
+        $stmt = $this->db->prepare("
+            SELECT 
+                sds.staff_id,
+                sds.shift_time,
+                COALESCE(CONCAT(u.first_name, ' ', u.last_name), cs.name) as name,
+                cs.role
+            FROM staff_duty_schedule sds
+            JOIN clinic_staff cs ON sds.staff_id = cs.id
+            LEFT JOIN users u ON cs.user_id = u.id
+            WHERE sds.clinic_id = ? 
+            AND sds.duty_date = ?
+            AND cs.status = 'Active'
+            ORDER BY cs.role, name
+        ");
+        $stmt->execute([$clinicId, $today]);
+        $staffMembers = $stmt->fetchAll();
+        
+        // Group staff by role
+        $staff = [];
+        foreach ($staffMembers as $member) {
+            $roleKey = $member['role'];
+            if (!isset($staff[$roleKey])) {
+                $staff[$roleKey] = [];
+            }
+            $staff[$roleKey][] = [
+                'name' => $member['name'],
+                'time' => $member['shift_time'],
+                'status' => 'online'
+            ];
+        }
+        
+        $badgeClasses = [
+            'pending' => 'badge-pending',
+            'approved' => 'badge-confirmed',
+            'completed' => 'badge-completed',
+            'cancelled' => 'badge-cancelled',
+            'ongoing' => 'badge-ongoing',
+        ];
+        
         return [
-            'kpis'=>$kpis,
-            'appointments'=>$appointments,
-            'ongoingAppointments'=>$ongoing,
-            'staff'=>$staff,
-            'badgeClasses'=>$badgeClasses,
+            'kpis' => $kpis,
+            'appointments' => $appointments,
+            'ongoingAppointments' => $ongoing,
+            'staff' => $staff,
+            'badgeClasses' => $badgeClasses,
         ];
     }
 }

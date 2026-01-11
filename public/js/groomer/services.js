@@ -59,9 +59,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const serviceName = card.querySelector('.service-name').textContent.trim();
             const serviceDescription = card.querySelector('.service-description').textContent.trim();
             const priceElement = card.querySelector('.meta-value.price');
-            const servicePrice = priceElement ? priceElement.textContent.replace('$', '').replace(',', '').trim() : '';
-            const durationElement = card.querySelector('.meta-value');
-            const serviceDuration = durationElement ? durationElement.textContent.trim() : '';
+            const servicePrice = priceElement ? priceElement.textContent.replace('LKR', '').replace(',', '').trim() : '';
+            const metaItems = card.querySelectorAll('.meta-item');
+            let serviceDuration = '';
+            
+            // Get duration from meta items
+            metaItems.forEach(item => {
+                const label = item.querySelector('.meta-label');
+                if (label && label.textContent.trim() === 'Duration:') {
+                    const valueElement = item.querySelector('.meta-value');
+                    serviceDuration = valueElement ? valueElement.textContent.trim() : '';
+                }
+            });
             
             // Check pet type badges
             const hasDogs = card.querySelector('.badge.dog') !== null;
@@ -102,38 +111,97 @@ document.addEventListener('DOMContentLoaded', function() {
             if (confirmed) {
                 const serviceId = card.dataset.serviceId;
                 
-                // In real app, send delete request to server
-                card.style.opacity = '0';
-                setTimeout(() => {
-                    card.remove();
-                    showToast('Service deleted successfully');
-                }, 300);
+                // Send delete request to server
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'delete');
+                    formData.append('service_id', serviceId);
+                    
+                    const response = await fetch('/PETVET/api/groomer/services.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        card.style.opacity = '0';
+                        setTimeout(() => {
+                            card.remove();
+                            
+                            // Check if no more services, show empty state
+                            const servicesGrid = document.querySelector('.services-grid');
+                            const remainingCards = servicesGrid.querySelectorAll('.service-card');
+                            if (remainingCards.length === 0) {
+                                servicesGrid.innerHTML = `
+                                    <div class="empty-state">
+                                        <div class="empty-icon">✂️</div>
+                                        <h3>No Services Yet</h3>
+                                        <p>Start adding your grooming services to attract more clients</p>
+                                        <button class="btn primary" id="addFirstService">Add Your First Service</button>
+                                    </div>
+                                `;
+                            }
+                            
+                            showToast(result.message);
+                        }, 300);
+                    } else {
+                        showToast(result.message || 'Failed to delete service');
+                    }
+                } catch (error) {
+                    console.error('Error deleting service:', error);
+                    showToast('An error occurred while deleting the service');
+                }
             }
         }
     });
 
     // Toggle service availability
-    document.querySelectorAll('.service-footer .toggle-switch input').forEach(toggle => {
-        toggle.addEventListener('change', function() {
-            const card = this.closest('.service-card');
+    document.addEventListener('change', async function(e) {
+        if (e.target.matches('.service-footer .toggle-switch input')) {
+            const toggle = e.target;
+            const card = toggle.closest('.service-card');
             const serviceId = card.dataset.serviceId;
-            const isAvailable = this.checked;
+            const isAvailable = toggle.checked;
             
-            if (isAvailable) {
-                card.classList.remove('unavailable');
-                this.nextElementSibling.nextElementSibling.textContent = 'Available';
-            } else {
-                card.classList.add('unavailable');
-                this.nextElementSibling.nextElementSibling.textContent = 'Unavailable';
+            try {
+                const formData = new FormData();
+                formData.append('action', 'toggle_availability');
+                formData.append('service_id', serviceId);
+                
+                const response = await fetch('/PETVET/api/groomer/services.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (result.available) {
+                        card.classList.remove('unavailable');
+                        toggle.nextElementSibling.nextElementSibling.textContent = 'Available';
+                    } else {
+                        card.classList.add('unavailable');
+                        toggle.nextElementSibling.nextElementSibling.textContent = 'Unavailable';
+                    }
+                    
+                    showToast(result.message);
+                } else {
+                    // Revert toggle state on error
+                    toggle.checked = !isAvailable;
+                    showToast(result.message || 'Failed to update availability');
+                }
+            } catch (error) {
+                console.error('Error toggling availability:', error);
+                // Revert toggle state on error
+                toggle.checked = !isAvailable;
+                showToast('An error occurred while updating availability');
             }
-            
-            // In real app, send update to server
-            showToast(isAvailable ? 'Service is now available' : 'Service is now unavailable');
-        });
+        }
     });
 
     // Form submission
-    serviceForm.addEventListener('submit', function(e) {
+    serviceForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const formData = new FormData(serviceForm);
@@ -145,16 +213,39 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('service_id', serviceId);
         }
 
-        // In real app, send to server
-        console.log('Form data:', Object.fromEntries(formData));
-        
-        showToast(serviceId ? 'Service updated successfully' : 'Service added successfully');
-        closeModalHandler();
-        
-        // Reload page or update UI
-        setTimeout(() => {
-            // location.reload();
-        }, 1500);
+        // Disable submit button to prevent double submission
+        const saveBtn = document.getElementById('saveBtn');
+        const originalText = saveBtn.textContent;
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+
+        try {
+            const response = await fetch('/PETVET/api/groomer/services.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast(result.message);
+                closeModalHandler();
+                
+                // Reload page to show updated data
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                showToast(result.message || 'Failed to save service');
+                saveBtn.disabled = false;
+                saveBtn.textContent = originalText;
+            }
+        } catch (error) {
+            console.error('Error saving service:', error);
+            showToast('An error occurred while saving the service');
+            saveBtn.disabled = false;
+            saveBtn.textContent = originalText;
+        }
     });
 
     // Pet type toggle styling

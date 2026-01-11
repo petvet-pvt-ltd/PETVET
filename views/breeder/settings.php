@@ -3,35 +3,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 $module = 'breeder';
 $GLOBALS['currentPage'] = 'settings.php';
 $GLOBALS['module'] = 'breeder';
-/** Breeder Settings (Profile & Preferences) */
-$profile = isset($profile) ? $profile : [
-	'name' => 'Your Name',
-	'email' => 'you@example.com',
-	'phone' => '',
-	'address' => '',
-	'city' => '',
-	'postal_code' => '',
-	'avatar' => 'https://placehold.co/200x200?text=Avatar',
-	'business_name' => '',
-	'license_number' => '',
-	'experience_years' => 0,
-	'specialization' => '',
-	'date_joined' => date('Y-m-d'),
-	'verified_email' => false,
-	'verified_phone' => false
-];
-$prefs = isset($prefs) ? $prefs : [
-	'email_notifications' => true,
-	'sms_notifications' => false,
-	'inquiry_alerts' => true,
-	'newsletter_subscription' => true,
-	'marketing_emails' => false,
-	'language' => 'en',
-	'timezone' => 'Asia/Colombo',
-	'theme' => 'light',
-	'public_profile' => true,
-	'show_pricing' => true
-];
+/** Breeder Settings */
+// Data will be loaded via JavaScript from API
+$profile = ['avatar' => '/PETVET/public/images/emptyProfPic.png'];
+$breederData = [];
+$prefs = [];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -39,45 +15,67 @@ $prefs = isset($prefs) ? $prefs : [
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Settings - Breeder - PetVet</title>
-<link rel="stylesheet" href="/PETVET/public/css/breeder/settings.css" />
+<link rel="stylesheet" href="/PETVET/public/css/pet-owner/settings.css" />
+<style>
+	.phone-error{
+		color:#ef4444;
+		font-size:12px;
+		margin-top:4px;
+		display:none;
+	}
+	.phone-error.show{display:block;}
+	input.error{border-color:#ef4444 !important;}
+
+	.card + .card{margin-top:1.5rem;}
+
+	.role-section-badge{
+		display:inline-flex;
+		align-items:center;
+		gap:.5rem;
+		padding:.25rem .75rem;
+		background:#dbeafe;
+		color:#1e40af;
+		border-radius:9999px;
+		font-size:.75rem;
+		font-weight:600;
+		margin-left:.5rem;
+	}
+	.role-section-badge svg{width:14px;height:14px;}
+
+	/* Make two-column rows align cleanly even with error text */
+	.row.two{align-items:start;}
+	.row.two > label{min-width:0;}
+</style>
 </head>
 <body>
 <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
-<main class="main-content">
-	<div class="page-wrap">
-		<div class="settings-header">
-			<div>
-				<h1>Settings</h1>
-				<p class="muted">Manage your profile &amp; preferences</p>
-			</div>
-			<nav class="quick-nav" aria-label="Quick navigation">
-				<a href="#section-profile">Profile</a>
-				<a href="#section-password">Password</a>
-				<a href="#section-preferences">Preferences</a>
-				<a href="#section-role">Role</a>
-			</nav>
+<main class="main-content" style="padding-top: 0px !important;">
+	<div class="settings-header">
+		<div>
+			<h1>Settings</h1>
+			<p class="muted">Manage your profile &amp; preferences</p>
 		</div>
+		<nav class="quick-nav" aria-label="Quick navigation">
+			<a href="#section-profile">Profile</a>
+			<a href="#section-password">Password</a>
+			<a href="#section-breeder">Breeder</a>
+			<a href="#section-preferences">Preferences</a>
+			<a href="#section-role">Active Role</a>
+		</nav>
+	</div>
 
+	<div class="page-wrap">
 		<div class="settings-grid">
-			<!-- Profile Card -->
+			<!-- 1. Profile Section (Same as Pet Owner) -->
 			<section class="card" id="section-profile" data-section>
 				<div class="card-head"><h2>Profile</h2></div>
 				<form id="formProfile" class="form" enctype="multipart/form-data">
-					<div class="cover-photo-section">
-						<div class="cover-photo-preview" id="coverPhotoPreview">
-							<img src="<?= htmlspecialchars($profile['cover_photo'] ?? 'https://placehold.co/1200x300?text=Cover+Photo') ?>" alt="Cover Photo" />
-							<div class="cover-photo-overlay">
-								<button type="button" class="btn outline small" data-for="coverPhoto">Change Cover Photo</button>
-							</div>
-						</div>
-						<input type="file" id="coverPhoto" accept="image/*" hidden />
-					</div>
 					<div class="profile-grid">
 						<div class="profile-left">
 							<div class="avatar-frame">
 								<div class="image-preview-list avatar big" id="breederAvatarPreview">
 									<div class="image-preview-item">
-										<img src="<?= htmlspecialchars($profile['avatar']) ?>" alt="avatar" />
+										<img src="<?= htmlspecialchars($profile['avatar'] ?? '/PETVET/public/images/emptyProfPic.png') ?>" alt="avatar" />
 									</div>
 								</div>
 								<div class="uploader-actions center">
@@ -88,108 +86,167 @@ $prefs = isset($prefs) ? $prefs : [
 						</div>
 						<div class="profile-right">
 							<div class="row two">
-								<label>Full Name
-									<input type="text" name="name" value="<?= htmlspecialchars($profile['name']) ?>" required />
+								<label>First Name
+									<input type="text" name="first_name" id="first_name" value="<?= htmlspecialchars($profile['first_name'] ?? '') ?>" required />
 								</label>
-								<label>Email
-									<input type="email" name="email" value="<?= htmlspecialchars($profile['email']) ?>" required />
+								<label>Last Name
+									<input type="text" name="last_name" id="last_name" value="<?= htmlspecialchars($profile['last_name'] ?? '') ?>" required />
 								</label>
 							</div>
-							<div class="row two">
+							<div class="row one">
+								<label>Email (Login Username)
+									<input type="email" name="email" id="email" value="<?= htmlspecialchars($profile['email'] ?? '') ?>" readonly style="background: #f0f0f0; cursor: not-allowed;" />
+								</label>
+							</div>
+							<div class="row one">
 								<label>Phone
-									<input type="tel" name="phone" value="<?= htmlspecialchars($profile['phone']) ?>" />
-								</label>
-								<label>Business Name
-									<input type="text" name="business_name" value="<?= htmlspecialchars($profile['business_name']) ?>" />
+									<input type="tel" name="phone" id="phone" value="<?= htmlspecialchars($profile['phone'] ?? '') ?>" placeholder="07XXXXXXXX" pattern="07[0-9]{8}" title="Phone number must be 10 digits starting with 07" />
+									<span id="phoneError" class="phone-error"></span>
 								</label>
 							</div>
-							<div class="row two">
-								<label>License Number
-									<input type="text" name="license_number" value="<?= htmlspecialchars($profile['license_number']) ?>" />
-								</label>
-								<label>Experience (Years)
-									<input type="number" name="experience_years" value="<?= htmlspecialchars($profile['experience_years']) ?>" min="0" />
+							<div class="row one">
+								<label>Address
+									<textarea name="address" id="address" rows="3" placeholder="Enter your full address"><?= htmlspecialchars($profile['address'] ?? '') ?></textarea>
 								</label>
 							</div>
-							<label>Specialization
-								<input type="text" name="specialization" value="<?= htmlspecialchars($profile['specialization']) ?>" placeholder="e.g., Large Breeds, Working Dogs" />
-							</label>
-							<label>Address
-								<input type="text" name="address" value="<?= htmlspecialchars($profile['address']) ?>" />
-							</label>
-							<div class="row two">
-								<label>City
-									<input type="text" name="city" value="<?= htmlspecialchars($profile['city']) ?>" />
-								</label>
-								<label>Postal Code
-									<input type="text" name="postal_code" value="<?= htmlspecialchars($profile['postal_code']) ?>" />
-								</label>
+							<div class="actions">
+								<button class="btn primary" type="submit">Save Profile</button>
 							</div>
 						</div>
-					</div>
-					<div class="actions">
-						<button class="btn primary" type="submit">Save Profile</button>
 					</div>
 				</form>
 			</section>
 
-			<!-- Password Card -->
+			<!-- 2. Change Password Section -->
 			<section class="card" id="section-password" data-section>
-				<div class="card-head">
-					<h2>Change Password</h2>
-					<p class="muted small">Use a strong password (min 8 characters)</p>
-				</div>
+				<div class="card-head"><h2>Change Password</h2></div>
 				<form id="formPassword" class="form">
-					<label>Current Password
-						<input type="password" name="current_password" required />
-					</label>
-					<label>New Password
-						<input type="password" name="new_password" required minlength="6" />
-					</label>
-					<label>Confirm New Password
-						<input type="password" name="confirm_password" required minlength="6" />
-					</label>
+					<div class="row one">
+						<label>Current Password
+							<input type="password" name="current_password" autocomplete="current-password" />
+						</label>
+					</div>
+					<div class="row one">
+						<label>New Password
+							<input type="password" name="new_password" autocomplete="new-password" />
+						</label>
+					</div>
+					<div class="row one">
+						<label>Confirm New Password
+							<input type="password" name="confirm_password" />
+						</label>
+					</div>
 					<div class="actions">
 						<button class="btn primary" type="submit">Update Password</button>
 					</div>
 				</form>
 			</section>
 
-			<!-- Preferences Card -->
-			<section class="card" id="section-preferences" data-section>
+			<!-- 3. Breeder-Specific Section -->
+			<section class="card" id="section-breeder" data-section>
 				<div class="card-head">
-					<h2>Preferences</h2>
-					<p class="muted small">Customize notifications &amp; services</p>
+					<h2>Breeder Settings
+						<span class="role-section-badge">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+								<circle cx="12" cy="7" r="4" />
+								<path d="M7 21v-1a7 7 0 0 1 7-7" />
+							</svg>
+							Breeder
+						</span>
+					</h2>
+					<p class="muted small">Manage your breeder profile and service details</p>
 				</div>
+				<form id="formBreeder" class="form">
+					<div class="row one">
+						<label>Business Name
+						<input type="text" name="business_name" value="<?= htmlspecialchars($breederData['business_name'] ?? '') ?>" placeholder="e.g., Golden Paws Kennel" />
+						</label>
+					</div>
+					<div class="row two">
+						<label>License Number
+						<input type="text" name="license_number" value="<?= htmlspecialchars($breederData['license_number'] ?? '') ?>" placeholder="e.g., BRD-12345" />
+					</label>
+					<label>Experience (Years)
+						<input type="number" name="experience" value="<?= htmlspecialchars($breederData['experience'] ?? '') ?>" min="0" placeholder="e.g., 6" />
+						</label>
+					</div>
+					<div class="row two">
+						<label>Work Area
+						<input type="text" name="work_area" value="<?= htmlspecialchars($breederData['work_area'] ?? '') ?>" placeholder="e.g., Colombo, Gampaha" />
+					</label>
+					<label>Specialization
+						<input type="text" name="specialization" value="<?= htmlspecialchars($breederData['specialization'] ?? '') ?>" placeholder="e.g., Large breeds, Working dogs" />
+						</label>
+					</div>
+					<div class="row one">
+						<label>Breeding Services & Pricing
+						<textarea name="services_description" rows="5" placeholder="Describe your breeding services, breeds, and rates... (UI only)"><?= htmlspecialchars($breederData['services_description'] ?? '') ?></textarea>
+						</label>
+					</div>
+					<div class="row two">
+						<label>Primary Phone Number
+						<input type="tel" name="phone_primary" id="phonePrimary" value="<?= htmlspecialchars($breederData['phone_primary'] ?? '') ?>" placeholder="0XXXXXXXXX" pattern="0[0-9]{9}" required />
+						<span id="phonePrimaryError" class="phone-error"></span>
+					</label>
+					<label>Secondary Phone Number
+						<input type="tel" name="phone_secondary" id="phoneSecondary" value="<?= htmlspecialchars($breederData['phone_secondary'] ?? '') ?>" placeholder="0XXXXXXXXX" pattern="0[0-9]{9}" />
+							<span id="phoneSecondaryError" class="phone-error"></span>
+						</label>
+					</div>
+					<div class="actions">
+						<button class="btn primary" type="submit">Save Breeder Settings</button>
+					</div>
+				</form>
+			</section>
+
+			<!-- 4. Preferences Section -->
+			<section class="card" id="section-preferences" data-section>
+				<div class="card-head"><h2>Preferences</h2></div>
 				<form id="formPrefs" class="form">
 					<div class="pref-simplified">
 						<div class="pref-row">
 							<label class="toggle">
-								<input type="checkbox" name="email_notifications" <?= $prefs['email_notifications'] ? 'checked' : '' ?> />
+								<input type="checkbox" name="email_notifications" <?= ($prefs['email_notifications'] ?? true) ? 'checked' : '' ?> />
 								<span class="toggle-track"><span class="toggle-handle"></span></span>
-								<span class="toggle-label">Email Notifications <small>Receive email alerts for inquiries</small></span>
+								<span class="toggle-label">Email Notifications <small>Inquiries & updates</small></span>
+							</label>
+						</div>
+						<div class="pref-row">
+							<label class="toggle">
+								<input type="checkbox" name="inquiry_alerts" <?= ($prefs['inquiry_alerts'] ?? true) ? 'checked' : '' ?> />
+								<span class="toggle-track"><span class="toggle-handle"></span></span>
+								<span class="toggle-label">Inquiry Alerts <small>Notify me when a customer contacts me</small></span>
+							</label>
+						</div>
+						<div class="pref-row">
+							<label class="toggle">
+							<input type="checkbox" name="public_profile" <?= ($prefs['public_profile'] ?? true) ? 'checked' : '' ?> />
+							<span class="toggle-track"><span class="toggle-handle"></span></span>
+							<span class="toggle-label">Public Profile <small>Allow customers to view my profile</small></span>
+						</label>
+					</div>
+					<div class="pref-row">
+						<label class="toggle">
+							<input type="checkbox" name="show_pricing" <?= ($prefs['show_pricing'] ?? true) ? 'checked' : '' ?> />
+								<span class="toggle-track"><span class="toggle-handle"></span></span>
+								<span class="toggle-label">Show Pricing <small>Display my rates publicly</small></span>
 							</label>
 						</div>
 					</div>
-					<hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid #e5e5e5;">
-					<h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">Breeding Services & Pricing</h3>
-					<p class="muted small" style="margin-bottom: 1rem;">Describe your breeding services and rates</p>
-					<label>Services Description
-						<textarea name="services_description" rows="6" placeholder="Describe your breeding services, e.g.,&#10;&#10;• Stud Service - LKR 50,000&#10;• Puppies/Kittens for Sale - LKR 80,000+&#10;• Breeding Consultation - LKR 5,000&#10;• Health Certificates Included"><?= htmlspecialchars($prefs['services_description'] ?? '') ?></textarea>
-						<small class="field-hint">List your services, breeds, and prices in LKR</small>
-					</label>
 					<div class="actions">
 						<button class="btn primary" type="submit">Save Preferences</button>
 					</div>
 				</form>
 			</section>
 
-			<!-- Role Management Card -->
+			<!-- 5. Role Management Card -->
 			<?php include __DIR__ . '/../shared/components/role-switcher.php'; ?>
 		</div>
 	</div>
 </main>
-<div id="toast" class="toast"></div>
-<script src="/PETVET/public/js/breeder/settings.js"></script>
+
+<div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+<script src="/PETVET/public/js/breeder/settings.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>
