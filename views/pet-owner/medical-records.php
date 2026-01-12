@@ -246,8 +246,7 @@ if (!empty($vaccinations)) {
           <thead>
             <tr>
               <th>Date</th>
-              <th>Vaccine</th>
-              <th>Next Due</th>
+              <th>Vaccines</th>
               <th>Vet</th>
               <th>Reports</th>
             </tr>
@@ -256,8 +255,18 @@ if (!empty($vaccinations)) {
             <?php foreach ($vaccinations as $vax): ?>
             <tr>
               <td><?php echo htmlspecialchars($vax['date'] ?? ''); ?></td>
-              <td><?php echo htmlspecialchars($vax['vaccine'] ?? ''); ?></td>
-              <td><?php echo htmlspecialchars($vax['next_due'] ?? '-'); ?></td>
+              <td>
+                <?php 
+                if (!empty($vax['vaccines']) && is_array($vax['vaccines'])) {
+                  foreach ($vax['vaccines'] as $v) {
+                    $nextDue = !empty($v['next_due']) ? ' (Next: ' . htmlspecialchars($v['next_due']) . ')' : '';
+                    echo '<div><strong>' . htmlspecialchars($v['vaccine'] ?? '') . '</strong>' . $nextDue . '</div>';
+                  }
+                } else {
+                  echo '-';
+                }
+                ?>
+              </td>
               <td><?php echo htmlspecialchars($vax['vet_name'] ?? 'N/A'); ?></td>
               <td>
                 <?php
@@ -295,8 +304,7 @@ if (!empty($vaccinations)) {
           <thead>
             <tr>
               <th>Date</th>
-              <th>Medication</th>
-              <th>Dosage</th>
+              <th>Medications</th>
               <th>Notes</th>
               <th>Vet</th>
               <th>Reports</th>
@@ -306,8 +314,17 @@ if (!empty($vaccinations)) {
             <?php foreach ($prescriptions as $rx): ?>
             <tr>
               <td><?php echo htmlspecialchars($rx['date'] ?? ''); ?></td>
-              <td><?php echo htmlspecialchars($rx['medication'] ?? ''); ?></td>
-              <td><?php echo htmlspecialchars($rx['dosage'] ?? ''); ?></td>
+              <td>
+                <?php 
+                if (!empty($rx['medications']) && is_array($rx['medications'])) {
+                  foreach ($rx['medications'] as $med) {
+                    echo '<div><strong>' . htmlspecialchars($med['medication'] ?? '') . '</strong>: ' . htmlspecialchars($med['dosage'] ?? '') . '</div>';
+                  }
+                } else {
+                  echo '-';
+                }
+                ?>
+              </td>
               <td><?php echo htmlspecialchars($rx['notes'] ?? ''); ?></td>
               <td><?php echo htmlspecialchars($rx['vet_name'] ?? 'N/A'); ?></td>
               <td>

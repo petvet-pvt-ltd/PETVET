@@ -56,12 +56,10 @@ function renderRecords(list){
       try {
         const files = JSON.parse(r.reports);
         if (files && files.length > 0) {
-          reportsHtml = files.map(f => {
-            const filename = f.split('/').pop();
-            const ext = filename.split('.').pop().toLowerCase();
-            const icon = ['jpg','jpeg','png','gif','webp'].includes(ext) ? '🖼️' : '📄';
-            return `<a href="/PETVET/${f}" target="_blank" title="${filename}">${icon}</a>`;
-          }).join(' ');
+          const filesJson = JSON.stringify(files).replace(/'/g, "&apos;");
+          const fileCount = files.length;
+          const label = fileCount === 1 ? '1 document' : `${fileCount} documents`;
+          reportsHtml = `<button class="btn-view-files" onclick='openFilesGallery(${filesJson})'>${label}</button>`;
         }
       } catch(e) {
         reportsHtml = '';

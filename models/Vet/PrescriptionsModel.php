@@ -21,7 +21,17 @@ class PrescriptionsModel extends BaseModel
         ";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['vet_id' => $vetId, 'clinic_id' => $clinicId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $prescriptions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Fetch medications for each prescription
+        foreach ($prescriptions as &$prescription) {
+            $itemSql = "SELECT medication, dosage FROM prescription_items WHERE prescription_id = ? ORDER BY id";
+            $itemStmt = $this->pdo->prepare($itemSql);
+            $itemStmt->execute([$prescription['id']]);
+            $prescription['medications'] = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return $prescriptions;
     }
 
     public function getByAppointment(int $appointmentId, int $vetId, int $clinicId): array

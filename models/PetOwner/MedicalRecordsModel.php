@@ -97,9 +97,18 @@ class MedicalRecordsModel extends BaseModel {
                     ORDER BY vax.id DESC";
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute(['pet_id' => $petId]);
-            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            error_log("getVaccinationsByPetId: Pet $petId returned " . count($result) . " vaccinations");
-            return $result;
+            $vaccinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Fetch vaccines for each vaccination
+            foreach ($vaccinations as &$vaccination) {
+                $itemSql = "SELECT vaccine, next_due FROM vaccination_items WHERE vaccination_id = ? ORDER BY id";
+                $itemStmt = $this->pdo->prepare($itemSql);
+                $itemStmt->execute([$vaccination['id']]);
+                $vaccination['vaccines'] = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+
+            error_log("getVaccinationsByPetId: Pet $petId returned " . count($vaccinations) . " vaccinations");
+            return $vaccinations;
         } catch (Exception $e) {
             error_log("MedicalRecordsModel::getVaccinationsByPetId Error: " . $e->getMessage());
             return [];
@@ -124,9 +133,18 @@ class MedicalRecordsModel extends BaseModel {
                     ORDER BY pr.id DESC";
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute(['pet_id' => $petId]);
-            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            error_log("getPrescriptionsByPetId: Pet $petId returned " . count($result) . " prescriptions");
-            return $result;
+            $prescriptions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Fetch medications for each prescription
+            foreach ($prescriptions as &$prescription) {
+                $itemSql = "SELECT medication, dosage FROM prescription_items WHERE prescription_id = ? ORDER BY id";
+                $itemStmt = $this->pdo->prepare($itemSql);
+                $itemStmt->execute([$prescription['id']]);
+                $prescription['medications'] = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+
+            error_log("getPrescriptionsByPetId: Pet $petId returned " . count($prescriptions) . " prescriptions");
+            return $prescriptions;
         } catch (Exception $e) {
             error_log("MedicalRecordsModel::getPrescriptionsByPetId Error: " . $e->getMessage());
             return [];

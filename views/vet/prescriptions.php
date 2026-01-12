@@ -47,14 +47,27 @@ $data = [
 
         <div class="form-row">
           <label>
-            Medication
-            <input name="medication" required placeholder="Enter medication name">
-          </label>
-          <label>
-            Dosage
-            <input name="dosage" required placeholder="e.g., 10mg twice daily">
+            Medications
           </label>
         </div>
+
+        <div id="medicationsContainer">
+          <div class="medication-row" data-row="0">
+            <div class="form-row">
+              <label style="flex: 2;">
+                Medication
+                <input type="text" name="medications[0][medication]" required placeholder="Enter medication name">
+              </label>
+              <label style="flex: 2;">
+                Dosage
+                <input type="text" name="medications[0][dosage]" required placeholder="e.g., 10mg twice daily">
+              </label>
+              <button type="button" class="btn-remove" onclick="removeMedicationRow(0)">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn secondary" onclick="addMedicationRow()" style="margin-bottom: 15px;">➕ Add Another Medication</button>
 
         <div class="form-row">
           <label>
@@ -88,6 +101,7 @@ $data = [
 <script>
 window.PETVET_INITIAL_DATA = <?php echo json_encode($data, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>;
 </script>
+<script src="/PETVET/public/js/vet/file-viewer-modal.js"></script>
 <script src="/PETVET/public/js/vet/prescriptions.js"></script>
 </body>
 </html>

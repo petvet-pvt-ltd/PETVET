@@ -19,10 +19,11 @@ function buildTableHTML(rows, includeActions=false){
             const hasPres = window.PETVET_INITIAL_DATA.prescriptions.some(p =>p.appointmentId == r.id || p.appointment_id == r.id);
             const hasVacc = window.PETVET_INITIAL_DATA.vaccinations.some(v =>v.appointmentId == r.id || v.appointment_id == r.id);
 
-            let actions = '';
-            if(hasRec) actions += `<button class="btn navy" onclick="goView('medical-records','${r.id}')">View Record</button>`;
-            if(hasPres) actions += `<button class="btn blue" onclick="goView('prescriptions','${r.id}')">View Prescription</button>`;
-            if(hasVacc) actions += `<button class="btn green" onclick="goView('vaccinations','${r.id}')">View Vaccination</button>`;
+            let actions = '<div class="action-buttons">';
+            if(hasRec) actions += `<button class="btn navy" onclick="goView('medical-records','${r.id}')">Record</button>`;
+            if(hasPres) actions += `<button class="btn blue" onclick="goView('prescriptions','${r.id}')">Prescription</button>`;
+            if(hasVacc) actions += `<button class="btn green" onclick="goView('vaccinations','${r.id}')">Vaccination</button>`;
+            actions += '</div>';
             html += `<td>${actions}</td>`;
         }
 

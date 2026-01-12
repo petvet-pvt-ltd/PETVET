@@ -40,8 +40,7 @@ function renderPrescriptions(list) {
             <th>Date</th>
             <th>Pet</th>
             <th>Owner</th>
-            <th>Medication</th>
-            <th>Dosage</th>
+            <th>Medications</th>
             <th>Notes</th>
             <th>Reports</th>
           </tr>
@@ -55,16 +54,24 @@ function renderPrescriptions(list) {
       try {
         const files = JSON.parse(r.reports);
         if (files && files.length > 0) {
-          reportsHtml = files.map(f => {
-            const filename = f.split('/').pop();
-            const ext = filename.split('.').pop().toLowerCase();
-            const icon = ['jpg','jpeg','png','gif','webp'].includes(ext) ? '🖼️' : '📄';
-            return `<a href="/PETVET/${f}" target="_blank" title="${filename}">${icon}</a>`;
-          }).join(' ');
+          const filesJson = JSON.stringify(files).replace(/'/g, "&apos;");
+          const fileCount = files.length;
+          const label = fileCount === 1 ? '1 document' : `${fileCount} documents`;
+          reportsHtml = `<button class="btn-view-files" onclick='openFilesGallery(${filesJson})'>${label}</button>`;
         }
       } catch(e) {
         reportsHtml = '';
       }
+    }
+
+    // Display multiple medications
+    let medicationsHtml = '';
+    if (r.medications && r.medications.length > 0) {
+      medicationsHtml = r.medications.map(med => 
+        `<div><strong>${med.medication}</strong>: ${med.dosage}</div>`
+      ).join('');
+    } else {
+      medicationsHtml = '-';
     }
 
     html += `
@@ -72,8 +79,7 @@ function renderPrescriptions(list) {
         <td>${r.date || r.created_at || ''}</td>
         <td>${r.petName || r.pet_name || ''}</td>
         <td>${r.ownerName || r.owner_name || ''}</td>
-        <td>${r.medication || ''}</td>
-        <td>${r.dosage || ''}</td>
+        <td>${medicationsHtml}</td>
         <td>${r.notes || ''}</td>
         <td>${reportsHtml || '-'}</td>
       </tr>
@@ -127,6 +133,42 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ✅ Dynamic medication rows
+  let medicationRowCounter = 1;
+
+  window.addMedicationRow = function() {
+    const container = document.getElementById('medicationsContainer');
+    const newRow = document.createElement('div');
+    newRow.className = 'medication-row';
+    newRow.setAttribute('data-row', medicationRowCounter);
+    newRow.innerHTML = `
+      <div class="form-row">
+        <label style="flex: 2;">
+          Medication
+          <input type="text" name="medications[${medicationRowCounter}][medication]" required placeholder="Enter medication name">
+        </label>
+        <label style="flex: 2;">
+          Dosage
+          <input type="text" name="medications[${medicationRowCounter}][dosage]" required placeholder="e.g., 10mg twice daily">
+        </label>
+        <button type="button" class="btn-remove" onclick="removeMedicationRow(${medicationRowCounter})">Remove</button>
+      </div>
+    `;
+    container.appendChild(newRow);
+    medicationRowCounter++;
+  };
+
+  window.removeMedicationRow = function(rowId) {
+    const rows = document.querySelectorAll('.medication-row');
+    if (rows.length > 1) {
+      const row = document.querySelector(`.medication-row[data-row="${rowId}"]`);
+      if (row) row.remove();
+    } else {
+      alert('At least one medication is required.');
+    }
+  };
+
+  // ✅ REAL SAVE (DB) with file upload
   const form = document.getElementById('prescriptionForm');
   if (form) {
     // File preview
@@ -157,9 +199,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const formData = new FormData();
       formData.append('appointment_id', form.elements['appointmentId'].value);
-      formData.append('medication', form.elements['medication'].value);
-      formData.append('dosage', form.elements['dosage'].value);
       formData.append('notes', form.elements['notes'].value);
+
+      // Collect all medications
+      const medications = [];
+      document.querySelectorAll('.medication-row').forEach(row => {
+        const medInput = row.querySelector('input[name*="[medication]"]');
+        const dosInput = row.querySelector('input[name*="[dosage]"]');
+        if (medInput && dosInput && medInput.value && dosInput.value) {
+          medications.push({
+            medication: medInput.value,
+            dosage: dosInput.value
+          });
+        }
+      });
+      formData.append('medications', JSON.stringify(medications));
 
       // Add files
       const files = form.elements['reports[]'].files;
