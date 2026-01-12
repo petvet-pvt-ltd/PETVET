@@ -18,26 +18,18 @@ $appointmentId = 0;
 if (isset($_POST['appointment_id'])) $appointmentId = (int)$_POST['appointment_id'];
 if (isset($_POST['appointmentId'])) $appointmentId = (int)$_POST['appointmentId'];
 
-$vaccine = trim($_POST['vaccine'] ?? '');
-
-$nextDue = null;
-if (!empty($_POST['next_due'])) $nextDue = $_POST['next_due'];
-if (!empty($_POST['nextDue'])) $nextDue = $_POST['nextDue'];
-
-if ($appointmentId <= 0 || $vaccine === '') {
-    echo json_encode(['success' => false, 'error' => 'Missing required fields']);
-    exit;
+// Get vaccines array from JSON
+$vaccines = [];
+if (isset($_POST['vaccines'])) {
+    $vaccinesData = json_decode($_POST['vaccines'], true);
+    if (is_array($vaccinesData) && count($vaccinesData) > 0) {
+        $vaccines = $vaccinesData;
+    }
 }
 
-// Validate date (optional but recommended)
-if ($nextDue !== null && $nextDue !== '') {
-    $dt = DateTime::createFromFormat('Y-m-d', $nextDue);
-    if (!$dt || $dt->format('Y-m-d') !== $nextDue) {
-        echo json_encode(['success' => false, 'error' => 'Invalid next due date']);
-        exit;
-    }
-} else {
-    $nextDue = null;
+if ($appointmentId <= 0 || empty($vaccines)) {
+    echo json_encode(['success' => false, 'error' => 'Missing required fields']);
+    exit;
 }
 
 $vetId = (int)$_SESSION['user_id'];
@@ -89,18 +81,47 @@ try {
         }
     }
 
+    // Create vaccination header (without vaccine/next_due - those go in vaccination_items)
     $stmt = $pdo->prepare("
-        INSERT INTO vaccinations (appointment_id, vaccine, next_due, reports, created_at)
-        VALUES (:appointment_id, :vaccine, :next_due, :reports, NOW())
+        INSERT INTO vaccinations (appointment_id, reports, created_at)
+        VALUES (:appointment_id, :reports, NOW())
     ");
     $stmt->execute([
         'appointment_id' => $appointmentId,
-        'vaccine' => $vaccine,
-        'next_due' => $nextDue,
         'reports' => $reports
     ]);
 
-    echo json_encode(['success' => true, 'id' => (int)$pdo->lastInsertId()]);
+    $vaccinationId = (int)$pdo->lastInsertId();
+
+    // Insert vaccines into vaccination_items
+    $itemStmt = $pdo->prepare("
+        INSERT INTO vaccination_items (vaccination_id, vaccine, next_due)
+        VALUES (:vaccination_id, :vaccine, :next_due)
+    ");
+
+    foreach ($vaccines as $vac) {
+        $vaccine = trim($vac['vaccine'] ?? '');
+        $nextDue = trim($vac['nextDue'] ?? '');
+        
+        if ($vaccine !== '') {
+            // Validate date
+            $nextDueValue = null;
+            if ($nextDue !== '') {
+                $dt = DateTime::createFromFormat('Y-m-d', $nextDue);
+                if ($dt && $dt->format('Y-m-d') === $nextDue) {
+                    $nextDueValue = $nextDue;
+                }
+            }
+
+            $itemStmt->execute([
+                'vaccination_id' => $vaccinationId,
+                'vaccine' => $vaccine,
+                'next_due' => $nextDueValue
+            ]);
+        }
+    }
+
+    echo json_encode(['success' => true, 'id' => $vaccinationId]);
 } catch (Throwable $e) {
     echo json_encode(['success' => false, 'error' => 'Server error: ' . $e->getMessage()]);
 }

@@ -90,6 +90,7 @@ $data = [
 <script>
 window.PETVET_INITIAL_DATA = <?php echo json_encode($data, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>;
 </script>
+<script src="/PETVET/public/js/vet/file-viewer-modal.js"></script>
 <script src="/PETVET/public/js/vet/medical-records.js"></script>
 </body>
 </html>

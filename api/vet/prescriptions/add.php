@@ -15,11 +15,18 @@ if (empty($_SESSION['clinic_id']) || empty($_SESSION['user_id'])) {
 
 // Handle both multipart/form-data and JSON
 $appointmentId = isset($_POST['appointment_id']) ? (int)$_POST['appointment_id'] : 0;
-$medication = trim($_POST['medication'] ?? '');
-$dosage = trim($_POST['dosage'] ?? '');
 $notes = trim($_POST['notes'] ?? '');
 
-if ($appointmentId <= 0 || $medication === '' || $dosage === '') {
+// Get medications array from JSON
+$medications = [];
+if (isset($_POST['medications'])) {
+    $medicationsData = json_decode($_POST['medications'], true);
+    if (is_array($medicationsData) && count($medicationsData) > 0) {
+        $medications = $medicationsData;
+    }
+}
+
+if ($appointmentId <= 0 || empty($medications)) {
     echo json_encode(['success' => false, 'error' => 'Missing required fields']);
     exit;
 }
@@ -73,19 +80,39 @@ try {
         }
     }
 
+    // Create prescription header (without medication/dosage - those go in prescription_items)
     $stmt = $pdo->prepare("
-        INSERT INTO prescriptions (appointment_id, medication, dosage, notes, reports, created_at)
-        VALUES (:appointment_id, :medication, :dosage, :notes, :reports, NOW())
+        INSERT INTO prescriptions (appointment_id, notes, reports, created_at)
+        VALUES (:appointment_id, :notes, :reports, NOW())
     ");
     $stmt->execute([
         'appointment_id' => $appointmentId,
-        'medication' => $medication,
-        'dosage' => $dosage,
         'notes' => ($notes === '' ? null : $notes),
         'reports' => $reports
     ]);
 
-    echo json_encode(['success' => true, 'id' => (int)$pdo->lastInsertId()]);
+    $prescriptionId = (int)$pdo->lastInsertId();
+
+    // Insert medications into prescription_items
+    $itemStmt = $pdo->prepare("
+        INSERT INTO prescription_items (prescription_id, medication, dosage)
+        VALUES (:prescription_id, :medication, :dosage)
+    ");
+
+    foreach ($medications as $med) {
+        $medication = trim($med['medication'] ?? '');
+        $dosage = trim($med['dosage'] ?? '');
+        
+        if ($medication !== '' && $dosage !== '') {
+            $itemStmt->execute([
+                'prescription_id' => $prescriptionId,
+                'medication' => $medication,
+                'dosage' => $dosage
+            ]);
+        }
+    }
+
+    echo json_encode(['success' => true, 'id' => $prescriptionId]);
 } catch (Throwable $e) {
     echo json_encode(['success' => false, 'error' => 'Server error: ' . $e->getMessage()]);
 }

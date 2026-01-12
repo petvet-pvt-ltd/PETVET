@@ -24,8 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <th>Date</th>
             <th>Pet</th>
             <th>Owner</th>
-            <th>Vaccine</th>
-            <th>Next Due</th>
+            <th>Vaccines</th>
             <th>Reports</th>
           </tr>
         </thead>
@@ -36,24 +35,32 @@ document.addEventListener("DOMContentLoaded", () => {
               try {
                 const files = JSON.parse(v.reports);
                 if (files && files.length > 0) {
-                  reportsHtml = files.map(f => {
-                    const filename = f.split('/').pop();
-                    const ext = filename.split('.').pop().toLowerCase();
-                    const icon = ['jpg','jpeg','png','gif','webp'].includes(ext) ? '🖼️' : '📄';
-                    return `<a href="/PETVET/${f}" target="_blank" title="${filename}">${icon}</a>`;
-                  }).join(' ');
+                  const filesJson = JSON.stringify(files).replace(/'/g, "&apos;");
+                  const fileCount = files.length;
+                  const label = fileCount === 1 ? '1 document' : `${fileCount} documents`;
+                  reportsHtml = `<button class="btn-view-files" onclick='openFilesGallery(${filesJson})'>${label}</button>`;
                 }
               } catch(e) {
                 reportsHtml = '';
               }
             }
+
+            // Display multiple vaccines
+            let vaccinesHtml = '';
+            if (v.vaccines && v.vaccines.length > 0) {
+              vaccinesHtml = v.vaccines.map(vac => 
+                `<div><strong>${vac.vaccine}</strong>${vac.next_due ? ` (Next: ${vac.next_due})` : ''}</div>`
+              ).join('');
+            } else {
+              vaccinesHtml = '-';
+            }
+
             return `
               <tr>
                 <td>${v.date || v.created_at || ""}</td>
                 <td>${v.pet_name || v.petName || ""}</td>
                 <td>${v.owner_name || v.ownerName || ""}</td>
-                <td>${v.vaccine || ""}</td>
-                <td>${v.next_due || "-"}</td>
+                <td>${vaccinesHtml}</td>
                 <td>${reportsHtml || '-'}</td>
               </tr>
             `;
@@ -123,6 +130,41 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ✅ Dynamic vaccine rows
+  let vaccineRowCounter = 1;
+
+  window.addVaccineRow = function() {
+    const container = document.getElementById('vaccinesContainer');
+    const newRow = document.createElement('div');
+    newRow.className = 'vaccine-row';
+    newRow.setAttribute('data-row', vaccineRowCounter);
+    newRow.innerHTML = `
+      <div class="form-row">
+        <label style="flex: 2;">
+          Vaccine
+          <input type="text" name="vaccines[${vaccineRowCounter}][vaccine]" required placeholder="Enter vaccine name">
+        </label>
+        <label style="flex: 2;">
+          Next Due Date
+          <input type="date" name="vaccines[${vaccineRowCounter}][nextDue]">
+        </label>
+        <button type="button" class="btn-remove" onclick="removeVaccineRow(${vaccineRowCounter})">Remove</button>
+      </div>
+    `;
+    container.appendChild(newRow);
+    vaccineRowCounter++;
+  };
+
+  window.removeVaccineRow = function(rowId) {
+    const rows = document.querySelectorAll('.vaccine-row');
+    if (rows.length > 1) {
+      const row = document.querySelector(`.vaccine-row[data-row="${rowId}"]`);
+      if (row) row.remove();
+    } else {
+      alert('At least one vaccine is required.');
+    }
+  };
+
   // Save
   if (form) {
     // File preview
@@ -153,8 +195,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const formData = new FormData();
       formData.append('appointmentId', form.elements["appointmentId"].value);
-      formData.append('vaccine', form.elements["vaccine"].value.trim());
-      formData.append('nextDue', form.elements["nextDue"].value);
+
+      // Collect all vaccines
+      const vaccines = [];
+      document.querySelectorAll('.vaccine-row').forEach(row => {
+        const vacInput = row.querySelector('input[name*="[vaccine]"]');
+        const dueInput = row.querySelector('input[name*="[nextDue]"]');
+        if (vacInput && vacInput.value) {
+          vaccines.push({
+            vaccine: vacInput.value,
+            nextDue: dueInput ? dueInput.value : ''
+          });
+        }
+      });
+      formData.append('vaccines', JSON.stringify(vaccines));
 
       // Add files
       const files = form.elements['reports[]'].files;

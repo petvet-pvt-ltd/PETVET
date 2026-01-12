@@ -21,7 +21,17 @@ class VaccinationsModel extends BaseModel
         ";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['vet_id' => $vetId, 'clinic_id' => $clinicId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $vaccinations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Fetch vaccines for each vaccination
+        foreach ($vaccinations as &$vaccination) {
+            $itemSql = "SELECT vaccine, next_due FROM vaccination_items WHERE vaccination_id = ? ORDER BY id";
+            $itemStmt = $this->pdo->prepare($itemSql);
+            $itemStmt->execute([$vaccination['id']]);
+            $vaccination['vaccines'] = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return $vaccinations;
     }
 
     public function getByAppointment(int $appointmentId, int $vetId, int $clinicId): array
