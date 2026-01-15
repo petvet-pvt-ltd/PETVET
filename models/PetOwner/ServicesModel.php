@@ -159,84 +159,109 @@ class ServicesModel extends BaseModel {
     }
     
     /**
-     * Get sitters with filters (Mock Data)
+     * Get sitters with filters (Real Data from Database)
      */
     private function getSitters($filters) {
-        // Mock sitter data
-        $allSitters = [
-            [
-                'id' => 6,
-                'name' => 'Sophie Williams',
-                'business_name' => 'Paws & Stay Pet Care',
-                'email' => 'sophie.williams@petvet.com',
-                'phone' => '555-0200',
-                'experience_years' => 5,
-                'pet_types' => 'Dogs, Cats',
-                'home_type' => 'House with Yard',
-                'city' => 'Colombo',
-                'avatar' => 'https://i.pravatar.cc/150?img=47',
-                'description' => 'Offering professional pet sitting, daily walks, and overnight care. Spacious backyard perfect for active dogs. Starting from LKR 1,500/day.',
-                'base_rate' => 1500
-            ],
-            [
-                'id' => 7,
-                'name' => 'Lucas Martinez',
-                'business_name' => 'Happy Tails Pet Sitting',
-                'email' => 'lucas.martinez@petvet.com',
-                'phone' => '555-0201',
-                'experience_years' => 3,
-                'pet_types' => 'Dogs, Cats, Birds',
-                'home_type' => 'Apartment',
-                'city' => 'Kandy',
-                'avatar' => 'https://i.pravatar.cc/150?img=52',
-                'description' => 'Specialized in small pets and birds. Daily visits, feeding, playtime. Flexible scheduling available. From LKR 1,200/visit.',
-                'base_rate' => 1200
-            ],
-            [
-                'id' => 8,
-                'name' => 'Olivia Brown',
-                'business_name' => 'Canine Companions Care',
-                'email' => 'olivia.brown@petvet.com',
-                'phone' => '555-0202',
-                'experience_years' => 7,
-                'pet_types' => 'Dogs',
-                'home_type' => 'House with Yard',
-                'city' => 'Galle',
-                'avatar' => 'https://i.pravatar.cc/150?img=10',
-                'description' => 'Dog walking specialist with large fenced yard. Active play sessions, overnight boarding, and exercise programs. LKR 2,000/day.',
-                'base_rate' => 2000
-            ],
-            [
-                'id' => 9,
-                'name' => 'James Wilson',
-                'business_name' => 'Pet Paradise Sitters',
-                'email' => 'james.wilson@petvet.com',
-                'phone' => '555-0203',
-                'experience_years' => 4,
-                'pet_types' => 'Cats, Birds',
-                'home_type' => 'Apartment',
-                'city' => 'Colombo',
-                'avatar' => 'https://i.pravatar.cc/150?img=56',
-                'description' => 'Cat and bird care expert. Quiet environment, medication administration available. Daily updates with photos. From LKR 1,300/day.',
-                'base_rate' => 1300
-            ],
-            [
-                'id' => 10,
-                'name' => 'Ava Garcia',
-                'business_name' => 'Furry Friends Haven',
-                'email' => 'ava.garcia@petvet.com',
-                'phone' => '555-0204',
-                'experience_years' => 6,
-                'pet_types' => 'Dogs, Cats',
-                'home_type' => 'House with Yard',
-                'city' => 'Mount Lavinia',
-                'avatar' => 'https://i.pravatar.cc/150?img=16',
-                'description' => 'Full-service pet care including grooming, walks, and training reinforcement. Beach walks available nearby. LKR 1,800/day.',
-                'base_rate' => 1800
-            ]
-        ];
+        $pdo = db();
         
-        return $this->applyFilters($allSitters, $filters);
+        // Build SQL query
+        $sql = "SELECT 
+                    u.id,
+                    CONCAT(u.first_name, ' ', u.last_name) as name,
+                    u.email,
+                    u.phone,
+                    u.avatar,
+                    u.address,
+                    spp.service_area,
+                    spp.experience_years,
+                    spp.bio,
+                    spp.pet_types,
+                    spp.home_type,
+                    spp.phone_primary,
+                    spp.phone_secondary
+                FROM users u
+                INNER JOIN service_provider_profiles spp ON u.id = spp.user_id
+                INNER JOIN user_roles ur ON u.id = ur.user_id
+                INNER JOIN roles r ON ur.role_id = r.id
+                WHERE r.role_name = 'sitter' 
+                AND ur.verification_status = 'approved'
+                AND ur.is_active = 1
+                AND spp.role_type = 'sitter'";
+        
+        // Apply filters
+        $params = [];
+        
+        if (!empty($filters['search'])) {
+            $sql .= " AND (u.first_name LIKE ? OR u.last_name LIKE ? OR spp.service_area LIKE ?)";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+        
+        if (!empty($filters['city'])) {
+            $sql .= " AND spp.service_area LIKE ?";
+            $params[] = '%' . $filters['city'] . '%';
+        }
+        
+        if (!empty($filters['experience'])) {
+            $sql .= " AND spp.experience_years >= ?";
+            $params[] = (int)$filters['experience'];
+        }
+        
+        if (!empty($filters['pet_type'])) {
+            $sql .= " AND spp.pet_types LIKE ?";
+            $params[] = '%' . $filters['pet_type'] . '%';
+        }
+        
+        if (!empty($filters['home_type'])) {
+            $homeTypeMap = [
+                'house_with_yard' => 'house_with_yard',
+                'house_without_yard' => 'house_without_yard',
+                'apartment' => 'apartment',
+                'farm' => 'farm'
+            ];
+            if (isset($homeTypeMap[$filters['home_type']])) {
+                $sql .= " AND spp.home_type = ?";
+                $params[] = $homeTypeMap[$filters['home_type']];
+            }
+        }
+        
+        $sql .= " ORDER BY spp.experience_years DESC, u.first_name";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $sitters = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Process sitters data
+        foreach ($sitters as &$sitter) {
+            // Parse service area
+            $sitter['city'] = $sitter['service_area'] ?? '';
+            
+            // Set default avatar if none exists
+            if (empty($sitter['avatar'])) {
+                $sitter['avatar'] = '/PETVET/public/images/emptyProfPic.png';
+            }
+            
+            // Format home type for display
+            if (!empty($sitter['home_type'])) {
+                $homeTypeDisplay = [
+                    'apartment' => 'Apartment',
+                    'house_with_yard' => 'House with Yard',
+                    'house_without_yard' => 'House without Yard',
+                    'farm' => 'Farm',
+                    'other' => 'Other'
+                ];
+                $sitter['home_type_display'] = $homeTypeDisplay[$sitter['home_type']] ?? $sitter['home_type'];
+            } else {
+                $sitter['home_type_display'] = 'Not specified';
+            }
+            
+            // Use bio as description
+            $sitter['description'] = $sitter['bio'] ?? '';
+        }
+        
+        return $sitters;
     }
     
     /**

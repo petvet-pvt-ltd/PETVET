@@ -493,8 +493,8 @@ $GLOBALS['currentPage'] = 'services.php';
                                             <p class="pet-types"><strong>Pet Types:</strong> <?= htmlspecialchars($provider['pet_types']) ?></p>
                                         <?php endif; ?>
 
-                                        <?php if (!empty($provider['home_type'])): ?>
-                                            <p class="home-type"><strong>Home:</strong> <?= htmlspecialchars($provider['home_type']) ?></p>
+                                        <?php if (!empty($provider['home_type_display'])): ?>
+                                            <p class="home-type"><strong>Home:</strong> <?= htmlspecialchars($provider['home_type_display']) ?></p>
                                         <?php endif; ?>
                                     <?php endif; ?>
 
@@ -586,13 +586,11 @@ $GLOBALS['currentPage'] = 'services.php';
                                         <button class="btn primary" onclick='openSitterBooking(<?= json_encode([
                                             "id" => $provider["id"],
                                             "name" => $provider["name"],
-                                            "business_name" => $provider["business_name"] ?? "",
                                             "avatar" => $provider["avatar"] ?? "/PETVET/public/images/default-avatar.png",
                                             "pet_types" => $provider["pet_types"] ?? "",
-                                            "home_type" => $provider["home_type"] ?? "",
+                                            "home_type" => $provider["home_type_display"] ?? "",
                                             "city" => $provider["city"] ?? "",
-                                            "experience_years" => $provider["experience_years"] ?? 0,
-                                            "base_rate" => $provider["base_rate"] ?? 1500
+                                            "experience_years" => $provider["experience_years"] ?? 0
                                         ]) ?>, event); return false;'>
                                             Book Now
                                         </button>
