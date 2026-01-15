@@ -108,12 +108,22 @@ try {
         $exists = $stmt->fetch();
 
         if ($exists) {
+            // Preserve existing business_logo when user saves without uploading a new file.
+            // (Otherwise we unintentionally wipe the logo and the UI falls back to avatar.)
+            if (!array_key_exists('business_logo', $g)) {
+                $stmt = $pdo->prepare("SELECT business_logo FROM service_provider_profiles WHERE user_id = ? AND role_type = 'groomer'");
+                $stmt->execute([$user_id]);
+                $current = $stmt->fetch(PDO::FETCH_ASSOC);
+                $g['business_logo'] = $current['business_logo'] ?? null;
+            }
+
             // Update existing
             $stmt = $pdo->prepare("
                 UPDATE service_provider_profiles 
                 SET business_name = ?, business_logo = ?, service_area = ?, experience_years = ?, specializations = ?,
                     certifications = ?, bio = ?,
                     phone_primary = ?, phone_secondary = ?,
+                    location_latitude = ?, location_longitude = ?,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE user_id = ? AND role_type = 'groomer'
             ");
@@ -121,6 +131,7 @@ try {
                 $g['business_name'], $g['business_logo'] ?? null, $g['service_area'], $g['experience_years'], $g['specializations'],
                 $g['certifications'], $g['bio'],
                 $g['phone_primary'], $g['phone_secondary'],
+                $g['location_latitude'] ?? null, $g['location_longitude'] ?? null,
                 $user_id
             ]);
         } else {
@@ -128,13 +139,14 @@ try {
             $stmt = $pdo->prepare("
                 INSERT INTO service_provider_profiles 
                 (user_id, role_type, business_name, business_logo, service_area, experience_years, specializations,
-                 certifications, bio, phone_primary, phone_secondary)
-                VALUES (?, 'groomer', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 certifications, bio, phone_primary, phone_secondary, location_latitude, location_longitude)
+                VALUES (?, 'groomer', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
                 $user_id, $g['business_name'], $g['business_logo'] ?? null, $g['service_area'], $g['experience_years'], $g['specializations'],
                 $g['certifications'], $g['bio'],
-                $g['phone_primary'], $g['phone_secondary']
+                $g['phone_primary'], $g['phone_secondary'],
+                $g['location_latitude'] ?? null, $g['location_longitude'] ?? null
             ]);
         }
     }

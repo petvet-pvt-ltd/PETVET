@@ -67,6 +67,252 @@
         });
     }
 
+    // Leaflet Map for Location Selection
+    let groomerMap = null;
+    let groomerMarker = null;
+    let lastMapInteractionAt = 0;
+    const mapContainer = $('#groomerMapContainer');
+    const latInput = $('#location_latitude');
+    const lngInput = $('#location_longitude');
+    const locationDisplay = $('#location_display');
+    const useMyLocationBtn = $('#useMyLocationBtn');
+
+    // Default center (Colombo, Sri Lanka)
+    const defaultLat = 6.9271;
+    const defaultLng = 79.8612;
+
+    function initGroomerMap(shouldRecenter = false) {
+        if (!mapContainer) return;
+        
+        mapContainer.style.display = 'block';
+        
+        if (!groomerMap) {
+            const centerLat = parseFloat(latInput.value) || defaultLat;
+            const centerLng = parseFloat(lngInput.value) || defaultLng;
+            
+            groomerMap = L.map('groomerMapContainer').setView([centerLat, centerLng], 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(groomerMap);
+
+            // Track user interactions so pan/zoom doesn't accidentally place marker.
+            // On some devices/browsers a click fires after drag/zoom.
+            const markInteraction = () => { lastMapInteractionAt = Date.now(); };
+            groomerMap.on('dragstart', markInteraction);
+            groomerMap.on('dragend', markInteraction);
+            groomerMap.on('zoomstart', markInteraction);
+            groomerMap.on('zoomend', markInteraction);
+            groomerMap.on('movestart', markInteraction);
+            groomerMap.on('moveend', markInteraction);
+
+            // Add existing marker if lat/lng present
+            if (latInput.value && lngInput.value) {
+                const lat = parseFloat(latInput.value);
+                const lng = parseFloat(lngInput.value);
+                groomerMarker = L.marker([lat, lng]).addTo(groomerMap);
+                updateLocationDisplay(lat, lng);
+            }
+
+            // Handle map clicks
+            groomerMap.on('click', async function(e) {
+                // Ignore clicks that happen right after pan/zoom/drag.
+                // (Prevents "auto selecting" a point while navigating the map.)
+                if (Date.now() - lastMapInteractionAt < 450) {
+                    return;
+                }
+                e.originalEvent.preventDefault();
+                e.originalEvent.stopPropagation();
+                
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+
+                latInput.value = lat.toFixed(6);
+                lngInput.value = lng.toFixed(6);
+
+                if (groomerMarker) {
+                    groomerMarker.setLatLng([lat, lng]);
+                } else {
+                    groomerMarker = L.marker([lat, lng]).addTo(groomerMap);
+                }
+
+                updateLocationDisplay(lat, lng);
+                
+                // Auto-detect and set district
+                const district = await getDistrictFromCoordinates(lat, lng);
+                if (district) {
+                    const success = setDistrictDropdown(district);
+                    if (success) {
+                        showToast(`District set to: ${district}`);
+                    }
+                }
+                
+                // Mark form as changed
+                const form = $('#formGroomer');
+                if(form) {
+                    form.dataset.clean = 'false';
+                    const btn = form.querySelector('button[type="submit"]');
+                    if(btn) updateButtonState(form, btn);
+                }
+            });
+        }
+
+        // Invalidate size after display
+        setTimeout(() => {
+            if (groomerMap) groomerMap.invalidateSize();
+        }, 100);
+    }
+
+    function updateLocationDisplay(lat, lng) {
+        if (locationDisplay) {
+            locationDisplay.value = `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+        }
+    }
+
+    // Reverse geocode to get district from coordinates
+    // Uses server-side proxy to avoid browser CORS failures.
+    async function getDistrictFromCoordinates(lat, lng) {
+        try {
+            const url = `/PETVET/api/pet-owner/reverse-geocode.php?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
+            const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            if (!response.ok) return null;
+
+            const data = await response.json();
+            if (!data || data.success !== true) return null;
+
+            // Prefer explicit district from backend (Sri Lanka matching)
+            if (data.district && String(data.district).trim() !== '') {
+                return String(data.district).trim();
+            }
+
+            // Fallback: try to infer from returned address components
+            const address = data.address_components || null;
+            if (address) {
+                const raw = address.state_district || address.county || address.district || address.city || address.town || address.village;
+                if (raw) {
+                    return String(raw).replace(/\s+District\s*$/i, '').trim();
+                }
+            }
+        } catch (error) {
+            console.error('Reverse geocoding error:', error);
+        }
+        return null;
+    }
+
+    // Set district in hidden field and display field
+    function setDistrictDropdown(districtName) {
+        const workAreaHidden = $('#work_area');
+        const workAreaDisplay = $('#work_area_display');
+        
+        if (!districtName) return false;
+
+        // Set both hidden and display fields
+        if (workAreaHidden) workAreaHidden.value = districtName;
+        if (workAreaDisplay) workAreaDisplay.value = districtName;
+        
+        // Mark form as changed
+        const form = $('#formGroomer');
+        if(form) {
+            form.dataset.clean = 'false';
+            const btn = form.querySelector('button[type="submit"]');
+            if(btn) updateButtonState(form, btn);
+        }
+        
+        return true;
+    }
+
+    // Use My Location button
+    if (useMyLocationBtn) {
+        useMyLocationBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (!navigator.geolocation) {
+                showToast('Geolocation not supported by your browser');
+                return;
+            }
+
+            useMyLocationBtn.disabled = true;
+            useMyLocationBtn.textContent = 'Getting location...';
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    
+                    // Initialize map if not already
+                    if (!groomerMap) {
+                        initGroomerMap(false);
+                    }
+
+                    // Always center on user's location when they click "Use My Location".
+                    groomerMap.setView([latitude, longitude], 15);
+                    
+                    latInput.value = latitude.toFixed(6);
+                    lngInput.value = longitude.toFixed(6);
+
+                    if (groomerMarker) {
+                        groomerMarker.setLatLng([latitude, longitude]);
+                    } else {
+                        groomerMarker = L.marker([latitude, longitude]).addTo(groomerMap);
+                    }
+
+                    updateLocationDisplay(latitude, longitude);
+                    
+                    // Auto-detect and set district
+                    const district = await getDistrictFromCoordinates(latitude, longitude);
+                    if (district) {
+                        const success = setDistrictDropdown(district);
+                        if (success) {
+                            showToast(`Location set - District: ${district}`);
+                        } else {
+                            showToast('Location set successfully');
+                        }
+                    } else {
+                        showToast('Location set successfully');
+                    }
+                    
+                    useMyLocationBtn.disabled = false;
+                    useMyLocationBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>Use My Current Location';
+                    
+                    // Mark form as changed
+                    const form = $('#formGroomer');
+                    if(form) {
+                        form.dataset.clean = 'false';
+                        const btn = form.querySelector('button[type="submit"]');
+                        if(btn) updateButtonState(form, btn);
+                    }
+                },
+                (error) => {
+                    showToast('Unable to get your location: ' + error.message);
+                    useMyLocationBtn.disabled = false;
+                    useMyLocationBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>Use My Current Location';
+                }
+            );
+        });
+    }
+
+    // Show map when location display is clicked
+    if (locationDisplay) {
+        locationDisplay.addEventListener('click', () => {
+            // Only init if map doesn't exist; otherwise just ensure it's visible.
+            // Don't recenter when user is already working with the map.
+            if (!groomerMap) {
+                initGroomerMap(false);
+            } else {
+                // Map already exists - just make sure it's visible and sized correctly.
+                // DO NOT call setView or recenter; user might be panning elsewhere.
+                if (mapContainer.style.display === 'none') {
+                    mapContainer.style.display = 'block';
+                    setTimeout(() => {
+                        if (groomerMap) groomerMap.invalidateSize();
+                    }, 100);
+                }
+                // If map is already visible, do nothing (user is interacting with it).
+            }
+        });
+    }
+
     // Real-time profile phone validation (07xxxxxxxx)
     const phoneInput = $('#phoneInput');
     const phoneError = $('#phoneError');
@@ -162,7 +408,8 @@
                 // Populate groomer section
                 if (data.groomer) {
                     const businessName = document.querySelector('input[name="business_name"]');
-                    const workArea = document.querySelector('input[name="work_area"]');
+                    const workArea = $('#work_area');
+                    const workAreaDisplay = $('#work_area_display');
                     const experience = document.querySelector('input[name="experience"]');
                     const specializations = document.querySelector('input[name="specializations"]');
                     const certifications = document.querySelector('input[name="certifications"]');
@@ -170,12 +417,24 @@
                     
                     if (businessName) businessName.value = data.groomer.business_name || '';
                     if (workArea) workArea.value = data.groomer.service_area || '';
+                    if (workAreaDisplay) workAreaDisplay.value = data.groomer.service_area || 'Not set - select location on map';
                     if (experience) experience.value = data.groomer.experience_years || '';
                     if (specializations) specializations.value = data.groomer.specializations || '';
                     if (certifications) certifications.value = data.groomer.certifications || '';
                     if (bio) bio.value = data.groomer.bio || '';
                     if(phonePrimary) phonePrimary.value = data.groomer.phone_primary || '';
                     if(phoneSecondary) phoneSecondary.value = data.groomer.phone_secondary || '';
+                    
+                    // Populate location fields
+                    if (data.groomer.location_latitude) {
+                        latInput.value = data.groomer.location_latitude;
+                    }
+                    if (data.groomer.location_longitude) {
+                        lngInput.value = data.groomer.location_longitude;
+                    }
+                    if (data.groomer.location_latitude && data.groomer.location_longitude) {
+                        updateLocationDisplay(parseFloat(data.groomer.location_latitude), parseFloat(data.groomer.location_longitude));
+                    }
                     
                     // Update business logo
                     if (data.groomer.business_logo) {
@@ -256,11 +515,13 @@
             const okSecondary = validateServicePhone(phoneSecondary, phoneSecondaryError, false);
             if(!okPrimary || !okSecondary){
                 showToast('Please fix phone number errors');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
                 return;
             }
             
             const businessName = form.querySelector('input[name="business_name"]');
-            const workArea = form.querySelector('input[name="work_area"]');
+            const workArea = $('#work_area');
             const experience = form.querySelector('input[name="experience"]');
             const specializations = form.querySelector('input[name="specializations"]');
             const certifications = form.querySelector('input[name="certifications"]');
@@ -276,6 +537,8 @@
             fd.append('groomer[bio]', bio ? bio.value.trim() : '');
             fd.append('groomer[phone_primary]', phonePrimary ? phonePrimary.value.trim() : '');
             fd.append('groomer[phone_secondary]', phoneSecondary ? phoneSecondary.value.trim() : '');
+            fd.append('groomer[location_latitude]', latInput ? latInput.value.trim() : '');
+            fd.append('groomer[location_longitude]', lngInput ? lngInput.value.trim() : '');
             
             // Add business logo if selected
             const businessLogoInput = $('#businessLogoInput');

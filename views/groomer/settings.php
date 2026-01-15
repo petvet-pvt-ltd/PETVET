@@ -16,6 +16,10 @@ $prefs = [];
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Settings - Groomer - PetVet</title>
 <link rel="stylesheet" href="/PETVET/public/css/pet-owner/settings.css" />
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
 <style>
 	.phone-error{
 		color:#ef4444;
@@ -181,8 +185,10 @@ $prefs = [];
 						</div>
 					</div>
 					<div class="row two">
-						<label>Work Area
-							<input type="text" name="work_area" value="<?= htmlspecialchars($groomerData['work_area'] ?? '') ?>" placeholder="e.g., Colombo, Gampaha" />
+						<label>Work Area (District)
+							<input type="text" id="work_area_display" readonly value="<?= htmlspecialchars($groomerData['work_area'] ?? 'Not set - select location on map') ?>" style="background: #f9f9f9; cursor: not-allowed;" placeholder="Auto-detected from map location" />
+							<input type="hidden" name="work_area" id="work_area" value="<?= htmlspecialchars($groomerData['work_area'] ?? '') ?>" />
+							<small class="muted" style="display: block; margin-top: 4px;">District is automatically detected from your map location</small>
 						</label>
 						<label>Experience (Years)
 							<input type="number" name="experience" value="<?= htmlspecialchars($groomerData['experience'] ?? '') ?>" min="0" placeholder="e.g., 4" />
@@ -202,9 +208,21 @@ $prefs = [];
 						</label>
 					</div>
 					<div class="row one">
-						<label>Google Maps Location Link
-							<input type="url" name="google_maps_link" value="<?= htmlspecialchars($groomerData['google_maps_link'] ?? '') ?>" placeholder="https://maps.google.com/..." />
-						</label>
+						<div style="display:flex; flex-direction:column; gap:8px; font-weight:600; font-size:14px;">
+							<label for="location_display" style="font-weight:600;">Map Location</label>
+							<small class="muted" style="display:block; margin-top:-4px;">Click on the map to set your business location. This helps customers find groomers near them.</small>
+							<button type="button" class="btn outline" id="useMyLocationBtn" style="margin-top: 6px; width: fit-content;">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+									<circle cx="12" cy="12" r="10"/>
+									<circle cx="12" cy="12" r="3"/>
+								</svg>
+								Use My Current Location
+							</button>
+							<div id="groomerMapContainer" style="height: 400px; width: 100%; border-radius: 8px; border: 1px solid var(--line, #e0e0e0); display: none;"></div>
+							<input type="hidden" id="location_latitude" name="location_latitude" value="<?= htmlspecialchars($groomerData['location_latitude'] ?? '') ?>" />
+							<input type="hidden" id="location_longitude" name="location_longitude" value="<?= htmlspecialchars($groomerData['location_longitude'] ?? '') ?>" />
+							<input type="text" id="location_display" readonly placeholder="Click 'Use My Current Location' or click on map" style="cursor: pointer; background: #f9f9f9;" />
+						</div>
 					</div>
 					<div class="row two">
 						<label>Primary Phone Number
@@ -266,6 +284,10 @@ $prefs = [];
 </main>
 
 <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
 <script src="/PETVET/public/js/groomer/settings.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

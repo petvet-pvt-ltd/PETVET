@@ -119,6 +119,20 @@ $GLOBALS['currentPage'] = 'services.php';
                             <option value="1" <?= ($filters['experience'] ?? '') == '1' ? 'selected' : '' ?>>1+ Year</option>
                         </select>
                     </div>
+
+                    <div class="filter-group">
+                        <label for="sortFilter">Sort</label>
+                        <?php
+                            $sortValue = $filters['sort'] ?? '';
+                            if ($sortValue === '') {
+                                $sortValue = ($serviceType === 'groomers') ? 'nearest' : 'az';
+                            }
+                        ?>
+                        <select id="sortFilter" name="sort">
+                            <option value="nearest" <?= $sortValue === 'nearest' ? 'selected' : '' ?>>Nearest</option>
+                            <option value="az" <?= $sortValue === 'az' ? 'selected' : '' ?>>A-Z</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Service-Specific Filters -->
@@ -182,22 +196,6 @@ $GLOBALS['currentPage'] = 'services.php';
                             <option value="packages" <?= ($filters['show'] ?? '') === 'packages' ? 'selected' : '' ?>>Packages</option>
                         </select>
                     </div>
-                    <div class="filter-group" id="groomerServiceTypeGroup" <?= ($filters['show'] ?? 'providers') === 'providers' ? 'style="display:none;"' : '' ?>>
-                        <label for="serviceTypeFilter">Service Type</label>
-                        <select id="serviceTypeFilter" name="service_type">
-                            <option value="single" <?= ($filters['service_type'] ?? 'single') === 'single' ? 'selected' : '' ?>>Single Services</option>
-                            <option value="package" <?= ($filters['service_type'] ?? '') === 'package' ? 'selected' : '' ?>>Packages</option>
-                        </select>
-                    </div>
-                    <div class="filter-group" id="groomerSpecializationGroup" <?= ($filters['show'] ?? 'providers') === 'services' ? 'style="display:none;"' : '' ?>>
-                        <label for="groomerSpecialization">Specialization</label>
-                        <select id="groomerSpecialization" name="specialization">
-                            <option value="">Any Specialization</option>
-                            <option value="Dogs" <?= ($filters['specialization'] ?? '') === 'Dogs' ? 'selected' : '' ?>>Dogs</option>
-                            <option value="Cats" <?= ($filters['specialization'] ?? '') === 'Cats' ? 'selected' : '' ?>>Cats</option>
-                            <option value="Show Grooming" <?= ($filters['specialization'] ?? '') === 'Show Grooming' ? 'selected' : '' ?>>Show Grooming</option>
-                        </select>
-                    </div>
                 </div>
 
                 <div class="filters-actions">
@@ -247,7 +245,7 @@ $GLOBALS['currentPage'] = 'services.php';
                             
                             <?php if ($isPackage): ?>
                                 <!-- Package Card (Compact Version) -->
-                                <article class="package-card <?= (!empty($provider['available']) && $provider['available']) ? '' : 'unavailable' ?>">
+                                <article class="package-card <?= (!empty($provider['available']) && $provider['available']) ? '' : 'unavailable' ?>" data-groomer-id="<?= (int)($provider['groomer_id'] ?? 0) ?>" data-sort-name="<?= htmlspecialchars($provider['package_name'] ?? 'Package') ?>">
                                     <?php if (!empty($provider['discount_percent']) && $provider['discount_percent'] > 0): ?>
                                         <div class="package-ribbon">
                                             <span class="discount-badge">Save <?= number_format($provider['discount_percent'], 1) ?>%</span>
@@ -314,6 +312,11 @@ $GLOBALS['currentPage'] = 'services.php';
                                                 <p class="provider-location-small">📍 <?= htmlspecialchars($provider['groomer_city']) ?></p>
                                             </div>
                                         </div>
+										<?php if (!empty($provider['groomer_id'])): ?>
+											<span class="clinic-distance groomer-distance" data-groomer-id="<?= (int)$provider['groomer_id'] ?>">
+												<span class="distance-loader">⏳ Calculating...</span>
+											</span>
+									<?php endif; ?>
                                     </div>
                                     
                                     <div class="package-footer">
@@ -325,7 +328,7 @@ $GLOBALS['currentPage'] = 'services.php';
                                 </article>
                             <?php else: ?>
                                 <!-- Single Service Card (Compact Version) -->
-                                <article class="service-card <?= (!empty($provider['available']) && $provider['available']) ? '' : 'unavailable' ?>">
+                                <article class="service-card <?= (!empty($provider['available']) && $provider['available']) ? '' : 'unavailable' ?>" data-groomer-id="<?= (int)($provider['groomer_id'] ?? 0) ?>" data-sort-name="<?= htmlspecialchars($provider['service_name'] ?? 'Service') ?>">
                                     <div class="service-header">
                                         <h3 class="service-name"><?= htmlspecialchars($provider['service_name'] ?? 'Service') ?></h3>
                                     </div>
@@ -368,6 +371,11 @@ $GLOBALS['currentPage'] = 'services.php';
                                                 <p class="provider-location-small">📍 <?= htmlspecialchars($provider['groomer_city']) ?></p>
                                             </div>
                                         </div>
+										<?php if (!empty($provider['groomer_id'])): ?>
+											<span class="clinic-distance groomer-distance" data-groomer-id="<?= (int)$provider['groomer_id'] ?>">
+												<span class="distance-loader">⏳ Calculating...</span>
+											</span>
+									<?php endif; ?>
                                     </div>
                                     
                                     <div class="service-footer">
@@ -380,10 +388,24 @@ $GLOBALS['currentPage'] = 'services.php';
                             <?php endif; ?>
                         <?php else: ?>
                             <!-- Display Provider Card -->
-                            <article class="provider-card <?= $serviceType === 'trainers' ? 'trainer-card' : '' ?>">
+                            <?php
+                            $providerSortName = $provider['name'] ?? '';
+                            if ($serviceType === 'groomers') {
+                                $providerSortName = $provider['business_name'] ?? ($provider['name'] ?? '');
+                            }
+                            ?>
+                            <article class="provider-card <?= $serviceType === 'trainers' ? 'trainer-card' : '' ?>" data-groomer-id="<?= $serviceType === 'groomers' ? (int)$provider['id'] : 0 ?>" data-sort-name="<?= htmlspecialchars($providerSortName) ?>">
                                 <div class="provider-header">
                                     <div class="provider-avatar">
-                                        <img src="<?= htmlspecialchars($provider['avatar'] ?? '/PETVET/public/images/default-avatar.png') ?>" 
+                                        <?php
+                                        $providerImg = $provider['avatar'] ?? '/PETVET/public/images/default-avatar.png';
+                                        if ($serviceType === 'groomers') {
+                                            $providerImg = !empty($provider['business_logo'])
+                                                ? $provider['business_logo']
+                                                : ($provider['avatar'] ?? '/PETVET/public/images/emptyProfPic.png');
+                                        }
+                                        ?>
+                                        <img src="<?= htmlspecialchars($providerImg) ?>" 
                                              alt="<?= htmlspecialchars($provider['name']) ?>">
                                     </div>
                                     <div class="provider-info">
@@ -528,6 +550,12 @@ $GLOBALS['currentPage'] = 'services.php';
                                     <?php if (!empty($provider['certifications'])): ?>
                                         <p class="certifications"><strong>Certifications:</strong> <?= htmlspecialchars($provider['certifications']) ?></p>
                                     <?php endif; ?>
+
+                                <?php if ($serviceType === 'groomers'): ?>
+                                    <span class="clinic-distance groomer-distance" data-groomer-id="<?= (int)$provider['id'] ?>">
+                                        <span class="distance-loader">⏳ Calculating...</span>
+                                    </span>
+                                <?php endif; ?>
                                 </div>
 
                                 <div class="provider-actions">
@@ -612,18 +640,15 @@ $GLOBALS['currentPage'] = 'services.php';
         </section>
     </div>
 
-    <!-- Contact Modal / Bottom Drawer -->
-    <div id="contactModal" class="modal-overlay contact-overlay">
-        <div class="modal-content contact-drawer">
-            <div class="drawer-handle"></div>
-            <div class="modal-header contact-header">
+    <!-- Contact Modal (match Trainer modal) -->
+    <div id="contactModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
                 <h3>Contact</h3>
                 <button class="modal-close" onclick="closeContactModal()">&times;</button>
             </div>
-            <div class="contact-info">
-                <div class="owner-name" id="modalOwnerName"></div>
-                <div class="phone-list" id="phoneList"></div>
-            </div>
+            <div class="owner-name" id="modalOwnerName"></div>
+            <div class="phone-list" id="phoneList"></div>
         </div>
     </div>
 
@@ -695,21 +720,8 @@ $GLOBALS['currentPage'] = 'services.php';
         }
 
         function toggleGroomerServiceType(showValue) {
-            const serviceTypeGroup = document.getElementById('groomerServiceTypeGroup');
-            const specializationGroup = document.getElementById('groomerSpecializationGroup');
             const form = document.getElementById('filterForm');
-            
-            if (showValue === 'services') {
-                // Show service type filter, hide specialization
-                serviceTypeGroup.style.display = 'flex';
-                specializationGroup.style.display = 'none';
-            } else {
-                // Show specialization, hide service type
-                serviceTypeGroup.style.display = 'none';
-                specializationGroup.style.display = 'flex';
-            }
-            
-            // Submit the form to apply the show filter (this will preserve groomer_id)
+            // Submit the form to apply the show filter (preserves groomer_id if present)
             form.submit();
         }
 
@@ -741,29 +753,20 @@ $GLOBALS['currentPage'] = 'services.php';
                 event.preventDefault();
                 event.stopPropagation();
             }
-            showContactModal(
-                providerData.name,
-                providerData.business_name || '',
-                providerData.phone,
-                providerData.phone2 || ''
-            );
+            const displayName = (providerData.business_name && String(providerData.business_name).trim() !== '')
+                ? providerData.business_name
+                : providerData.name;
+            showContactModal(displayName, providerData.phone, providerData.phone2 || '');
         }
 
-        // Contact Modal Functions (Reused from Sitter Bookings)
-        function showContactModal(name, businessName, phone1, phone2) {
+        // Contact Modal Functions (match Trainer modal)
+        function showContactModal(ownerName, phone1, phone2) {
             const modal = document.getElementById('contactModal');
             const modalOwnerName = document.getElementById('modalOwnerName');
             const phoneList = document.getElementById('phoneList');
             
-            // Set name and business name
-            if (businessName && businessName.trim() !== '') {
-                modalOwnerName.innerHTML = `
-                    <div class="contact-person-name">${name}</div>
-                    <div class="contact-business-name">${businessName}</div>
-                `;
-            } else {
-                modalOwnerName.innerHTML = `<div class="contact-person-name">${name}</div>`;
-            }
+            // Set owner name
+            modalOwnerName.textContent = ownerName;
             
             // Clear previous phone numbers
             phoneList.innerHTML = '';
@@ -773,16 +776,8 @@ $GLOBALS['currentPage'] = 'services.php';
                 const phoneItem = document.createElement('div');
                 phoneItem.className = 'phone-item';
                 phoneItem.innerHTML = `
-                    <div class="phone-info">
-                        <span class="phone-label">Phone</span>
-                        <span class="phone-number">${phone1}</span>
-                    </div>
-                    <a href="tel:${phone1}" class="call-btn">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                        </svg>
-                        <span>Call</span>
-                    </a>
+                    <div class="phone-number">${phone1}</div>
+                    <a href="tel:${phone1}" class="call-btn">Call</a>
                 `;
                 phoneList.appendChild(phoneItem);
             }
@@ -792,25 +787,13 @@ $GLOBALS['currentPage'] = 'services.php';
                 const phoneItem = document.createElement('div');
                 phoneItem.className = 'phone-item';
                 phoneItem.innerHTML = `
-                    <div class="phone-info">
-                        <span class="phone-label">Phone 2</span>
-                        <span class="phone-number">${phone2}</span>
-                    </div>
-                    <a href="tel:${phone2}" class="call-btn">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                        </svg>
-                        <span>Call</span>
-                    </a>
+                    <div class="phone-number">${phone2}</div>
+                    <a href="tel:${phone2}" class="call-btn">Call</a>
                 `;
                 phoneList.appendChild(phoneItem);
             }
             
-            // Lock scroll and save position
-            savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-            document.documentElement.style.overflow = 'hidden';
-            document.body.style.overflow = 'hidden';
-            document.body.style.position = 'relative';
+            // Show modal and freeze background
             modal.classList.add('active');
             document.body.classList.add('modal-open');
         }
@@ -819,12 +802,6 @@ $GLOBALS['currentPage'] = 'services.php';
             const modal = document.getElementById('contactModal');
             modal.classList.remove('active');
             document.body.classList.remove('modal-open');
-            
-            // Restore scroll and position
-            document.documentElement.style.overflow = '';
-            document.body.style.overflow = '';
-            document.body.style.position = '';
-            window.scrollTo(0, savedScrollPosition);
         }
 
         // Close modal when clicking outside
@@ -1950,5 +1927,7 @@ $GLOBALS['currentPage'] = 'services.php';
             </div>
         </div>
     </div>
+
+    <script src="/PETVET/public/js/pet-owner/groomer-distance.js"></script>
 </body>
 </html>

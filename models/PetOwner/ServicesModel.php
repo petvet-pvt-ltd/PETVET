@@ -445,96 +445,318 @@ class ServicesModel extends BaseModel {
      * Get groomers with filters (Mock Data)
      */
     private function getGroomers($filters) {
-        // Check if user wants to see services/packages instead of providers
-        if (!empty($filters['show']) && ($filters['show'] === 'services' || $filters['show'] === 'packages')) {
-            return $this->getGroomingServices($filters);
+        // When show=services/packages, return items instead of providers
+        if (!empty($filters['show']) && $filters['show'] === 'services') {
+            return $this->getGroomerServiceItems($filters);
         }
-        
-        // Default: Show groomer providers
-        // Mock groomer data
-        $allGroomers = [
-            [
-                'id' => 16,
-                'name' => 'Isabella Martinez',
-                'email' => 'isabella.martinez@petvet.com',
-                'phone' => '555-0400',
-                'business_name' => 'Paws & Perfection Grooming',
-                'experience_years' => 7,
-                'specializations' => 'Dogs, Cats, Show Grooming',
-                'certifications' => 'Certified Professional Groomer',
-                'city' => 'Colombo',
-                'avatar' => 'https://i.pravatar.cc/150?img=32'
-            ],
-            [
-                'id' => 17,
-                'name' => 'Alexander Johnson',
-                'email' => 'alexander.johnson@petvet.com',
-                'phone' => '555-0401',
-                'business_name' => 'Elite Breed Grooming Studio',
-                'experience_years' => 5,
-                'specializations' => 'Dogs, Breed-Specific Cuts',
-                'certifications' => 'Master Groomer Certified',
-                'city' => 'Kandy',
-                'avatar' => 'https://i.pravatar.cc/150?img=70'
-            ],
-            [
-                'id' => 18,
-                'name' => 'Sophia Rodriguez',
-                'email' => 'sophia.rodriguez@petvet.com',
-                'phone' => '555-0402',
-                'business_name' => 'Whiskers & Wags Spa',
-                'experience_years' => 9,
-                'specializations' => 'Cats, Show Grooming',
-                'certifications' => 'International Cat Groomer',
-                'city' => 'Galle',
-                'avatar' => 'https://i.pravatar.cc/150?img=38'
-            ],
-            [
-                'id' => 19,
-                'name' => 'Benjamin Clark',
-                'email' => 'benjamin.clark@petvet.com',
-                'phone' => '555-0403',
-                'business_name' => 'Quick Clips Pet Salon',
-                'experience_years' => 6,
-                'specializations' => 'Dogs, Cats, Small Pets',
-                'certifications' => 'Certified Pet Stylist',
-                'city' => 'Colombo',
-                'avatar' => 'https://i.pravatar.cc/150?img=11'
-            ],
-            [
-                'id' => 20,
-                'name' => 'Charlotte Anderson',
-                'email' => 'charlotte.anderson@petvet.com',
-                'phone' => '555-0404',
-                'business_name' => 'Glamour Paws Boutique',
-                'experience_years' => 8,
-                'specializations' => 'Dogs, Show Grooming, Creative Styling',
-                'certifications' => 'Award-Winning Groomer',
-                'city' => 'Mount Lavinia',
-                'avatar' => 'https://i.pravatar.cc/150?img=43'
-            ]
-        ];
-        
-        return $this->applyFilters($allGroomers, $filters);
+        if (!empty($filters['show']) && $filters['show'] === 'packages') {
+            return $this->getGroomerPackageItems($filters);
+        }
+
+        return $this->getGroomerProviders($filters);
     }
     
     /**
-     * Get grooming services/packages instead of providers (Mock Data)
+     * Providers view: only approved groomers with >= 1 service in groomer_services
      */
-    private function getGroomingServices($filters) {
-        // Check if user specifically wants packages
-        if (!empty($filters['show']) && $filters['show'] === 'packages') {
-            return $this->getGroomingPackages($filters);
+    private function getGroomerProviders($filters) {
+        $pdo = db();
+
+        $sql = "SELECT
+                    u.id,
+                    CONCAT(u.first_name, ' ', u.last_name) AS name,
+                    u.avatar,
+                    u.email,
+                    u.phone,
+                    spp.business_name,
+                    spp.business_logo,
+                    spp.service_area,
+                    spp.experience_years,
+                    spp.certifications,
+                    spp.specializations,
+                    spp.phone_primary,
+                    spp.phone_secondary
+                FROM users u
+                INNER JOIN service_provider_profiles spp ON u.id = spp.user_id
+                INNER JOIN user_roles ur ON u.id = ur.user_id
+                INNER JOIN roles r ON ur.role_id = r.id
+                WHERE r.role_name = 'groomer'
+                  AND ur.verification_status = 'approved'
+                  AND ur.is_active = 1
+                  AND spp.role_type = 'groomer'
+                  AND EXISTS (
+                      SELECT 1
+                      FROM groomer_services gs
+                      WHERE gs.user_id = u.id
+                  )";
+
+        $params = [];
+
+        if (!empty($filters['search'])) {
+            $sql .= " AND (
+                        u.first_name LIKE ? OR u.last_name LIKE ? OR spp.business_name LIKE ? OR spp.service_area LIKE ?
+                     )";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
         }
-        
-        // Otherwise check service_type filter
-        $serviceType = $filters['service_type'] ?? 'single';
-        
-        if ($serviceType === 'package') {
-            return $this->getGroomingPackages($filters);
-        } else {
-            return $this->getGroomingSingles($filters);
+
+        if (!empty($filters['city'])) {
+            $sql .= " AND spp.service_area LIKE ?";
+            $params[] = '%' . $filters['city'] . '%';
         }
+
+        if (!empty($filters['experience'])) {
+            $sql .= " AND spp.experience_years >= ?";
+            $params[] = (int)$filters['experience'];
+        }
+
+        $sql .= " ORDER BY COALESCE(spp.experience_years, 0) DESC, u.first_name";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $groomers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($groomers as &$groomer) {
+            $areas = $this->parseServiceAreas($groomer['service_area'] ?? '');
+            $groomer['service_areas'] = $areas;
+            $groomer['city'] = $areas[0] ?? '';
+            if (empty($groomer['avatar'])) {
+                $groomer['avatar'] = '/PETVET/public/images/emptyProfPic.png';
+            }
+
+            $logo = trim((string)($groomer['business_logo'] ?? ''));
+            if ($logo === '') {
+                $groomer['business_logo'] = '';
+            }
+        }
+
+        return $groomers;
+    }
+
+    /**
+     * Services view: single services across groomers (or one groomer via groomer_id)
+     */
+    private function getGroomerServiceItems($filters) {
+        $pdo = db();
+
+        $sql = "SELECT
+                    gs.id,
+                    gs.name AS service_name,
+                    gs.description,
+                    gs.price,
+                    gs.duration,
+                    gs.for_dogs,
+                    gs.for_cats,
+                    gs.available,
+                    u.id AS groomer_id,
+                    CONCAT(u.first_name, ' ', u.last_name) AS groomer_name,
+                    spp.business_name AS groomer_business,
+                    spp.service_area AS groomer_service_area,
+                    spp.phone_primary AS groomer_phone,
+                                        COALESCE(NULLIF(spp.business_logo, ''), u.avatar) AS groomer_avatar
+                FROM groomer_services gs
+                INNER JOIN users u ON gs.user_id = u.id
+                INNER JOIN service_provider_profiles spp ON u.id = spp.user_id AND spp.role_type = 'groomer'
+                INNER JOIN user_roles ur ON u.id = ur.user_id
+                INNER JOIN roles r ON ur.role_id = r.id
+                WHERE r.role_name = 'groomer'
+                  AND ur.verification_status = 'approved'
+                  AND ur.is_active = 1";
+
+        $params = [];
+
+        if (!empty($filters['groomer_id'])) {
+            $sql .= " AND u.id = ?";
+            $params[] = (int)$filters['groomer_id'];
+        }
+
+        if (!empty($filters['search'])) {
+            $sql .= " AND (
+                        gs.name LIKE ? OR gs.description LIKE ? OR spp.business_name LIKE ? OR spp.service_area LIKE ?
+                     )";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+
+        if (!empty($filters['city'])) {
+            $sql .= " AND spp.service_area LIKE ?";
+            $params[] = '%' . $filters['city'] . '%';
+        }
+
+        if (!empty($filters['experience'])) {
+            $sql .= " AND spp.experience_years >= ?";
+            $params[] = (int)$filters['experience'];
+        }
+
+        // Optional price filtering if passed
+        if (!empty($filters['min_price'])) {
+            $sql .= " AND gs.price >= ?";
+            $params[] = (float)$filters['min_price'];
+        }
+        if (!empty($filters['max_price'])) {
+            $sql .= " AND gs.price <= ?";
+            $params[] = (float)$filters['max_price'];
+        }
+
+        $sql .= " ORDER BY gs.price ASC, gs.created_at DESC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($rows as &$row) {
+            $row['for_dogs'] = (bool)$row['for_dogs'];
+            $row['for_cats'] = (bool)$row['for_cats'];
+            $row['available'] = (bool)$row['available'];
+            $row['price'] = (float)$row['price'];
+
+            $areas = $this->parseServiceAreas($row['groomer_service_area'] ?? '');
+            $row['groomer_city'] = $areas[0] ?? '';
+
+            if (empty($row['groomer_avatar'])) {
+                $row['groomer_avatar'] = '/PETVET/public/images/emptyProfPic.png';
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Packages view: packages across groomers (or one groomer via groomer_id)
+     */
+    private function getGroomerPackageItems($filters) {
+        $pdo = db();
+
+        $sql = "SELECT
+                    gp.id,
+                    gp.name AS package_name,
+                    gp.description,
+                    gp.original_price,
+                    gp.discounted_price AS price,
+                    COALESCE(
+                        gp.discount_percent,
+                        CASE
+                            WHEN gp.original_price > 0 THEN ROUND((1 - (gp.discounted_price / gp.original_price)) * 100, 1)
+                            ELSE 0
+                        END
+                    ) AS discount_percent,
+                    gp.duration,
+                    gp.for_dogs,
+                    gp.for_cats,
+                    gp.available,
+                    u.id AS groomer_id,
+                    CONCAT(u.first_name, ' ', u.last_name) AS groomer_name,
+                    spp.business_name AS groomer_business,
+                    spp.service_area AS groomer_service_area,
+                    spp.phone_primary AS groomer_phone,
+                    COALESCE(NULLIF(spp.business_logo, ''), u.avatar) AS groomer_avatar,
+                    (
+                        SELECT GROUP_CONCAT(gs.name ORDER BY gs.name SEPARATOR ', ')
+                        FROM groomer_package_services gps
+                        INNER JOIN groomer_services gs ON gps.service_id = gs.id
+                        WHERE gps.package_id = gp.id
+                    ) AS services_included
+                FROM groomer_packages gp
+                INNER JOIN users u ON gp.user_id = u.id
+                INNER JOIN service_provider_profiles spp ON u.id = spp.user_id AND spp.role_type = 'groomer'
+                INNER JOIN user_roles ur ON u.id = ur.user_id
+                INNER JOIN roles r ON ur.role_id = r.id
+                WHERE r.role_name = 'groomer'
+                  AND ur.verification_status = 'approved'
+                  AND ur.is_active = 1";
+
+        $params = [];
+
+        if (!empty($filters['groomer_id'])) {
+            $sql .= " AND u.id = ?";
+            $params[] = (int)$filters['groomer_id'];
+        }
+
+        if (!empty($filters['search'])) {
+            $sql .= " AND (
+                        gp.name LIKE ? OR gp.description LIKE ? OR spp.business_name LIKE ? OR spp.service_area LIKE ?
+                     )";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+
+        if (!empty($filters['city'])) {
+            $sql .= " AND spp.service_area LIKE ?";
+            $params[] = '%' . $filters['city'] . '%';
+        }
+
+        if (!empty($filters['experience'])) {
+            $sql .= " AND spp.experience_years >= ?";
+            $params[] = (int)$filters['experience'];
+        }
+
+        // Optional price filtering: compare against discounted price
+        if (!empty($filters['min_price'])) {
+            $sql .= " AND gp.discounted_price >= ?";
+            $params[] = (float)$filters['min_price'];
+        }
+        if (!empty($filters['max_price'])) {
+            $sql .= " AND gp.discounted_price <= ?";
+            $params[] = (float)$filters['max_price'];
+        }
+
+        $sql .= " ORDER BY gp.discounted_price ASC, gp.created_at DESC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($rows as &$row) {
+            $row['for_dogs'] = (bool)$row['for_dogs'];
+            $row['for_cats'] = (bool)$row['for_cats'];
+            $row['available'] = (bool)$row['available'];
+            $row['original_price'] = (float)$row['original_price'];
+            $row['price'] = (float)$row['price'];
+            $row['discount_percent'] = (float)$row['discount_percent'];
+
+            $areas = $this->parseServiceAreas($row['groomer_service_area'] ?? '');
+            $row['groomer_city'] = $areas[0] ?? '';
+
+            if (empty($row['groomer_avatar'])) {
+                $row['groomer_avatar'] = '/PETVET/public/images/emptyProfPic.png';
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Normalize service_area into array of areas (supports JSON arrays or comma strings)
+     */
+    private function parseServiceAreas($serviceArea) {
+        $areas = [];
+        $areaStr = trim((string)$serviceArea);
+        if ($areaStr === '') return $areas;
+
+        if (str_starts_with($areaStr, '[')) {
+            $decoded = json_decode($areaStr, true);
+            if (is_array($decoded)) {
+                $areas = array_values(array_filter(array_map(function ($v) {
+                    $v = trim((string)$v);
+                    return $v === '' ? null : $v;
+                }, $decoded)));
+                if (!empty($areas)) {
+                    return $areas;
+                }
+            }
+        }
+
+        $parts = array_map('trim', explode(',', $areaStr));
+        return array_values(array_filter($parts, fn($p) => $p !== ''));
     }
     
     /**
@@ -1053,6 +1275,11 @@ class ServicesModel extends BaseModel {
                          OR spp.training_intermediate_enabled = 1
                          OR spp.training_advanced_enabled = 1
                      )";
+        }
+
+        if ($roleType === 'groomer') {
+            // Only list districts for groomers who actually have at least one service
+            $sql .= " AND EXISTS (SELECT 1 FROM groomer_services gs WHERE gs.user_id = spp.user_id)";
         }
         
         $stmt = $pdo->prepare($sql);

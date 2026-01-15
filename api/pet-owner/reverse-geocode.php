@@ -42,6 +42,44 @@ try {
         
         if ($data && isset($data['address'])) {
             $address = $data['address'];
+
+            // Attempt to extract Sri Lanka district (for Groomer map auto-detect)
+            $district = null;
+            $slDistricts = [
+                'Ampara','Anuradhapura','Badulla','Batticaloa','Colombo','Galle','Gampaha','Hambantota','Jaffna',
+                'Kalutara','Kandy','Kegalle','Kilinochchi','Kurunegala','Mannar','Matale','Matara','Monaragala',
+                'Mullaitivu','Nuwara Eliya','Polonnaruwa','Puttalam','Ratnapura','Trincomalee','Vavuniya'
+            ];
+
+            $candidates = [];
+            foreach (['state_district','county','district','region','state','city','town','village','municipality'] as $k) {
+                if (!empty($address[$k])) $candidates[] = (string)$address[$k];
+            }
+
+            $normalize = function($s) {
+                $s = trim((string)$s);
+                $s = preg_replace('/\s+District\s*$/i', '', $s);
+                $s = preg_replace('/\s+Distric\s*$/i', '', $s); // common typo
+                $s = preg_replace('/\s+/', ' ', $s);
+                return trim($s);
+            };
+
+            foreach ($candidates as $cand) {
+                $candNorm = $normalize($cand);
+                foreach ($slDistricts as $d) {
+                    if (strcasecmp($candNorm, $d) === 0) {
+                        $district = $d;
+                        break 2;
+                    }
+                }
+                // If Nominatim returns e.g. "Colombo District", still accept after normalization
+                foreach ($slDistricts as $d) {
+                    if (stripos($candNorm, $d) !== false) {
+                        $district = $d;
+                        break 2;
+                    }
+                }
+            }
             $locationParts = [];
             
             // Priority order for location components
@@ -74,6 +112,7 @@ try {
             echo json_encode([
                 'success' => true,
                 'location' => $conciseLocation,
+                'district' => $district,
                 'full_address' => $data['display_name'] ?? '',
                 'address_components' => $address
             ]);
