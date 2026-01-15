@@ -55,7 +55,7 @@ try {
     // Get sitter-specific data from service_provider_profiles
     $stmt = $pdo->prepare("
         SELECT service_area, experience_years, bio, pet_types, home_type,
-               phone_primary, phone_secondary
+               location_latitude, location_longitude, phone_primary, phone_secondary
         FROM service_provider_profiles
         WHERE user_id = ? AND role_type = 'sitter'
     ");
@@ -78,23 +78,22 @@ try {
     if (!$sitter_profile) {
         $sitter_profile = [
             'service_area' => '',
-            'service_areas' => [],
             'experience_years' => '',
             'bio' => '',
             'pet_types' => '',
             'home_type' => '',
+            'location_latitude' => '',
+            'location_longitude' => '',
             'phone_primary' => '',
             'phone_secondary' => ''
         ];
     } else {
-        $areas = parse_service_areas($sitter_profile['service_area'] ?? '');
-        $sitter_profile['service_areas'] = $areas;
-        $sitter_profile['service_area'] = implode(', ', $areas);
-        // Parse pet_types JSON if exists
+        // Parse pet_types if it's JSON
         if (!empty($sitter_profile['pet_types'])) {
-            $sitter_profile['pet_types'] = json_decode($sitter_profile['pet_types'], true) ?: [];
-        } else {
-            $sitter_profile['pet_types'] = [];
+            $decoded = json_decode($sitter_profile['pet_types'], true);
+            if (is_array($decoded)) {
+                $sitter_profile['pet_types'] = implode(', ', $decoded);
+            }
         }
     }
 

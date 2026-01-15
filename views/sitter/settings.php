@@ -16,6 +16,10 @@ $prefs = [];
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Settings - Sitter - PetVet</title>
 <link rel="stylesheet" href="/PETVET/public/css/pet-owner/settings.css" />
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
 <style>
 	.phone-error{
 		color:#ef4444;
@@ -158,33 +162,53 @@ $prefs = [];
 					</h2>
 					<p class="muted small">Manage your sitter profile and service details</p>
 				</div>
-				<form id="formSitter" class="form">
+				<form id="formSitter" class="form" enctype="multipart/form-data">
 					<div class="row two">
-						<label>Working Areas (Max 5)
-							<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-								<select id="sitterWorkAreaSelect" style="min-width: 220px; flex: 1 1 220px;"></select>
-								<button type="button" class="btn outline" id="sitterAddWorkAreaBtn" style="white-space:nowrap;">Add Area</button>
-							</div>
-							<div id="sitterWorkAreaChips" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;"></div>
-							<input type="hidden" id="sitterWorkAreasJson" name="work_areas" value="<?= htmlspecialchars($sitterData['work_area'] ?? '') ?>" />
-							<small class="muted">Select Sri Lanka districts. You can add up to 5.</small>
+						<label>Work Area (District)
+							<input type="text" id="work_area_display" readonly value="<?= htmlspecialchars($sitterData['service_area'] ?? 'Not set - select location on map') ?>" style="background: #f9f9f9; cursor: not-allowed;" placeholder="Auto-detected from map location" />
+							<input type="hidden" name="work_area" id="work_area" value="<?= htmlspecialchars($sitterData['service_area'] ?? '') ?>" />
+							<small class="muted" style="display: block; margin-top: 4px;">District is automatically detected from your map location</small>
 						</label>
 						<label>Experience (Years)
-							<input type="number" name="experience" id="experienceYears" value="<?= htmlspecialchars($sitterData['experience'] ?? '') ?>" min="0" placeholder="e.g., 3" />
+							<input type="number" name="experience" value="<?= htmlspecialchars($sitterData['experience_years'] ?? '') ?>" min="0" placeholder="e.g., 3" />
 						</label>
 					</div>
 					<div class="row two">
 						<label>Pet Types
-							<input type="text" name="pet_types" id="petTypes" value="<?= htmlspecialchars($sitterData['pet_types'] ?? '') ?>" placeholder="e.g., Dogs, Cats" />
+							<input type="text" name="pet_types" value="<?= htmlspecialchars($sitterData['pet_types'] ?? '') ?>" placeholder="e.g., Dogs, Cats, Birds" />
 						</label>
 						<label>Home Type
-							<input type="text" name="home_type" id="homeType" value="<?= htmlspecialchars($sitterData['home_type'] ?? '') ?>" placeholder="e.g., House, Apartment" />
+							<select name="home_type">
+								<option value="">Select Home Type</option>
+								<option value="apartment" <?= (($sitterData['home_type'] ?? '') === 'apartment' ? 'selected' : '') ?>>Apartment</option>
+								<option value="house_with_yard" <?= (($sitterData['home_type'] ?? '') === 'house_with_yard' ? 'selected' : '') ?>>House with Yard</option>
+								<option value="house_without_yard" <?= (($sitterData['home_type'] ?? '') === 'house_without_yard' ? 'selected' : '') ?>>House without Yard</option>
+								<option value="farm" <?= (($sitterData['home_type'] ?? '') === 'farm' ? 'selected' : '') ?>>Farm</option>
+								<option value="other" <?= (($sitterData['home_type'] ?? '') === 'other' ? 'selected' : '') ?>>Other</option>
+							</select>
 						</label>
 					</div>
 					<div class="row one">
-						<label>Description
-							<textarea name="description" id="sitterDescription" rows="3" placeholder="Describe your sitting service (max 50 words)"><?= htmlspecialchars($sitterData['description'] ?? '') ?></textarea>
+						<label>Bio
+							<textarea name="bio" rows="3" placeholder="Tell clients about your pet sitting experience..."><?= htmlspecialchars($sitterData['bio'] ?? '') ?></textarea>
 						</label>
+					</div>
+					<div class="row one">
+						<div style="display:flex; flex-direction:column; gap:8px; font-weight:600; font-size:14px;">
+							<label for="location_display" style="font-weight:600;">Map Location</label>
+							<small class="muted" style="display:block; margin-top:-4px;">Click on the map to set your business location. This helps customers find sitters near them.</small>
+							<button type="button" class="btn outline" id="useMyLocationBtn" style="margin-top: 6px; width: fit-content;">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+									<circle cx="12" cy="12" r="10"/>
+									<circle cx="12" cy="12" r="3"/>
+								</svg>
+								Use My Current Location
+							</button>
+							<div id="sitterMapContainer" style="height: 400px; width: 100%; border-radius: 8px; border: 1px solid var(--line, #e0e0e0); display: none;"></div>
+							<input type="hidden" id="location_latitude" name="location_latitude" value="<?= htmlspecialchars($sitterData['location_latitude'] ?? '') ?>" />
+							<input type="hidden" id="location_longitude" name="location_longitude" value="<?= htmlspecialchars($sitterData['location_longitude'] ?? '') ?>" />
+							<input type="text" id="location_display" readonly placeholder="Click 'Use My Current Location' or click on map" style="cursor: pointer; background: #f9f9f9;" />
+						</div>
 					</div>
 					<div class="row two">
 						<label>Primary Phone Number
@@ -257,6 +281,10 @@ $prefs = [];
 </main>
 
 <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
 <script src="/PETVET/public/js/sitter/settings.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

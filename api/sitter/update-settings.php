@@ -15,7 +15,32 @@ if (!isLoggedIn()) {
 }
 
 $user_id = currentUserId();
-$data = json_decode(file_get_contents('php://input'), true);
+
+// Check if this is FormData (multipart) or JSON request
+$isFormData = !empty($_POST) || !empty($_FILES);
+
+if ($isFormData) {
+    // Parse FormData format: sitter[field_name]
+    $data = [];
+    if (!empty($_POST)) {
+        foreach ($_POST as $key => $value) {
+            // Parse nested form data like sitter[business_name]
+            if (preg_match('/^(\w+)\[(\w+)\]$/', $key, $matches)) {
+                $section = $matches[1];
+                $field = $matches[2];
+                if (!isset($data[$section])) {
+                    $data[$section] = [];
+                }
+                $data[$section][$field] = $value;
+            } else {
+                $data[$key] = $value;
+            }
+        }
+    }
+} else {
+    // JSON request
+    $data = json_decode(file_get_contents('php://input'), true);
+}
 
 if (!$data) {
     http_response_code(400);
@@ -116,36 +141,17 @@ try {
     // Update or insert sitter profile
     if (isset($data['sitter'])) {
         $s = $data['sitter'];
-
-        // Normalize service_area to JSON array (Sri Lankan districts), max 5
-        $norm = normalize_service_areas($s['service_area'] ?? []);
-        if (isset($norm['error'])) {
-            $pdo->rollBack();
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => $norm['error']]);
-            exit;
-        }
-        $areas = $norm['areas'] ?? [];
-        $s['service_area'] = empty($areas) ? '' : json_encode($areas, JSON_UNESCAPED_UNICODE);
         
         // Convert empty strings to null for numeric fields
         $s['experience_years'] = empty($s['experience_years']) ? null : $s['experience_years'];
         
         // Normalize home_type to match enum values
         if (!empty($s['home_type'])) {
-            $home_type_map = [
-                'apartment' => 'apartment',
-                'house with yard' => 'house_with_yard',
-                'house without yard' => 'house_without_yard',
-                'farm' => 'farm',
-                'other' => 'other'
-            ];
-            $normalized = strtolower(trim($s['home_type']));
-            $s['home_type'] = $home_type_map[$normalized] ?? 'other';
+            $allowed_home_types = ['apartment', 'house_with_yard', 'house_without_yard', 'farm', 'other'];
+            if (!in_array($s['home_type'], $allowed_home_types)) {
+                $s['home_type'] = 'other';
+            }
         }
-        
-        // Encode pet_types as JSON
-        $pet_types_json = !empty($s['pet_types']) ? json_encode($s['pet_types']) : null;
         
         // Check if profile exists
         $stmt = $pdo->prepare("SELECT id FROM service_provider_profiles WHERE user_id = ? AND role_type = 'sitter'");
@@ -159,13 +165,16 @@ try {
                 SET service_area = ?, experience_years = ?, bio = ?,
                     pet_types = ?, home_type = ?,
                     phone_primary = ?, phone_secondary = ?,
+                    location_latitude = ?, location_longitude = ?,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE user_id = ? AND role_type = 'sitter'
             ");
             $stmt->execute([
-                $s['service_area'], $s['experience_years'], $s['bio'],
-                $pet_types_json, $s['home_type'],
-                $s['phone_primary'], $s['phone_secondary'],
+                $s['work_area'] ?? null, 
+                $s['experience_years'], $s['bio'] ?? null,
+                $s['pet_types'] ?? null, $s['home_type'] ?? null,
+                $s['phone_primary'], $s['phone_secondary'] ?? null,
+                $s['location_latitude'] ?? null, $s['location_longitude'] ?? null,
                 $user_id
             ]);
         } else {
@@ -173,13 +182,15 @@ try {
             $stmt = $pdo->prepare("
                 INSERT INTO service_provider_profiles 
                 (user_id, role_type, service_area, experience_years, bio,
-                 pet_types, home_type, phone_primary, phone_secondary)
-                VALUES (?, 'sitter', ?, ?, ?, ?, ?, ?, ?)
+                 pet_types, home_type, phone_primary, phone_secondary, location_latitude, location_longitude)
+                VALUES (?, 'sitter', ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
-                $user_id, $s['service_area'], $s['experience_years'], $s['bio'],
-                $pet_types_json, $s['home_type'],
-                $s['phone_primary'], $s['phone_secondary']
+                $user_id, $s['work_area'] ?? null,
+                $s['experience_years'], $s['bio'] ?? null,
+                $s['pet_types'] ?? null, $s['home_type'] ?? null,
+                $s['phone_primary'], $s['phone_secondary'] ?? null,
+                $s['location_latitude'] ?? null, $s['location_longitude'] ?? null
             ]);
         }
     }
