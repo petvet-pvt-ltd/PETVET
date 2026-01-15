@@ -396,6 +396,11 @@ $GLOBALS['currentPage'] = 'services.php';
                             ?>
                             <article class="provider-card <?= $serviceType === 'trainers' ? 'trainer-card' : '' ?>" data-groomer-id="<?= $serviceType === 'groomers' ? (int)$provider['id'] : 0 ?>" data-sort-name="<?= htmlspecialchars($providerSortName) ?>">
                                 <div class="provider-header">
+                                    <?php if ($serviceType === 'groomers'): ?>
+                                        <span class="clinic-distance groomer-distance" data-groomer-id="<?= (int)$provider['id'] ?>">
+                                            <span class="distance-loader">⏳ Calculating...</span>
+                                        </span>
+                                    <?php endif; ?>
                                     <div class="provider-avatar">
                                         <?php
                                         $providerImg = $provider['avatar'] ?? '/PETVET/public/images/default-avatar.png';
@@ -550,12 +555,6 @@ $GLOBALS['currentPage'] = 'services.php';
                                     <?php if (!empty($provider['certifications'])): ?>
                                         <p class="certifications"><strong>Certifications:</strong> <?= htmlspecialchars($provider['certifications']) ?></p>
                                     <?php endif; ?>
-
-                                <?php if ($serviceType === 'groomers'): ?>
-                                    <span class="clinic-distance groomer-distance" data-groomer-id="<?= (int)$provider['id'] ?>">
-                                        <span class="distance-loader">⏳ Calculating...</span>
-                                    </span>
-                                <?php endif; ?>
                                 </div>
 
                                 <div class="provider-actions">
