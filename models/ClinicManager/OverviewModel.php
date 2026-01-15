@@ -120,7 +120,7 @@ class OverviewModel extends BaseModel {
         $stmt->execute([$clinicId, $today]);
         $appointments = $stmt->fetchAll();
         
-        // Get ongoing appointments (appointments where current time is within the appointment window)
+        // Get ongoing appointments (based on status='ongoing', not time calculation)
         $stmt = $this->db->prepare("
             SELECT 
                 a.id,
@@ -138,7 +138,7 @@ class OverviewModel extends BaseModel {
             JOIN users u_vet ON a.vet_id = u_vet.id
             WHERE a.clinic_id = ? 
             AND a.appointment_date = ?
-            AND a.status IN ('approved', 'ongoing')
+            AND a.status = 'ongoing'
             ORDER BY a.appointment_time ASC
         ");
         $stmt->execute([$clinicId, $today]);
@@ -146,26 +146,20 @@ class OverviewModel extends BaseModel {
         
         // Build ongoing appointments list
         $ongoing = [];
-        $currentTime = date('H:i:s', $nowTs);
         
         foreach ($appointmentsData as $appt) {
             $startTime = $appt['appointment_time'];
             $duration = $appt['duration_minutes'] ?? $slotMinutes;
             $endTime = date('H:i:s', strtotime($startTime) + ($duration * 60));
             
-            // Check if current time is within appointment window
-            $isOngoing = ($currentTime >= $startTime && $currentTime < $endTime);
-            
-            if ($isOngoing) {
-                $ongoing[] = [
-                    'vet' => $appt['vet_name'] ?? 'Unknown Vet',
-                    'hasAppointment' => true,
-                    'animal' => $appt['species'] ?? 'Pet',
-                    'client' => $appt['owner_name'] ?? 'Unknown',
-                    'type' => $appt['appointment_type'] ?? 'Checkup',
-                    'time_range' => date('H:i', strtotime($startTime)) . ' – ' . date('H:i', strtotime($endTime))
-                ];
-            }
+            $ongoing[] = [
+                'vet' => $appt['vet_name'] ?? 'Unknown Vet',
+                'hasAppointment' => true,
+                'animal' => $appt['species'] ?? 'Pet',
+                'client' => $appt['owner_name'] ?? 'Unknown',
+                'type' => $appt['appointment_type'] ?? 'Checkup',
+                'time_range' => date('H:i', strtotime($startTime)) . ' – ' . date('H:i', strtotime($endTime))
+            ];
         }
         
         // If no ongoing appointments, show vets with no current appointments

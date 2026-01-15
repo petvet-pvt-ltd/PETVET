@@ -50,13 +50,8 @@ try {
         $params[] = $clinicId;
     }
     
-    // Get ongoing appointments
-    $currentTime = time();
-    $currentHour = (int)date('H', $currentTime);
-    $currentMinute = (int)date('i', $currentTime);
-    $currentTimeMinutes = $currentHour * 60 + $currentMinute;
-    
-    $query = "
+    // Get ongoing appointments (based on status='ongoing', not time)
+    $ongoingQuery = "
         SELECT 
             a.id,
             a.appointment_time,
@@ -71,18 +66,16 @@ try {
         JOIN users u ON a.pet_owner_id = u.id
         LEFT JOIN users v ON a.vet_id = v.id
         WHERE a.appointment_date = ? 
-        AND a.status = 'approved' $clinicFilter
+        AND a.status = 'ongoing' $clinicFilter
         ORDER BY a.appointment_time
     ";
     
-    $stmt = $pdo->prepare($query);
+    $stmt = $pdo->prepare($ongoingQuery);
     $stmt->execute($params);
-    $todayAppointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $ongoingData = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     $ongoingAppointments = [];
-    $upcomingAppointments = [];
-    
-    foreach ($todayAppointments as $appt) {
+    foreach ($ongoingData as $appt) {
         $apptTime = strtotime($appt['appointment_time']);
         $apptHour = (int)date('H', $apptTime);
         $apptMinute = (int)date('i', $apptTime);
@@ -90,33 +83,51 @@ try {
         
         $apptStart = $apptHour * 60 + $apptMinute;
         $apptEnd = $apptStart + $duration;
+        $endHour = floor($apptEnd / 60);
+        $endMinute = $apptEnd % 60;
         
-        // Check if ongoing
-        if ($currentTimeMinutes >= $apptStart && $currentTimeMinutes <= $apptEnd) {
-            $endHour = floor($apptEnd / 60);
-            $endMinute = $apptEnd % 60;
-            
-            $ongoingAppointments[] = [
-                'vet' => $appt['vet'],
-                'client' => $appt['client'],
-                'type' => $appt['appointment_type'],
-                'time_range' => sprintf('%02d:%02d - %02d:%02d', $apptHour, $apptMinute, $endHour, $endMinute),
-                'pet' => $appt['pet']
-            ];
-        }
-        
-        // Check if upcoming
-        $apptFullTime = strtotime($today . ' ' . $appt['appointment_time']);
-        if ($apptFullTime > $currentTime) {
-            $upcomingAppointments[] = [
-                'date' => $today,
-                'time' => $appt['appointment_time'],
-                'pet' => $appt['pet'],
-                'client' => $appt['client'],
-                'vet' => $appt['vet'],
-                'type' => $appt['appointment_type']
-            ];
-        }
+        $ongoingAppointments[] = [
+            'vet' => $appt['vet'],
+            'client' => $appt['client'],
+            'type' => $appt['appointment_type'],
+            'time_range' => sprintf('%02d:%02d - %02d:%02d', $apptHour, $apptMinute, $endHour, $endMinute),
+            'pet' => $appt['pet']
+        ];
+    }
+    
+    // Get upcoming appointments (approved status)
+    $upcomingQuery = "
+        SELECT 
+            a.id,
+            a.appointment_time,
+            a.appointment_type,
+            p.name as pet,
+            p.species as animal,
+            CONCAT(u.first_name, ' ', u.last_name) as client,
+            COALESCE(CONCAT(v.first_name, ' ', v.last_name), 'Any Available Vet') as vet
+        FROM appointments a
+        JOIN pets p ON a.pet_id = p.id
+        JOIN users u ON a.pet_owner_id = u.id
+        LEFT JOIN users v ON a.vet_id = v.id
+        WHERE a.appointment_date = ? 
+        AND a.status = 'approved' $clinicFilter
+        ORDER BY a.appointment_time
+    ";
+    
+    $stmt = $pdo->prepare($upcomingQuery);
+    $stmt->execute($params);
+    $upcomingData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    $upcomingAppointments = [];
+    foreach ($upcomingData as $appt) {
+        $upcomingAppointments[] = [
+            'date' => $today,
+            'time' => $appt['appointment_time'],
+            'pet' => $appt['pet'],
+            'client' => $appt['client'],
+            'vet' => $appt['vet'],
+            'type' => $appt['appointment_type']
+        ];
     }
     
     echo json_encode([

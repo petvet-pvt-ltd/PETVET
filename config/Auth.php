@@ -238,6 +238,17 @@ class Auth {
             $_SESSION['clinic_id'] = (int)$row['clinic_id'];
         }
     }
+    
+    // ✅ If receptionist or clinic_manager, pull clinic_id from clinic_staff table
+    if (in_array($primaryRole['role_name'], ['receptionist', 'clinic_manager'])) {
+        $stmt = $this->db->prepare("SELECT clinic_id FROM clinic_staff WHERE user_id = ? LIMIT 1");
+        $stmt->execute([$_SESSION['user_id']]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row && isset($row['clinic_id']) && $row['clinic_id'] !== null) {
+            $_SESSION['clinic_id'] = (int)$row['clinic_id'];
+        }
+    }
 }
 
     

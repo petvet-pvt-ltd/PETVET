@@ -52,7 +52,7 @@ try {
         JOIN users u ON a.pet_owner_id = u.id
         LEFT JOIN users vet ON a.vet_id = vet.id
         WHERE a.clinic_id = ?
-        AND a.status NOT IN ('declined', 'cancelled')
+        AND a.status IN ('approved', 'completed')
     ";
     
     $params = [$clinicId];

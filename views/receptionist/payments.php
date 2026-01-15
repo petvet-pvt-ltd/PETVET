@@ -78,69 +78,96 @@
           </div>
         </div>
 
-        <form id="paymentForm">
+        <form id="paymentForm" onsubmit="return false;">
           <input type="hidden" id="appointment-id" name="appointment_id">
-          
+
           <div class="form-section">
-            <h3>Charges</h3>
-            
-            <div class="form-group">
-              <label for="consultation-fee">Consultation Fee (LKR)</label>
-              <input type="number" id="consultation-fee" name="consultation_fee" value="2500" step="0.01" required>
+            <div class="editor-head">
+              <h3>Invoice Items</h3>
             </div>
 
-            <div class="form-group">
-              <label for="treatment-charges">Treatment Charges (LKR)</label>
-              <input type="number" id="treatment-charges" name="treatment_charges" value="0" step="0.01">
-            </div>
+            <div id="detected-items" class="detected-items" aria-live="polite"></div>
 
-            <div class="form-group">
-              <label for="medication-charges">Medication Charges (LKR)</label>
-              <input type="number" id="medication-charges" name="medication_charges" value="0" step="0.01">
-            </div>
-
-            <div class="form-group">
-              <label for="lab-charges">Lab/Test Charges (LKR)</label>
-              <input type="number" id="lab-charges" name="lab_charges" value="0" step="0.01">
-            </div>
-
-            <div class="form-group">
-              <label for="other-charges">Other Charges (LKR)</label>
-              <input type="number" id="other-charges" name="other_charges" value="0" step="0.01">
+            <div class="items-table-wrap" role="region" aria-label="Invoice Items">
+              <table class="items-table" id="itemsTable">
+                <thead>
+                  <tr>
+                    <th style="width: 46%">Description</th>
+                    <th style="width: 12%" class="num">Qty</th>
+                    <th style="width: 18%" class="num">Unit Price</th>
+                    <th style="width: 18%" class="num">Total</th>
+                    <th style="width: 6%"></th>
+                  </tr>
+                </thead>
+                <tbody id="itemsTbody"></tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="5" class="items-footer">
+                      <button type="button" class="btn-outline btn-sm" onclick="addInvoiceRow(true)">+ Add Row</button>
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
             </div>
           </div>
 
           <div class="form-section">
-            <h3>Additional Information</h3>
-            
-            <div class="form-group">
-              <label for="services-provided">Services Provided</label>
-              <textarea id="services-provided" name="services_provided" rows="3" placeholder="e.g., General checkup, vaccination, dental cleaning"></textarea>
-            </div>
+            <h3>Invoice Details</h3>
 
-            <div class="form-group">
-              <label for="medications">Medications Prescribed</label>
-              <textarea id="medications" name="medications" rows="3" placeholder="e.g., Amoxicillin 500mg, Pain relief tablets"></textarea>
-            </div>
+            <div class="meta-grid">
+              <div class="form-group">
+                <label for="invoice-date">Date</label>
+                <input type="date" id="invoice-date" name="invoice_date" required>
+              </div>
 
-            <div class="form-group">
-              <label for="notes">Additional Notes</label>
-              <textarea id="notes" name="notes" rows="2" placeholder="Any special notes or comments"></textarea>
+              <div class="form-group">
+                <label for="invoice-no">Invoice No</label>
+                    <input type="text" id="invoice-no" name="invoice_no" placeholder="Auto" autocomplete="off" readonly>
+              </div>
+
+              <div class="form-group">
+                <label for="payment-method">Payment Method</label>
+                <select id="payment-method" name="payment_method">
+                  <option value="CASH">CASH</option>
+                  <option value="CARD">CARD</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="client-phone">Client Phone</label>
+                <input type="text" id="client-phone" name="client_phone" placeholder="e.g., 0773983002" autocomplete="off">
+              </div>
+
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label for="invoice-note">Note</label>
+                <input type="text" id="invoice-note" name="invoice_note" placeholder="-" autocomplete="off">
+              </div>
             </div>
           </div>
 
           <div class="total-section">
             <div class="total-row">
-              <span class="total-label">Subtotal:</span>
-              <span class="total-value" id="subtotal">LKR 2,500.00</span>
+              <span class="total-label">Gross Amount:</span>
+              <span class="total-value" id="gross">LKR 0.00</span>
             </div>
-            <div class="total-row">
-              <span class="total-label">Tax (0%):</span>
-              <span class="total-value" id="tax">LKR 0.00</span>
+
+            <div class="total-row total-input">
+              <span class="total-label">Item Discount:</span>
+              <span class="total-value">
+                <input type="number" id="invoice-discount" value="0" step="0.01" min="0" class="money-input" aria-label="Item Discount">
+              </span>
             </div>
+
+            <div class="total-row total-input">
+              <span class="total-label">Card Fee:</span>
+              <span class="total-value">
+                <input type="number" id="invoice-cardfee" value="0" step="0.01" min="0" class="money-input" aria-label="Card Fee">
+              </span>
+            </div>
+
             <div class="total-row total-final">
               <span class="total-label">Total Amount:</span>
-              <span class="total-value" id="total">LKR 2,500.00</span>
+              <span class="total-value" id="total">LKR 0.00</span>
             </div>
           </div>
         </form>
@@ -148,7 +175,7 @@
 
       <div class="modal-footer">
         <button class="btn-secondary" onclick="closePaymentModal()">Cancel</button>
-        <button class="btn-primary" onclick="generateInvoice()">Generate Invoice</button>
+        <button class="btn-primary" onclick="generateInvoice()">Preview Invoice</button>
       </div>
     </div>
   </div>
@@ -168,7 +195,8 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn-secondary" onclick="closeInvoiceModal()">Cancel</button>
+        <button class="btn-secondary" onclick="backToPaymentDetails()">Back</button>
+        <button class="btn-secondary" onclick="closeInvoiceModal()">Close</button>
         <button class="btn-outline" onclick="printInvoice()">🖨️ Print Invoice</button>
         <button class="btn-success" onclick="showConfirmPaymentDialog()">✓ Mark as Paid</button>
       </div>

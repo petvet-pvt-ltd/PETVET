@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/BaseController.php';
 require_once __DIR__ . '/../models/ClinicManager/AppointmentsModel.php';
+require_once __DIR__ . '/../config/connect.php';
 
 class ReceptionistController extends BaseController {
     
@@ -13,34 +14,51 @@ class ReceptionistController extends BaseController {
     
     public function payments() {
         try {
-            // Get completed appointments pending payment
-            $appointments = $this->appointmentsModel->fetchAppointments();
+            if (empty($_SESSION['clinic_id'])) {
+                echo "Clinic not set in session";
+                return;
+            }
+
+            $clinicId = (int)$_SESSION['clinic_id'];
+            
+            // Get completed appointments pending payment from database
+            $pdo = db();
+            $stmt = $pdo->prepare("
+                SELECT 
+                    a.id,
+                    a.appointment_date,
+                    a.appointment_time,
+                    a.appointment_type,
+                    u.first_name AS owner_first_name,
+                    u.last_name AS owner_last_name,
+                    p.name AS pet_name,
+                    p.species AS animal_type,
+                    v.first_name AS vet_first_name,
+                    v.last_name AS vet_last_name
+                FROM appointments a
+                JOIN users u ON a.pet_owner_id = u.id
+                JOIN pets p ON a.pet_id = p.id
+                JOIN users v ON a.vet_id = v.id
+                WHERE a.clinic_id = :clinic_id
+                  AND a.status = 'completed'
+                ORDER BY a.appointment_date DESC, a.appointment_time DESC
+            ");
+            $stmt->execute(['clinic_id' => $clinicId]);
+            $appointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
             $pendingPayments = [];
-            
-            $vets = [
-                1 => 'Dr. Robert Fox',
-                2 => 'Theresa Webb',
-                3 => 'Marvin McKinney',
-                4 => 'Dr. Kathryn Murphy'
-            ];
-            
-            // Filter completed appointments (mock data - in production filter by payment_status)
-            foreach ($appointments as $date => $dayAppointments) {
-                foreach ($dayAppointments as $appt) {
-                    if (isset($appt['status']) && $appt['status'] === 'Completed') {
-                        $pendingPayments[] = [
-                            'id' => uniqid('appt_'),
-                            'client' => $appt['client'],
-                            'pet' => $appt['pet'],
-                            'animal' => $appt['animal'],
-                            'vet' => $vets[$appt['vet_id']] ?? 'Unknown',
-                            'type' => $appt['type'],
-                            'date' => $date,
-                            'time' => $appt['time'],
-                            'status' => 'Pending Payment'
-                        ];
-                    }
-                }
+            foreach ($appointments as $appt) {
+                $pendingPayments[] = [
+                    'id' => $appt['id'],  // Real appointment ID from database
+                    'client' => trim($appt['owner_first_name'] . ' ' . $appt['owner_last_name']),
+                    'pet' => $appt['pet_name'],
+                    'animal' => ucfirst($appt['animal_type']),
+                    'vet' => 'Dr. ' . trim($appt['vet_first_name'] . ' ' . $appt['vet_last_name']),
+                    'type' => ucfirst($appt['appointment_type']),
+                    'date' => $appt['appointment_date'],
+                    'time' => date('h:i A', strtotime($appt['appointment_time'])),
+                    'status' => 'Pending Payment'
+                ];
             }
             
             $this->view('receptionist', 'payments', [
@@ -48,6 +66,7 @@ class ReceptionistController extends BaseController {
             ]);
             
         } catch (Exception $e) {
+            error_log("ReceptionistController::payments error: " . $e->getMessage());
             echo "Error: " . $e->getMessage();
         }
     }

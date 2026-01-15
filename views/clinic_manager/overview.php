@@ -556,5 +556,98 @@ $today = date('l, F j, Y');
       width: auto;
     }
   </style>
+
+  <script>
+    // Auto-refresh ongoing appointments
+    let refreshInterval;
+
+    function refreshOngoingAppointments() {
+      console.log('[Overview Refresh] Fetching ongoing appointments...');
+      
+      fetch('/PETVET/api/clinic-manager/get-ongoing-appointments.php', {
+        credentials: 'same-origin'
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          console.log('[Overview Refresh] ✅ Ongoing appointments updated:', data);
+          updateOngoingAppointmentsTable(data.ongoingAppointments);
+        } else {
+          console.error('[Overview Refresh] ❌ Error:', data.error);
+        }
+      })
+      .catch(error => {
+        console.error('[Overview Refresh] ❌ Fetch error:', error);
+      });
+    }
+
+    function updateOngoingAppointmentsTable(appointments) {
+      const tableWrap = document.querySelector('.card.table-card .table-wrap');
+      if (!tableWrap) return;
+      
+      if (appointments.length === 0) {
+        tableWrap.innerHTML = '<p class="no-data">No vets are in an appointment right now.</p>';
+      } else {
+        let tableHtml = `
+          <table class="cm-table">
+            <thead>
+              <tr>
+                <th scope="col">Vet</th>
+                <th scope="col">Animal</th>
+                <th scope="col">Client</th>
+                <th scope="col">Type</th>
+                <th scope="col">Time</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        appointments.forEach(row => {
+          if (row.hasAppointment) {
+            tableHtml += `
+              <tr>
+                <td>${escapeHtml(row.vet)}</td>
+                <td>${escapeHtml(row.animal)}</td>
+                <td>${escapeHtml(row.client)}</td>
+                <td>${escapeHtml(row.type)}</td>
+                <td>${escapeHtml(row.time_range)}</td>
+              </tr>
+            `;
+          } else {
+            tableHtml += `
+              <tr>
+                <td>${escapeHtml(row.vet)}</td>
+                <td colspan="4" class="no-appointment">No current appointment</td>
+              </tr>
+            `;
+          }
+        });
+        
+        tableHtml += `
+            </tbody>
+          </table>
+        `;
+        
+        tableWrap.innerHTML = tableHtml;
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Start auto-refresh every 10 seconds
+    refreshInterval = setInterval(refreshOngoingAppointments, 10000);
+    console.log('[Overview] ✅ Auto-refresh enabled (every 10 seconds)');
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    });
+  </script>
 </body>
 </html>
