@@ -73,42 +73,65 @@ class ReceptionistController extends BaseController {
     
     public function paymentRecords() {
         try {
-            // Mock payment records (in production, fetch from database)
-            $paymentRecords = [
-                [
-                    'invoice_number' => 'INV-001234',
-                    'date' => date('Y-m-d', strtotime('-2 days')),
-                    'client' => 'John Silva',
-                    'pet' => 'Max',
-                    'vet' => 'Dr. Robert Fox',
-                    'amount' => 3500.00,
-                    'status' => 'Paid'
-                ],
-                [
-                    'invoice_number' => 'INV-001235',
-                    'date' => date('Y-m-d', strtotime('-1 day')),
-                    'client' => 'Sarah Fernando',
-                    'pet' => 'Bella',
-                    'vet' => 'Marvin McKinney',
-                    'amount' => 5200.00,
-                    'status' => 'Paid'
-                ],
-                [
-                    'invoice_number' => 'INV-001236',
-                    'date' => date('Y-m-d'),
-                    'client' => 'David Perera',
-                    'pet' => 'Rocky',
-                    'vet' => 'Dr. Robert Fox',
-                    'amount' => 2800.00,
-                    'status' => 'Paid'
-                ],
-            ];
+            if (empty($_SESSION['clinic_id'])) {
+                echo "Clinic not set in session";
+                return;
+            }
+
+            $clinicId = (int)$_SESSION['clinic_id'];
+            
+            // Get paid appointments from database
+            $pdo = db();
+            
+            // Check if payments table exists
+            $stmt = $pdo->query("SHOW TABLES LIKE 'payments'");
+            $paymentsTableExists = $stmt->rowCount() > 0;
+            
+            $paymentRecords = [];
+            
+            if ($paymentsTableExists) {
+                $stmt = $pdo->prepare("
+                    SELECT 
+                        p.invoice_number,
+                        p.payment_date as date,
+                        p.total_amount as amount,
+                        u.first_name AS owner_first_name,
+                        u.last_name AS owner_last_name,
+                        pet.name AS pet_name,
+                        v.first_name AS vet_first_name,
+                        v.last_name AS vet_last_name,
+                        a.appointment_type
+                    FROM appointments a
+                    JOIN payments p ON p.appointment_id = a.id
+                    JOIN users u ON a.pet_owner_id = u.id
+                    JOIN pets pet ON a.pet_id = pet.id
+                    JOIN users v ON a.vet_id = v.id
+                    WHERE a.clinic_id = :clinic_id
+                      AND a.status = 'paid'
+                    ORDER BY p.payment_date DESC, p.created_at DESC
+                ");
+                $stmt->execute(['clinic_id' => $clinicId]);
+                $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                foreach ($records as $rec) {
+                    $paymentRecords[] = [
+                        'invoice_number' => $rec['invoice_number'],
+                        'date' => $rec['date'],
+                        'client' => trim($rec['owner_first_name'] . ' ' . $rec['owner_last_name']),
+                        'pet' => $rec['pet_name'],
+                        'vet' => 'Dr. ' . trim($rec['vet_first_name'] . ' ' . $rec['vet_last_name']),
+                        'amount' => (float)$rec['amount'],
+                        'status' => 'Paid'
+                    ];
+                }
+            }
             
             $this->view('receptionist', 'payment-records', [
                 'paymentRecords' => $paymentRecords
             ]);
             
         } catch (Exception $e) {
+            error_log("ReceptionistController::paymentRecords error: " . $e->getMessage());
             echo "Error: " . $e->getMessage();
         }
     }

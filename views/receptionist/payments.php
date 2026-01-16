@@ -254,5 +254,187 @@
   </div>
 
   <script src="/PETVET/public/js/receptionist/payments.js"></script>
+  <script>
+    // Auto-refresh payments list every 30 seconds
+    let autoRefreshInterval = null;
+    let lastPaymentCount = <?php echo count($pendingPayments); ?>;
+    
+    function startAutoRefresh() {
+      // Clear any existing interval
+      if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+      }
+      
+      // Refresh every 30 seconds (30000 ms)
+      autoRefreshInterval = setInterval(() => {
+        // Only refresh if no modal is open
+        const modals = ['paymentModal', 'invoiceModal', 'confirmPaymentModal', 'successModal'];
+        const anyModalOpen = modals.some(id => {
+          const modal = document.getElementById(id);
+          return modal && modal.style.display === 'flex';
+        });
+        
+        if (!anyModalOpen) {
+          fetchPaymentsList();
+        }
+      }, 30000);
+    }
+    
+    function fetchPaymentsList() {
+      fetch('/PETVET/api/receptionist/get-pending-payments.php')
+      .then(response => response.json())
+      .then(data => {
+        if (!data.success) {
+          console.error('Failed to fetch payments:', data.error);
+          return;
+        }
+        
+        const payments = data.payments || [];
+        const container = document.querySelector('.page-container');
+        
+        if (!container) return;
+        
+        // Remove existing grid or empty state
+        const existingGrid = container.querySelector('.payments-grid');
+        const existingEmpty = container.querySelector('.empty-state');
+        
+        if (existingGrid) existingGrid.remove();
+        if (existingEmpty) existingEmpty.remove();
+        
+        // Show notification if count changed
+        if (payments.length !== lastPaymentCount) {
+          if (payments.length < lastPaymentCount) {
+            showNotification('✅ Payment processed successfully!', 'success');
+          } else if (payments.length > lastPaymentCount) {
+            showNotification('📋 New payment pending!', 'info');
+          }
+          lastPaymentCount = payments.length;
+        }
+        
+        if (payments.length === 0) {
+          // Show empty state
+          const emptyDiv = document.createElement('div');
+          emptyDiv.className = 'empty-state';
+          emptyDiv.innerHTML = '<p>🎉 No pending payments at the moment!</p>';
+          container.appendChild(emptyDiv);
+        } else {
+          // Build payments grid
+          const section = document.createElement('section');
+          section.className = 'payments-grid';
+          
+          payments.forEach(payment => {
+            const article = document.createElement('article');
+            article.className = 'payment-card';
+            article.innerHTML = `
+              <div class="payment-header">
+                <div class="payment-info">
+                  <h3>${escapeHtml(payment.client)}</h3>
+                  <p class="pet-name">${escapeHtml(payment.pet)} (${escapeHtml(payment.animal)})</p>
+                </div>
+                <span class="badge badge-pending">Pending Payment</span>
+              </div>
+              
+              <div class="payment-details">
+                <div class="detail-row">
+                  <span class="label">Vet:</span>
+                  <span class="value">${escapeHtml(payment.vet)}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Type:</span>
+                  <span class="value">${escapeHtml(payment.type)}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Date:</span>
+                  <span class="value">${escapeHtml(payment.date)}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Time:</span>
+                  <span class="value">${escapeHtml(payment.time)}</span>
+                </div>
+              </div>
+
+              <button class="btn-process" onclick="openPaymentForm(${escapeHtml(JSON.stringify(payment))})">
+                Process Payment
+              </button>
+            `;
+            section.appendChild(article);
+          });
+          
+          container.appendChild(section);
+        }
+        
+        console.log('✅ Payments list refreshed (' + payments.length + ' pending)');
+      })
+      .catch(err => {
+        console.error('Failed to refresh payments list:', err);
+      });
+    }
+    
+    function showNotification(message, type = 'info') {
+      // Create notification element
+      const notif = document.createElement('div');
+      notif.className = `notification notification-${type}`;
+      notif.textContent = message;
+      notif.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        background: ${type === 'success' ? '#28a745' : '#007bff'};
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+      `;
+      
+      document.body.appendChild(notif);
+      
+      // Remove after 3 seconds
+      setTimeout(() => {
+        notif.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notif.remove(), 300);
+      }, 3000);
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    // Start auto-refresh when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      startAutoRefresh();
+      console.log('🔄 Auto-refresh enabled (every 30 seconds)');
+    });
+    
+    // Stop auto-refresh when page is hidden/closed
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        if (autoRefreshInterval) {
+          clearInterval(autoRefreshInterval);
+          console.log('⏸️ Auto-refresh paused (page hidden)');
+        }
+      } else {
+        startAutoRefresh();
+        console.log('▶️ Auto-refresh resumed');
+      }
+    });
+    
+    // Add CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
 </body>
 </html>
