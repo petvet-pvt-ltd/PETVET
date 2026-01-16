@@ -42,8 +42,8 @@ function openPaymentForm(appointment) {
   // Reset invoice editor inputs
   document.getElementById('paymentForm').reset();
   document.getElementById('invoice-date').value = todayISO();
-  // UI-only invoice no (auto). Later this will come from DB when saving.
-  document.getElementById('invoice-no').value = String(Date.now()).slice(-4);
+  // Use appointment ID as invoice number
+  document.getElementById('invoice-no').value = 'INV-' + String(appointment.id).padStart(6, '0');
   document.getElementById('payment-method').value = 'CASH';
   document.getElementById('client-phone').value = '';
   document.getElementById('invoice-note').value = '';
@@ -278,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function generateInvoice() {
   const invoiceDate = document.getElementById('invoice-date')?.value || todayISO();
-  const invoiceNo = (document.getElementById('invoice-no')?.value || '').trim() || String(Date.now()).slice(-4);
+  const invoiceNo = (document.getElementById('invoice-no')?.value || '').trim();
   const paymentMethod = document.getElementById('payment-method')?.value || 'CASH';
   const clientPhone = (document.getElementById('client-phone')?.value || '').trim();
   const note = (document.getElementById('invoice-note')?.value || '').trim();
@@ -508,29 +508,65 @@ function closeConfirmPaymentModal() {
 
 // Confirm payment (final)
 function confirmPaymentFinal() {
-  // In production, send data to server
-  console.log('Payment confirmed:', invoiceData);
+  // Send payment confirmation to server
+  const appointmentId = currentAppointment?.id;
   
-  /*
-  fetch('/PETVET/receptionist/confirm-payment', {
+  if (!appointmentId || !invoiceData) {
+    alert('Error: Missing appointment or invoice data');
+    return;
+  }
+  
+  // Disable the confirm button to prevent double submission
+  const confirmBtn = document.querySelector('#confirmPaymentModal .btn-success');
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Processing...';
+  }
+  
+  fetch('/PETVET/api/receptionist/confirm-payment.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(invoiceData)
+    body: JSON.stringify({
+      appointment_id: appointmentId,
+      invoice_data: invoiceData
+    })
   })
   .then(response => response.json())
   .then(data => {
     if (data.success) {
+      // Close modals
+      closeConfirmPaymentModal();
+      closeInvoiceModal();
+      closePaymentModal();
+      
+      // Show success message
       showSuccessMessage();
+      
+      // Trigger AJAX refresh instead of full page reload
+      setTimeout(() => {
+        if (typeof fetchPaymentsList === 'function') {
+          fetchPaymentsList();
+        } else {
+          // Fallback to page reload if AJAX function not available
+          window.location.reload();
+        }
+      }, 1500);
+    } else {
+      alert('Error confirming payment: ' + (data.error || 'Unknown error'));
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = '✓ Confirm Payment';
+      }
+    }
+  })
+  .catch(err => {
+    console.error('Error confirming payment:', err);
+    alert('Failed to confirm payment. Please try again.');
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = '✓ Confirm Payment';
     }
   });
-  */
-  
-  // Close modals
-  closeConfirmPaymentModal();
-  closeInvoiceModal();
-  
-  // Show success message
-  showSuccessMessage();
 }
 
 // Show success modal
@@ -542,8 +578,13 @@ function showSuccessMessage() {
 // Close success modal
 function closeSuccessModal() {
   document.getElementById('successModal').style.display = 'none';
-  // In production, reload to update the list
-  // window.location.reload();
+  // Trigger AJAX refresh instead of page reload
+  if (typeof fetchPaymentsList === 'function') {
+    fetchPaymentsList();
+  } else {
+    // Fallback to page reload if AJAX function not available
+    window.location.reload();
+  }
 }
 
 // Close modal when clicking outside
