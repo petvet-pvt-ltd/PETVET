@@ -241,7 +241,9 @@ class RegistrationController {
                 'clinic_address' => $_POST['clinic_address'] ?? '',
                 'district' => $_POST['district'] ?? '',
                 'clinic_phone' => $_POST['clinic_phone'] ?? '',
-                'clinic_email' => $_POST['clinic_email'] ?? ''
+                'clinic_email' => $_POST['clinic_email'] ?? '',
+                'latitude' => $_POST['latitude'] ?? null,
+                'longitude' => $_POST['longitude'] ?? null
             ];
         }
         

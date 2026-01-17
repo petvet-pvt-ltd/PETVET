@@ -327,13 +327,19 @@ class RegistrationModel {
             // First, create the clinic
             $stmt = $this->db->prepare("
                 INSERT INTO clinics 
-                (clinic_name, clinic_address, district, clinic_phone, clinic_email, license_document, verification_status, is_active, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, 'approved', 1, NOW())
+                (clinic_name, clinic_address, district, clinic_phone, clinic_email, license_document, map_location, verification_status, is_active, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 0, NOW())
             ");
             
             $licenseDocument = null;
             if (!empty($files)) {
                 $licenseDocument = $this->saveVerificationDocument($userId, 'clinic_manager', $files);
+            }
+            
+            // Prepare map_location as "latitude, longitude"
+            $mapLocation = null;
+            if (!empty($data['latitude']) && !empty($data['longitude'])) {
+                $mapLocation = $data['latitude'] . ', ' . $data['longitude'];
             }
             
             $stmt->execute([
@@ -342,7 +348,8 @@ class RegistrationModel {
                 $data['district'] ?? '',
                 $data['clinic_phone'] ?? '',
                 $data['clinic_email'] ?? '',
-                $licenseDocument
+                $licenseDocument,
+                $mapLocation
             ]);
             
             $clinicId = $this->db->lastInsertId();
