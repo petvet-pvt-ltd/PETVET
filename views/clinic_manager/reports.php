@@ -1,8 +1,8 @@
 <?php
 // View receives $data from the controller
-extract($data); // exposes: $rangeStart, $rangeEnd, $apptStatus, $workload, $productTotals,
+extract($data ?? []); // exposes: $rangeStart, $rangeEnd, $apptStatus, $workload, $productTotals,
 // $appointmentsRevenue, $shopRevenue, $grossRevenue, $netIncome,
-// $labels, $bars, $maxBar, $clinicPct, $shopPct, $rangeMode
+// $labels, $bars, $shopBars, $maxBar, $clinicPct, $shopPct, $rangeMode
 $rangeMode = $rangeMode ?? ($_GET['range'] ?? 'week'); // week|month|year|custom
 function isActive($cur,$mode){ return $cur === $mode ? ' active' : ''; }
 ?>
@@ -207,19 +207,11 @@ function isActive($cur,$mode){ return $cur === $mode ? ' active' : ''; }
         <p class="muted">Range: <?=htmlspecialchars($rangeStart)?> → <?=htmlspecialchars($rangeEnd)?></p>
       </div>
 
-      <!-- Range toggles -->
+      <!-- Export buttons -->
       <div class="actions screen-only">
-        <div class="toggle-group">
-          <a class="btn toggle<?=isActive('week',$rangeMode)?>"
-            href="?module=clinic-manager&page=reports&range=week">This Week</a>
-          <a class="btn toggle<?=isActive('month',$rangeMode)?>"
-            href="?module=clinic-manager&page=reports&range=month">This Month</a>
-          <a class="btn toggle<?=isActive('year',$rangeMode)?>"
-            href="?module=clinic-manager&page=reports&range=year">This Year</a>
-        </div>
         <div class="export-group">
-          <button class="btn primary" onclick="printReports()">Export (PDF)</button>
-          <a class="btn" href="#" onclick="downloadCSV();return false;">Export CSV</a>
+          <button class="btn compact" onclick="printReports()">Export (PDF)</button>
+          <a class="btn compact" href="#" onclick="downloadCSV();return false;">Export CSV</a>
         </div>
       </div>
     </div>
@@ -232,9 +224,19 @@ function isActive($cur,$mode){ return $cur === $mode ? ' active' : ''; }
         <input type="hidden" name="range" value="custom">
         <label>From <input type="date" name="from" value="<?=htmlspecialchars($rangeStart)?>"></label>
         <label>To <input type="date" name="to" value="<?=htmlspecialchars($rangeEnd)?>"></label>
-        <button class="btn apply" type="submit">Apply</button>
-    <a class="btn ghost" href="?module=clinic-manager&page=reports&range=week">Clear</a>
+        <button class="btn compact apply" type="submit">Apply</button>
+    <a class="btn compact ghost" href="?module=clinic-manager&page=reports&range=week">Clear</a>
       </form>
+      
+      <!-- Range toggles moved here on right -->
+      <div class="toggle-group">
+        <a class="btn compact toggle<?=isActive('week',$rangeMode)?>"
+          href="?module=clinic-manager&page=reports&range=week">This Week</a>
+        <a class="btn compact toggle<?=isActive('month',$rangeMode)?>"
+          href="?module=clinic-manager&page=reports&range=month">This Month</a>
+        <a class="btn compact toggle<?=isActive('year',$rangeMode)?>"
+          href="?module=clinic-manager&page=reports&range=year">This Year</a>
+      </div>
     </section>
 
     <section class="grid">
@@ -246,6 +248,28 @@ function isActive($cur,$mode){ return $cur === $mode ? ' active' : ''; }
         $barsSafe   = $bars ?? [];
         $maxSafe    = max(1, $maxBar ?? 1);
         $barCount   = count($labelsSafe);
+        
+        // Calculate which bar represents today/this month for auto-centering
+        $currentBarIndex = 0;
+        if ($rangeMode === 'week') {
+          // Find today's day of week (0=Monday in the week labels)
+          $todayDayOfWeek = (int)date('N') - 1; // 0=Mon, 6=Sun
+          $currentBarIndex = min($todayDayOfWeek, $barCount - 1);
+        } elseif ($rangeMode === 'month') {
+          // Find today's date
+          $todayDay = (int)date('j'); // 1-31
+          $currentBarIndex = min($todayDay - 1, $barCount - 1);
+        } elseif ($rangeMode === 'year') {
+          // Find current month (0=Jan, 11=Dec)
+          $todayMonth = (int)date('n') - 1; // 0-11
+          $currentBarIndex = min($todayMonth, $barCount - 1);
+        }
+        
+        // For week mode with 7 or fewer bars, make them flexible to fill width
+        $barFlex = ($barCount <= 7) ? '1 1 0' : '0 0 44px';
+        
+        // For PDF/print: only MONTH should hide the chart (too many columns)
+        $printHideClass = ($rangeMode === 'month') ? 'print-hide-chart' : '';
       ?>
       <!-- ================= Appointments ================= -->
       <article class="card">
@@ -259,15 +283,17 @@ function isActive($cur,$mode){ return $cur === $mode ? ' active' : ''; }
         </div>
 
         <!-- Scroll wrapper – dashed box spans full width; inner flex can grow -->
-        <div class="bars-scroll">
+        <div class="bars-scroll <?=$printHideClass?>" id="barsScroll" data-center-index="<?=$currentBarIndex?>" style="--bar-count: <?=$barCount?>; --bar-flex: <?=$barFlex?>">
           <div class="bars">
-            <div class="bars-inner" style="--bar-count: <?=$barCount?>">
+            <div class="bars-inner">
               <?php foreach ($barsSafe as $i => $val):
                 $h = round(($val / $maxSafe) * 120); // px column height
                 $lbl = $labelsSafe[$i] ?? '';
               ?>
                 <div class="bar">
-                  <div class="value" style="bottom: <?=$h+6?>px;">LKR <?=number_format($val)?></div>
+                  <?php if ($val > 0): ?>
+                    <div class="value" style="bottom: <?=$h+6?>px;">LKR <?=number_format($val)?></div>
+                  <?php endif; ?>
                   <div class="col" style="height:<?=$h?>px" title="<?=$lbl?>: LKR <?=number_format($val)?>"></div>
                   <div class="label"><?=htmlspecialchars($lbl)?></div>
                 </div>
@@ -275,6 +301,67 @@ function isActive($cur,$mode){ return $cur === $mode ? ' active' : ''; }
             </div>
           </div>
         </div>
+
+        <?php if ($rangeMode === 'month'):
+          // Print/PDF replacement for monthly chart: full-width calendar grid
+          $incomeByDate = [];
+          $monthlyTotal = 0.0;
+          foreach ($barsSafe as $i => $val) {
+            $dateKey = date('Y-m-d', strtotime($rangeStart . ' +' . $i . ' day'));
+            $incomeByDate[$dateKey] = (float)$val;
+            $monthlyTotal += (float)$val;
+          }
+
+          $monthStart = date('Y-m-01', strtotime($rangeStart));
+          $daysInMonth = (int)date('t', strtotime($monthStart));
+          $firstDow = (int)date('N', strtotime($monthStart)); // 1=Mon..7=Sun
+          $leadingEmpty = $firstDow - 1;
+          $trailingEmpty = (7 - (($leadingEmpty + $daysInMonth) % 7)) % 7;
+        ?>
+          <div class="print-only month-calendar" aria-label="Daily income calendar (monthly)">
+            <div class="month-calendar-head">
+              <div class="title">Daily Income (Calendar)</div>
+              <div class="total">Total: LKR <?=number_format($monthlyTotal)?></div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <?php for ($i = 0; $i < $leadingEmpty; $i++): ?>
+                    <td class="empty"></td>
+                  <?php endfor; ?>
+
+                  <?php
+                    $cell = $leadingEmpty;
+                    for ($day = 1; $day <= $daysInMonth; $day++):
+                      $curDate = date('Y-m-d', strtotime($monthStart . ' +' . ($day - 1) . ' day'));
+                      $income = (float)($incomeByDate[$curDate] ?? 0);
+                      $hasIncome = $income > 0.00001;
+                  ?>
+                      <td class="day<?= $hasIncome ? ' has-income' : '' ?>">
+                        <div class="d"><?=$day?></div>
+                        <div class="a">LKR <?=number_format($income)?></div>
+                      </td>
+                  <?php
+                      $cell++;
+                      if ($cell % 7 === 0 && $day !== $daysInMonth) {
+                        echo "</tr><tr>";
+                      }
+                    endfor;
+                  ?>
+
+                  <?php for ($i = 0; $i < $trailingEmpty; $i++): ?>
+                    <td class="empty"></td>
+                  <?php endfor; ?>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        <?php endif; ?>
 
         <div class="foot-note">
           Completed revenue in range: <strong>LKR <?=number_format($appointmentsRevenue)?></strong>
@@ -294,20 +381,11 @@ function isActive($cur,$mode){ return $cur === $mode ? ' active' : ''; }
       <!-- ================= Top products ================= -->
       <article class="card">
         <h3>Top Selling Products</h3>
-        <div class="bar-list">
-          <?php
-            $pt = $productTotals ?? [];
-            $maxQty = max(1, ($pt ? max($pt) : 1));
-            foreach ($pt as $prod => $qty):
-              $w = round(($qty / $maxQty) * 100);
-          ?>
-            <div class="row">
-              <span class="name"><?=htmlspecialchars($prod)?></span>
-              <div class="track"><span class="fill" style="width:<?=$w?>%"></span></div>
-              <b class="qty"><?=intval($qty)?></b>
-            </div>
+        <ul class="list">
+          <?php foreach (($productTotals ?? []) as $prod => $qty): ?>
+            <li><span><?=htmlspecialchars($prod)?></span><b><?=intval($qty)?> units</b></li>
           <?php endforeach; ?>
-        </div>
+        </ul>
         <div class="foot-note">Shop revenue in range: <strong>LKR <?=number_format($shopRevenue)?></strong></div>
       </article>
 
@@ -361,6 +439,28 @@ function isActive($cur,$mode){ return $cur === $mode ? ' active' : ''; }
   </div>
 
   <script>
+    // Auto-scroll to center current day/month, but clamp to edges when near left/right.
+    document.addEventListener('DOMContentLoaded', function() {
+      const scrollContainer = document.getElementById('barsScroll');
+      if (!scrollContainer) return;
+
+      const centerIndex = parseInt(scrollContainer.getAttribute('data-center-index') || '0', 10);
+      const bars = scrollContainer.querySelectorAll('.bar');
+
+      if (bars.length <= 7) return; // week view (and any short series) should just fit
+      const targetBar = bars[centerIndex];
+      if (!targetBar) return;
+
+      const containerRect = scrollContainer.getBoundingClientRect();
+      const barRect = targetBar.getBoundingClientRect();
+      const barCenterInContainer = (barRect.left - containerRect.left) + scrollContainer.scrollLeft + (barRect.width / 2);
+
+      const targetScrollLeft = barCenterInContainer - (scrollContainer.clientWidth / 2);
+      const maxScrollLeft = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+
+      scrollContainer.scrollLeft = Math.max(0, Math.min(maxScrollLeft, targetScrollLeft));
+    });
+
     window.reportsData = {
       appointmentsRevenue: "<?=number_format($appointmentsRevenue,2,'.','')?>",
       shopRevenue: "<?=number_format($shopRevenue,2,'.','')?>"

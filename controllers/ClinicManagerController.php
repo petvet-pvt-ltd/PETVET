@@ -132,6 +132,13 @@ class ClinicManagerController extends BaseController {
     public function reports(){
         $model = new ReportsModel();
 
+        // Get clinic_id for logged-in clinic manager
+        $userId = $_SESSION['user_id'] ?? 0;
+        $pdo = db();
+        $stmt = $pdo->prepare("SELECT clinic_id FROM clinic_manager_profiles WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        $clinicId = $stmt->fetchColumn() ?: null;
+
         // rangeMode comes from query: week | month | year | custom
         $mode = $_GET['range'] ?? 'week';
 
@@ -151,8 +158,8 @@ class ClinicManagerController extends BaseController {
             $mode = 'week';
         }
 
-        // Call the model with the computed range and mode
-        $vm = $model->getReport($from, $to, $mode);
+        // Call the model with the computed range, mode, and clinic_id
+        $vm = $model->getReport($from, $to, $mode, $clinicId);
 
         // Add the mode so the view can style active toggle & titles
         $vm['rangeMode'] = $mode;

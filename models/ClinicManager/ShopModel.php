@@ -57,9 +57,46 @@ class ShopModel extends BaseModel {
     }
 
     public function fetchPendingOrders(): array {
-        // TODO: Implement real orders table
-        // For now, return empty or mock data
-        return []; 
+        $clinicId = $this->getClinicId();
+        if (!$clinicId) return [];
+
+        $stmt = $this->db->prepare("
+            SELECT 
+                o.id,
+                o.order_number,
+                o.user_id,
+                o.total_amount,
+                o.delivery_charge,
+                o.created_at,
+                u.first_name,
+                u.last_name,
+                u.phone,
+                u.email
+            FROM orders o
+            LEFT JOIN users u ON o.user_id = u.id
+            WHERE o.clinic_id = ? AND o.status = 'Confirmed'
+            ORDER BY o.created_at DESC
+        ");
+        $stmt->execute([$clinicId]);
+        $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Get items for each order
+        $itemsStmt = $this->db->prepare("
+            SELECT 
+                product_name,
+                quantity,
+                price
+            FROM order_items
+            WHERE order_id = ?
+        ");
+
+        foreach ($orders as &$order) {
+            $itemsStmt->execute([$order['id']]);
+            $order['items'] = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
+            $order['item_count'] = count($order['items']);
+        }
+
+        return $orders;
     }
 }
 ?>

@@ -27,6 +27,10 @@
     --radius: 12px;
     --radius-lg: 16px;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --modal-overlay: rgba(2, 6, 23, 0.58);
+    --modal-surface: rgba(255, 255, 255, 0.92);
+    --modal-border: rgba(15, 23, 42, 0.10);
 }
 
 * {
@@ -39,6 +43,12 @@ body {
     background: var(--bg);
     color: var(--text);
     line-height: 1.6;
+}
+
+/* Ensure consistent typography everywhere (including modals) */
+.pv-modal,
+.pv-modal * {
+    font-family: inherit;
 }
 
 .no-scroll {
@@ -207,7 +217,7 @@ body {
     align-items: center;
 }
 
-.badge {
+.order-badge {
     background: var(--danger);
     color: white;
     padding: 4px 10px;
@@ -215,6 +225,7 @@ body {
     font-size: 13px;
     font-weight: 700;
     line-height: 1;
+    margin-left: 8px;
 }
 
 .icon-btn {
@@ -426,6 +437,7 @@ body {
     font-size: 13px;
     line-height: 1.5;
     display: -webkit-box;
+    line-clamp: 2;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
@@ -476,8 +488,10 @@ body {
 .modal {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(8px);
+    background: radial-gradient(1200px 800px at 20% 10%, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0) 55%),
+                radial-gradient(1000px 700px at 80% 20%, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0) 60%),
+                var(--modal-overlay);
+    backdrop-filter: blur(10px);
     display: none;
     align-items: center;
     justify-content: center;
@@ -491,9 +505,10 @@ body {
 }
 
 .modal-dialog {
-    background: white;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-xl);
+    background: var(--modal-surface);
+    border: 1px solid var(--modal-border);
+    border-radius: 20px;
+    box-shadow: 0 30px 80px rgba(2, 6, 23, 0.35);
     width: min(920px, 95vw);
     max-height: 90vh;
     display: flex;
@@ -520,19 +535,36 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 24px 28px;
-    border-bottom: 2px solid var(--border);
+    padding: 20px 22px 20px 42px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.85) 100%);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    position: relative;
+}
+
+.modal-header::before {
+    content: "";
+    position: absolute;
+    left: 18px;
+    top: 16px;
+    bottom: 16px;
+    width: 4px;
+    border-radius: 99px;
+    background: linear-gradient(180deg, var(--primary) 0%, #34d399 55%, var(--info) 100%);
+    opacity: 0.95;
 }
 
 .modal-header h2 {
-    font-size: 24px;
-    font-weight: 700;
+    font-size: 20px;
+    font-weight: 800;
     color: var(--text);
     margin: 0;
+    letter-spacing: -0.01em;
 }
 
 .modal-body {
-    padding: 28px;
+    padding: 20px 22px;
     overflow-y: auto;
     flex: 1;
 }
@@ -542,9 +574,47 @@ body {
     align-items: center;
     justify-content: flex-end;
     gap: 12px;
-    padding: 20px 28px;
-    border-top: 2px solid var(--border);
-    background: var(--bg);
+    padding: 16px 22px;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    background: rgba(248, 250, 252, 0.75);
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+/* New modal header helpers used by Orders/Items */
+.pv-modal__title {
+    display: grid;
+    gap: 4px;
+    padding-left: 14px; /* spacing from accent bar */
+}
+
+.pv-modal__subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.pv-icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    background: rgba(255, 255, 255, 0.6);
+    color: rgba(15, 23, 42, 0.65);
+    font-size: 18px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.pv-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+    color: rgba(15, 23, 42, 0.9);
+    transform: translateY(-1px);
+    box-shadow: 0 12px 25px rgba(2, 6, 23, 0.12);
+}
+
+.pv-icon-btn:active {
+    transform: translateY(0);
 }
 
 /* ================================================
@@ -685,58 +755,425 @@ body {
 }
 
 /* ================================================
-   TABLE
+   ORDERS TABLE & MODALS
    ================================================ */
 
-.table-wrap {
-    overflow-x: auto;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    max-height: 60vh;
+.modal-wide {
+    max-width: 1100px;
 }
 
-.table {
+/* Orders modal should use most of the viewport */
+.pv-modal__dialog--fullscreen {
+    width: min(1400px, 98vw);
+    max-height: 94vh;
+}
+
+.pv-modal__dialog--fullscreen .modal-body {
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+.pv-modal__dialog--fullscreen .orders-table-wrap {
+    max-height: calc(94vh - 160px);
+}
+
+.orders-table-wrap {
+    overflow-x: auto;
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    max-height: 60vh;
+    background: rgba(255, 255, 255, 0.65);
+    box-shadow: 0 10px 25px rgba(2, 6, 23, 0.08);
+}
+
+.orders-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     font-size: 14px;
 }
 
-.table thead {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-}
-
-.table th {
-    padding: 14px 16px;
-    text-align: left;
-    font-weight: 700;
-    color: var(--text);
-    border-bottom: 2px solid var(--border);
+.orders-table thead {
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.85) 100%);
     position: sticky;
     top: 0;
-    background: inherit;
+    z-index: 10;
 }
 
-.table td {
+.orders-table th {
     padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-weight: 800;
+    color: rgba(15, 23, 42, 0.75);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+}
+
+.orders-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
     color: var(--text);
 }
 
-.table tbody tr {
+.orders-table td:last-child {
+    width: 260px;
+}
+
+.orders-table tbody tr {
     transition: var(--transition);
 }
 
-.table tbody tr:hover {
-    background: var(--primary-light);
+.orders-table tbody tr:hover {
+    background: rgba(16, 185, 129, 0.08);
 }
 
-.table tbody tr:last-child td {
-    border-bottom: none;
+.orders-table tbody tr.delivered {
+    opacity: 0.5;
+    background: #f0fdf4;
 }
 
-.table tbody tr.is-delivered {
-    opacity: 0.6;
+/* New buttons used inside Orders table */
+.pv-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: nowrap;
+    align-items: center;
 }
+
+.pv-actions > .pv-btn {
+    white-space: nowrap;
+    padding: 9px 12px;
+    border-radius: 12px;
+}
+
+.pv-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: rgba(255, 255, 255, 0.7);
+    color: rgba(15, 23, 42, 0.85);
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 6px 16px rgba(2, 6, 23, 0.08);
+    font-size: 13px;
+}
+
+.pv-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(2, 6, 23, 0.12);
+}
+
+.pv-btn:active {
+    transform: translateY(0);
+}
+
+.pv-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.pv-btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.pv-btn--primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+    border-color: rgba(16, 185, 129, 0.5);
+    color: white;
+}
+
+.pv-btn--primary:hover {
+    background: linear-gradient(135deg, var(--primary-hover) 0%, #047857 100%);
+}
+
+.pv-btn--ghost {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.25);
+    color: #1d4ed8;
+}
+
+.pv-btn--ghost:hover {
+    background: rgba(59, 130, 246, 0.13);
+}
+
+.pv-btn--soft {
+    background: rgba(15, 23, 42, 0.06);
+    border-color: rgba(15, 23, 42, 0.10);
+    color: rgba(15, 23, 42, 0.85);
+    box-shadow: none;
+}
+
+.pv-btn--soft:hover {
+    background: rgba(15, 23, 42, 0.09);
+}
+
+.pv-order-no {
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: rgba(15, 23, 42, 0.85);
+}
+
+/* Order Items modal: details + table */
+.pv-card {
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    background: rgba(255, 255, 255, 0.75);
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(2, 6, 23, 0.08);
+    overflow: hidden;
+}
+
+.pv-card__header {
+    padding: 14px 16px;
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.85) 100%);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    font-weight: 800;
+    color: rgba(15, 23, 42, 0.78);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 12px;
+}
+
+.pv-card__body {
+    padding: 16px;
+}
+
+.pv-kv-wrap {
+    overflow-x: auto;
+}
+
+.pv-kv {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 14px;
+}
+
+.pv-kv th {
+    width: 120px;
+    padding: 10px 12px;
+    color: rgba(15, 23, 42, 0.65);
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.pv-kv td {
+    padding: 10px 12px;
+    color: rgba(15, 23, 42, 0.88);
+    font-weight: 700;
+}
+
+.pv-mono {
+    font-weight: 800;
+}
+
+/* Compact Order Items modal */
+.pv-modal__dialog--items {
+    width: min(700px, 94vw);
+    max-height: 90vh;
+}
+
+.pv-modal__dialog--items .modal-header {
+    padding: 16px 16px 16px 40px;
+}
+
+.pv-modal__dialog--items .modal-header h2 {
+    font-size: 18px;
+}
+
+.pv-modal__dialog--items .pv-modal__subtitle {
+    font-size: 12px;
+}
+
+.pv-modal__dialog--items .pv-icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+}
+
+.pv-modal__dialog--items .modal-body {
+    padding: 10px 12px;
+}
+
+.pv-modal__dialog--items .pv-card__header {
+    padding: 8px 10px;
+}
+
+.pv-modal__dialog--items .pv-card__body {
+    padding: 8px 10px;
+}
+
+.pv-modal__dialog--items .pv-card + .pv-card {
+    margin-top: 10px;
+}
+
+.pv-modal__dialog--items .pv-table thead th,
+.pv-modal__dialog--items .pv-table tbody td,
+.pv-modal__dialog--items .pv-table tfoot td {
+    padding: 9px 10px;
+}
+
+.pv-kv th,
+.pv-kv td {
+    padding: 7px 10px;
+}
+
+.pv-modal__dialog--items .pv-table thead th {
+    font-size: 11px;
+}
+
+.pv-modal__dialog--items .pv-table,
+.pv-modal__dialog--items .pv-kv {
+    font-size: 13px;
+}
+
+.pv-kv th {
+    width: 96px;
+}
+
+.pv-modal__dialog--items .pv-kv th {
+    font-size: 11px;
+}
+
+.pv-modal__dialog--items .pv-kv td {
+    font-weight: 600;
+}
+
+.pv-money {
+    color: var(--primary);
+}
+
+.pv-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    background: rgba(245, 158, 11, 0.10);
+    color: #b45309;
+    font-weight: 800;
+    font-size: 12px;
+}
+
+.pv-pill::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #f59e0b;
+}
+
+.pv-pill--pending {
+    border-color: rgba(59, 130, 246, 0.25);
+    background: rgba(59, 130, 246, 0.10);
+    color: #1d4ed8;
+}
+
+.pv-pill--pending::before {
+    background: #3b82f6;
+}
+
+.pv-table-wrap {
+    overflow-x: auto;
+}
+
+.pv-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.pv-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: rgba(248, 250, 252, 0.95);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 14px 16px;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: rgba(15, 23, 42, 0.65);
+    font-weight: 900;
+}
+
+.pv-table tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.pv-table tbody tr:hover td {
+    background: rgba(16, 185, 129, 0.06);
+}
+
+.pv-table tfoot td {
+    padding: 14px 16px;
+    background: rgba(248, 250, 252, 0.9);
+    border-top: 1px solid rgba(15, 23, 42, 0.10);
+}
+
+.pv-right {
+    text-align: right;
+}
+
+.pv-empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 24px 16px;
+}
+
+.pv-item-name {
+    font-weight: 700;
+    color: rgba(15, 23, 42, 0.86);
+    font-size: 13px;
+}
+
+.pv-item-sub {
+    font-size: 12px;
+    color: rgba(15, 23, 42, 0.55);
+    margin-top: 2px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+/* Remove/disable unused experimental modal/table redesign block that conflicts
+   with current markup (kept intentionally empty). */
+
+/* ================================================
+   TABLE
+   ================================================ */
 
 /* ================================================
    TOAST NOTIFICATIONS
@@ -785,3 +1222,9 @@ body {
 .product-card:nth-child(4) { animation-delay: 0.2s; }
 .product-card:nth-child(5) { animation-delay: 0.25s; }
 .product-card:nth-child(6) { animation-delay: 0.3s; }
+
+tr.delivered td {
+    opacity: 0.6;
+    background: #f8fafc;
+}
+

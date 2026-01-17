@@ -47,13 +47,15 @@ $pendingOrders = $orders;
         <div class="shop-header">
             <div class="title-area">
                 <h1>Clinic Shop Manager</h1>
-                <p class="subtitle">Manage your clinic's products and review pending orders</p>
+                <p class="subtitle">Manage your clinic's products</p>
             </div>
             <div class="actions">
-                <button id="btnPendingOrders" class="btn btn-secondary">
+                <button id="btnOrders" class="btn btn-secondary">
                     <span class="icon">📦</span>
-                    Pending Orders
-                    <span id="pendingBadge" class="badge"><?php echo count($pendingOrders); ?></span>
+                    Orders
+                    <?php if (count($orders) > 0): ?>
+                        <span class="order-badge"><?php echo count($orders); ?></span>
+                    <?php endif; ?>
                 </button>
                 <button id="btnAddProduct" class="btn btn-primary">
                     <span class="icon">＋</span>
@@ -100,49 +102,150 @@ $pendingOrders = $orders;
         </div>
     </div>
 
-    <!-- Pending Orders Modal -->
-    <div id="modalPending" class="modal" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-header">
-                <h2>Pending Orders</h2>
-                <button class="icon-btn modal-close" data-close>✕</button>
+    <!-- Orders Modal -->
+    <div id="modalOrders" class="modal pv-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="ordersModalTitle">
+        <div class="modal-dialog modal-wide pv-modal__dialog pv-modal__dialog--fullscreen">
+            <div class="modal-header pv-modal__header">
+                <div class="pv-modal__title">
+                    <h2 id="ordersModalTitle">Orders Pending Delivery</h2>
+                    <p class="pv-modal__subtitle">Confirmed orders waiting to be delivered</p>
+                </div>
+                <button class="pv-icon-btn modal-close" type="button" data-close aria-label="Close">✕</button>
             </div>
             <div class="modal-body">
-                <div class="table-wrap">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Order #</th>
-                                <th>Customer</th>
-                                <th>Address</th>
-                                <th>Phone</th>
-                                <th>Product</th>
-                                <th>Qty</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ordersTbody">
-                            <?php foreach ($pendingOrders as $o): ?>
+                <?php if (count($orders) > 0): ?>
+                    <div class="orders-table-wrap">
+                        <table class="orders-table">
+                            <thead>
                                 <tr>
-                                    <td>#<?php echo (int)$o['id']; ?></td>
-                                    <td><?php echo htmlspecialchars($o['customer']); ?></td>
-                                    <td><?php echo htmlspecialchars($o['address']); ?></td>
-                                    <td><?php echo htmlspecialchars($o['phone']); ?></td>
-                                    <td><?php echo htmlspecialchars($o['product']); ?></td>
-                                    <td><?php echo (int)$o['qty']; ?></td>
-                                    <td><?php echo htmlspecialchars($o['date']); ?></td>
-                                    <td>
-                                        <button class="btn btn-success btn-delivered" data-id="<?php echo (int)$o['id']; ?>">Delivered</button>
-                                    </td>
+                                    <th>Order #</th>
+                                    <th>Customer</th>
+                                    <th>Phone</th>
+                                    <th>Total</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
                                 </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($orders as $order): ?>
+                                    <tr data-order-id="<?php echo $order['id']; ?>">
+                                        <td>
+                                            <div class="pv-order-no"><?php echo htmlspecialchars($order['order_number']); ?></div>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($order['first_name'] . ' ' . $order['last_name']); ?></td>
+                                        <td><?php echo htmlspecialchars($order['phone'] ?? 'N/A'); ?></td>
+                                        <td>LKR <?php echo number_format($order['total_amount'], 2); ?></td>
+                                        <td><?php echo date('M d, Y', strtotime($order['created_at'])); ?></td>
+                                        <td>
+                                            <div class="pv-actions">
+                                                <button class="pv-btn pv-btn--ghost btn-view-cart"
+                                                        type="button"
+                                                        data-order-id="<?php echo $order['id']; ?>"
+                                                        data-order-number="<?php echo htmlspecialchars($order['order_number']); ?>"
+                                                        data-customer="<?php echo htmlspecialchars(trim(($order['first_name'] ?? '') . ' ' . ($order['last_name'] ?? ''))); ?>"
+                                                        data-phone="<?php echo htmlspecialchars($order['phone'] ?? 'N/A'); ?>"
+                                                        data-date="<?php echo htmlspecialchars($order['created_at']); ?>"
+                                                        data-total="<?php echo htmlspecialchars((string)$order['total_amount']); ?>"
+                                                        data-items='<?php echo htmlspecialchars(json_encode($order['items']), ENT_QUOTES); ?>'>
+                                                    View Items
+                                                </button>
+                                                <button class="pv-btn pv-btn--primary btn-mark-delivered"
+                                                        type="button"
+                                                        data-order-id="<?php echo $order['id']; ?>"
+                                                        data-order-number="<?php echo htmlspecialchars($order['order_number']); ?>">
+                                                    Mark Delivered
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <p>No pending orders at the moment.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+            <div class="modal-footer pv-modal__footer">
+                <button class="pv-btn pv-btn--soft" type="button" data-close>Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Items Modal -->
+    <div id="modalCart" class="modal pv-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="cartModalTitle">
+        <div class="modal-dialog pv-modal__dialog pv-modal__dialog--items">
+            <div class="modal-header pv-modal__header">
+                <div class="pv-modal__title">
+                    <h2 id="cartModalTitle">Order Items</h2>
+                    <p class="pv-modal__subtitle" id="cartModalSubtitle">Order details and item list</p>
+                </div>
+                <button class="pv-icon-btn modal-close" type="button" data-close aria-label="Close">✕</button>
+            </div>
+            <div class="modal-body pv-modal__body">
+                <div class="pv-card">
+                    <div class="pv-card__header">Order Details</div>
+                    <div class="pv-card__body">
+                        <div class="pv-kv-wrap">
+                            <table class="pv-kv" id="cartOrderDetails" aria-label="Order details">
+                                <tbody>
+                                    <tr>
+                                        <th>Order #</th>
+                                        <td class="muted">—</td>
+                                        <th>Date</th>
+                                        <td class="muted">—</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Customer</th>
+                                        <td class="muted">—</td>
+                                        <th>Phone</th>
+                                        <td class="muted">—</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Status</th>
+                                        <td class="muted">—</td>
+                                        <th>Total</th>
+                                        <td class="muted">—</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pv-card">
+                    <div class="pv-card__header">Items</div>
+                    <div class="pv-card__body" style="padding:0;">
+                        <div class="pv-table-wrap">
+                            <table class="pv-table" aria-label="Order items">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th class="pv-right">Qty</th>
+                                        <th class="pv-right">Unit</th>
+                                        <th class="pv-right">Line Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cartItemsTbody">
+                                    <tr>
+                                        <td colspan="4" class="pv-empty">Select an order to view items</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" class="pv-right"><strong>Total</strong></td>
+                                        <td class="pv-right"><strong id="cartTotalCell">LKR 0.00</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-close>Close</button>
+            <div class="modal-footer pv-modal__footer">
+                <button class="pv-btn pv-btn--soft" type="button" data-close>Close</button>
             </div>
         </div>
     </div>
@@ -308,13 +411,14 @@ $pendingOrders = $orders;
         return el;
     };
 
-    const modalPending = wireModal('modalPending');
     const modalAdd = wireModal('modalAdd');
     const modalEdit = wireModal('modalEdit');
     const modalDelete = wireModal('modalDelete');
+    const modalOrders = wireModal('modalOrders');
+    const modalCart = wireModal('modalCart');
 
     // Header buttons
-    $('#btnPendingOrders')?.addEventListener('click', () => openModal(modalPending));
+    $('#btnOrders')?.addEventListener('click', () => openModal(modalOrders));
     $('#btnAddProduct')?.addEventListener('click', () => openModal(modalAdd));
 
     // Image URL list handlers (Add)
@@ -734,27 +838,149 @@ $pendingOrders = $orders;
         });
     });
 
-    // Delivered action: mark row as delivered and decrease badge count
-    $$('#ordersTbody .btn-delivered').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-            const tr = btn.closest('tr');
-            if (!tr) return;
-            tr.classList.add('is-delivered');
-            btn.disabled = true; btn.textContent = 'Delivered';
-            // Update badge
-            const badge = document.getElementById('pendingBadge');
-            if (badge) {
-                const n = Math.max(0, (parseInt(badge.textContent,10) || 0) - 1);
-                badge.textContent = String(n);
+    const escapeHtml = (value) => {
+        const s = String(value ?? '');
+        return s
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    };
+
+    const formatPrettyDate = (isoOrDateTime) => {
+        const d = new Date(isoOrDateTime);
+        if (Number.isNaN(d.getTime())) return String(isoOrDateTime ?? '');
+        return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+    };
+
+    // View Items button handlers
+    $$('.btn-view-cart').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const items = JSON.parse(btn.getAttribute('data-items') || '[]');
+            const orderId = btn.getAttribute('data-order-id');
+            const orderNumber = btn.getAttribute('data-order-number') || '';
+            const customer = btn.getAttribute('data-customer') || '';
+            const phone = btn.getAttribute('data-phone') || 'N/A';
+            const dateRaw = btn.getAttribute('data-date') || '';
+            const createdPretty = formatPrettyDate(dateRaw);
+
+            const detailsTable = document.getElementById('cartOrderDetails');
+            const itemsTbody = document.getElementById('cartItemsTbody');
+            const totalCell = document.getElementById('cartTotalCell');
+            const subtitle = document.getElementById('cartModalSubtitle');
+            if (!detailsTable || !itemsTbody || !totalCell) return;
+
+            if (subtitle) subtitle.textContent = orderNumber ? `Order ${orderNumber}` : 'Order details and item list';
+
+            // Render items
+            itemsTbody.innerHTML = '';
+            let total = 0;
+            items.forEach((item) => {
+                const qty = Number(item.quantity || 0);
+                const unit = Number(item.price || 0);
+                const lineTotal = qty * unit;
+                total += lineTotal;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div class="pv-item-name">${escapeHtml(item.product_name ?? 'Item')}</div>
+                    </td>
+                    <td class="pv-right">${escapeHtml(qty)}</td>
+                    <td class="pv-right">LKR ${unit.toFixed(2)}</td>
+                    <td class="pv-right"><strong>LKR ${lineTotal.toFixed(2)}</strong></td>
+                `;
+                itemsTbody.appendChild(tr);
+            });
+            if (items.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td colspan="4" class="pv-empty">No items found for this order.</td>';
+                itemsTbody.appendChild(tr);
             }
-            showToast('Order marked as delivered');
+
+            totalCell.textContent = `LKR ${total.toFixed(2)}`;
+
+            // Render details table
+            const statusHtml = '<span class="pv-pill pv-pill--pending">Confirmed</span>';
+            detailsTable.querySelector('tbody').innerHTML = `
+                <tr>
+                    <th>Order #</th>
+                    <td><span class="pv-mono">${escapeHtml(orderNumber)}</span></td>
+                    <th>Date</th>
+                    <td>${escapeHtml(createdPretty)}</td>
+                </tr>
+                <tr>
+                    <th>Customer</th>
+                    <td>${escapeHtml(customer)}</td>
+                    <th>Phone</th>
+                    <td>${escapeHtml(phone)}</td>
+                </tr>
+                <tr>
+                    <th>Status</th>
+                    <td>${statusHtml}</td>
+                    <th>Total</th>
+                    <td><strong class="pv-money">LKR ${total.toFixed(2)}</strong></td>
+                </tr>
+            `;
+
+            openModal(modalCart);
+        });
+    });
+
+    // Mark as Delivered button handlers
+    $$('.btn-mark-delivered').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const orderId = btn.getAttribute('data-order-id');
+            const orderNumber = btn.getAttribute('data-order-number');
+            
+            if (!confirm(`Mark order ${orderNumber} as delivered?`)) return;
+            
+            try {
+                const formData = new FormData();
+                formData.append('order_id', orderId);
+                
+                const response = await fetch('/PETVET/api/clinic-manager/mark-order-delivered.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Mark row as delivered
+                    const row = btn.closest('tr');
+                    if (row) {
+                        row.classList.add('delivered');
+                        btn.disabled = true;
+                        btn.textContent = 'Delivered';
+                    }
+                    
+                    // Update badge count
+                    const badge = $('.order-badge');
+                    if (badge) {
+                        const count = Math.max(0, parseInt(badge.textContent || '0') - 1);
+                        if (count > 0) {
+                            badge.textContent = count;
+                        } else {
+                            badge.remove();
+                        }
+                    }
+                    
+                    showToast('Order marked as delivered');
+                } else {
+                    showToast('Failed to update order: ' + (result.message || 'Unknown error'));
+                }
+            } catch (error) {
+                showToast('Error: ' + error.message);
+            }
         });
     });
 
     // Keyboard ESC to close any open modal
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            [modalPending, modalAdd, modalEdit, modalDelete].forEach(m => m && closeModal(m));
+            [modalAdd, modalEdit, modalDelete, modalOrders, modalCart].forEach(m => m && closeModal(m));
         }
     });
     </script>

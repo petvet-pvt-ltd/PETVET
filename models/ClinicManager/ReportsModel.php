@@ -1,9 +1,17 @@
 <?php
 // app/models/ReportsModel.php
 require_once __DIR__ . '/ClinicData.php';
+require_once __DIR__ . '/../../config/connect.php';
+
 class ReportsModel
 {
-    // ---------- STATIC MOCK DATA (2 years) ----------
+    private $pdo;
+
+    public function __construct() {
+        $this->pdo = db();
+    }
+
+    // ---------- STATIC MOCK DATA (2 years) - DEPRECATED ----------
     // date, time, pet, client, vet, status, fee (LKR)
     private array $appointments = [
         // ===== 2023 =====
@@ -179,59 +187,187 @@ class ReportsModel
     }
 
     /** Main entry used by controller: $mode in ['week','month','year','custom'] */
-    public function getReport(string $from, string $to, string $mode = 'custom'): array
+    public function getReport(string $from, string $to, string $mode = 'custom', ?int $clinicId = null): array
     {
-        return $this->buildReport($from, $to, $mode);
+        return $this->buildReport($from, $to, $mode, $clinicId);
     }
 
     // ------------------------- Core aggregation -------------------------
-    private function buildReport(string $rangeStart, string $rangeEnd, string $mode = 'week'): array
+    private function buildReport(string $rangeStart, string $rangeEnd, string $mode = 'week', ?int $clinicId = null): array
     {
         $mode = in_array($mode, ['week','month','year','custom']) ? $mode : 'week';
+
+        // If no clinic_id provided, try to get from session
+        if ($clinicId === null && isset($_SESSION['clinic_id'])) {
+            $clinicId = $_SESSION['clinic_id'];
+        }
 
         // prepare chart buckets
         [$bucketKeys, $bucketLabels] = $this->makeBuckets($rangeStart, $rangeEnd, $mode);
 
-        // Sync vets list from centralized ClinicData for consistency
-        if (empty($this->vets)) {
-            $this->vets = array_map(fn($v)=>$v['name'], ClinicData::getVets());
-        }
+        // Initialize counters
         $apptStatus = ["Confirmed"=>0,"Completed"=>0,"Cancelled"=>0,"No-show"=>0];
-        $workload   = array_fill_keys($this->vets, 0);
+        $workload   = [];
         $appointmentsRevenue = 0;
 
         $apptByBucket = [];
         foreach ($bucketKeys as $k) { $apptByBucket[$k] = 0; }
 
-        foreach ($this->appointments as [$d,$t,$pet,$client,$vet,$status,$fee]) {
-            if (!$this->inRange($d,$rangeStart,$rangeEnd)) continue;
-
-            if (!isset($apptStatus[$status])) $apptStatus[$status] = 0;
-            $apptStatus[$status]++;
-            if (!isset($workload[$vet])) {
-                // In case historical data contains a vet no longer in current list
-                $workload[$vet] = 0;
+        // ============ FETCH REAL APPOINTMENT DATA FROM DATABASE ============
+        
+        // Query 1: Get appointment status counts and vet workload
+        $sql = "SELECT 
+                    a.status,
+                    a.appointment_date,
+                    a.vet_id,
+                    CONCAT(u.first_name, ' ', u.last_name) as vet_name,
+                    p.total_amount
+                FROM appointments a
+                LEFT JOIN users u ON a.vet_id = u.id
+                LEFT JOIN payments p ON a.id = p.appointment_id
+                WHERE a.appointment_date BETWEEN :from AND :to";
+        
+        if ($clinicId !== null) {
+            $sql .= " AND a.clinic_id = :clinic_id";
+        }
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':from', $rangeStart);
+        $stmt->bindParam(':to', $rangeEnd);
+        if ($clinicId !== null) {
+            $stmt->bindParam(':clinic_id', $clinicId, PDO::PARAM_INT);
+        }
+        $stmt->execute();
+        
+        $appointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Process appointments data
+        foreach ($appointments as $appt) {
+            $status = $appt['status'];
+            $date = $appt['appointment_date'];
+            $vetName = $appt['vet_name'] ?? 'Unassigned';
+            $amount = (float)($appt['total_amount'] ?? 0);
+            
+            // Normalize status for report display
+            $displayStatus = match($status) {
+                'approved', 'confirmed', 'pending' => 'Confirmed',
+                'completed', 'paid' => 'Completed',
+                'cancelled', 'declined' => 'Cancelled',
+                'no_show' => 'No-show',
+                default => 'Confirmed'
+            };
+            
+            // Count status
+            if (!isset($apptStatus[$displayStatus])) {
+                $apptStatus[$displayStatus] = 0;
             }
-            $workload[$vet]++;
-
-            if ($status === "Completed") {
-                $appointmentsRevenue += $fee;
-                $k = $this->bucketKeyForDate($d, $mode);
-                if (isset($apptByBucket[$k])) $apptByBucket[$k] += $fee;
+            $apptStatus[$displayStatus]++;
+            
+            // Count vet workload
+            if (!isset($workload[$vetName])) {
+                $workload[$vetName] = 0;
+            }
+            $workload[$vetName]++;
+            
+            // Add revenue for completed/paid appointments
+            if ($status === 'completed' || $status === 'paid') {
+                $appointmentsRevenue += $amount;
+                $k = $this->bucketKeyForDate($date, $mode);
+                if (isset($apptByBucket[$k])) {
+                    $apptByBucket[$k] += $amount;
+                }
             }
         }
 
+        // ============ FETCH ALL VETS FOR THIS CLINIC ============
+        // Get all vets from vets table to show even those with 0 appointments
+        if ($clinicId !== null) {
+            $sqlVets = "SELECT CONCAT(u.first_name, ' ', u.last_name) as vet_name 
+                        FROM vets v
+                        INNER JOIN users u ON v.user_id = u.id
+                        WHERE v.clinic_id = :clinic_id";
+            
+            $stmtVets = $this->pdo->prepare($sqlVets);
+            $stmtVets->bindParam(':clinic_id', $clinicId, PDO::PARAM_INT);
+            $stmtVets->execute();
+            $allVets = $stmtVets->fetchAll(PDO::FETCH_COLUMN);
+            
+            // Initialize workload for all vets (even if 0)
+            foreach ($allVets as $vetName) {
+                if (!isset($workload[$vetName])) {
+                    $workload[$vetName] = 0;
+                }
+            }
+        }
+
+        // ============ FETCH REAL SHOP ORDER DATA FROM DATABASE ============
+        
         $productTotals = [];
-        $shopRevenue = 0; $totalDiscounts = 0; $totalRefunds = 0;
-
-        foreach ($this->orders as [$od,$product,$price,$qty,$discount,$refund]) {
-            if (!$this->inRange($od,$rangeStart,$rangeEnd)) continue;
-            $lineTotal = ($price * $qty) - $discount - $refund;
-            $shopRevenue     += $lineTotal;
-            $totalDiscounts  += $discount;
-            $totalRefunds    += $refund;
-            $productTotals[$product] = ($productTotals[$product] ?? 0) + $qty;
+        $shopRevenue = 0;
+        $shopByBucket = [];
+        foreach ($bucketKeys as $k) { $shopByBucket[$k] = 0; }
+        
+        // Query orders table for delivered/completed orders
+        $sqlOrders = "SELECT 
+                    o.id as order_id,
+                    o.order_number,
+                    o.total_amount,
+                    o.created_at,
+                    p.name as product_name,
+                    oi.quantity,
+                    oi.price as unit_price
+                FROM orders o
+                INNER JOIN order_items oi ON o.id = oi.order_id
+                INNER JOIN products p ON oi.product_id = p.id
+                WHERE DATE(o.created_at) BETWEEN :from AND :to
+                AND o.status IN ('Delivered', 'Confirmed', 'Paid')";
+        
+        if ($clinicId !== null) {
+            $sqlOrders .= " AND o.clinic_id = :clinic_id";
         }
+        
+        $stmtOrders = $this->pdo->prepare($sqlOrders);
+        $stmtOrders->bindParam(':from', $rangeStart);
+        $stmtOrders->bindParam(':to', $rangeEnd);
+        if ($clinicId !== null) {
+            $stmtOrders->bindParam(':clinic_id', $clinicId, PDO::PARAM_INT);
+        }
+        $stmtOrders->execute();
+        
+        $orderItems = $stmtOrders->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Aggregate revenue and product totals
+        $processedOrders = [];
+        foreach ($orderItems as $item) {
+            $orderId = $item['order_id'];
+            $orderDate = date('Y-m-d', strtotime($item['created_at']));
+            $productName = $item['product_name'];
+            $quantity = (int)$item['quantity'];
+            $unitPrice = (float)$item['unit_price'];
+            $lineTotal = $quantity * $unitPrice;
+            
+            // Track product quantities sold
+            if (!isset($productTotals[$productName])) {
+                $productTotals[$productName] = 0;
+            }
+            $productTotals[$productName] += $quantity;
+            
+            // Add to revenue (count each order's total only once)
+            if (!isset($processedOrders[$orderId])) {
+                $orderTotal = (float)$item['total_amount'];
+                $shopRevenue += $orderTotal;
+                $processedOrders[$orderId] = true;
+                
+                // Add to bucket for chart
+                $k = $this->bucketKeyForDate($orderDate, $mode);
+                if (isset($shopByBucket[$k])) {
+                    $shopByBucket[$k] += $orderTotal;
+                }
+            }
+        }
+        
+        $totalDiscounts = 0;
+        $totalRefunds = 0;
 
         $totalExpenses = 0;
         foreach ($this->expenses as [$ed,$cat,$amt]) {
@@ -244,13 +380,16 @@ class ReportsModel
         $grossRevenue = $appointmentsRevenue + $shopRevenue;
         $netIncome    = $grossRevenue - $totalRefunds - $totalExpenses;
 
+        // Combine appointment and shop revenue for chart
         $labels = [];
         $bars   = [];
+        $shopBars = [];
         foreach ($bucketKeys as $i => $key) {
             $labels[] = $bucketLabels[$i];
             $bars[]   = $apptByBucket[$key] ?? 0;
+            $shopBars[] = $shopByBucket[$key] ?? 0;
         }
-        $maxBar = max(1, max($bars));
+        $maxBar = max(1, max($bars), max($shopBars));
 
         $clinicPct = $grossRevenue>0 ? round(($appointmentsRevenue/$grossRevenue)*100) : 0;
         $shopPct   = 100 - $clinicPct;
@@ -269,6 +408,7 @@ class ReportsModel
             'netIncome'    => $netIncome,
             'labels'       => $labels,
             'bars'         => $bars,
+            'shopBars'     => $shopBars,
             'maxBar'       => $maxBar,
             'clinicPct'    => $clinicPct,
             'shopPct'      => $shopPct,

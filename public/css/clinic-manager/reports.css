@@ -15,24 +15,30 @@ body{margin:0;background:var(--bg);color:var(--text)}
 .muted{color:var(--muted);font-size:13px}
 
 .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.toggle-group{display:flex;gap:10px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+.toggle-group{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
 .toggle-group .btn{flex:0 0 auto;white-space:nowrap}
-.export-group{display:flex;gap:10px;flex-wrap:wrap}
-.btn{border:1px solid #d7deea;background:#fff;padding:10px 14px;border-radius:10px;cursor:pointer;text-decoration:none;color:var(--text)}
+.export-group{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid #d7deea;background:#fff;padding:9px 14px;border-radius:10px;cursor:pointer;text-decoration:none;color:var(--text);font-size:14px;font-weight:500;transition:all 0.2s}
+.btn:hover{background:#f8fafc;border-color:#c1c9d7}
+.btn.compact{padding:8px 12px;font-size:13px}
 .btn.primary{background:var(--primary);color:#fff;border-color:transparent}
+.btn.primary:hover{background:#1d4ed8}
 .btn.ghost{background:transparent}
+.btn.ghost:hover{background:#f1f5f9}
 /* toggle active styling */
 .toggle.active{background:#0ea5e9;color:#fff;border-color:#0ea5e9}
+.toggle.active:hover{background:#0891b2}
 
 /* Show only on screen / only in print */
 .screen-only{display:initial}
 .print-only{display:none}
 
-.filters{margin-bottom:10px}
+.filters{margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .range{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .range label{background:var(--panel);border:1px solid #e3e9f6;padding:8px 10px;border-radius:10px;box-shadow:var(--shadow)}
 .range input{border:none;outline:none;background:transparent}
 .apply{background:#0ea5e9;color:#fff;border:none}
+.apply:hover{background:#0891b2}
 
 .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
 .card{grid-column:span 6;background:var(--panel);border-radius:14px;box-shadow:var(--shadow);padding:16px;min-height:220px}
@@ -53,7 +59,9 @@ body{margin:0;background:var(--bg);color:var(--text)}
   padding-bottom:6px; /* room for scrollbar */
 }
 .bars{
-  width:100%; /* dashed box spans full card */
+  display:inline-block;
+  width:max-content; /* shrink-wrap to all bars so background covers full scroll width */
+  min-width:100%;    /* but never smaller than the card width */
   border:1px dashed #e6edf8;
   border-radius:12px;
   background:#fafcff;
@@ -64,7 +72,8 @@ body{margin:0;background:var(--bg);color:var(--text)}
   gap:14px;
   align-items:flex-end;
   height:160px;
-  min-width:max(100%, calc(var(--bar-count, 7) * 48px)); /* triggers scroll on many bars */
+  width:max-content; /* make inner width equal to sum of columns */
+  min-width:100%;
 }
 .bar{
   position:relative;
@@ -72,7 +81,7 @@ body{margin:0;background:var(--bg);color:var(--text)}
   flex-direction:column;
   align-items:center;
   gap:6px;
-  flex:0 0 44px;         /* fixed column width (matches 48px incl. gap) */
+  flex:var(--bar-flex, 0 0 44px);  /* flexible when few bars, fixed when many */
   min-width:44px;
 }
 .col{width:24px;background:linear-gradient(180deg,var(--c2),var(--c1));border-radius:6px}
@@ -139,6 +148,10 @@ body{margin:0;background:var(--bg);color:var(--text)}
   .print-only{display:block !important;}
 
   .main-content{margin:0 !important;padding:0 !important;}
+
+  /* Use full page width in print (avoid half-page cards) */
+  .grid{grid-template-columns:1fr !important;gap:10px !important;}
+  .card{grid-column:1 / -1 !important;min-height:auto;}
   .card{
     break-inside: avoid;
     page-break-inside: avoid;
@@ -162,6 +175,26 @@ body{margin:0;background:var(--bg);color:var(--text)}
     print-color-adjust: exact;
   }
   .value{font-size:10px}
+  
+  /* Hide charts in PDF when there are more than 12 data points */
+  .print-hide-chart {
+    display: none !important;
+  }
+
+  /* Monthly print replacement: calendar grid */
+  .month-calendar{margin-top:8px;}
+  .month-calendar-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;gap:12px;}
+  .month-calendar-head .title{font-weight:700;color:#0f172a;}
+  .month-calendar-head .total{font-weight:700;color:#0f172a;}
+  .month-calendar table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  .month-calendar th,
+  .month-calendar td{border:1px solid #e9eef8;padding:6px 6px;vertical-align:top;}
+  .month-calendar thead th{background:#f8fafc;color:#334155;font-weight:700;font-size:11px;text-align:left;}
+  .month-calendar td{height:70px;}
+  .month-calendar td.empty{background:#fbfdff;}
+  .month-calendar td.day .d{font-weight:700;color:#0f172a;font-size:12px;line-height:1.1;}
+  .month-calendar td.day .a{margin-top:6px;font-size:11px;color:#334155;}
+  .month-calendar td.day.has-income{background:rgba(34,197,94,.08);}
 }
 
 /* ===================== MOBILE (top section fixes) ===================== */
