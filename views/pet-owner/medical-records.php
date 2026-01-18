@@ -42,15 +42,6 @@ if (!empty($vaccinations)) {
     </div>
   </header>
 
-  <!-- Overview -->
-  <div class="section">
-    <h2>Overview</h2>
-    <p><b>Last Vaccination:</b> <?php echo $lastVaccination; ?></p>
-    <p><b>Medical Records:</b> <?php echo count($medical_records); ?> records on file</p>
-    <p><b>Prescriptions:</b> <?php echo count($prescriptions); ?> prescriptions</p>
-    <p><b>Clinic Visits:</b> <?php echo count($clinic_visits); ?> visits</p>
-  </div>
-
   <!-- Clinic Visits & Appointments -->
   <div class="section">
     <h2>Clinic Visits & Appointments</h2>
@@ -215,12 +206,10 @@ if (!empty($vaccinations)) {
                 if (!empty($record['reports'])) {
                   $files = json_decode($record['reports'], true);
                   if ($files && is_array($files)) {
-                    foreach ($files as $file) {
-                      $filename = basename($file);
-                      $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-                      $icon = in_array($ext, ['jpg','jpeg','png','gif','webp']) ? '🖼️' : '📄';
-                      echo '<a href="/PETVET/' . htmlspecialchars($file) . '" target="_blank" title="' . htmlspecialchars($filename) . '">' . $icon . '</a> ';
-                    }
+                    $filesJson = htmlspecialchars(json_encode($files), ENT_QUOTES);
+                    $fileCount = count($files);
+                    $label = $fileCount === 1 ? '1 document' : "$fileCount documents";
+                    echo "<button class='btn-view-files' data-files='$filesJson'>$label</button>";
                   }
                 } else {
                   echo '-';
@@ -273,12 +262,10 @@ if (!empty($vaccinations)) {
                 if (!empty($vax['reports'])) {
                   $files = json_decode($vax['reports'], true);
                   if ($files && is_array($files)) {
-                    foreach ($files as $file) {
-                      $filename = basename($file);
-                      $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-                      $icon = in_array($ext, ['jpg','jpeg','png','gif','webp']) ? '🖼️' : '📄';
-                      echo '<a href="/PETVET/' . htmlspecialchars($file) . '" target="_blank" title="' . htmlspecialchars($filename) . '">' . $icon . '</a> ';
-                    }
+                    $filesJson = htmlspecialchars(json_encode($files), ENT_QUOTES);
+                    $fileCount = count($files);
+                    $label = $fileCount === 1 ? '1 document' : "$fileCount documents";
+                    echo "<button class='btn-view-files' data-files='$filesJson'>$label</button>";
                   }
                 } else {
                   echo '-';
@@ -332,12 +319,10 @@ if (!empty($vaccinations)) {
                 if (!empty($rx['reports'])) {
                   $files = json_decode($rx['reports'], true);
                   if ($files && is_array($files)) {
-                    foreach ($files as $file) {
-                      $filename = basename($file);
-                      $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-                      $icon = in_array($ext, ['jpg','jpeg','png','gif','webp']) ? '🖼️' : '📄';
-                      echo '<a href="/PETVET/' . htmlspecialchars($file) . '" target="_blank" title="' . htmlspecialchars($filename) . '">' . $icon . '</a> ';
-                    }
+                    $filesJson = htmlspecialchars(json_encode($files), ENT_QUOTES);
+                    $fileCount = count($files);
+                    $label = $fileCount === 1 ? '1 document' : "$fileCount documents";
+                    echo "<button class='btn-view-files' data-files='$filesJson'>$label</button>";
                   }
                 } else {
                   echo '-';
@@ -353,5 +338,24 @@ if (!empty($vaccinations)) {
   </div>
 
   </main>
+  <script src="/PETVET/public/js/vet/file-viewer-modal.js"></script>
+  <script>
+    // Add click event listeners to all view files buttons
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.btn-view-files').forEach(function(button) {
+        button.addEventListener('click', function() {
+          const filesJson = this.getAttribute('data-files');
+          if (filesJson) {
+            try {
+              const files = JSON.parse(filesJson);
+              openFilesGallery(files);
+            } catch (e) {
+              console.error('Error parsing files JSON:', e);
+            }
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>
