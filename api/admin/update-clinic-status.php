@@ -4,7 +4,8 @@ require_once '../../config/connect.php';
 header('Content-Type: application/json');
 
 // Check admin authentication
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+$userRole = $_SESSION['current_role'] ?? $_SESSION['role'] ?? null;
+if (!isset($_SESSION['user_id']) || $userRole !== 'admin') {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Unauthorized']);
     exit;
@@ -20,10 +21,21 @@ try {
         throw new Exception('Invalid status');
     }
     
-    $query = "UPDATE clinics SET 
-        verification_status = ?,
-        updated_at = NOW()
-        WHERE id = ?";
+    // When approving, also set is_active to 1
+    if ($status === 'approved') {
+        $query = "UPDATE clinics SET 
+            verification_status = ?,
+            is_active = 1,
+            updated_at = NOW()
+            WHERE id = ?";
+    } else {
+        // When rejecting, keep is_active as 0
+        $query = "UPDATE clinics SET 
+            verification_status = ?,
+            is_active = 0,
+            updated_at = NOW()
+            WHERE id = ?";
+    }
     
     $stmt = mysqli_prepare($conn, $query);
     mysqli_stmt_bind_param($stmt, "si", $status, $clinicId);

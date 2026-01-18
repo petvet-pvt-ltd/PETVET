@@ -15,6 +15,38 @@ if (isLoggedIn()) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clinic Manager Registration - PetVet</title>
   <link rel="stylesheet" href="/PETVET/public/css/guest/clinic-manager-reg.css">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    #map {
+      height: 300px;
+      width: 100%;
+      border-radius: 8px;
+      margin: 15px 0;
+      border: 2px solid #e5e7eb;
+    }
+    .map-label {
+      font-size: 14px;
+      color: #374151;
+      margin-bottom: 8px;
+      display: block;
+      font-weight: 500;
+    }
+    .map-instruction {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 5px;
+      font-style: italic;
+    }
+    .coordinates-display {
+      background: #f3f4f6;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #374151;
+    }
+  </style>
 </head>
 
 <body>
@@ -83,6 +115,19 @@ if (isLoggedIn()) {
             <div>
               <input type="text" id="clinic_address" name="clinic_address" placeholder="Clinic Address" required>
               <span class="error-msg" id="clinic_address-error"></span>
+            </div>
+
+            <!-- Map for selecting location -->
+            <div>
+              <label class="map-label">Select Clinic Location on Map</label>
+              <p class="map-instruction">Click on the map to set your clinic's exact location</p>
+              <div id="map"></div>
+              <div class="coordinates-display">
+                <strong>Selected Location:</strong> 
+                <span id="coords-display">Click on the map to select location</span>
+              </div>
+              <input type="hidden" id="latitude" name="latitude" required>
+              <input type="hidden" id="longitude" name="longitude" required>
             </div>
 
             <select name="district" id="district" required>
@@ -221,6 +266,15 @@ if (isLoggedIn()) {
     }
 
     function validateStep2() {
+      const latInput = document.getElementById('latitude');
+      const lngInput = document.getElementById('longitude');
+      
+      // Check if location is selected
+      if (!latInput.value || !lngInput.value) {
+        alert('Please select your clinic location on the map');
+        return false;
+      }
+      
       return ["clinic_name", "clinic_address", "clinic_email", "clinic_phone"]
         .map(validateField)
         .every(Boolean);
@@ -317,6 +371,67 @@ if (isLoggedIn()) {
         alert("Please complete all required fields correctly.");
       }
     });
+  </script>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // Initialize map (centered on Sri Lanka - Colombo)
+    const map = L.map('map').setView([6.9271, 79.8612], 13);
+
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    // Variable to store the marker
+    let marker = null;
+
+    // Function to update coordinates
+    function updateCoordinates(lat, lng) {
+      document.getElementById('latitude').value = lat;
+      document.getElementById('longitude').value = lng;
+      document.getElementById('coords-display').textContent = `Latitude: ${lat.toFixed(6)}, Longitude: ${lng.toFixed(6)}`;
+    }
+
+    // Add click event to map
+    map.on('click', function(e) {
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+
+      // Remove existing marker if any
+      if (marker) {
+        map.removeLayer(marker);
+      }
+
+      // Add new marker
+      marker = L.marker([lat, lng]).addTo(map);
+      marker.bindPopup(`<b>Clinic Location</b><br>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}`).openPopup();
+
+      // Update hidden fields and display
+      updateCoordinates(lat, lng);
+    });
+
+    // Try to get user's current location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        function(position) {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          map.setView([lat, lng], 15);
+          
+          // Optionally add a marker at current location
+          marker = L.marker([lat, lng]).addTo(map);
+          marker.bindPopup('<b>Your Location</b><br>Click anywhere to change clinic location').openPopup();
+          updateCoordinates(lat, lng);
+        },
+        function(error) {
+          console.log('Geolocation error:', error);
+          // Keep default Colombo location
+        }
+      );
+    }
   </script>
 
 </body>
