@@ -61,8 +61,10 @@ class ServicesModel extends BaseModel {
                 AND COALESCE(TRIM(spp.business_name), '') <> ''
                 AND COALESCE(TRIM(spp.service_area), '') <> ''
                 AND spp.experience_years IS NOT NULL
+                AND spp.experience_years > 0
                 AND COALESCE(TRIM(spp.specializations), '') <> ''
                 AND COALESCE(TRIM(spp.phone_primary), '') <> ''
+                AND COALESCE(TRIM(spp.bio), '') <> ''
                 AND (
                     spp.training_basic_enabled = 1
                     OR spp.training_intermediate_enabled = 1
@@ -178,7 +180,9 @@ class ServicesModel extends BaseModel {
                     spp.pet_types,
                     spp.home_type,
                     spp.phone_primary,
-                    spp.phone_secondary
+                    spp.phone_secondary,
+                    spp.location_latitude,
+                    spp.location_longitude
                 FROM users u
                 INNER JOIN service_provider_profiles spp ON u.id = spp.user_id
                 INNER JOIN user_roles ur ON u.id = ur.user_id
@@ -186,7 +190,16 @@ class ServicesModel extends BaseModel {
                 WHERE r.role_name = 'sitter' 
                 AND ur.verification_status = 'approved'
                 AND ur.is_active = 1
-                AND spp.role_type = 'sitter'";
+                AND spp.role_type = 'sitter'
+                AND COALESCE(TRIM(spp.service_area), '') <> ''
+                AND spp.experience_years IS NOT NULL
+                AND spp.experience_years > 0
+                AND COALESCE(TRIM(spp.bio), '') <> ''
+                AND COALESCE(TRIM(spp.pet_types), '') <> ''
+                AND spp.home_type IS NOT NULL
+                AND COALESCE(TRIM(spp.phone_primary), '') <> ''
+                AND spp.location_latitude IS NOT NULL
+                AND spp.location_longitude IS NOT NULL";
         
         // Apply filters
         $params = [];
@@ -268,202 +281,112 @@ class ServicesModel extends BaseModel {
      * Get breeders with filters (Mock Data)
      */
     private function getBreeders($filters) {
-        // Mock breeder data
-        $allBreeders = [
-            [
-                'id' => 11,
-                'name' => 'William Taylor',
-                'email' => 'william.taylor@petvet.com',
-                'phone' => '555-0300',
-                'business_name' => 'Royal Canine Breeding',
-                'experience_years' => 12,
-                'city' => 'Colombo',
-                'avatar' => 'https://i.pravatar.cc/150?img=11',
-                'specialization' => 'German Shepherd & Golden Retriever Specialist',
-                'breeding_pets' => [
-                    [
-                        'id' => 1,
-                        'name' => 'Max',
-                        'breed' => 'Golden Retriever',
-                        'gender' => 'Male',
-                        'is_active' => true,
-                    ],
-                    [
-                        'id' => 2,
-                        'name' => 'Luna',
-                        'breed' => 'Golden Retriever',
-                        'gender' => 'Female',
-                        'is_active' => true,
-                    ],
-                    [
-                        'id' => 3,
-                        'name' => 'Charlie',
-                        'breed' => 'German Shepherd',
-                        'gender' => 'Male',
-                        'is_active' => false,
-                    ]
-                ],
-            ],
-            [
-                'id' => 12,
-                'name' => 'Patricia Moore',
-                'email' => 'patricia.moore@petvet.com',
-                'phone' => '555-0301',
-                'business_name' => 'Persian Paradise Cattery',
-                'experience_years' => 8,
-                'city' => 'Galle',
-                'avatar' => 'https://i.pravatar.cc/150?img=21',
-                'specialization' => 'Persian & Maine Coon Specialist',
-                'breeding_pets' => [
-                    [
-                        'id' => 4,
-                        'name' => 'Simba',
-                        'breed' => 'Persian Cat',
-                        'gender' => 'Male',
-                        'is_active' => true,
-                    ],
-                    [
-                        'id' => 5,
-                        'name' => 'Nala',
-                        'breed' => 'Persian Cat',
-                        'gender' => 'Female',
-                        'is_active' => true,
-                    ],
-                    [
-                        'id' => 6,
-                        'name' => 'Leo',
-                        'breed' => 'Maine Coon',
-                        'gender' => 'Male',
-                        'is_active' => true,
-                    ],
-                    [
-                        'id' => 7,
-                        'name' => 'Luna',
-                        'breed' => 'Maine Coon',
-                        'gender' => 'Female',
-                        'is_active' => false,
-                    ]
-                ],
-            ],
-            [
-                'id' => 13,
-                'name' => 'Jennifer Lee',
-                'email' => 'jennifer.lee@petvet.com',
-                'phone' => '555-0302',
-                'business_name' => 'Elite Dog Breeders',
-                'experience_years' => 15,
-                'city' => 'Kandy',
-                'avatar' => 'https://i.pravatar.cc/150?img=31',
-                'specialization' => 'Labrador & Rottweiler Expert',
-                'breeding_pets' => [
-                    [
-                        'id' => 8,
-                        'name' => 'Duke',
-                        'breed' => 'Labrador Retriever',
-                        'gender' => 'Male',
-                        'is_active' => true,
-                    ],
-                    [
-                        'id' => 9,
-                        'name' => 'Bella',
-                        'breed' => 'Labrador Retriever',
-                        'gender' => 'Female',
-                        'is_active' => true,
-                    ],
-                    [
-                        'id' => 10,
-                        'name' => 'Rocky',
-                        'breed' => 'Rottweiler',
-                        'gender' => 'Male',
-                        'is_active' => true,
-                    ],
-                    [
-                        'id' => 11,
-                        'name' => 'Rose',
-                        'breed' => 'Rottweiler',
-                        'gender' => 'Female',
-                        'is_active' => true,
-                    ]
-                ],
-            ],
-            [
-                'id' => 14,
-                'name' => 'Emily Watson',
-                'email' => 'emily.watson@petvet.com',
-                'phone' => '555-0303',
-                'business_name' => 'Pedigree Pups',
-                'experience_years' => 6,
-                'city' => 'Colombo',
-                'avatar' => 'https://i.pravatar.cc/150?img=41',
-                'specialization' => 'Poodle & Yorkshire Terrier Specialist',
-                'breeding_pets' => [
-                    [
-                        'id' => 12,
-                        'name' => 'Charlie',
-                        'breed' => 'Poodle',
-                        'gender' => 'Male',
-                        'is_active' => true,
-                    ],
-                    [
-                        'id' => 13,
-                        'name' => 'Sophie',
-                        'breed' => 'Poodle',
-                        'gender' => 'Female',
-                        'is_active' => true,
-                    ],
-                    [
-                        'id' => 14,
-                        'name' => 'Buddy',
-                        'breed' => 'Yorkshire Terrier',
-                        'gender' => 'Male',
-                        'is_active' => true,
-                    ]
-                ],
-            ],
-            [
-                'id' => 15,
-                'name' => 'Daniel White',
-                'email' => 'daniel.white@petvet.com',
-                'phone' => '555-0304',
-                'business_name' => 'Exotic Bird Haven',
-                'experience_years' => 10,
-                'city' => 'Negombo',
-                'avatar' => 'https://i.pravatar.cc/150?img=51',
-                'specialization' => 'Exotic Birds Breeding Specialist',
-                'breeding_pets' => [
-                    [
-                        'id' => 15,
-                        'name' => 'Rio',
-                        'breed' => 'African Grey Parrot',
-                        'gender' => 'Male',
-                        'is_active' => true,
-                    ],
-                    [
-                        'id' => 16,
-                        'name' => 'Pearl',
-                        'breed' => 'African Grey Parrot',
-                        'gender' => 'Female',
-                        'is_active' => true,
-                    ],
-                    [
-                        'id' => 17,
-                        'name' => 'Sky',
-                        'breed' => 'Cockatiel',
-                        'gender' => 'Male',
-                        'is_active' => true,
-                    ],
-                    [
-                        'id' => 18,
-                        'name' => 'Dawn',
-                        'breed' => 'Cockatiel',
-                        'gender' => 'Female',
-                        'is_active' => true,
-                    ]
-                ],
-            ]
-        ];
+        $pdo = db();
         
-        return $this->applyFilters($allBreeders, $filters);
+        // Build SQL query
+        $sql = "SELECT 
+                    u.id,
+                    CONCAT(u.first_name, ' ', u.last_name) as name,
+                    u.email,
+                    u.phone,
+                    u.avatar,
+                    u.address,
+                    spp.business_name,
+                    spp.license_number,
+                    spp.service_area,
+                    spp.experience_years,
+                    spp.specializations,
+                    spp.services_description,
+                    spp.phone_primary,
+                    spp.phone_secondary,
+                    spp.location_latitude,
+                    spp.location_longitude
+                FROM users u
+                INNER JOIN service_provider_profiles spp ON u.id = spp.user_id
+                INNER JOIN user_roles ur ON u.id = ur.user_id
+                INNER JOIN roles r ON ur.role_id = r.id
+                WHERE r.role_name = 'breeder' 
+                AND ur.verification_status = 'approved'
+                AND ur.is_active = 1
+                AND spp.role_type = 'breeder'
+                AND COALESCE(TRIM(spp.business_name), '') <> ''
+                AND COALESCE(TRIM(spp.license_number), '') <> ''
+                AND COALESCE(TRIM(spp.service_area), '') <> ''
+                AND spp.experience_years IS NOT NULL
+                AND spp.experience_years > 0
+                AND COALESCE(TRIM(spp.specializations), '') <> ''
+                AND COALESCE(TRIM(spp.phone_primary), '') <> ''
+                AND spp.location_latitude IS NOT NULL
+                AND spp.location_longitude IS NOT NULL";
+        
+        // Apply filters
+        $params = [];
+        
+        if (!empty($filters['search'])) {
+            $sql .= " AND (u.first_name LIKE ? OR u.last_name LIKE ? OR spp.business_name LIKE ? OR spp.service_area LIKE ?)";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+        
+        if (!empty($filters['city'])) {
+            $sql .= " AND spp.service_area LIKE ?";
+            $params[] = '%' . $filters['city'] . '%';
+        }
+        
+        if (!empty($filters['experience'])) {
+            $sql .= " AND spp.experience_years >= ?";
+            $params[] = (int)$filters['experience'];
+        }
+        
+        if (!empty($filters['specialization'])) {
+            $sql .= " AND spp.specializations LIKE ?";
+            $params[] = '%' . $filters['specialization'] . '%';
+        }
+        
+        $sql .= " ORDER BY spp.experience_years DESC, u.first_name";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $breeders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Process breeders data and fetch breeding pets for each
+        foreach ($breeders as &$breeder) {
+            // Parse service area
+            $breeder['city'] = $breeder['service_area'] ?? '';
+            
+            // Set default avatar if none exists
+            if (empty($breeder['avatar'])) {
+                $breeder['avatar'] = '/PETVET/public/images/emptyProfPic.png';
+            }
+            
+            // Use specializations as specialization for compatibility
+            $breeder['specialization'] = $breeder['specializations'] ?? '';
+            
+            // Fetch breeding pets for this breeder
+            $petSql = "SELECT 
+                            id,
+                            name,
+                            breed,
+                            gender,
+                            is_active
+                       FROM breeder_pets
+                       WHERE breeder_id = ?
+                       ORDER BY is_active DESC, name";
+            
+            $petStmt = $pdo->prepare($petSql);
+            $petStmt->execute([$breeder['id']]);
+            $breeder['breeding_pets'] = $petStmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Convert is_active from 0/1 to boolean for compatibility
+            foreach ($breeder['breeding_pets'] as &$pet) {
+                $pet['is_active'] = (bool)$pet['is_active'];
+            }
+        }
+        
+        return $breeders;
     }
     
     /**
@@ -509,6 +432,13 @@ class ServicesModel extends BaseModel {
                   AND ur.verification_status = 'approved'
                   AND ur.is_active = 1
                   AND spp.role_type = 'groomer'
+                  AND COALESCE(TRIM(spp.business_name), '') <> ''
+                  AND COALESCE(TRIM(spp.service_area), '') <> ''
+                  AND spp.experience_years IS NOT NULL
+                  AND spp.experience_years > 0
+                  AND COALESCE(TRIM(spp.phone_primary), '') <> ''
+                  AND spp.location_latitude IS NOT NULL
+                  AND spp.location_longitude IS NOT NULL
                   AND EXISTS (
                       SELECT 1
                       FROM groomer_services gs

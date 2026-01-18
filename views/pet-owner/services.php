@@ -394,10 +394,15 @@ $GLOBALS['currentPage'] = 'services.php';
                                 $providerSortName = $provider['business_name'] ?? ($provider['name'] ?? '');
                             }
                             ?>
-                            <article class="provider-card <?= $serviceType === 'trainers' ? 'trainer-card' : '' ?>" data-groomer-id="<?= $serviceType === 'groomers' ? (int)$provider['id'] : 0 ?>" data-sort-name="<?= htmlspecialchars($providerSortName) ?>">
+                            <article class="provider-card <?= $serviceType === 'trainers' ? 'trainer-card' : '' ?>" data-groomer-id="<?= $serviceType === 'groomers' ? (int)$provider['id'] : 0 ?>" data-sitter-id="<?= $serviceType === 'sitters' ? (int)$provider['id'] : 0 ?>" data-sort-name="<?= htmlspecialchars($providerSortName) ?>">
                                 <div class="provider-header">
                                     <?php if ($serviceType === 'groomers'): ?>
                                         <span class="clinic-distance groomer-distance" data-groomer-id="<?= (int)$provider['id'] ?>">
+                                            <span class="distance-loader">⏳ Calculating...</span>
+                                        </span>
+                                    <?php endif; ?>
+                                    <?php if ($serviceType === 'sitters'): ?>
+                                        <span class="clinic-distance sitter-distance" data-sitter-id="<?= (int)$provider['id'] ?>">
                                             <span class="distance-loader">⏳ Calculating...</span>
                                         </span>
                                     <?php endif; ?>
@@ -600,7 +605,8 @@ $GLOBALS['currentPage'] = 'services.php';
                                             "business_name" => $provider["business_name"] ?? "",
                                             "avatar" => $provider["avatar"] ?? "/PETVET/public/images/default-avatar.png",
                                             "city" => $provider["city"] ?? "",
-                                            "phone" => $provider["phone"] ?? "",
+                                            "phone" => $provider["phone_primary"] ?? "",
+                                            "phone2" => $provider["phone_secondary"] ?? "",
                                             "experience_years" => $provider["experience_years"] ?? 0,
                                             "breeding_pets" => array_filter($provider["breeding_pets"] ?? [], function($pet) {
                                                 return $pet['is_active'];

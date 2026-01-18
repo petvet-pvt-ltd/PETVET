@@ -15,7 +15,32 @@ if (!isLoggedIn()) {
 }
 
 $user_id = currentUserId();
-$data = json_decode(file_get_contents('php://input'), true);
+
+// Check if this is FormData (multipart) or JSON request
+$isFormData = !empty($_POST) || !empty($_FILES);
+
+if ($isFormData) {
+    // Parse FormData format: breeder[field_name]
+    $data = [];
+    if (!empty($_POST)) {
+        foreach ($_POST as $key => $value) {
+            // Parse nested form data like breeder[business_name]
+            if (preg_match('/^(\w+)\[(\w+)\]$/', $key, $matches)) {
+                $section = $matches[1];
+                $field = $matches[2];
+                if (!isset($data[$section])) {
+                    $data[$section] = [];
+                }
+                $data[$section][$field] = $value;
+            } else {
+                $data[$key] = $value;
+            }
+        }
+    }
+} else {
+    // JSON request
+    $data = json_decode(file_get_contents('php://input'), true);
+}
 
 if (!$data) {
     http_response_code(400);
@@ -27,17 +52,44 @@ $pdo = db();
 $pdo->beginTransaction();
 
 try {
+    $updatedAvatar = null;
+    
     // Update profile section (users table) - same for all roles
     if (isset($data['profile'])) {
         $p = $data['profile'];
-        $stmt = $pdo->prepare("
-            UPDATE users 
-            SET first_name = ?, last_name = ?, phone = ?, address = ?
-            WHERE id = ?
-        ");
-        $stmt->execute([
-            $p['first_name'], $p['last_name'], $p['phone'], $p['address'], $user_id
-        ]);
+        
+        // Handle avatar upload if present
+        if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
+            require_once __DIR__ . '/../../config/ImageUploader.php';
+            $uploader = new ImageUploader(__DIR__ . '/../../uploads/avatars/');
+            $result = $uploader->upload($_FILES['avatar'], 'avatar_');
+            
+            if ($result['success']) {
+                $p['avatar'] = '/PETVET/uploads/avatars/' . $result['path'];
+                $updatedAvatar = $p['avatar'];
+            }
+        }
+        
+        // Update user profile
+        if (isset($p['avatar'])) {
+            $stmt = $pdo->prepare("
+                UPDATE users 
+                SET first_name = ?, last_name = ?, phone = ?, address = ?, avatar = ?
+                WHERE id = ?
+            ");
+            $stmt->execute([
+                $p['first_name'], $p['last_name'], $p['phone'], $p['address'], $p['avatar'], $user_id
+            ]);
+        } else {
+            $stmt = $pdo->prepare("
+                UPDATE users 
+                SET first_name = ?, last_name = ?, phone = ?, address = ?
+                WHERE id = ?
+            ");
+            $stmt->execute([
+                $p['first_name'], $p['last_name'], $p['phone'], $p['address'], $user_id
+            ]);
+        }
     }
 
     // Update password if provided
@@ -78,6 +130,7 @@ try {
                 SET business_name = ?, license_number = ?, service_area = ?,
                     experience_years = ?, specializations = ?, services_description = ?,
                     phone_primary = ?, phone_secondary = ?,
+                    location_latitude = ?, location_longitude = ?,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE user_id = ? AND role_type = 'breeder'
             ");
@@ -85,6 +138,7 @@ try {
                 $b['business_name'], $b['license_number'], $b['service_area'],
                 $b['experience_years'], $b['specializations'], $b['services_description'],
                 $b['phone_primary'], $b['phone_secondary'],
+                $b['location_latitude'] ?? null, $b['location_longitude'] ?? null,
                 $user_id
             ]);
         } else {
@@ -93,13 +147,14 @@ try {
                 INSERT INTO service_provider_profiles 
                 (user_id, role_type, business_name, license_number, service_area,
                  experience_years, specializations, services_description,
-                 phone_primary, phone_secondary)
-                VALUES (?, 'breeder', ?, ?, ?, ?, ?, ?, ?, ?)
+                 phone_primary, phone_secondary, location_latitude, location_longitude)
+                VALUES (?, 'breeder', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([
                 $user_id, $b['business_name'], $b['license_number'], $b['service_area'],
                 $b['experience_years'], $b['specializations'], $b['services_description'],
-                $b['phone_primary'], $b['phone_secondary']
+                $b['phone_primary'], $b['phone_secondary'],
+                $b['location_latitude'] ?? null, $b['location_longitude'] ?? null
             ]);
         }
     }
@@ -164,7 +219,12 @@ try {
     }
 
     $pdo->commit();
-    echo json_encode(['success' => true, 'message' => 'Settings updated successfully']);
+    
+    $response = ['success' => true, 'message' => 'Settings updated successfully'];
+    if ($updatedAvatar) {
+        $response['avatar'] = $updatedAvatar;
+    }
+    echo json_encode($response);
 
 } catch (PDOException $e) {
     $pdo->rollBack();

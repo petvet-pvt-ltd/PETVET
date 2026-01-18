@@ -482,8 +482,6 @@
         submitBtn.disabled = true;
         submitBtn.textContent = 'Saving...';
         
-        const formData = {};
-        
         if (formId === '#formProfile') {
             const phoneVal = ($('#phone')?.value || '').trim();
             const phoneRegex = /^07\d{8}$/;
@@ -494,13 +492,56 @@
                 return;
             }
             
-            formData.profile = {
-                first_name: $('#first_name').value.trim(),
-                last_name: $('#last_name').value.trim(),
-                phone: phoneVal,
-                address: $('#address').value.trim()
-            };
-        } else if (formId === '#formPassword') {
+            // Use FormData for profile to support avatar upload
+            const fd = new FormData();
+            fd.append('profile[first_name]', $('#first_name').value.trim());
+            fd.append('profile[last_name]', $('#last_name').value.trim());
+            fd.append('profile[phone]', phoneVal);
+            fd.append('profile[address]', $('#address').value.trim());
+            
+            // Add avatar file if selected
+            const avatarInput = $('#groomerAvatar');
+            const avatarPreview = $('#groomerAvatarPreview .image-preview-item img');
+            if (avatarInput && avatarInput.files && avatarInput.files[0]) {
+                fd.append('avatar', avatarInput.files[0]);
+            }
+            
+            try {
+                const response = await fetch('/PETVET/api/groomer/update-settings.php', {
+                    method: 'POST',
+                    body: fd
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Profile saved successfully');
+                    form.dataset.clean = 'true';
+                    updateButtonState(form, submitBtn);
+                    // Update avatar preview if new avatar was uploaded
+                    if (result.avatar && avatarPreview) {
+                        avatarPreview.src = result.avatar + '?t=' + Date.now();
+                    }
+                    // Clear the file input
+                    if (avatarInput) {
+                        avatarInput.value = '';
+                    }
+                } else {
+                    showToast(result.message || 'Failed to save');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showToast('Error saving settings');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+            return;
+        }
+        
+        const formData = {};
+        
+        if (formId === '#formPassword') {
             const np = form.querySelector('input[name="new_password"]').value.trim();
             const cp = form.querySelector('input[name="confirm_password"]').value.trim();
             if(np.length < 6){ showToast('Password too short (min 6)'); return; }

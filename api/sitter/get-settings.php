@@ -54,7 +54,7 @@ try {
 
     // Get sitter-specific data from service_provider_profiles
     $stmt = $pdo->prepare("
-        SELECT service_area, experience_years, bio, pet_types, home_type,
+        SELECT service_area, experience_years, bio AS description, pet_types, home_type,
                location_latitude, location_longitude, phone_primary, phone_secondary
         FROM service_provider_profiles
         WHERE user_id = ? AND role_type = 'sitter'
@@ -79,7 +79,7 @@ try {
         $sitter_profile = [
             'service_area' => '',
             'experience_years' => '',
-            'bio' => '',
+            'description' => '',
             'pet_types' => '',
             'home_type' => '',
             'location_latitude' => '',
