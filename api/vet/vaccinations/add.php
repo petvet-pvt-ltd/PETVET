@@ -81,13 +81,14 @@ try {
         }
     }
 
-    // Create vaccination header (without vaccine/next_due - those go in vaccination_items)
+    // Create vaccination header (with placeholder for old columns)
     $stmt = $pdo->prepare("
-        INSERT INTO vaccinations (appointment_id, reports, created_at)
-        VALUES (:appointment_id, :reports, NOW())
+        INSERT INTO vaccinations (appointment_id, vaccine, reports, created_at)
+        VALUES (:appointment_id, :vaccine, :reports, NOW())
     ");
     $stmt->execute([
         'appointment_id' => $appointmentId,
+        'vaccine' => 'See vaccination items',
         'reports' => $reports
     ]);
 

@@ -80,13 +80,15 @@ try {
         }
     }
 
-    // Create prescription header (without medication/dosage - those go in prescription_items)
+    // Create prescription header (with placeholder for old columns)
     $stmt = $pdo->prepare("
-        INSERT INTO prescriptions (appointment_id, notes, reports, created_at)
-        VALUES (:appointment_id, :notes, :reports, NOW())
+        INSERT INTO prescriptions (appointment_id, medication, dosage, notes, reports, created_at)
+        VALUES (:appointment_id, :medication, :dosage, :notes, :reports, NOW())
     ");
     $stmt->execute([
         'appointment_id' => $appointmentId,
+        'medication' => 'See prescription items',
+        'dosage' => 'Multiple medications',
         'notes' => ($notes === '' ? null : $notes),
         'reports' => $reports
     ]);

@@ -405,10 +405,12 @@ select:focus {
 }
 
 input[readonly] {
-  background: #e8ecf1;
+  background: #f8fafc;
   cursor: not-allowed;
-  color: var(--muted);
+  color: #64748b;
   border-color: #d4dce5;
+  border-radius: 10px;
+  padding: 12px 16px;
 }
 
 textarea {
@@ -737,6 +739,11 @@ p.empty-text {
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 11px;
+}
+
+.form-section form > button[type="submit"],
+.form-section form > .btn {
+  margin-top: 20px;
 }
 
 /* ============================================
