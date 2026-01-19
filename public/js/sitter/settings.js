@@ -399,14 +399,14 @@
                     const experience = document.querySelector('input[name="experience"]');
                     const petTypes = document.querySelector('input[name="pet_types"]');
                     const homeType = document.querySelector('select[name="home_type"]');
-                    const bio = document.querySelector('textarea[name="bio"]');
+                    const description = document.querySelector('textarea[name="description"]');
                     
                     if (workArea) workArea.value = data.sitter.service_area || '';
                     if (workAreaDisplay) workAreaDisplay.value = data.sitter.service_area || 'Not set - select location on map';
                     if (experience) experience.value = data.sitter.experience_years || '';
                     if (petTypes) petTypes.value = data.sitter.pet_types || '';
                     if (homeType) homeType.value = data.sitter.home_type || '';
-                    if (bio) bio.value = data.sitter.bio || '';
+                    if (description) description.value = data.sitter.description || '';
                     if(phonePrimary) phonePrimary.value = data.sitter.phone_primary || '';
                     if(phoneSecondary) phoneSecondary.value = data.sitter.phone_secondary || '';
                     
@@ -461,8 +461,6 @@
         submitBtn.disabled = true;
         submitBtn.textContent = 'Saving...';
         
-        const formData = {};
-        
         if (formId === '#formProfile') {
             const phoneVal = ($('#phone')?.value || '').trim();
             const phoneRegex = /^07\d{8}$/;
@@ -473,13 +471,56 @@
                 return;
             }
             
-            formData.profile = {
-                first_name: $('#first_name').value.trim(),
-                last_name: $('#last_name').value.trim(),
-                phone: phoneVal,
-                address: $('#address').value.trim()
-            };
-        } else if (formId === '#formPassword') {
+            // Use FormData for profile to support avatar upload
+            const fd = new FormData();
+            fd.append('profile[first_name]', $('#first_name').value.trim());
+            fd.append('profile[last_name]', $('#last_name').value.trim());
+            fd.append('profile[phone]', phoneVal);
+            fd.append('profile[address]', $('#address').value.trim());
+            
+            // Add avatar file if selected
+            const avatarInput = $('#sitterAvatar');
+            const avatarPreview = $('#sitterAvatarPreview .image-preview-item img');
+            if (avatarInput && avatarInput.files && avatarInput.files[0]) {
+                fd.append('avatar', avatarInput.files[0]);
+            }
+            
+            try {
+                const response = await fetch('/PETVET/api/sitter/update-settings.php', {
+                    method: 'POST',
+                    body: fd
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Profile saved successfully');
+                    form.dataset.clean = 'true';
+                    updateButtonState(form, submitBtn);
+                    // Update avatar preview if new avatar was uploaded
+                    if (result.avatar && avatarPreview) {
+                        avatarPreview.src = result.avatar + '?t=' + Date.now();
+                    }
+                    // Clear the file input
+                    if (avatarInput) {
+                        avatarInput.value = '';
+                    }
+                } else {
+                    showToast(result.message || 'Failed to save');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showToast('Error saving settings');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+            return;
+        }
+        
+        const formData = {};
+        
+        if (formId === '#formPassword') {
             const np = form.querySelector('input[name="new_password"]').value.trim();
             const cp = form.querySelector('input[name="confirm_password"]').value.trim();
             if(np.length < 6){ showToast('Password too short (min 6)'); return; }
@@ -503,7 +544,7 @@
             const experience = form.querySelector('input[name="experience"]');
             const petTypes = form.querySelector('input[name="pet_types"]');
             const homeType = form.querySelector('select[name="home_type"]');
-            const bio = form.querySelector('textarea[name="bio"]');
+            const description = form.querySelector('textarea[name="description"]');
             
             // Use FormData for file upload support
             const fd = new FormData();
@@ -511,7 +552,7 @@
             fd.append('sitter[experience_years]', experience ? experience.value.trim() : '');
             fd.append('sitter[pet_types]', petTypes ? petTypes.value.trim() : '');
             fd.append('sitter[home_type]', homeType ? homeType.value : '');
-            fd.append('sitter[bio]', bio ? bio.value.trim() : '');
+            fd.append('sitter[bio]', description ? description.value.trim() : '');
             fd.append('sitter[phone_primary]', phonePrimary ? phonePrimary.value.trim() : '');
             fd.append('sitter[phone_secondary]', phoneSecondary ? phoneSecondary.value.trim() : '');
             fd.append('sitter[location_latitude]', latInput ? latInput.value.trim() : '');

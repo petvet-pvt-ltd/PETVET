@@ -106,17 +106,44 @@ function normalize_service_areas($input) {
 }
 
 try {
+    $updatedAvatar = null;
+    
     // Update profile section (users table) - same for all roles
     if (isset($data['profile'])) {
         $p = $data['profile'];
-        $stmt = $pdo->prepare("
-            UPDATE users 
-            SET first_name = ?, last_name = ?, phone = ?, address = ?
-            WHERE id = ?
-        ");
-        $stmt->execute([
-            $p['first_name'], $p['last_name'], $p['phone'], $p['address'], $user_id
-        ]);
+        
+        // Handle avatar upload if present
+        if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
+            require_once __DIR__ . '/../../config/ImageUploader.php';
+            $uploader = new ImageUploader(__DIR__ . '/../../uploads/avatars/');
+            $result = $uploader->upload($_FILES['avatar'], 'avatar_');
+            
+            if ($result['success']) {
+                $p['avatar'] = '/PETVET/uploads/avatars/' . $result['path'];
+                $updatedAvatar = $p['avatar'];
+            }
+        }
+        
+        // Update user profile
+        if (isset($p['avatar'])) {
+            $stmt = $pdo->prepare("
+                UPDATE users 
+                SET first_name = ?, last_name = ?, phone = ?, address = ?, avatar = ?
+                WHERE id = ?
+            ");
+            $stmt->execute([
+                $p['first_name'], $p['last_name'], $p['phone'], $p['address'], $p['avatar'], $user_id
+            ]);
+        } else {
+            $stmt = $pdo->prepare("
+                UPDATE users 
+                SET first_name = ?, last_name = ?, phone = ?, address = ?
+                WHERE id = ?
+            ");
+            $stmt->execute([
+                $p['first_name'], $p['last_name'], $p['phone'], $p['address'], $user_id
+            ]);
+        }
     }
 
     // Update password if provided
@@ -255,7 +282,12 @@ try {
     }
 
     $pdo->commit();
-    echo json_encode(['success' => true, 'message' => 'Settings updated successfully']);
+    
+    $response = ['success' => true, 'message' => 'Settings updated successfully'];
+    if ($updatedAvatar) {
+        $response['avatar'] = $updatedAvatar;
+    }
+    echo json_encode($response);
 
 } catch (PDOException $e) {
     $pdo->rollBack();

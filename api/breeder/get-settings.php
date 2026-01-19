@@ -36,7 +36,8 @@ try {
     // Get breeder-specific data from service_provider_profiles
     $stmt = $pdo->prepare("
         SELECT business_name, license_number, service_area, experience_years,
-               specializations, services_description, phone_primary, phone_secondary
+               specializations, services_description, phone_primary, phone_secondary,
+               location_latitude, location_longitude
         FROM service_provider_profiles
         WHERE user_id = ? AND role_type = 'breeder'
     ");
@@ -65,7 +66,9 @@ try {
             'specializations' => '',
             'services_description' => '',
             'phone_primary' => '',
-            'phone_secondary' => ''
+            'phone_secondary' => '',
+            'location_latitude' => '',
+            'location_longitude' => ''
         ];
     }
 

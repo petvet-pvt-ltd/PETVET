@@ -130,6 +130,214 @@
     phoneSecondary.addEventListener('input', ()=>validateServicePhone(phoneSecondary, phoneSecondaryError, false));
   }
 
+  // Leaflet Map for Location Selection
+  let breederMap = null;
+  let breederMarker = null;
+  let lastMapInteractionAt = 0;
+  const mapContainer = $('#breederMapContainer');
+  const latInput = $('#location_latitude');
+  const lngInput = $('#location_longitude');
+  const locationDisplay = $('#location_display');
+  const useMyLocationBtn = $('#useMyLocationBtn');
+
+  // Default center (Colombo, Sri Lanka)
+  const defaultLat = 6.9271;
+  const defaultLng = 79.8612;
+
+  function initBreederMap(shouldRecenter = false) {
+    if (!mapContainer) return;
+    
+    mapContainer.style.display = 'block';
+    
+    if (!breederMap) {
+      const centerLat = parseFloat(latInput.value) || defaultLat;
+      const centerLng = parseFloat(lngInput.value) || defaultLng;
+      
+      breederMap = L.map('breederMapContainer').setView([centerLat, centerLng], 13);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+      }).addTo(breederMap);
+
+      const markInteraction = () => { lastMapInteractionAt = Date.now(); };
+      breederMap.on('dragstart', markInteraction);
+      breederMap.on('dragend', markInteraction);
+      breederMap.on('zoomstart', markInteraction);
+      breederMap.on('zoomend', markInteraction);
+      breederMap.on('movestart', markInteraction);
+      breederMap.on('moveend', markInteraction);
+
+      // Add existing marker if lat/lng present
+      if (latInput.value && lngInput.value) {
+        const lat = parseFloat(latInput.value);
+        const lng = parseFloat(lngInput.value);
+        breederMarker = L.marker([lat, lng]).addTo(breederMap);
+        updateLocationDisplay(lat, lng);
+      }
+
+      // Handle map clicks
+      breederMap.on('click', async function(e) {
+        if (Date.now() - lastMapInteractionAt < 450) return;
+        e.originalEvent.preventDefault();
+        e.originalEvent.stopPropagation();
+        
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+
+        latInput.value = lat.toFixed(6);
+        lngInput.value = lng.toFixed(6);
+
+        if (breederMarker) {
+          breederMarker.setLatLng([lat, lng]);
+        } else {
+          breederMarker = L.marker([lat, lng]).addTo(breederMap);
+        }
+
+        updateLocationDisplay(lat, lng);
+        
+        // Auto-detect and set district
+        const district = await getDistrictFromCoordinates(lat, lng);
+        if (district) {
+          const success = setDistrictDropdown(district);
+          if (success) {
+            showToast(`District set to: ${district}`);
+          }
+        }
+        
+        // Mark form as changed
+        const form = $('#formBreeder');
+        if(form) {
+          form.dataset.clean = 'false';
+          const btn = form.querySelector('button[type="submit"]');
+          if(btn) updateButtonState(form, btn);
+        }
+      });
+    }
+
+    setTimeout(() => {
+      if (breederMap) breederMap.invalidateSize();
+    }, 100);
+  }
+
+  function updateLocationDisplay(lat, lng) {
+    if (locationDisplay) {
+      locationDisplay.value = `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+    }
+  }
+
+  async function getDistrictFromCoordinates(lat, lng) {
+    try {
+      const url = `/PETVET/api/pet-owner/reverse-geocode.php?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
+      const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      if (!response.ok) return null;
+
+      const data = await response.json();
+      if (!data || data.success !== true) return null;
+
+      if (data.district && String(data.district).trim() !== '') {
+        return String(data.district).trim();
+      }
+
+      const address = data.address_components || null;
+      if (address) {
+        const raw = address.state_district || address.county || address.district || address.city || address.town || address.village;
+        if (raw) {
+          return String(raw).replace(/\s+District\s*$/i, '').trim();
+        }
+      }
+    } catch (error) {
+      console.error('Reverse geocoding error:', error);
+    }
+    return null;
+  }
+
+  function setDistrictDropdown(districtName) {
+    const workAreaHidden = $('#work_area');
+    const workAreaDisplay = $('#work_area_display');
+    
+    if (!districtName) return false;
+
+    if (workAreaHidden) workAreaHidden.value = districtName;
+    if (workAreaDisplay) workAreaDisplay.value = districtName;
+    
+    return true;
+  }
+
+  // Use My Location button
+  if (useMyLocationBtn) {
+    useMyLocationBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (!navigator.geolocation) {
+        showToast('Geolocation not supported by your browser');
+        return;
+      }
+
+      useMyLocationBtn.disabled = true;
+      useMyLocationBtn.textContent = 'Getting location...';
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          
+          if (!breederMap) {
+            initBreederMap(false);
+          }
+
+          breederMap.setView([latitude, longitude], 15);
+          
+          latInput.value = latitude.toFixed(6);
+          lngInput.value = longitude.toFixed(6);
+
+          if (breederMarker) {
+            breederMarker.setLatLng([latitude, longitude]);
+          } else {
+            breederMarker = L.marker([latitude, longitude]).addTo(breederMap);
+          }
+
+          updateLocationDisplay(latitude, longitude);
+          
+          const district = await getDistrictFromCoordinates(latitude, longitude);
+          if (district) {
+            setDistrictDropdown(district);
+            showToast(`Location set: ${district}`);
+          } else {
+            showToast('Location set');
+          }
+
+          useMyLocationBtn.disabled = false;
+          useMyLocationBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>Use My Current Location';
+          
+          const form = $('#formBreeder');
+          if(form) {
+            form.dataset.clean = 'false';
+            const btn = form.querySelector('button[type="submit"]');
+            if(btn) updateButtonState(form, btn);
+          }
+        },
+        (error) => {
+          showToast('Could not get your location');
+          useMyLocationBtn.disabled = false;
+          useMyLocationBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>Use My Current Location';
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    });
+  }
+
+  // Click on location display field to show/init map
+  if (locationDisplay) {
+    locationDisplay.addEventListener('click', () => {
+      initBreederMap(false);
+    });
+  }
+
   // Cover photo preview
   const coverPhotoInput = document.getElementById('coverPhoto');
   document.addEventListener('click', e=>{
@@ -183,7 +391,8 @@
         if (data.breeder) {
           const businessName = document.querySelector('input[name="business_name"]');
           const licenseNumber = document.querySelector('input[name="license_number"]');
-          const workArea = document.querySelector('input[name="work_area"]');
+          const workArea = $('#work_area');
+          const workAreaDisplay = $('#work_area_display');
           const experience = document.querySelector('input[name="experience"]');
           const specialization = document.querySelector('input[name="specialization"]');
           const servicesDesc = document.querySelector('textarea[name="services_description"]');
@@ -191,11 +400,24 @@
           if (businessName) businessName.value = data.breeder.business_name || '';
           if (licenseNumber) licenseNumber.value = data.breeder.license_number || '';
           if (workArea) workArea.value = data.breeder.service_area || '';
+          if (workAreaDisplay) workAreaDisplay.value = data.breeder.service_area || 'Not set - select location on map';
           if (experience) experience.value = data.breeder.experience_years || '';
           if (specialization) specialization.value = data.breeder.specializations || '';
           if (servicesDesc) servicesDesc.value = data.breeder.services_description || '';
           if(phonePrimary) phonePrimary.value = data.breeder.phone_primary || '';
           if(phoneSecondary) phoneSecondary.value = data.breeder.phone_secondary || '';
+          
+          // Populate location fields
+          if (data.breeder.location_latitude) {
+            latInput.value = data.breeder.location_latitude;
+          }
+          if (data.breeder.location_longitude) {
+            lngInput.value = data.breeder.location_longitude;
+          }
+          if (data.breeder.location_latitude && data.breeder.location_longitude) {
+            updateLocationDisplay(parseFloat(data.breeder.location_latitude), parseFloat(data.breeder.location_longitude));
+            // Don't auto-init map to save resources; only when user interacts
+          }
         }
         
         // Populate preferences
@@ -237,8 +459,6 @@
     submitBtn.disabled = true;
     submitBtn.textContent = 'Saving...';
     
-    const formData = {};
-    
     if (formId === '#formProfile') {
       const phoneVal = ($('#phone')?.value || '').trim();
       const phoneRegex = /^07\d{8}$/;
@@ -249,13 +469,56 @@
         return;
       }
       
-      formData.profile = {
-        first_name: $('#first_name').value.trim(),
-        last_name: $('#last_name').value.trim(),
-        phone: phoneVal,
-        address: $('#address').value.trim()
-      };
-    } else if (formId === '#formPassword') {
+      // Use FormData for profile to support avatar upload
+      const fd = new FormData();
+      fd.append('profile[first_name]', $('#first_name').value.trim());
+      fd.append('profile[last_name]', $('#last_name').value.trim());
+      fd.append('profile[phone]', phoneVal);
+      fd.append('profile[address]', $('#address').value.trim());
+      
+      // Add avatar file if selected
+      const avatarInput = $('#breederAvatar');
+      const avatarPreview = $('#breederAvatarPreview .image-preview-item img');
+      if (avatarInput && avatarInput.files && avatarInput.files[0]) {
+        fd.append('avatar', avatarInput.files[0]);
+      }
+      
+      try {
+        const response = await fetch('/PETVET/api/breeder/update-settings.php', {
+          method: 'POST',
+          body: fd
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showToast('Profile saved successfully');
+          form.dataset.clean = 'true';
+          updateButtonState(form, submitBtn);
+          // Update avatar preview if new avatar was uploaded
+          if (result.avatar && avatarPreview) {
+            avatarPreview.src = result.avatar + '?t=' + Date.now();
+          }
+          // Clear the file input
+          if (avatarInput) {
+            avatarInput.value = '';
+          }
+        } else {
+          showToast(result.message || 'Failed to save');
+        }
+      } catch (error) {
+        console.error('Save error:', error);
+        showToast('Error saving settings');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+      return;
+    }
+    
+    const formData = {};
+    
+    if (formId === '#formPassword') {
       const np = form.querySelector('input[name="new_password"]').value.trim();
       const cp = form.querySelector('input[name="confirm_password"]').value.trim();
       if(np.length < 6){ showToast('Password too short (min 6)'); return; }
@@ -288,7 +551,9 @@
         specializations: specialization ? specialization.value.trim() : '',
         services_description: servicesDesc ? servicesDesc.value.trim() : '',
         phone_primary: phonePrimary ? phonePrimary.value.trim() : '',
-        phone_secondary: phoneSecondary ? phoneSecondary.value.trim() : ''
+        phone_secondary: phoneSecondary ? phoneSecondary.value.trim() : '',
+        location_latitude: latInput ? latInput.value.trim() : '',
+        location_longitude: lngInput ? lngInput.value.trim() : ''
       };
     } else if (formId === '#formPrefs') {
       const emailNotif = form.querySelector('input[name="email_notifications"]');

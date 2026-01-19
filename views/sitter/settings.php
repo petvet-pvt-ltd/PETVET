@@ -189,8 +189,8 @@ $prefs = [];
 						</label>
 					</div>
 					<div class="row one">
-						<label>Bio
-							<textarea name="bio" rows="3" placeholder="Tell clients about your pet sitting experience..."><?= htmlspecialchars($sitterData['bio'] ?? '') ?></textarea>
+					<label>Description
+						<textarea name="description" rows="3" placeholder="Tell clients about your pet sitting experience..."><?= htmlspecialchars($sitterData['bio'] ?? '') ?></textarea>
 						</label>
 					</div>
 					<div class="row one">
