@@ -91,7 +91,7 @@ class PetOwnerAppointmentsModel extends BaseModel {
             LEFT JOIN users u ON a.vet_id = u.id
             WHERE a.pet_owner_id = ?
             AND a.appointment_date >= CURDATE()
-            AND a.status NOT IN ('cancelled', 'declined', 'completed')
+            AND a.status NOT IN ('cancelled', 'declined', 'completed', 'paid')
             ORDER BY a.appointment_date ASC, a.appointment_time ASC
         ");
         

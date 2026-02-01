@@ -113,6 +113,10 @@ try {
     $success = $stmt->execute($params);
     
     if ($success && $stmt->rowCount() > 0) {
+        // Create notification for pet owner
+        require_once __DIR__ . '/../../helpers/NotificationHelper.php';
+        NotificationHelper::createAppointmentNotification($appointmentId, 'rescheduled');
+
         echo json_encode([
             'success' => true,
             'message' => 'Appointment rescheduled successfully'

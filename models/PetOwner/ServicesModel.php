@@ -64,7 +64,6 @@ class ServicesModel extends BaseModel {
                 AND spp.experience_years > 0
                 AND COALESCE(TRIM(spp.specializations), '') <> ''
                 AND COALESCE(TRIM(spp.phone_primary), '') <> ''
-                AND COALESCE(TRIM(spp.bio), '') <> ''
                 AND (
                     spp.training_basic_enabled = 1
                     OR spp.training_intermediate_enabled = 1
@@ -364,6 +363,9 @@ class ServicesModel extends BaseModel {
             
             // Use specializations as specialization for compatibility
             $breeder['specialization'] = $breeder['specializations'] ?? '';
+
+            // Surface the services description for UI display
+            $breeder['description'] = $breeder['services_description'] ?? '';
             
             // Fetch breeding pets for this breeder
             $petSql = "SELECT 

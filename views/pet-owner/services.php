@@ -125,11 +125,13 @@ $GLOBALS['currentPage'] = 'services.php';
                         <?php
                             $sortValue = $filters['sort'] ?? '';
                             if ($sortValue === '') {
-                                $sortValue = ($serviceType === 'groomers') ? 'nearest' : 'az';
+                                $sortValue = ($serviceType === 'trainers') ? 'az' : 'nearest';
                             }
                         ?>
                         <select id="sortFilter" name="sort">
-                            <option value="nearest" <?= $sortValue === 'nearest' ? 'selected' : '' ?>>Nearest</option>
+                            <?php if ($serviceType !== 'trainers'): ?>
+                                <option value="nearest" <?= $sortValue === 'nearest' ? 'selected' : '' ?>>Nearest</option>
+                            <?php endif; ?>
                             <option value="az" <?= $sortValue === 'az' ? 'selected' : '' ?>>A-Z</option>
                         </select>
                     </div>
@@ -394,7 +396,7 @@ $GLOBALS['currentPage'] = 'services.php';
                                 $providerSortName = $provider['business_name'] ?? ($provider['name'] ?? '');
                             }
                             ?>
-                            <article class="provider-card <?= $serviceType === 'trainers' ? 'trainer-card' : '' ?>" data-groomer-id="<?= $serviceType === 'groomers' ? (int)$provider['id'] : 0 ?>" data-sitter-id="<?= $serviceType === 'sitters' ? (int)$provider['id'] : 0 ?>" data-sort-name="<?= htmlspecialchars($providerSortName) ?>">
+                            <article class="provider-card <?= $serviceType === 'trainers' ? 'trainer-card' : '' ?>" data-groomer-id="<?= $serviceType === 'groomers' ? (int)$provider['id'] : 0 ?>" data-sitter-id="<?= $serviceType === 'sitters' ? (int)$provider['id'] : 0 ?>" data-breeder-id="<?= $serviceType === 'breeders' ? (int)$provider['id'] : 0 ?>" data-sort-name="<?= htmlspecialchars($providerSortName) ?>">
                                 <div class="provider-header">
                                     <?php if ($serviceType === 'groomers'): ?>
                                         <span class="clinic-distance groomer-distance" data-groomer-id="<?= (int)$provider['id'] ?>">
@@ -403,6 +405,11 @@ $GLOBALS['currentPage'] = 'services.php';
                                     <?php endif; ?>
                                     <?php if ($serviceType === 'sitters'): ?>
                                         <span class="clinic-distance sitter-distance" data-sitter-id="<?= (int)$provider['id'] ?>">
+                                            <span class="distance-loader">⏳ Calculating...</span>
+                                        </span>
+                                    <?php endif; ?>
+                                    <?php if ($serviceType === 'breeders'): ?>
+                                        <span class="clinic-distance breeder-distance" data-breeder-id="<?= (int)$provider['id'] ?>">
                                             <span class="distance-loader">⏳ Calculating...</span>
                                         </span>
                                     <?php endif; ?>
@@ -518,6 +525,12 @@ $GLOBALS['currentPage'] = 'services.php';
                                                 </div>
                                             </div>
                                         <?php endif; ?>
+
+                                        <?php if (!empty($provider['description'])): ?>
+                                            <div class="breeder-description">
+                                                <p class="description-text"><?= htmlspecialchars($provider['description']) ?></p>
+                                            </div>
+                                        <?php endif; ?>
                                         
                                         <?php if (!empty($provider['breeding_pets'])): ?>
                                             <?php
@@ -608,6 +621,7 @@ $GLOBALS['currentPage'] = 'services.php';
                                             "phone" => $provider["phone_primary"] ?? "",
                                             "phone2" => $provider["phone_secondary"] ?? "",
                                             "experience_years" => $provider["experience_years"] ?? 0,
+                                            "description" => $provider["description"] ?? "",
                                             "breeding_pets" => array_filter($provider["breeding_pets"] ?? [], function($pet) {
                                                 return $pet['is_active'];
                                             })
@@ -1364,6 +1378,15 @@ $GLOBALS['currentPage'] = 'services.php';
             document.getElementById('breederModalCity').textContent = breederData.city;
             document.getElementById('breederModalExperience').textContent = breederData.experience_years + ' years';
             document.getElementById('breederModalPhone').textContent = breederData.phone || 'N/A';
+            const breederDescSection = document.getElementById('breederDescriptionSection');
+            const breederDescEl = document.getElementById('breederModalDescription');
+            if (breederData.description) {
+                breederDescEl.textContent = breederData.description;
+                breederDescSection.style.display = 'block';
+            } else {
+                breederDescEl.textContent = '';
+                breederDescSection.style.display = 'none';
+            }
             
             // Reset form
             document.getElementById('breedingBookingForm').reset();
@@ -1867,6 +1890,11 @@ $GLOBALS['currentPage'] = 'services.php';
             </div>
             
             <div class="modal-body">
+                <div id="breederDescriptionSection" class="modal-section" style="display:none;">
+                    <h4 class="modal-section-title">Breeding Services &amp; Pricing</h4>
+                    <p id="breederModalDescription" class="modal-description"></p>
+                </div>
+
                 <form id="breedingBookingForm" onsubmit="submitBreedingBooking(event)">
                     <h4 class="modal-section-title">Book Breeding Service</h4>
                     
@@ -1932,5 +1960,22 @@ $GLOBALS['currentPage'] = 'services.php';
     </div>
 
     <script src="/PETVET/public/js/pet-owner/groomer-distance.js"></script>
+    
+    <script>
+        // Apply default sort on page load for non-trainers
+        document.addEventListener('DOMContentLoaded', function() {
+            const serviceTypeInput = document.getElementById('serviceTypeInput');
+            const sortFilter = document.getElementById('sortFilter');
+            
+            if (serviceTypeInput && sortFilter) {
+                const serviceType = serviceTypeInput.value;
+                // If service type is not trainers and sort is not set, trigger nearest sort
+                if (serviceType !== 'trainers' && (!sortFilter.value || sortFilter.value === 'az')) {
+                    sortFilter.value = 'nearest';
+                    sortFilter.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+        });
+    </script>
 </body>
 </html>

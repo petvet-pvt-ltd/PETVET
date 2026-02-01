@@ -220,7 +220,7 @@ class ReportsModel
                     a.status,
                     a.appointment_date,
                     a.vet_id,
-                    CONCAT(u.first_name, ' ', u.last_name) as vet_name,
+                    COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unassigned') as vet_name,
                     p.total_amount
                 FROM appointments a
                 LEFT JOIN users u ON a.vet_id = u.id
@@ -245,7 +245,7 @@ class ReportsModel
         foreach ($appointments as $appt) {
             $status = $appt['status'];
             $date = $appt['appointment_date'];
-            $vetName = $appt['vet_name'] ?? 'Unassigned';
+            $vetName = $appt['vet_name'];
             $amount = (float)($appt['total_amount'] ?? 0);
             
             // Normalize status for report display
@@ -263,11 +263,13 @@ class ReportsModel
             }
             $apptStatus[$displayStatus]++;
             
-            // Count vet workload
-            if (!isset($workload[$vetName])) {
-                $workload[$vetName] = 0;
+            // Count vet workload (only completed appointments)
+            if (($status === 'completed' || $status === 'paid') && $vetName !== 'Unassigned') {
+                if (!isset($workload[$vetName])) {
+                    $workload[$vetName] = 0;
+                }
+                $workload[$vetName]++;
             }
-            $workload[$vetName]++;
             
             // Add revenue for completed/paid appointments
             if ($status === 'completed' || $status === 'paid') {
@@ -282,7 +284,7 @@ class ReportsModel
         // ============ FETCH ALL VETS FOR THIS CLINIC ============
         // Get all vets from vets table to show even those with 0 appointments
         if ($clinicId !== null) {
-            $sqlVets = "SELECT CONCAT(u.first_name, ' ', u.last_name) as vet_name 
+            $sqlVets = "SELECT COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unassigned') as vet_name 
                         FROM vets v
                         INNER JOIN users u ON v.user_id = u.id
                         WHERE v.clinic_id = :clinic_id";
@@ -473,3 +475,4 @@ class ReportsModel
     private function startOfYear(string $anyDate): string { return date('Y-01-01', strtotime($anyDate)); }
     private function endOfYear(string $anyDate): string   { return date('Y-12-31', strtotime($anyDate)); }
 }
+

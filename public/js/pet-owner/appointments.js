@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		};
 
 		// Send to backend; if backend not present, still apply UI changes (graceful fallback)
-		fetch('/PETVET/pet-owner/appointments/reschedule', {
+		fetch('/PETVET/api/pet-owner/request-reschedule.php', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)

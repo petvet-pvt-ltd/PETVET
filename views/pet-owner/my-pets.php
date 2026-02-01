@@ -591,6 +591,14 @@ function calculateAge($dob) {
       background: #eff6ff;
     }
 
+    .mark-all-read.disabled,
+    .mark-all-read:disabled {
+      background: #e5e7eb;
+      color: #9ca3af;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
     /* Notification List */
     .notification-list {
       overflow-y: auto;
@@ -709,6 +717,7 @@ function calculateAge($dob) {
       text-align: center;
       border-top: 1px solid #e5e7eb;
       background: #fafbfc;
+      border-radius: 0 0 12px 12px;
     }
 
     .notification-footer p {
@@ -872,7 +881,7 @@ function calculateAge($dob) {
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
             </svg>
-            <span class="notification-badge" id="notificationBadge">3</span>
+            <span class="notification-badge hidden" id="notificationBadge">0</span>
           </button>
 
           <!-- Notification Panel (YouTube-style) -->
@@ -882,108 +891,7 @@ function calculateAge($dob) {
               <button class="mark-all-read" id="markAllRead">Mark all as read</button>
             </div>
             <div class="notification-list" id="notificationList">
-              <!-- TODO: Backend will populate notifications dynamically -->
-              <!-- Sample notifications for UI demonstration -->
-              
-              <!-- Appointment Notifications -->
-              <div class="notification-item unread" data-type="appointment">
-                <div class="notification-icon appointment-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                  </svg>
-                </div>
-                <div class="notification-content">
-                  <p class="notification-text">Appointment for <strong>Duke</strong> with <strong>Dr. Peter</strong> has been confirmed for <strong>October 20, 2023, at 10:00 AM</strong></p>
-                  <span class="notification-time">2 hours ago</span>
-                </div>
-              </div>
-
-              <div class="notification-item unread" data-type="appointment">
-                <div class="notification-icon appointment-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                  </svg>
-                </div>
-                <div class="notification-content">
-                  <p class="notification-text">Appointment declined for <strong>Duke</strong>. Reason: <em>Fully booked on that day</em></p>
-                  <span class="notification-time">5 hours ago</span>
-                </div>
-              </div>
-
-              <!-- Sitter Notifications -->
-              <div class="notification-item unread" data-type="sitter">
-                <div class="notification-icon sitter-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                  </svg>
-                </div>
-                <div class="notification-content">
-                  <p class="notification-text">Sitter <strong>John</strong> has accepted your request for <strong>Max</strong></p>
-                  <span class="notification-time">1 day ago</span>
-                </div>
-              </div>
-
-              <!-- Trainer Notifications -->
-              <div class="notification-item" data-type="trainer">
-                <div class="notification-icon trainer-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                </div>
-                <div class="notification-content">
-                  <p class="notification-text">Trainer <strong>Alex</strong> has accepted your request for <strong>Max</strong></p>
-                  <span class="notification-time">2 days ago</span>
-                </div>
-              </div>
-
-              <div class="notification-item" data-type="trainer">
-                <div class="notification-icon trainer-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                </div>
-                <div class="notification-content">
-                  <p class="notification-text">Training Session <strong>5</strong> for <strong>Max</strong> has been completed. Next session is scheduled for <strong>October 20, 2025</strong>.</p>
-                  <span class="notification-time">3 days ago</span>
-                </div>
-              </div>
-
-              <!-- Breeder Notifications -->
-              <div class="notification-item" data-type="breeder">
-                <div class="notification-icon breeder-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                  </svg>
-                </div>
-                <div class="notification-content">
-                  <p class="notification-text">Breeder <strong>Peter</strong> accepted your request for <strong>Duke</strong>. Breeder's Pet: <strong>Molly</strong></p>
-                  <span class="notification-time">1 week ago</span>
-                </div>
-              </div>
-
-              <div class="notification-item" data-type="breeder">
-                <div class="notification-icon breeder-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                  </svg>
-                </div>
-                <div class="notification-content">
-                  <p class="notification-text">Breeder <strong>Peter</strong> declined your request. Reason: <em>Not compatible breeds</em></p>
-                  <span class="notification-time">1 week ago</span>
-                </div>
-              </div>
-
+              <!-- Notifications loaded via AJAX -->
             </div>
             <div class="notification-footer">
               <p>You're all caught up!</p>
@@ -1482,7 +1390,43 @@ function calculateAge($dob) {
   <script src="/PETVET/public/js/pet-owner/clinic-distance.js"></script>
   <script src="/PETVET/public/js/pet-owner/clinic-selector.js"></script>
   <script src="/PETVET/public/js/pet-owner/my-pets.js"></script>
+
+  <!-- Notification Sound -->
+  <audio id="notificationSound" preload="auto" crossorigin="anonymous">
+    <source src="/PETVET/public/audio/notification_sound.mp3" type="audio/mpeg">
+  </audio>
+
   <script>
+    /* ========================================
+       NOTIFICATION SOUND CONFIGURATION
+       ======================================== */
+    // ⚙️ SOUND CONTROL: Change to true to enable notification sounds
+    const NOTIFICATION_SOUND_ENABLED = false;
+    
+    // Enable audio context on any user interaction (page-level)
+    let audioContextEnabled = false;
+    function enableAudioContext() {
+      if (!audioContextEnabled && NOTIFICATION_SOUND_ENABLED) {
+        const audio = document.getElementById('notificationSound');
+        try {
+          audio.currentTime = 0;
+          audio.volume = 1;
+          audio.muted = false;
+          audioContextEnabled = true;
+          console.log('✓ Audio context enabled - you can now hear notifications');
+        } catch (e) {
+          console.log('Audio context error:', e);
+        }
+      }
+    }
+    
+    // Enable audio on ANY user interaction (only if sound is enabled)
+    if (NOTIFICATION_SOUND_ENABLED) {
+      document.addEventListener('click', enableAudioContext);
+      document.addEventListener('keydown', enableAudioContext);
+      document.addEventListener('touchstart', enableAudioContext);
+    }
+    
     /* ========================================
        NOTIFICATION PANEL FUNCTIONALITY
        ======================================== */
@@ -1492,6 +1436,14 @@ function calculateAge($dob) {
       const notificationBadge = document.getElementById('notificationBadge');
       const markAllReadBtn = document.getElementById('markAllRead');
       const notificationList = document.getElementById('notificationList');
+      const notificationFooterText = document.querySelector('.notification-footer p');
+      const notificationSound = document.getElementById('notificationSound');
+
+      // Ensure audio can play (only if sound is enabled)
+      if (NOTIFICATION_SOUND_ENABLED) {
+        notificationSound.volume = 1;
+        notificationSound.playbackRate = 1;
+      }
 
       // Toggle notification panel
       notificationBell.addEventListener('click', function(e) {
@@ -1514,34 +1466,36 @@ function calculateAge($dob) {
       // Mark single notification as read when clicked
       notificationList.addEventListener('click', function(e) {
         const notificationItem = e.target.closest('.notification-item');
-        if (notificationItem && notificationItem.classList.contains('unread')) {
-          notificationItem.classList.remove('unread');
-          updateBadgeCount();
+        if (notificationItem) {
+          const notificationId = notificationItem.dataset.id;
+          const formData = new FormData();
+          formData.append('notification_id', notificationId);
           
-          // TODO: Backend - Send AJAX request to mark notification as read
-          // Example:
-          // const notificationId = notificationItem.dataset.id;
-          // fetch('/PETVET/api/notifications/mark-read.php', {
-          //   method: 'POST',
-          //   headers: { 'Content-Type': 'application/json' },
-          //   body: JSON.stringify({ notificationId: notificationId })
-          // });
+          fetch('/PETVET/api/pet-owner/mark-notification-read.php', {
+            method: 'POST',
+            body: formData
+          }).then(() => {
+            if (notificationItem.classList.contains('unread')) {
+              notificationItem.classList.remove('unread');
+              updateBadgeCount();
+            }
+          });
         }
       });
 
       // Mark all notifications as read
       markAllReadBtn.addEventListener('click', function() {
-        const unreadNotifications = notificationList.querySelectorAll('.notification-item.unread');
-        unreadNotifications.forEach(notification => {
-          notification.classList.remove('unread');
-        });
-        updateBadgeCount();
+        if (markAllReadBtn.disabled) return;
 
-        // TODO: Backend - Send AJAX request to mark all notifications as read
-        // fetch('/PETVET/api/notifications/mark-all-read.php', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' }
-        // });
+        const formData = new FormData();
+        formData.append('mark_all', '1');
+        
+        fetch('/PETVET/api/pet-owner/mark-notification-read.php', {
+          method: 'POST',
+          body: formData
+        }).then(() => {
+          fetchNotifications();
+        });
       });
 
       // Update badge count
@@ -1550,29 +1504,118 @@ function calculateAge($dob) {
         if (unreadCount > 0) {
           notificationBadge.textContent = unreadCount;
           notificationBadge.classList.remove('hidden');
+          if (notificationFooterText) notificationFooterText.textContent = 'You have unread notifications!';
+          markAllReadBtn.disabled = false;
+          markAllReadBtn.classList.remove('disabled');
         } else {
           notificationBadge.classList.add('hidden');
+          if (notificationFooterText) notificationFooterText.textContent = "You're all caught up!";
+          markAllReadBtn.disabled = true;
+          markAllReadBtn.classList.add('disabled');
         }
       }
 
-      // Initialize badge count on page load
-      updateBadgeCount();
+      let previousUnreadCount = 0;
+      let soundQueuedToPlay = false;
+      
+      // Function to play notification sound
+      function playNotificationSound() {
+        // Skip if sound is disabled
+        if (!NOTIFICATION_SOUND_ENABLED) {
+          console.log('🔇 Notification sound is disabled');
+          return;
+        }
+        
+        try {
+          console.log('🔔 Attempting to play notification sound...');
+          
+          // Ensure audio context is enabled
+          enableAudioContext();
+          
+          // Reset audio and ensure it can play
+          notificationSound.volume = 1;
+          notificationSound.muted = false;
+          notificationSound.currentTime = 0;
+          
+          // Attempt to play
+          const playPromise = notificationSound.play();
+          if (playPromise !== undefined) {
+            playPromise.then(() => {
+              console.log('✅ Sound played successfully');
+            }).catch(error => {
+              console.log('❌ Audio playback prevented:', error.message);
+              // Queue sound to play on next user gesture
+              soundQueuedToPlay = true;
+              console.log('⏳ Sound queued for next user interaction');
+            });
+          }
+        } catch (error) {
+          console.log('Error in playNotificationSound:', error);
+          soundQueuedToPlay = true;
+        }
+      }
+      
+      // Play queued sound on any user interaction
+      document.addEventListener('click', function playQueuedSound(e) {
+        // Skip if sound is disabled
+        if (!NOTIFICATION_SOUND_ENABLED) return;
+        
+        if (soundQueuedToPlay && audioContextEnabled) {
+          try {
+            console.log('▶️ Playing queued notification sound');
+            notificationSound.volume = 1;
+            notificationSound.muted = false;
+            notificationSound.currentTime = 0;
+            notificationSound.play().then(() => {
+              console.log('✅ Queued sound played');
+              soundQueuedToPlay = false;
+            }).catch(e => console.log('❌ Error playing queued sound:', e.message));
+          } catch (e) {
+            console.log('Error:', e);
+          }
+        }
+      });
 
-      // TODO: Backend - Fetch notifications from server
-      // This function should be called on page load and periodically to check for new notifications
-      /*
+      // Fetch notifications from server
       function fetchNotifications() {
-        fetch('/PETVET/api/notifications/get-notifications.php')
+        console.log('📥 Fetching notifications... (previous unread: ' + previousUnreadCount + ')');
+        fetch('/PETVET/api/pet-owner/get-notifications.php')
           .then(response => response.json())
           .then(data => {
-            renderNotifications(data.notifications);
-            updateBadgeCount();
+            console.log('📦 API Response:', data);
+            if (data.success) {
+              renderNotifications(data.notifications);
+              const currentUnreadCount = data.unread_count || 0;
+              
+              console.log('Current unread: ' + currentUnreadCount + ', Previous unread: ' + previousUnreadCount);
+              
+              // Play sound only if unread count increased (new notification)
+              if (currentUnreadCount > previousUnreadCount && previousUnreadCount >= 0) {
+                console.log('🎵 NEW NOTIFICATION DETECTED - Playing sound!');
+                playNotificationSound();
+              } else {
+                console.log('No new notifications (count did not increase)');
+              }
+              
+              previousUnreadCount = currentUnreadCount;
+              updateBadgeCount();
+            }
           })
-          .catch(error => console.error('Error fetching notifications:', error));
+          .catch(error => {
+            console.error('❌ Fetch error:', error);
+          });
       }
+
+      // Fetch notifications immediately on page load
+      fetchNotifications();
 
       function renderNotifications(notifications) {
         notificationList.innerHTML = '';
+        
+        if (notifications.length === 0) {
+          notificationList.innerHTML = '<div style="padding: 40px 20px; text-align: center; color: #9ca3af;"><p style="margin: 0;">No notifications yet</p></div>';
+          return;
+        }
         
         notifications.forEach(notification => {
           const notificationItem = document.createElement('div');
@@ -1609,7 +1652,10 @@ function calculateAge($dob) {
             </div>
             <div class="notification-content">
               <p class="notification-text">${notification.message}</p>
-              <span class="notification-time">${notification.time_ago}</span>
+              <div class="notification-meta">
+                ${notification.clinic_name ? `<span class="clinic-badge">${notification.clinic_name}</span>` : ''}
+                <span class="notification-time">${getTimeAgo(notification.created_at)}</span>
+              </div>
             </div>
           `;
           
@@ -1617,12 +1663,85 @@ function calculateAge($dob) {
         });
       }
 
+      // Time ago formatting
+      function getTimeAgo(dateString) {
+        const date = new Date(dateString);
+        const seconds = Math.floor((new Date() - date) / 1000);
+        
+        if (seconds < 60) return 'Just now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes}m ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}h ago`;
+        const days = Math.floor(hours / 24);
+        if (days < 7) return `${days}d ago`;
+        return date.toLocaleDateString();
+      }
+
+      // Add CSS for clinic badge if not already present
+      const styleTag = document.createElement('style');
+      styleTag.textContent = `
+        .notification-meta {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 12px;
+          margin-top: 4px;
+        }
+        .clinic-badge {
+          background-color: #e3f2fd;
+          color: #1976d2;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-weight: 500;
+        }
+      `;
+      if (!document.querySelector('style[data-notification-styles]')) {
+        styleTag.setAttribute('data-notification-styles', 'true');
+        document.head.appendChild(styleTag);
+      }
+
+      // Mark single notification as read when clicked
+      notificationList.addEventListener('click', function(e) {
+        const notificationItem = e.target.closest('.notification-item');
+        if (notificationItem) {
+          const notificationId = notificationItem.dataset.id;
+          const formData = new FormData();
+          formData.append('notification_id', notificationId);
+          
+          fetch('/PETVET/api/pet-owner/mark-notification-read.php', {
+            method: 'POST',
+            body: formData
+          }).then(() => {
+            if (notificationItem.classList.contains('unread')) {
+              notificationItem.classList.remove('unread');
+              updateBadgeCount();
+            }
+          });
+        }
+      });
+
+      // Mark all notifications as read
+      markAllReadBtn.addEventListener('click', function() {
+        const formData = new FormData();
+        formData.append('mark_all', '1');
+        
+        fetch('/PETVET/api/pet-owner/mark-notification-read.php', {
+          method: 'POST',
+          body: formData
+        }).then(() => {
+          fetchNotifications();
+        });
+      });
+
+      // Initialize badge count on page load
+      updateBadgeCount();
+
       // Fetch notifications on page load
       fetchNotifications();
 
       // Poll for new notifications every 30 seconds
-      setInterval(fetchNotifications, 30000);
-      */
+      setInterval(fetchNotifications, 10000);
 
     })();
 

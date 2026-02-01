@@ -100,12 +100,12 @@ try {
     if ($vet_id === 'any' || $vet_id === '') {
         // "Any Vet" - show slot if ANY vet at clinic is available
         
-        // Get all vets at this clinic
+        // Get all vets at this clinic from vets table
         $stmt = $conn->prepare("
             SELECT user_id 
-            FROM clinic_staff 
+            FROM vets 
             WHERE clinic_id = ? 
-            AND role = 'vet'
+            AND available = 1
         ");
         $stmt->bind_param("i", $clinic_id);
         $stmt->execute();

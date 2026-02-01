@@ -63,7 +63,7 @@
   }
 
   function clearLoaders() {
-    document.querySelectorAll('.groomer-distance, .sitter-distance').forEach((el) => {
+    document.querySelectorAll('.groomer-distance, .sitter-distance, .breeder-distance').forEach((el) => {
       if (el.querySelector('.distance-loader')) el.innerHTML = '';
     });
   }
@@ -86,9 +86,12 @@
   }
 
   async function loadDistances(userLat, userLng, providerIds, providerType = 'groomers') {
-    const endpoint = providerType === 'sitters' 
-      ? '/PETVET/api/pet-owner/get-sitters-by-distance.php'
-      : '/PETVET/api/pet-owner/get-groomers-by-distance.php';
+    let endpoint = '/PETVET/api/pet-owner/get-groomers-by-distance.php';
+    if (providerType === 'sitters') {
+      endpoint = '/PETVET/api/pet-owner/get-sitters-by-distance.php';
+    } else if (providerType === 'breeders') {
+      endpoint = '/PETVET/api/pet-owner/get-breeders-by-distance.php';
+    }
     
     const url = `${endpoint}?latitude=${encodeURIComponent(
       userLat
@@ -100,7 +103,9 @@
     if (!response.ok) throw new Error('Distance API failed');
 
     const data = await response.json();
-    const dataKey = providerType === 'sitters' ? 'sitters' : 'groomers';
+    let dataKey = 'groomers';
+    if (providerType === 'sitters') dataKey = 'sitters';
+    if (providerType === 'breeders') dataKey = 'breeders';
     if (!data || data.success !== true || !Array.isArray(data[dataKey])) {
       throw new Error('Invalid distance response');
     }
@@ -115,8 +120,16 @@
     window.__petvetGroomerDistances = map;
 
     // Update distances based on provider type
-    const distanceSelector = providerType === 'sitters' ? '.sitter-distance[data-sitter-id]' : '.groomer-distance[data-groomer-id]';
-    const idAttribute = providerType === 'sitters' ? 'sitterId' : 'groomerId';
+    const distanceSelector = providerType === 'sitters'
+      ? '.sitter-distance[data-sitter-id]'
+      : providerType === 'breeders'
+        ? '.breeder-distance[data-breeder-id]'
+        : '.groomer-distance[data-groomer-id]';
+    const idAttribute = providerType === 'sitters'
+      ? 'sitterId'
+      : providerType === 'breeders'
+        ? 'breederId'
+        : 'groomerId';
     
     document
       .querySelectorAll(distanceSelector)
@@ -127,7 +140,11 @@
       });
 
     // Attach distance_km to cards for sorting
-    const cardSelector = providerType === 'sitters' ? '[data-sitter-id]' : '[data-groomer-id]';
+    const cardSelector = providerType === 'sitters'
+      ? '[data-sitter-id]'
+      : providerType === 'breeders'
+        ? '[data-breeder-id]'
+        : '[data-groomer-id]';
     document.querySelectorAll(cardSelector).forEach((card) => {
       const gid = String(card.dataset[idAttribute] || '').trim();
       if (!gid || gid === '0') return;
@@ -196,16 +213,26 @@
   function init() {
     const serviceType = getServiceType();
     
-    // Check for both groomers and sitters
+    // Check for groomers, sitters, breeders
     const groomerDistanceEls = Array.from(
       document.querySelectorAll('.groomer-distance[data-groomer-id]')
     );
     const sitterDistanceEls = Array.from(
       document.querySelectorAll('.sitter-distance[data-sitter-id]')
     );
+    const breederDistanceEls = Array.from(
+      document.querySelectorAll('.breeder-distance[data-breeder-id]')
+    );
     
-    const distanceEls = serviceType === 'sitters' ? sitterDistanceEls : groomerDistanceEls;
-    const providerType = serviceType === 'sitters' ? 'sitters' : 'groomers';
+    let distanceEls = groomerDistanceEls;
+    let providerType = 'groomers';
+    if (serviceType === 'sitters') {
+      distanceEls = sitterDistanceEls;
+      providerType = 'sitters';
+    } else if (serviceType === 'breeders') {
+      distanceEls = breederDistanceEls;
+      providerType = 'breeders';
+    }
 
     if (distanceEls.length === 0) {
       // Still allow A–Z sorting for non-groomer pages
@@ -217,7 +244,11 @@
     }
 
     // Always wire sort controls
-    const idAttribute = serviceType === 'sitters' ? 'sitterId' : 'groomerId';
+    const idAttribute = serviceType === 'sitters'
+      ? 'sitterId'
+      : serviceType === 'breeders'
+        ? 'breederId'
+        : 'groomerId';
     const providerIds = unique(
       distanceEls
         .map((el) => String(el.dataset[idAttribute] || '').trim())
@@ -227,20 +258,13 @@
 
     const mode = getSortMode();
 
-    // For sitters, only show distances, don't enable sorting by distance
-    if (serviceType === 'sitters') {
-      // Load distances for display only
+    // For sitters and breeders, only show distances, don't enable sorting by distance
+    if (serviceType === 'sitters' || serviceType === 'breeders') {
       if (navigator.geolocation && providerIds.length > 0) {
         ensureDistancesLoaded(providerIds, providerType, () => {});
       } else {
         clearLoaders();
       }
-      return;
-    }
-
-    // Sorting is only intended for groomers in this page.
-    if (serviceType !== 'groomers') {
-      clearLoaders();
       return;
     }
 

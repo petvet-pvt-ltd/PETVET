@@ -10,6 +10,7 @@ session_start();
 // }
 
 require_once __DIR__ . '/../../models/SharedAppointmentsModel.php';
+require_once __DIR__ . '/../../helpers/NotificationHelper.php';
 
 // Get JSON input
 $input = file_get_contents('php://input');
@@ -32,6 +33,9 @@ try {
     $result = $model->declineAppointment($appointmentId, $reason);
     
     if ($result) {
+        // Create notification for pet owner
+        NotificationHelper::createAppointmentNotification($appointmentId, 'declined', $reason);
+        
         echo json_encode([
             'success' => true,
             'message' => 'Appointment declined successfully',

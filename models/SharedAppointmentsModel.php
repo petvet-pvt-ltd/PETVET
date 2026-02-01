@@ -403,7 +403,7 @@ class SharedAppointmentsModel extends BaseModel {
                 UPDATE appointments 
                 SET status = 'declined', 
                     decline_reason = ? 
-                WHERE id = ? AND status = 'pending'
+                    WHERE id = ? AND status IN ('pending', 'approved', 'rescheduled')
             ");
             
             $stmt->execute([$reason, $appointmentId]);

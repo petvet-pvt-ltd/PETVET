@@ -29,13 +29,13 @@ class VetsModel extends BaseModel {
                  FROM appointments a 
                  WHERE a.vet_id = v.user_id 
                  AND a.appointment_date >= CURDATE() 
-                 AND a.status != 'cancelled'
+                 AND a.status NOT IN ('cancelled', 'completed', 'paid')
                 ) as next_appointment_date,
                 (SELECT MIN(a.appointment_time) 
                  FROM appointments a 
                  WHERE a.vet_id = v.user_id 
                  AND a.appointment_date >= CURDATE() 
-                 AND a.status != 'cancelled'
+                 AND a.status NOT IN ('cancelled', 'completed', 'paid')
                 ) as next_appointment_time
             FROM vets v
             JOIN users u ON v.user_id = u.id

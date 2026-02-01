@@ -1,6 +1,7 @@
 <?php
 require_once '../../config/connect.php';
 require_once '../../config/auth_helper.php';
+require_once '../../helpers/NotificationHelper.php';
 
 header('Content-Type: application/json');
 
@@ -51,6 +52,9 @@ try {
     $success = $stmt->execute([$appointmentId]);
     
     if ($success && $stmt->rowCount() > 0) {
+        // Create notification for pet owner
+        NotificationHelper::createAppointmentNotification($appointmentId, 'cancelled', $cancelReason);
+        
         echo json_encode([
             'success' => true,
             'message' => 'Appointment cancelled successfully'
