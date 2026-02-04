@@ -9,10 +9,25 @@ ini_set('display_errors', 0);
 
 header('Content-Type: application/json');
 
-// Check if user is logged in as pet owner
-$userRole = $_SESSION['current_role'] ?? $_SESSION['role'] ?? null;
-if (!isset($_SESSION['user_id']) || $userRole !== 'pet_owner') {
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
+    exit;
+}
+
+// Check if user has pet_owner role (for multi-role accounts)
+$db = db();
+$stmt = $db->prepare("
+    SELECT COUNT(*) as has_role 
+    FROM user_roles ur 
+    JOIN roles r ON ur.role_id = r.id 
+    WHERE ur.user_id = ? AND r.role_name = 'pet_owner' AND ur.is_active = 1
+");
+$stmt->execute([$_SESSION['user_id']]);
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$result || $result['has_role'] == 0) {
+    echo json_encode(['success' => false, 'message' => 'Pet owner role required']);
     exit;
 }
 

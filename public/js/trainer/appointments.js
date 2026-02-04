@@ -88,7 +88,7 @@ document.addEventListener('click', function(event) {
 
 // Confirmation Dialog Functions
 let pendingAction = null;
-let pendingBookingId = null;
+let pendingRequestId = null;
 
 function confirmAction(action, petName, bookingId) {
     const confirmModal = document.getElementById('confirmModal');
@@ -97,7 +97,7 @@ function confirmAction(action, petName, bookingId) {
     const confirmButton = document.getElementById('confirmButton');
     
     pendingAction = action;
-    pendingBookingId = bookingId;
+    pendingRequestId = bookingId;
     
     // Set modal content based on action
     if (action === 'accept') {
@@ -127,18 +127,18 @@ function closeConfirmModal() {
     confirmModal.classList.remove('active');
     document.body.classList.remove('modal-open');
     pendingAction = null;
-    pendingBookingId = null;
+    pendingRequestId = null;
 }
 
 function executeAction() {
-    if (!pendingAction || !pendingBookingId) return;
+    if (!pendingAction || !pendingRequestId) return;
     
     // Send AJAX request to controller
     const formData = new FormData();
     formData.append('action', pendingAction);
-    formData.append('booking_id', pendingBookingId);
+    formData.append('request_id', pendingRequestId);
     
-    fetch('/PETVET/index.php?module=sitter&action=handleBookingAction', {
+    fetch('/PETVET/index.php?module=trainer&page=appointments&action=handleTrainingAction', {
         method: 'POST',
         body: formData
     })

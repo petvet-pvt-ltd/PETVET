@@ -11,6 +11,14 @@ $GLOBALS['currentPage'] = 'services.php';
     <title>Services - PetVet</title>
     <link rel="stylesheet" href="/PETVET/public/css/shared/bookings.css">
     <link rel="stylesheet" href="/PETVET/public/css/pet-owner/services.css">
+
+    <!-- Leaflet (used for map location selection) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
 </head>
 <body>
     <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
@@ -905,6 +913,25 @@ $GLOBALS['currentPage'] = 'services.php';
             document.querySelectorAll('input[name="trainingType"]').forEach(radio => radio.checked = false);
             document.getElementById('bookingForm').reset();
             
+            // Add input listeners for submit button state
+            const formFields = document.querySelectorAll('#bookingForm input, #bookingForm select, #bookingForm textarea');
+            formFields.forEach(field => {
+                field.removeEventListener('input', updateSubmitButtonState);
+                field.removeEventListener('change', updateSubmitButtonState);
+                field.addEventListener('input', updateSubmitButtonState);
+                field.addEventListener('change', updateSubmitButtonState);
+            });
+            
+            // Reset submit button state
+            const submitBtn = document.getElementById('trainerSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.style.backgroundColor = '#ccc';
+            submitBtn.style.cursor = 'not-allowed';
+            isDateTimeValid = false;
+            
+            // Load owner name and pets
+            loadOwnerAndPets();
+            
             // Lock scroll and save position
             savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
             document.documentElement.style.overflow = 'hidden';
@@ -912,6 +939,203 @@ $GLOBALS['currentPage'] = 'services.php';
             document.body.style.position = 'relative';
             modal.classList.add('active');
             document.body.classList.add('modal-open');
+        }
+
+        // Load owner name and pets from API
+        let userPetsData = []; // Store pets data globally for breed auto-fill
+        
+        function loadOwnerAndPets() {
+            const ownerNameField = document.getElementById('ownerName');
+            const petNamesList = document.getElementById('petNamesList');
+            const petNameField = document.getElementById('petName');
+            const breedField = document.getElementById('dogBreed');
+            
+            // Show loading state
+            ownerNameField.value = 'Loading...';
+            
+            fetch('/PETVET/api/pet-owner/get-my-pets.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Set owner name
+                        ownerNameField.value = data.owner_name || '';
+                        
+                        // Store pets data for later use
+                        userPetsData = data.pets || [];
+                        
+                        // Populate pet names datalist
+                        petNamesList.innerHTML = '';
+                        if (data.pets && data.pets.length > 0) {
+                            data.pets.forEach(pet => {
+                                const option = document.createElement('option');
+                                option.value = pet.name;
+                                petNamesList.appendChild(option);
+                            });
+                        }
+                        
+                        // Add event listener to auto-fill breed when pet is selected
+                        petNameField.removeEventListener('input', handlePetNameChange);
+                        petNameField.addEventListener('input', handlePetNameChange);
+                    } else {
+                        ownerNameField.value = '';
+                        console.error('Failed to load owner data');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading owner and pets:', error);
+                    ownerNameField.value = '';
+                });
+        }
+        
+        // Handle pet name selection to auto-fill breed
+        function handlePetNameChange(e) {
+            const selectedPetName = e.target.value;
+            const breedField = document.getElementById('dogBreed');
+            
+            // Find the pet with matching name
+            const selectedPet = userPetsData.find(pet => pet.name === selectedPetName);
+            
+            if (selectedPet && selectedPet.breed) {
+                // Auto-fill breed field
+                breedField.value = selectedPet.breed;
+            }
+        }
+        
+        // Check trainer availability for selected date and time
+        let availabilityCheckTimeout = null;
+        let isDateTimeValid = false;
+        
+        function checkTrainerAvailability() {
+            // Clear previous timeout
+            if (availabilityCheckTimeout) {
+                clearTimeout(availabilityCheckTimeout);
+            }
+            
+            const dateField = document.getElementById('appointmentDate');
+            const timeField = document.getElementById('appointmentTime');
+            const dateMsg = document.getElementById('dateAvailabilityMsg');
+            const timeMsg = document.getElementById('timeAvailabilityMsg');
+            const locationField = document.getElementById('trainingLocation');
+            const submitBtn = document.getElementById('trainerSubmitBtn');
+            
+            // Reset messages and validity
+            dateMsg.style.display = 'none';
+            timeMsg.style.display = 'none';
+            dateField.setCustomValidity('');
+            timeField.setCustomValidity('');
+            isDateTimeValid = false;
+            updateSubmitButtonState();
+            
+            const date = dateField.value;
+            const time = timeField.value;
+            
+            // Need at least a date to check
+            if (!date || !currentTrainer) {
+                return;
+            }
+            
+            // If no time yet, enable time field but disable location
+            if (!time) {
+                timeField.disabled = false;
+                locationField.disabled = true;
+            }
+            
+            // Build API URL - only include time if it's selected
+            let apiUrl = `/PETVET/api/check-trainer-availability.php?trainer_id=${currentTrainer.id}&date=${date}`;
+            if (time) {
+                apiUrl += `&time=${time}`;
+            }
+            
+            console.log('Checking availability:', apiUrl);
+            
+            // Disable next fields during check
+            locationField.disabled = true;
+            
+            // Debounce the API call
+            availabilityCheckTimeout = setTimeout(() => {
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Availability response:', data);
+                        
+                        if (data.success) {
+                            if (!data.available) {
+                                // Check if it's a full day block or specific issue
+                                const isFullDayBlock = data.message.includes('unavailable on this date') || 
+                                                      data.message.includes('not available on');
+                                
+                                if (isFullDayBlock) {
+                                    // Show error on date field
+                                    dateMsg.textContent = data.message;
+                                    dateMsg.style.display = 'block';
+                                    dateField.setCustomValidity(data.message);
+                                    
+                                    // Disable time and location fields
+                                    timeField.disabled = true;
+                                    timeField.value = '';
+                                    locationField.disabled = true;
+                                    
+                                    // Focus back to date field
+                                    dateField.focus();
+                                } else if (time) {
+                                    // Time-specific issue - show on time field
+                                    timeMsg.textContent = data.message;
+                                    timeMsg.style.display = 'block';
+                                    timeField.setCustomValidity(data.message);
+                                    
+                                    // Keep location field disabled
+                                    locationField.disabled = true;
+                                    
+                                    // Focus back to time field
+                                    timeField.focus();
+                                } else {
+                                    // Date is problematic for default time, enable time selection
+                                    timeField.disabled = false;
+                                }
+                                isDateTimeValid = false;
+                            } else {
+                                // Available
+                                dateField.setCustomValidity('');
+                                timeField.setCustomValidity('');
+                                timeField.disabled = false;
+                                
+                                // Only enable location if time is also selected
+                                if (time) {
+                                    locationField.disabled = false;
+                                    dateMsg.style.display = 'none';
+                                    timeMsg.style.display = 'none';
+                                    isDateTimeValid = true;
+                                }
+                            }
+                        }
+                        updateSubmitButtonState();
+                    })
+                    .catch(error => {
+                        console.error('Availability check error:', error);
+                        // Enable fields on error to not block user
+                        timeField.disabled = false;
+                        locationField.disabled = false;
+                    });
+            }, 500); // Wait 500ms after user stops typing
+        }
+        
+        // Update submit button state based on form validity
+        function updateSubmitButtonState() {
+            const submitBtn = document.getElementById('trainerSubmitBtn');
+            const form = document.getElementById('bookingForm');
+            
+            // Check if all required fields are filled and date/time are valid
+            const allFieldsFilled = form.checkValidity() && isDateTimeValid;
+            
+            if (allFieldsFilled) {
+                submitBtn.disabled = false;
+                submitBtn.style.backgroundColor = '';
+                submitBtn.style.cursor = '';
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.style.backgroundColor = '#ccc';
+                submitBtn.style.cursor = 'not-allowed';
+            }
         }
 
         function closeTrainerDetails() {
@@ -935,11 +1159,200 @@ $GLOBALS['currentPage'] = 'services.php';
             }
         }
 
+        // Leaflet map location pickers (Trainer + Sitter)
+        const SL_DEFAULT_LAT = 6.9271;
+        const SL_DEFAULT_LNG = 79.8612;
+
+        async function reverseGeocodeForLocation(lat, lng) {
+            try {
+                const url = `/PETVET/api/pet-owner/reverse-geocode.php?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
+                const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                if (!response.ok) return null;
+                const data = await response.json();
+                if (!data || data.success !== true) return null;
+
+                return {
+                    location: data.location || data.full_address || `Lat: ${Number(lat).toFixed(6)}, Lng: ${Number(lng).toFixed(6)}`,
+                    district: data.district || null
+                };
+            } catch (e) {
+                console.error('Reverse geocode failed:', e);
+                return null;
+            }
+        }
+
+        function setDistrictAuto(selectEl, rowEl, msgEl, districtName) {
+            if (!selectEl || !rowEl) return false;
+
+            rowEl.style.display = 'flex';
+            if (msgEl) msgEl.style.display = 'none';
+
+            if (!districtName) {
+                selectEl.required = true;
+                selectEl.style.pointerEvents = 'auto';
+                selectEl.style.backgroundColor = '';
+                if (msgEl) {
+                    msgEl.textContent = 'Could not detect district automatically. Please select your district.';
+                    msgEl.style.display = 'block';
+                }
+                return false;
+            }
+
+            const district = String(districtName).trim();
+            // Try exact value match
+            let matched = false;
+            for (const opt of Array.from(selectEl.options)) {
+                if (String(opt.value).trim().toLowerCase() === district.toLowerCase()) {
+                    selectEl.value = opt.value;
+                    matched = true;
+                    break;
+                }
+            }
+
+            if (!matched) {
+                // If missing (unexpected district string), add it to keep auto working.
+                const opt = document.createElement('option');
+                opt.value = district;
+                opt.textContent = district;
+                selectEl.appendChild(opt);
+                selectEl.value = district;
+            }
+
+            selectEl.required = true;
+            // "Readonly" feel while still submitting value
+            selectEl.style.pointerEvents = 'none';
+            selectEl.style.backgroundColor = '#f5f5f5';
+            return true;
+        }
+
+        // Trainer map state
+        let trainerMap = null;
+        let trainerMarker = null;
+        let trainerLastMapInteractionAt = 0;
+
+        function initTrainerLocationMap() {
+            const container = document.getElementById('trainerMapContainer');
+            if (!container) return;
+            if (typeof L === 'undefined') {
+                console.error('Leaflet is not loaded (L is undefined)');
+                return;
+            }
+
+            if (!trainerMap) {
+                const latInput = document.getElementById('trainerLocationLat');
+                const lngInput = document.getElementById('trainerLocationLng');
+                const displayInput = document.getElementById('trainerLocationDisplay');
+                const districtRow = document.getElementById('trainerDistrictRow');
+                const districtSelect = document.getElementById('locationDistrict');
+                const districtMsg = document.getElementById('trainerDistrictMsg');
+
+                const centerLat = parseFloat(latInput?.value) || SL_DEFAULT_LAT;
+                const centerLng = parseFloat(lngInput?.value) || SL_DEFAULT_LNG;
+
+                trainerMap = L.map('trainerMapContainer').setView([centerLat, centerLng], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    maxZoom: 19
+                }).addTo(trainerMap);
+
+                const markInteraction = () => { trainerLastMapInteractionAt = Date.now(); };
+                trainerMap.on('dragstart', markInteraction);
+                trainerMap.on('dragend', markInteraction);
+                trainerMap.on('zoomstart', markInteraction);
+                trainerMap.on('zoomend', markInteraction);
+                trainerMap.on('movestart', markInteraction);
+                trainerMap.on('moveend', markInteraction);
+
+                async function applyTrainerLocation(lat, lng, shouldCenter = true) {
+                    if (!latInput || !lngInput || !displayInput) return;
+                    latInput.value = Number(lat).toFixed(6);
+                    lngInput.value = Number(lng).toFixed(6);
+
+                    if (trainerMarker) {
+                        trainerMarker.setLatLng([lat, lng]);
+                    } else {
+                        trainerMarker = L.marker([lat, lng]).addTo(trainerMap);
+                    }
+
+                    if (shouldCenter) {
+                        trainerMap.setView([lat, lng], Math.max(trainerMap.getZoom() || 13, 15));
+                    }
+
+                    // Always mark the location field as filled (required gating)
+                    const geo = await reverseGeocodeForLocation(lat, lng);
+                    displayInput.value = (geo && geo.location) ? geo.location : `Lat: ${Number(lat).toFixed(6)}, Lng: ${Number(lng).toFixed(6)}`;
+
+                    // Show and auto-set district (or allow manual fallback)
+                    setDistrictAuto(districtSelect, districtRow, districtMsg, geo ? geo.district : null);
+
+                    // Update submit button state
+                    updateSubmitButtonState();
+                }
+
+                // Existing values
+                if (latInput?.value && lngInput?.value) {
+                    const lat = parseFloat(latInput.value);
+                    const lng = parseFloat(lngInput.value);
+                    applyTrainerLocation(lat, lng, false);
+                }
+
+                trainerMap.on('click', async function(e) {
+                    if (Date.now() - trainerLastMapInteractionAt < 450) return;
+                    e.originalEvent.preventDefault();
+                    e.originalEvent.stopPropagation();
+                    await applyTrainerLocation(e.latlng.lat, e.latlng.lng, false);
+                });
+
+                const useBtn = document.getElementById('trainerUseMyLocationBtn');
+                if (useBtn) {
+                    useBtn.addEventListener('click', (ev) => {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+
+                        if (!navigator.geolocation) {
+                            alert('Geolocation is not supported by your browser.');
+                            return;
+                        }
+
+                        useBtn.disabled = true;
+                        const oldText = useBtn.textContent;
+                        useBtn.textContent = 'Getting location...';
+
+                        navigator.geolocation.getCurrentPosition(
+                            async (pos) => {
+                                const lat = pos.coords.latitude;
+                                const lng = pos.coords.longitude;
+                                await applyTrainerLocation(lat, lng, true);
+                                useBtn.disabled = false;
+                                useBtn.textContent = oldText;
+                            },
+                            (err) => {
+                                console.error('Geolocation error:', err);
+                                alert('Unable to get your current location. Please click on the map to select.');
+                                useBtn.disabled = false;
+                                useBtn.textContent = oldText;
+                            },
+                            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+                        );
+                    });
+                }
+            }
+
+            // If container was hidden (modal), invalidate size so tiles render correctly
+            setTimeout(() => {
+                if (trainerMap) trainerMap.invalidateSize();
+            }, 120);
+        }
+
         function toggleLocationFields() {
             const locationSelect = document.getElementById('trainingLocation');
             const additionalFields = document.getElementById('additionalLocationFields');
             const districtField = document.getElementById('locationDistrict');
-            const mapField = document.getElementById('googleMapLocation');
+            const districtRow = document.getElementById('trainerDistrictRow');
+            const districtMsg = document.getElementById('trainerDistrictMsg');
+            const mapDisplayField = document.getElementById('trainerLocationDisplay');
+            const latField = document.getElementById('trainerLocationLat');
+            const lngField = document.getElementById('trainerLocationLng');
             
             // Show additional fields for: home, park, or other
             // Hide for: trainer's location
@@ -947,22 +1360,66 @@ $GLOBALS['currentPage'] = 'services.php';
             
             if (showFields) {
                 additionalFields.style.display = 'block';
-                // Make fields required
-                districtField.required = true;
-                mapField.required = true;
+
+                // Map location must be selected; district becomes required after we select a point
+                if (mapDisplayField) mapDisplayField.required = true;
+                if (districtField) districtField.required = false;
+
+                // Reset district UI until a point is selected
+                if (districtRow) districtRow.style.display = 'none';
+                if (districtMsg) districtMsg.style.display = 'none';
+                if (districtField) {
+                    districtField.style.pointerEvents = 'none';
+                    districtField.style.backgroundColor = '#f5f5f5';
+                }
+
+                // Init map after showing section
+                initTrainerLocationMap();
             } else {
                 additionalFields.style.display = 'none';
                 // Remove required attribute
-                districtField.required = false;
-                mapField.required = false;
+                if (mapDisplayField) mapDisplayField.required = false;
+                if (districtField) districtField.required = false;
+
                 // Clear values
-                districtField.value = '';
-                mapField.value = '';
+                if (districtField) districtField.value = '';
+                if (mapDisplayField) mapDisplayField.value = '';
+                if (latField) latField.value = '';
+                if (lngField) lngField.value = '';
+                if (districtRow) districtRow.style.display = 'none';
+                if (districtMsg) districtMsg.style.display = 'none';
+                if (districtField) {
+                    districtField.style.pointerEvents = 'none';
+                    districtField.style.backgroundColor = '#f5f5f5';
+                }
+
+                // Keep marker on map (if any) but do not block form when hidden
             }
+
+            updateSubmitButtonState();
         }
 
-        function submitTrainerAppointment(event) {
+        async function submitTrainerAppointment(event) {
             event.preventDefault();
+            
+            // Check availability one more time before submitting
+            const date = document.getElementById('appointmentDate').value;
+            const time = document.getElementById('appointmentTime').value;
+            
+            try {
+                let url = `/PETVET/api/check-trainer-availability.php?trainer_id=${currentTrainer.id}&date=${encodeURIComponent(date)}`;
+                if (time) url += `&time=${encodeURIComponent(time)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success && !data.available) {
+                    alert(data.message + '\n\nPlease select a different date or time.');
+                    document.getElementById('appointmentTime').focus();
+                    return false;
+                }
+            } catch (error) {
+                console.error('Final availability check failed:', error);
+            }
             
             // Gather form data
             pendingAppointmentData = {
@@ -981,7 +1438,9 @@ $GLOBALS['currentPage'] = 'services.php';
             // Add location details if applicable
             if (['home', 'park', 'other'].includes(pendingAppointmentData.trainingLocation)) {
                 pendingAppointmentData.locationDistrict = document.getElementById('locationDistrict').value;
-                pendingAppointmentData.googleMapLocation = document.getElementById('googleMapLocation').value;
+                pendingAppointmentData.mapLocation = document.getElementById('trainerLocationDisplay').value;
+                pendingAppointmentData.mapLat = document.getElementById('trainerLocationLat').value;
+                pendingAppointmentData.mapLng = document.getElementById('trainerLocationLng').value;
             }
             
             // Show confirmation dialog
@@ -1039,6 +1498,15 @@ $GLOBALS['currentPage'] = 'services.php';
                     </div>
                 `;
             }
+
+            if (pendingAppointmentData.mapLocation) {
+                detailsHTML += `
+                    <div class="detail-item">
+                        <span class="detail-label">Map Location:</span>
+                        <span class="detail-value">${pendingAppointmentData.mapLocation}</span>
+                    </div>
+                `;
+            }
             
             detailsDiv.innerHTML = detailsHTML;
             
@@ -1053,17 +1521,37 @@ $GLOBALS['currentPage'] = 'services.php';
         }
 
         function confirmBooking() {
-            // Here you would send the data to the server
-            console.log('Confirmed Appointment Data:', pendingAppointmentData);
-            
-            // Close both modals
-            closeConfirmation();
-            closeTrainerDetails();
-            
-            // Show success message (you can replace this with a better notification)
-            alert('Appointment booked successfully!\n\nYou will receive a confirmation email shortly.');
-            
-            pendingAppointmentData = null;
+            if (!pendingAppointmentData) return;
+
+            // Persist the request so it appears on trainer's Pending appointments
+            fetch('/PETVET/api/pet-owner/create-training-request.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(pendingAppointmentData)
+            })
+            .then(async (res) => {
+                const data = await res.json().catch(() => null);
+                if (!res.ok || !data || data.success !== true) {
+                    const msg = (data && data.message) ? data.message : 'Failed to submit booking. Please try again.';
+                    throw new Error(msg);
+                }
+                return data;
+            })
+            .then(() => {
+                // Close both modals
+                closeConfirmation();
+                closeTrainerDetails();
+
+                alert('Appointment request submitted successfully!\n\nThe trainer will review it under Pending appointments.');
+                pendingAppointmentData = null;
+            })
+            .catch((err) => {
+                console.error('Booking submit failed:', err);
+                alert((err && err.message) ? err.message : 'Failed to submit booking. Please try again.');
+            });
         }
 
         function formatDate(dateString) {
@@ -1218,21 +1706,145 @@ $GLOBALS['currentPage'] = 'services.php';
             const location = document.getElementById('sitterLocation').value;
             const additionalFields = document.getElementById('sitterAdditionalLocationFields');
             const districtField = document.getElementById('sitterDistrict');
-            const mapField = document.getElementById('sitterMapLocation');
+            const districtRow = document.getElementById('sitterDistrictRow');
+            const districtMsg = document.getElementById('sitterDistrictMsg');
+            const mapDisplayField = document.getElementById('sitterLocationDisplay');
+            const latField = document.getElementById('sitterLocationLat');
+            const lngField = document.getElementById('sitterLocationLng');
             
             const showFields = ['my-home', 'park', 'other'].includes(location);
             
             if (showFields) {
                 additionalFields.style.display = 'block';
-                districtField.required = true;
-                mapField.required = true;
+                if (mapDisplayField) mapDisplayField.required = true;
+                if (districtField) districtField.required = false;
+                if (districtRow) districtRow.style.display = 'none';
+                if (districtMsg) districtMsg.style.display = 'none';
+                if (districtField) {
+                    districtField.style.pointerEvents = 'none';
+                    districtField.style.backgroundColor = '#f5f5f5';
+                }
+                initSitterLocationMap();
             } else {
                 additionalFields.style.display = 'none';
-                districtField.required = false;
-                mapField.required = false;
-                districtField.value = '';
-                mapField.value = '';
+                if (mapDisplayField) mapDisplayField.required = false;
+                if (districtField) districtField.required = false;
+                if (districtField) districtField.value = '';
+                if (mapDisplayField) mapDisplayField.value = '';
+                if (latField) latField.value = '';
+                if (lngField) lngField.value = '';
+                if (districtRow) districtRow.style.display = 'none';
+                if (districtMsg) districtMsg.style.display = 'none';
+                if (districtField) {
+                    districtField.style.pointerEvents = 'none';
+                    districtField.style.backgroundColor = '#f5f5f5';
+                }
             }
+        }
+
+        // Sitter map state
+        let sitterMap = null;
+        let sitterMarker = null;
+        let sitterLastMapInteractionAt = 0;
+
+        function initSitterLocationMap() {
+            const container = document.getElementById('sitterLeafletMapContainer');
+            if (!container) return;
+            if (typeof L === 'undefined') {
+                console.error('Leaflet is not loaded (L is undefined)');
+                return;
+            }
+
+            if (!sitterMap) {
+                const latInput = document.getElementById('sitterLocationLat');
+                const lngInput = document.getElementById('sitterLocationLng');
+                const displayInput = document.getElementById('sitterLocationDisplay');
+                const districtRow = document.getElementById('sitterDistrictRow');
+                const districtSelect = document.getElementById('sitterDistrict');
+                const districtMsg = document.getElementById('sitterDistrictMsg');
+
+                const centerLat = parseFloat(latInput?.value) || SL_DEFAULT_LAT;
+                const centerLng = parseFloat(lngInput?.value) || SL_DEFAULT_LNG;
+
+                sitterMap = L.map('sitterLeafletMapContainer').setView([centerLat, centerLng], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    maxZoom: 19
+                }).addTo(sitterMap);
+
+                const markInteraction = () => { sitterLastMapInteractionAt = Date.now(); };
+                sitterMap.on('dragstart', markInteraction);
+                sitterMap.on('dragend', markInteraction);
+                sitterMap.on('zoomstart', markInteraction);
+                sitterMap.on('zoomend', markInteraction);
+                sitterMap.on('movestart', markInteraction);
+                sitterMap.on('moveend', markInteraction);
+
+                async function applySitterLocation(lat, lng, shouldCenter = true) {
+                    if (!latInput || !lngInput || !displayInput) return;
+                    latInput.value = Number(lat).toFixed(6);
+                    lngInput.value = Number(lng).toFixed(6);
+
+                    if (sitterMarker) {
+                        sitterMarker.setLatLng([lat, lng]);
+                    } else {
+                        sitterMarker = L.marker([lat, lng]).addTo(sitterMap);
+                    }
+
+                    if (shouldCenter) {
+                        sitterMap.setView([lat, lng], Math.max(sitterMap.getZoom() || 13, 15));
+                    }
+
+                    const geo = await reverseGeocodeForLocation(lat, lng);
+                    displayInput.value = (geo && geo.location) ? geo.location : `Lat: ${Number(lat).toFixed(6)}, Lng: ${Number(lng).toFixed(6)}`;
+                    setDistrictAuto(districtSelect, districtRow, districtMsg, geo ? geo.district : null);
+                }
+
+                sitterMap.on('click', async function(e) {
+                    if (Date.now() - sitterLastMapInteractionAt < 450) return;
+                    e.originalEvent.preventDefault();
+                    e.originalEvent.stopPropagation();
+                    await applySitterLocation(e.latlng.lat, e.latlng.lng, false);
+                });
+
+                const useBtn = document.getElementById('sitterUseMyLocationBtn');
+                if (useBtn) {
+                    useBtn.addEventListener('click', (ev) => {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+
+                        if (!navigator.geolocation) {
+                            alert('Geolocation is not supported by your browser.');
+                            return;
+                        }
+
+                        useBtn.disabled = true;
+                        const oldText = useBtn.textContent;
+                        useBtn.textContent = 'Getting location...';
+
+                        navigator.geolocation.getCurrentPosition(
+                            async (pos) => {
+                                const lat = pos.coords.latitude;
+                                const lng = pos.coords.longitude;
+                                await applySitterLocation(lat, lng, true);
+                                useBtn.disabled = false;
+                                useBtn.textContent = oldText;
+                            },
+                            (err) => {
+                                console.error('Geolocation error:', err);
+                                alert('Unable to get your current location. Please click on the map to select.');
+                                useBtn.disabled = false;
+                                useBtn.textContent = oldText;
+                            },
+                            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+                        );
+                    });
+                }
+            }
+
+            setTimeout(() => {
+                if (sitterMap) sitterMap.invalidateSize();
+            }, 120);
         }
 
         function submitSitterBooking(event) {
@@ -1266,7 +1878,9 @@ $GLOBALS['currentPage'] = 'services.php';
             
             if (['my-home', 'park', 'other'].includes(pendingSitterBookingData.location)) {
                 pendingSitterBookingData.district = document.getElementById('sitterDistrict').value;
-                pendingSitterBookingData.mapLocation = document.getElementById('sitterMapLocation').value;
+                pendingSitterBookingData.mapLocation = document.getElementById('sitterLocationDisplay').value;
+                pendingSitterBookingData.mapLat = document.getElementById('sitterLocationLat').value;
+                pendingSitterBookingData.mapLng = document.getElementById('sitterLocationLng').value;
             }
             
             showSitterConfirmation();
@@ -1334,6 +1948,15 @@ $GLOBALS['currentPage'] = 'services.php';
                     <div class="detail-item">
                         <span class="detail-label">District:</span>
                         <span class="detail-value">${pendingSitterBookingData.district}</span>
+                    </div>
+                `;
+            }
+
+            if (pendingSitterBookingData.mapLocation) {
+                detailsHTML += `
+                    <div class="detail-item">
+                        <span class="detail-label">Map Location:</span>
+                        <span class="detail-value">${pendingSitterBookingData.mapLocation}</span>
                     </div>
                 `;
             }
@@ -1560,10 +2183,30 @@ $GLOBALS['currentPage'] = 'services.php';
                     </div>
 
                     <form id="bookingForm" onsubmit="submitTrainerAppointment(event)">
+                        <div class="form-group">
+                            <label for="ownerName">Owner Name *</label>
+                            <input type="text" 
+                                   id="ownerName" 
+                                   name="ownerName" 
+                                   required 
+                                   readonly 
+                                   style="background-color: #f5f5f5; cursor: not-allowed;" 
+                                   placeholder="Loading...">
+                        </div>
+
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="petName">Pet Name *</label>
-                                <input type="text" id="petName" name="petName" required placeholder="Enter your pet's name">
+                                <input type="text" 
+                                       id="petName" 
+                                       name="petName" 
+                                       list="petNamesList" 
+                                       required 
+                                       placeholder="Select or type pet name" 
+                                       autocomplete="off">
+                                <datalist id="petNamesList">
+                                    <!-- Pet names will be loaded dynamically -->
+                                </datalist>
                             </div>
 
                             <div class="form-group">
@@ -1575,12 +2218,24 @@ $GLOBALS['currentPage'] = 'services.php';
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="appointmentDate">Appointment Date *</label>
-                                <input type="date" id="appointmentDate" name="appointmentDate" required min="<?= date('Y-m-d') ?>">
+                                <input type="date" 
+                                       id="appointmentDate" 
+                                       name="appointmentDate" 
+                                       required 
+                                       min="<?= date('Y-m-d') ?>"
+                                       onchange="checkTrainerAvailability()">
+                                <small id="dateAvailabilityMsg" style="display:none; color: #e74c3c; margin-top: 4px; font-size: 12px;"></small>
                             </div>
 
                             <div class="form-group">
                                 <label for="appointmentTime">Appointment Time *</label>
-                                <input type="time" id="appointmentTime" name="appointmentTime" required>
+                                <input type="time" 
+                                       id="appointmentTime" 
+                                       name="appointmentTime" 
+                                       required
+                                       disabled
+                                       onchange="checkTrainerAvailability()">
+                                <small id="timeAvailabilityMsg" style="display:none; color: #e74c3c; margin-top: 4px; font-size: 12px;"></small>
                             </div>
                         </div>
 
@@ -1597,46 +2252,58 @@ $GLOBALS['currentPage'] = 'services.php';
 
                         <!-- Additional Location Fields (Shown conditionally) -->
                         <div id="additionalLocationFields" class="additional-location-fields" style="display: none;">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="locationDistrict">District *</label>
-                                    <select id="locationDistrict" name="locationDistrict">
-                                        <option value="">Select district</option>
-                                        <option value="Colombo">Colombo</option>
-                                        <option value="Gampaha">Gampaha</option>
-                                        <option value="Kalutara">Kalutara</option>
-                                        <option value="Kandy">Kandy</option>
-                                        <option value="Matale">Matale</option>
-                                        <option value="Nuwara Eliya">Nuwara Eliya</option>
-                                        <option value="Galle">Galle</option>
-                                        <option value="Matara">Matara</option>
-                                        <option value="Hambantota">Hambantota</option>
-                                        <option value="Jaffna">Jaffna</option>
-                                        <option value="Kilinochchi">Kilinochchi</option>
-                                        <option value="Mannar">Mannar</option>
-                                        <option value="Vavuniya">Vavuniya</option>
-                                        <option value="Mullaitivu">Mullaitivu</option>
-                                        <option value="Batticaloa">Batticaloa</option>
-                                        <option value="Ampara">Ampara</option>
-                                        <option value="Trincomalee">Trincomalee</option>
-                                        <option value="Kurunegala">Kurunegala</option>
-                                        <option value="Puttalam">Puttalam</option>
-                                        <option value="Anuradhapura">Anuradhapura</option>
-                                        <option value="Polonnaruwa">Polonnaruwa</option>
-                                        <option value="Badulla">Badulla</option>
-                                        <option value="Moneragala">Moneragala</option>
-                                        <option value="Ratnapura">Ratnapura</option>
-                                        <option value="Kegalle">Kegalle</option>
-                                    </select>
+                            <div class="form-group">
+                                <label for="trainerLocationDisplay">Map Location *</label>
+                                <div style="display:flex; gap:10px; align-items:center; margin: 6px 0 10px;">
+                                    <button type="button" class="btn outline" id="trainerUseMyLocationBtn">Use My Current Location</button>
+                                    <small style="color: #6b7280;">Or click on the map to pick a point</small>
                                 </div>
 
+                                <div id="trainerMapContainer" style="height: 220px; width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid #e5e7eb;"></div>
+
+                                <input type="text"
+                                       id="trainerLocationDisplay"
+                                       name="trainerLocationDisplay"
+                                       required
+                                       readonly
+                                       style="background-color: #f5f5f5; cursor: not-allowed; margin-top: 10px;"
+                                       placeholder="Select a location on the map or use your current location">
+                                <input type="hidden" id="trainerLocationLat" name="trainerLocationLat">
+                                <input type="hidden" id="trainerLocationLng" name="trainerLocationLng">
+                            </div>
+
+                            <div class="form-row" id="trainerDistrictRow" style="display:none;">
                                 <div class="form-group">
-                                    <label for="googleMapLocation">Google Map Location *</label>
-                                    <input type="url" 
-                                           id="googleMapLocation" 
-                                           name="googleMapLocation" 
-                                           placeholder="Paste Google Maps link here"
-                                           title="Please provide a valid Google Maps URL">
+                                    <label for="locationDistrict">District *</label>
+                                    <select id="locationDistrict" name="locationDistrict" style="pointer-events: none; background-color: #f5f5f5;">
+                                        <option value="">Select district</option>
+                                        <option value="Ampara">Ampara</option>
+                                        <option value="Anuradhapura">Anuradhapura</option>
+                                        <option value="Badulla">Badulla</option>
+                                        <option value="Batticaloa">Batticaloa</option>
+                                        <option value="Colombo">Colombo</option>
+                                        <option value="Galle">Galle</option>
+                                        <option value="Gampaha">Gampaha</option>
+                                        <option value="Hambantota">Hambantota</option>
+                                        <option value="Jaffna">Jaffna</option>
+                                        <option value="Kalutara">Kalutara</option>
+                                        <option value="Kandy">Kandy</option>
+                                        <option value="Kegalle">Kegalle</option>
+                                        <option value="Kilinochchi">Kilinochchi</option>
+                                        <option value="Kurunegala">Kurunegala</option>
+                                        <option value="Mannar">Mannar</option>
+                                        <option value="Matale">Matale</option>
+                                        <option value="Matara">Matara</option>
+                                        <option value="Monaragala">Monaragala</option>
+                                        <option value="Mullaitivu">Mullaitivu</option>
+                                        <option value="Nuwara Eliya">Nuwara Eliya</option>
+                                        <option value="Polonnaruwa">Polonnaruwa</option>
+                                        <option value="Puttalam">Puttalam</option>
+                                        <option value="Ratnapura">Ratnapura</option>
+                                        <option value="Trincomalee">Trincomalee</option>
+                                        <option value="Vavuniya">Vavuniya</option>
+                                    </select>
+                                    <small id="trainerDistrictMsg" style="display:none; color:#6b7280; margin-top: 4px; font-size: 12px;"></small>
                                 </div>
                             </div>
                         </div>
@@ -1651,7 +2318,7 @@ $GLOBALS['currentPage'] = 'services.php';
 
                         <div class="form-actions">
                             <button type="button" class="btn outline" onclick="closeTrainerDetails()">Cancel</button>
-                            <button type="submit" class="btn primary">Book Appointment</button>
+                            <button type="submit" id="trainerSubmitBtn" class="btn primary" disabled style="background-color: #ccc; cursor: not-allowed;">Book Appointment</button>
                         </div>
                     </form>
                 </div>
@@ -1803,26 +2470,58 @@ $GLOBALS['currentPage'] = 'services.php';
 
                     <!-- Additional Location Fields -->
                     <div id="sitterAdditionalLocationFields" class="additional-location-fields" style="display: none;">
-                        <div class="form-row">
+                        <div class="form-group">
+                            <label for="sitterLocationDisplay">Map Location *</label>
+                            <div style="display:flex; gap:10px; align-items:center; margin: 6px 0 10px;">
+                                <button type="button" class="btn outline" id="sitterUseMyLocationBtn">Use My Current Location</button>
+                                <small style="color: #6b7280;">Or click on the map to pick a point</small>
+                            </div>
+
+                            <div id="sitterLeafletMapContainer" style="height: 220px; width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid #e5e7eb;"></div>
+
+                            <input type="text"
+                                   id="sitterLocationDisplay"
+                                   name="sitterLocationDisplay"
+                                   required
+                                   readonly
+                                   style="background-color: #f5f5f5; cursor: not-allowed; margin-top: 10px;"
+                                   placeholder="Select a location on the map or use your current location">
+                            <input type="hidden" id="sitterLocationLat" name="sitterLocationLat">
+                            <input type="hidden" id="sitterLocationLng" name="sitterLocationLng">
+                        </div>
+
+                        <div class="form-row" id="sitterDistrictRow" style="display:none;">
                             <div class="form-group">
                                 <label for="sitterDistrict">District *</label>
-                                <select id="sitterDistrict" name="sitterDistrict">
+                                <select id="sitterDistrict" name="sitterDistrict" style="pointer-events: none; background-color: #f5f5f5;">
                                     <option value="">Select district</option>
+                                    <option value="Ampara">Ampara</option>
+                                    <option value="Anuradhapura">Anuradhapura</option>
+                                    <option value="Badulla">Badulla</option>
+                                    <option value="Batticaloa">Batticaloa</option>
                                     <option value="Colombo">Colombo</option>
+                                    <option value="Galle">Galle</option>
                                     <option value="Gampaha">Gampaha</option>
+                                    <option value="Hambantota">Hambantota</option>
+                                    <option value="Jaffna">Jaffna</option>
                                     <option value="Kalutara">Kalutara</option>
                                     <option value="Kandy">Kandy</option>
-                                    <option value="Galle">Galle</option>
+                                    <option value="Kegalle">Kegalle</option>
+                                    <option value="Kilinochchi">Kilinochchi</option>
+                                    <option value="Kurunegala">Kurunegala</option>
+                                    <option value="Mannar">Mannar</option>
+                                    <option value="Matale">Matale</option>
                                     <option value="Matara">Matara</option>
-                                    <option value="Negombo">Negombo</option>
+                                    <option value="Monaragala">Monaragala</option>
+                                    <option value="Mullaitivu">Mullaitivu</option>
+                                    <option value="Nuwara Eliya">Nuwara Eliya</option>
+                                    <option value="Polonnaruwa">Polonnaruwa</option>
+                                    <option value="Puttalam">Puttalam</option>
+                                    <option value="Ratnapura">Ratnapura</option>
+                                    <option value="Trincomalee">Trincomalee</option>
+                                    <option value="Vavuniya">Vavuniya</option>
                                 </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="sitterMapLocation">Google Map Location *</label>
-                                <input type="url" 
-                                       id="sitterMapLocation" 
-                                       name="sitterMapLocation" 
-                                       placeholder="Paste Google Maps link here">
+                                <small id="sitterDistrictMsg" style="display:none; color:#6b7280; margin-top: 4px; font-size: 12px;"></small>
                             </div>
                         </div>
                     </div>
