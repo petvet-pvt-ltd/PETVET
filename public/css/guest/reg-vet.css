@@ -125,7 +125,8 @@ form input {
   transition: border 0.2s ease;
 }
 
-form div {
+/* Apply spacing only to the immediate field rows, not nested UI (e.g., clinic selector) */
+form .form-step > div {
   margin-bottom: 18px;
   position: relative;
 }
@@ -138,6 +139,13 @@ form div {
   display: block;
   margin-top: 4px;
   min-height: 18px;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #6b7280;
 }
 
 form input:focus {

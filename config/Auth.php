@@ -170,9 +170,22 @@ class Auth {
             $roles = $stmt->fetchAll();
             
             if (empty($roles)) {
+                // Determine which approval message to show
+                $pendingStmt = $this->db->prepare("
+                    SELECT r.role_name
+                    FROM user_roles ur
+                    JOIN roles r ON r.id = ur.role_id
+                    WHERE ur.user_id = ? AND ur.is_active = 1 AND ur.verification_status = 'pending'
+                ");
+                $pendingStmt->execute([$user['id']]);
+                $pendingRoleNames = $pendingStmt->fetchAll(PDO::FETCH_COLUMN);
+                $isVetPending = in_array('vet', $pendingRoleNames ?? [], true);
+
                 return [
                     'success' => false, 
-                    'message' => 'Your account is pending verification. Please wait for admin approval.'
+                    'message' => $isVetPending
+                        ? "Your account is pending verification. Please wait for the clinic manager's approval."
+                        : 'Your account is pending verification. Please wait for admin approval.'
                 ];
             }
             

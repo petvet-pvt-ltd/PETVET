@@ -37,9 +37,12 @@ class VetsModel extends BaseModel {
                  AND a.appointment_date >= CURDATE() 
                  AND a.status NOT IN ('cancelled', 'completed', 'paid')
                 ) as next_appointment_time
-            FROM vets v
-            JOIN users u ON v.user_id = u.id
-            WHERE v.clinic_id = :clinic_id
+                        FROM vets v
+                        JOIN users u ON v.user_id = u.id
+                        JOIN user_roles ur ON ur.user_id = u.id AND ur.is_active = 1
+                        JOIN roles r ON r.id = ur.role_id AND r.role_name = 'vet'
+                        WHERE v.clinic_id = :clinic_id
+                            AND ur.verification_status = 'approved'
             ORDER BY u.first_name, u.last_name ASC
         ";
         
@@ -84,52 +87,70 @@ class VetsModel extends BaseModel {
      * @return array - Array of pending requests
      */
     public function fetchPendingRequests(int $clinicId): array {
-        // Note: With the new system, vets are created directly in the vets table
-        // Pending requests would need to come from a different workflow
-        // For now, return empty array as pending vet requests are handled differently
-        
-        // If you need pending vet applications, you would query user_roles 
-        // where role='vet' and verification_status='pending'
-        // But those vets won't have entries in the vets table until approved
-        
         $sql = "
             SELECT 
-                ur.id as request_id,
+                ur.id as user_role_id,
                 u.id as user_id,
                 CONCAT(u.first_name, ' ', u.last_name) as name,
                 u.email,
                 u.phone,
                 u.avatar,
                 ur.applied_at,
-                ur.verification_status
+                v.specialization,
+                v.license_number,
+                v.years_experience
             FROM user_roles ur
-            JOIN users u ON ur.user_id = u.id
             JOIN roles r ON ur.role_id = r.id
+            JOIN users u ON ur.user_id = u.id
+            JOIN vets v ON v.user_id = u.id
             WHERE r.role_name = 'vet'
-            AND ur.verification_status = 'pending'
+              AND ur.is_active = 1
+              AND ur.verification_status = 'pending'
+              AND v.clinic_id = :clinic_id
             ORDER BY ur.applied_at DESC
         ";
-        
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute();
+        $stmt->execute(['clinic_id' => $clinicId]);
         $requests = $stmt->fetchAll();
         
         // Format for view
         $formatted = [];
+        $docStmt = $this->db->prepare("
+            SELECT id, document_type, document_name, file_path
+            FROM role_verification_documents
+            WHERE user_role_id = ?
+            ORDER BY uploaded_at DESC
+        ");
+
         foreach ($requests as $req) {
+            $docStmt->execute([$req['user_role_id']]);
+            $docsRows = $docStmt->fetchAll();
+            $docs = [];
+            foreach ($docsRows as $d) {
+                $label = $d['document_type'] === 'other'
+                    ? 'Proof / CV (PDF)'
+                    : (ucfirst($d['document_type']) . ' (PDF)');
+                $docs[] = [
+                    'label' => $label,
+                    'url' => '/PETVET/api/download-file.php?doc_id=' . (int)$d['id']
+                ];
+            }
+
             $formatted[] = [
-                'id' => $req['request_id'],
+                'id' => $req['user_role_id'],
                 'user_id' => $req['user_id'],
                 'name' => $req['name'],
                 'email' => $req['email'],
                 'phone' => $req['phone'] ?? 'N/A',
-                'photo' => $req['avatar'] ?? 'https://i.pravatar.cc/64?img=' . ($req['user_id'] % 70),
-                'specialization' => 'General',
-                'license' => 'Pending',
-                'experience' => 'N/A',
+                'photo' => !empty($req['avatar']) ? $req['avatar'] : '/PETVET/public/images/emptyProfPic.png',
+                'specialization' => $req['specialization'] ?? 'General',
+                'license' => $req['license_number'] ?? 'Pending',
+                'experience' => ((int)($req['years_experience'] ?? 0)) . ' years experience',
                 'education' => 'Not provided',
                 'bio' => '',
-                'applied_date' => date('M d, Y', strtotime($req['applied_at']))
+                'docs' => $docs,
+                'applied_date' => !empty($req['applied_at']) ? date('M d, Y', strtotime($req['applied_at'])) : ''
             ];
         }
         

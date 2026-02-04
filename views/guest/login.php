@@ -17,7 +17,12 @@ if (isset($_GET['logout'])) {
 
 // Check for registration success message
 if (isset($_GET['registered'])) {
+  $registered = (string)$_GET['registered'];
+  if ($registered === 'vet') {
+    $success = "Registration successful! You can login after the clinic manager's approval.";
+  } else {
     $success = 'Registration successful! You can now login.';
+  }
 }
 
 // Handle login form submission

@@ -36,6 +36,21 @@ $pendingOrders = $orders;
 <!DOCTYPE html>
 <html lang="en">
 <head>
+            <style>
+            .shop-badge {
+                background: #dc2626;
+                color: #fff;
+                margin-left: 8px;
+                border-radius: 999px;
+                font-size: 13px;
+                font-weight: 700;
+                padding: 2px 10px;
+                display: inline-block;
+                min-width: 24px;
+                text-align: center;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            }
+            </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shop Manager | Clinic Manager</title>
@@ -51,15 +66,19 @@ $pendingOrders = $orders;
             </div>
             <div class="actions">
                 <button id="btnOrders" class="btn btn-secondary">
-                    <span class="icon">📦</span>
-                    Orders
-                    <?php if (count($orders) > 0): ?>
-                        <span class="order-badge"><?php echo count($orders); ?></span>
-                    <?php endif; ?>
+                                        <span class="icon" style="vertical-align:middle;margin-right:6px;">
+                                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="3" y="6" width="14" height="10" rx="2" fill="currentColor"/><rect x="7" y="2" width="6" height="4" rx="1" fill="#a5b4fc"/></svg>
+                                        </span>
+                                        Orders
+                                        <?php if (count($orders) > 0): ?>
+                                                <span class="order-badge shop-badge"><?php echo count($orders); ?></span>
+                                        <?php endif; ?>
                 </button>
                 <button id="btnAddProduct" class="btn btn-primary">
-                    <span class="icon">＋</span>
-                    Add Product
+                                        <span class="icon" style="vertical-align:middle;margin-right:6px;">
+                                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="9" y="4" width="2" height="12" rx="1" fill="currentColor"/><rect x="4" y="9" width="12" height="2" rx="1" fill="currentColor"/></svg>
+                                        </span>
+                                        Add Product
                 </button>
             </div>
         </div>
@@ -71,8 +90,12 @@ $pendingOrders = $orders;
                         <?php $firstImg = $p['images'][0] ?? ''; ?>
                         <img class="main-img" src="<?php echo htmlspecialchars($firstImg); ?>" alt="<?php echo htmlspecialchars($p['title']); ?>">
                         <?php if (count($p['images']) > 1): ?>
-                            <button class="nav prev" aria-label="Previous image">❮</button>
-                            <button class="nav next" aria-label="Next image">❯</button>
+                                                        <button class="nav prev" aria-label="Previous image">
+                                                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M13 5l-5 5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                                        </button>
+                                                        <button class="nav next" aria-label="Next image">
+                                                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                                        </button>
                         <?php endif; ?>
                         <?php if (!empty($p['images'])): ?>
                         <div class="thumbs">
@@ -93,8 +116,8 @@ $pendingOrders = $orders;
                             <span class="price">LKR <?php echo number_format((float)$p['price'], 2); ?></span>
                         </div>
                         <div class="card-actions">
-                            <button class="btn btn-light btn-edit" data-id="<?php echo (int)$p['id']; ?>">Edit</button>
-                            <button class="btn btn-danger btn-delete" data-id="<?php echo (int)$p['id']; ?>">Delete</button>
+                                                        <button class="btn btn-light btn-edit" data-id="<?php echo (int)$p['id']; ?>" title="Edit">Edit</button>
+                                                        <button class="btn btn-danger btn-delete" data-id="<?php echo (int)$p['id']; ?>" title="Delete">Delete</button>
                         </div>
                     </div>
                 </div>
@@ -147,12 +170,14 @@ $pendingOrders = $orders;
                                                         data-date="<?php echo htmlspecialchars($order['created_at']); ?>"
                                                         data-total="<?php echo htmlspecialchars((string)$order['total_amount']); ?>"
                                                         data-items='<?php echo htmlspecialchars(json_encode($order['items']), ENT_QUOTES); ?>'>
+                                                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true" style="vertical-align:middle;margin-right:4px;"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none"/><path d="M7 10l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/></svg>
                                                     View Items
                                                 </button>
                                                 <button class="pv-btn pv-btn--primary btn-mark-delivered"
                                                         type="button"
                                                         data-order-id="<?php echo $order['id']; ?>"
                                                         data-order-number="<?php echo htmlspecialchars($order['order_number']); ?>">
+                                                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true" style="vertical-align:middle;margin-right:4px;"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none"/><path d="M7 10l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/></svg>
                                                     Mark Delivered
                                                 </button>
                                             </div>
@@ -182,7 +207,9 @@ $pendingOrders = $orders;
                     <h2 id="cartModalTitle">Order Items</h2>
                     <p class="pv-modal__subtitle" id="cartModalSubtitle">Order details and item list</p>
                 </div>
-                <button class="pv-icon-btn modal-close" type="button" data-close aria-label="Close">✕</button>
+                                <button class="pv-icon-btn modal-close" type="button" data-close aria-label="Close">
+                                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#e5e7eb"/><path d="M7 7l6 6M13 7l-6 6" stroke="#374151" stroke-width="2" stroke-linecap="round"/></svg>
+                                </button>
             </div>
             <div class="modal-body pv-modal__body">
                 <div class="pv-card">

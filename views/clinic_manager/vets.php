@@ -74,13 +74,34 @@ $on_duty_today = array_column(array_filter($vets, fn($v)=>in_array($today, $v['o
     }
     
     .pending-requests {
-      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-      border: 1px solid #f59e0b;
-      color: #92400e;
+      background: var(--primary-btn-bg, #2563eb);
+      border: 1px solid var(--primary-btn-border, #2563eb);
+      color: var(--primary-btn-color, #fff);
+      border-radius: 8px;
+      font-weight: 600;
+      box-shadow: var(--btn-shadow, none);
+      transition: background 0.2s;
+    }
+    .pending-requests:hover {
+      background: var(--primary-btn-hover-bg, #1e40af);
+    }
+    .pending-badge {
+      background: #dc2626;
+      color: #fff;
+      margin-left: 8px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 2px 10px;
+      display: inline-block;
+      min-width: 24px;
+      text-align: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
     
-    .pending-requests:hover {
-      background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+    .pending-requests:hover .pending-badge {
+      background: #dc2626;
+      color: #fff;
     }
   </style>
 </head>
@@ -95,7 +116,7 @@ $on_duty_today = array_column(array_filter($vets, fn($v)=>in_array($today, $v['o
     </div>
     <div class="cmc-actions" style="display: flex; gap: 12px;">
       <button class="btn pending-requests" id="openDrawer">
-        🔔 Pending Requests <span class="badge" style="background: #dc2626; color: white; margin-left: 8px;"><?= count($pending ?? []) ?></span>
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true" style="vertical-align:middle;margin-right:6px;"><path d="M10 2a6 6 0 0 0-6 6v3.586l-.707.707A1 1 0 0 0 4 14h12a1 1 0 0 0 .707-1.707L16 11.586V8a6 6 0 0 0-6-6Zm0 16a2 2 0 0 0 2-2H8a2 2 0 0 0 2 2Z" fill="currentColor"/></svg>Pending Requests <span class="badge pending-badge"><?= count($pending ?? []) ?></span>
       </button>
     </div>
   </header>
@@ -200,7 +221,9 @@ $on_duty_today = array_column(array_filter($vets, fn($v)=>in_array($today, $v['o
               <td>
                 <div  class="row-actions">
                   <!-- Schedule (first) -->
-                  <button type="button" class="action-btn btn-schedule" data-vet="<?= htmlspecialchars($v['name']) ?>" title="View Schedule / Filter Appointments">📅</button>
+                  <button type="button" class="action-btn btn-schedule" data-vet="<?= htmlspecialchars($v['name']) ?>" title="View Schedule / Filter Appointments">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="3" y="5" width="14" height="12" rx="2" fill="#2563eb"/><rect x="7" y="2" width="1.5" height="3" rx=".75" fill="#2563eb"/><rect x="11.5" y="2" width="1.5" height="3" rx=".75" fill="#2563eb"/><rect x="3" y="8" width="14" height="1.5" fill="#1e40af"/></svg>
+                  </button>
                   <!-- On Leave toggle (disabled when suspended) -->
                   <?php
                     $isSuspended = $v['status'] === 'Suspended';
@@ -214,7 +237,11 @@ $on_duty_today = array_column(array_filter($vets, fn($v)=>in_array($today, $v['o
                           data-name="<?= htmlspecialchars($v['name']) ?>"
                           data-leave="<?= $isOnLeave ? 'leave' : 'active' ?>"
                           title="<?= $leaveBtnTitle ?>">
-                          <?= $leaveIcon ?>
+                    <?php if ($isOnLeave): ?>
+                      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#22c55e"/><path d="M6 10.5l2.5 2.5L14 8.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <?php else: ?>
+                      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#f59e42"/><path d="M10 5v5l3 3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <?php endif; ?>
                   </button>
                   <!-- Suspend / Activate -->
                   <button
@@ -224,7 +251,11 @@ $on_duty_today = array_column(array_filter($vets, fn($v)=>in_array($today, $v['o
                     data-name="<?= htmlspecialchars($v['name']) ?>"
                     data-status="<?= htmlspecialchars($v['status']) ?>"
                     title="<?= $v['status']==='Suspended'?'Activate':'Suspend' ?>">
-                    <?= $v['status']==='Suspended'?'▶️':'⛔' ?>
+                    <?php if ($v['status']==='Suspended'): ?>
+                      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#22c55e"/><polygon points="8,6 14,10 8,14" fill="#fff"/></svg>
+                    <?php else: ?>
+                      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#ef4444"/><rect x="6" y="9" width="8" height="2" rx="1" fill="#fff"/></svg>
+                    <?php endif; ?>
                   </button>
                 </div>
                 
@@ -243,28 +274,47 @@ $on_duty_today = array_column(array_filter($vets, fn($v)=>in_array($today, $v['o
 <aside id="drawer" class="drawer">
   <div class="drawer-header">
     <h2>Pending Vet Requests</h2>
-    <button id="closeDrawer" class="icon-btn" aria-label="Close">✕</button>
+    <button id="closeDrawer" class="icon-btn" aria-label="Close">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#e5e7eb"/><path d="M7 7l6 6M13 7l-6 6" stroke="#374151" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
   </div>
   <div class="drawer-body">
     <?php if (isset($pending) && $pending): foreach ($pending as $p): ?>
-    <div class="pending-item">
+    <div class="pending-item" data-user-role-id="<?= (int)$p['id'] ?>">
       <img class="avatar-sm" src="<?= htmlspecialchars($p['photo']) ?>" alt="">
       <div class="pending-info">
-        <div class="pending-name"><?= htmlspecialchars($p['name']) ?></div>
+        <div class="pending-name">
+          <?= htmlspecialchars($p['name']) ?>
+          <?php if (!empty($p['applied_date'])): ?>
+            <span class="pending-date">Applied: <?= htmlspecialchars($p['applied_date']) ?></span>
+          <?php endif; ?>
+        </div>
         <div class="pending-meta">
           <span><?= htmlspecialchars($p['specialization']) ?></span> •
           <span>License: <?= htmlspecialchars($p['license']) ?></span> •
           <span><?= htmlspecialchars($p['experience']) ?></span>
         </div>
+        <div class="pending-contact">
+          <span class="pending-email"><?= htmlspecialchars($p['email']) ?></span>
+          <?php if (!empty($p['phone']) && $p['phone'] !== 'N/A'): ?>
+            <span class="pending-phone">• <?= htmlspecialchars($p['phone']) ?></span>
+          <?php endif; ?>
+        </div>
         <div class="pending-docs">
-          <?php foreach ($p['docs'] as $d): ?>
-            <a class="doc-link" href="<?= htmlspecialchars($d['url']) ?>" target="_blank"><?= htmlspecialchars($d['label']) ?></a>
-          <?php endforeach; ?>
+          <?php if (!empty($p['docs'])): foreach ($p['docs'] as $d): ?>
+            <a class="doc-link" href="<?= htmlspecialchars($d['url']) ?>" target="_blank" rel="noopener">View PDF</a>
+          <?php endforeach; else: ?>
+            <span class="doc-empty">No proof document uploaded.</span>
+          <?php endif; ?>
         </div>
       </div>
       <div class="pending-actions">
-        <button class="btn btn-success btn-sm">Approve</button>
-        <button class="btn btn-danger btn-sm">Decline</button>
+        <button class="btn btn-success btn-sm pending-approve" type="button" title="Approve">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#22c55e"/><path d="M6 10.5l2.5 2.5L14 8.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="btn btn-danger btn-sm pending-decline" type="button" title="Decline">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#ef4444"/><path d="M7 7l6 6M13 7l-6 6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
       </div>
     </div>
     <?php endforeach; else: ?>
@@ -292,6 +342,16 @@ const backdrop = document.getElementById('backdrop');
 const openBtn = document.getElementById('openDrawer');
 const closeBtn = document.getElementById('closeDrawer');
 
+function setPendingBadgeCount(count) {
+  const badge = openBtn ? openBtn.querySelector('.badge') : null;
+  if (badge) badge.textContent = String(Math.max(0, count));
+}
+
+function getPendingBadgeCount() {
+  const badge = openBtn ? openBtn.querySelector('.badge') : null;
+  return badge ? parseInt(badge.textContent || '0', 10) || 0 : 0;
+}
+
 function openDrawer(){
   drawer.classList.add('open');
   backdrop.classList.add('show');
@@ -301,9 +361,52 @@ function closeDrawer(){
   backdrop.classList.remove('show');
 }
 
-openBtn.addEventListener('click', openDrawer);
-closeBtn.addEventListener('click', closeDrawer);
-backdrop.addEventListener('click', closeDrawer);
+if (openBtn) openBtn.addEventListener('click', openDrawer);
+if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+if (backdrop) backdrop.addEventListener('click', closeDrawer);
+
+// Pending Vet Requests: Approve / Decline (AJAX)
+async function handlePendingAction(buttonEl, action) {
+  const item = buttonEl.closest('.pending-item');
+  const userRoleId = item ? item.getAttribute('data-user-role-id') : null;
+  if (!userRoleId) return;
+
+  const endpoint = action === 'approve'
+    ? '/PETVET/api/clinic-manager/approve-vet-request.php'
+    : '/PETVET/api/clinic-manager/reject-vet-request.php';
+
+  // Prevent double-clicks
+  const originalText = buttonEl.textContent;
+  const actionButtons = item ? item.querySelectorAll('.pending-approve, .pending-decline') : [];
+  actionButtons.forEach(b => b.disabled = true);
+  buttonEl.textContent = action === 'approve' ? 'Approving...' : 'Declining...';
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ user_role_id: Number(userRoleId) }),
+      credentials: 'same-origin'
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Request failed');
+
+    // Remove card and decrement badge
+    if (item) item.remove();
+    setPendingBadgeCount(getPendingBadgeCount() - 1);
+
+    // If no items left, show empty state
+    const body = document.querySelector('#drawer .drawer-body');
+    const remaining = body ? body.querySelectorAll('.pending-item').length : 0;
+    if (body && remaining === 0) {
+      body.innerHTML = '<div class="empty">No pending requests.</div>';
+    }
+  } catch (e) {
+    alert(e.message || 'Action failed');
+    actionButtons.forEach(b => b.disabled = false);
+    buttonEl.textContent = originalText;
+  }
+}
 
 // Custom modal confirmation for Suspend / Activate
 const statusModal = document.getElementById('statusConfirmModal');
@@ -311,23 +414,47 @@ const statusMsg = document.getElementById('statusModalMessage');
 const statusCancel = document.getElementById('statusModalCancel');
 const statusConfirm = document.getElementById('statusModalConfirm');
 let pendingToggleBtn = null;
+let pendingConfirmAction = null;
 
 function openStatusModal(msg, btn){
   statusMsg.textContent = msg;
   pendingToggleBtn = btn;
+  pendingConfirmAction = null;
   statusModal.classList.add('show');
   // Keep scrollbar visible (no overflow hidden) per request
   statusCancel.focus();
 }
+
+function openConfirmModal(msg, onConfirm) {
+  statusMsg.textContent = msg;
+  pendingToggleBtn = null;
+  pendingConfirmAction = onConfirm;
+  statusModal.classList.add('show');
+  statusCancel.focus();
+}
+
 function closeStatusModal(){
   statusModal.classList.remove('show');
   pendingToggleBtn = null;
+  pendingConfirmAction = null;
 }
 statusCancel.addEventListener('click', closeStatusModal);
 statusModal.addEventListener('click', e=>{ if(e.target===statusModal) closeStatusModal(); });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && statusModal.classList.contains('show')) closeStatusModal(); });
 
 statusConfirm.addEventListener('click', async () => {
+  // Generic confirmation flow (used by pending approve/decline)
+  if (typeof pendingConfirmAction === 'function') {
+    const fn = pendingConfirmAction;
+    closeStatusModal();
+    try {
+      await fn();
+    } catch (e) {
+      console.error(e);
+    }
+    return;
+  }
+
   if(!pendingToggleBtn) return closeStatusModal();
   const btn = pendingToggleBtn;
   const pill = btn.closest('tr').querySelector('.status-pill');
@@ -419,6 +546,26 @@ statusConfirm.addEventListener('click', async () => {
   }
 });
 
+// Pending actions: event delegation + confirmation
+if (drawer) {
+  drawer.addEventListener('click', (e) => {
+    const approveBtn = e.target.closest('.pending-approve');
+    const declineBtn = e.target.closest('.pending-decline');
+    const btn = approveBtn || declineBtn;
+    if (!btn) return;
+
+    const item = btn.closest('.pending-item');
+    const name = item ? (item.querySelector('.pending-name')?.innerText || 'this vet') : 'this vet';
+    const action = approveBtn ? 'approve' : 'decline';
+
+    const msg = action === 'approve'
+      ? `Approve ${name}? This will allow the vet to log in.`
+      : `Decline ${name}? This will reject the vet request.`;
+
+    openConfirmModal(msg, () => handlePendingAction(btn, action));
+  });
+}
+
 document.querySelectorAll('.vet-toggle-status').forEach(btn => {
   btn.addEventListener('click', () => {
     const name = btn.dataset.name || 'this vet';
@@ -458,7 +605,7 @@ document.querySelectorAll('.btn-leave-toggle').forEach(btn => {
         // Set Active
         btn.dataset.leave = 'active';
         btn.title = 'Set On Leave';
-        btn.textContent = '⏳';
+        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#f59e42"/><path d="M10 5v5l3 3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         if(pill && statusToggleBtn && statusToggleBtn.dataset.status !== 'Suspended'){
           pill.textContent = 'Active';
           pill.classList.remove('status-leave','status-suspended');
@@ -468,7 +615,7 @@ document.querySelectorAll('.btn-leave-toggle').forEach(btn => {
         // Set On Leave
         btn.dataset.leave = 'leave';
         btn.title = 'Mark Active';
-        btn.textContent = '✅';
+        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#22c55e"/><path d="M6 10.5l2.5 2.5L14 8.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         if(pill && statusToggleBtn && statusToggleBtn.dataset.status !== 'Suspended'){
           pill.textContent = 'On Leave';
           pill.classList.remove('status-active','status-suspended');
@@ -506,10 +653,10 @@ document.querySelectorAll('.btn-leave-toggle').forEach(btn => {
       }
       if(originalLeaveState === 'leave') {
         btn.title = 'Mark Active';
-        btn.textContent = '✅';
+        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#22c55e"/><path d="M6 10.5l2.5 2.5L14 8.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       } else {
         btn.title = 'Set On Leave';
-        btn.textContent = '⏳';
+        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#f59e42"/><path d="M10 5v5l3 3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       }
     }
   });

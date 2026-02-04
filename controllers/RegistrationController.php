@@ -52,6 +52,12 @@ class RegistrationController {
             // Handle file uploads
             $uploadedFiles = $this->handleFileUploads($roles);
             error_log("Files uploaded: " . print_r($uploadedFiles, true));
+
+            if (!empty($this->errors)) {
+                error_log("File upload validation failed: " . print_r($this->errors, true));
+                $this->redirectWithErrors();
+                return;
+            }
             
             // Create user in database
             $userId = $this->model->createUser($userData);
@@ -87,7 +93,8 @@ class RegistrationController {
             error_log("=== Registration Successful ===");
             $_SESSION['registration_success'] = true;
             $_SESSION['registered_email'] = $userData['email'];
-            header('Location: /PETVET/index.php?module=guest&page=login&registered=1');
+            $registeredFlag = in_array('vet', $roles, true) ? 'vet' : '1';
+            header('Location: /PETVET/index.php?module=guest&page=login&registered=' . urlencode($registeredFlag));
             exit;
             
         } catch (Exception $e) {
@@ -267,19 +274,51 @@ class RegistrationController {
             
             if (isset($_FILES[$fileInputName]) && $_FILES[$fileInputName]['error'] === UPLOAD_ERR_OK) {
                 $file = $_FILES[$fileInputName];
-                
-                // Validate file type
-                if ($file['type'] !== 'application/pdf') {
-                    continue; // Skip non-PDF files
+
+                // Enforce single file only
+                if (is_array($file['name'])) {
+                    $this->errors[] = 'Only one PDF file can be uploaded.';
+                    continue;
                 }
-                
+
                 // Validate file size (5MB max)
-                if ($file['size'] > 5 * 1024 * 1024) {
-                    continue; // Skip files over 5MB
+                if (($file['size'] ?? 0) > 5 * 1024 * 1024) {
+                    $this->errors[] = 'Uploaded file is too large (max 5MB).';
+                    continue;
+                }
+
+                // Validate extension
+                $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                if ($extension !== 'pdf') {
+                    $this->errors[] = 'Uploaded file must be a PDF.';
+                    continue;
+                }
+
+                // Validate MIME using finfo on the uploaded temp file
+                $tmpPath = $file['tmp_name'] ?? '';
+                if (empty($tmpPath) || !is_file($tmpPath)) {
+                    $this->errors[] = 'Upload failed. Please try again.';
+                    continue;
+                }
+
+                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                $mime = $finfo->file($tmpPath);
+
+                if ($mime !== 'application/pdf') {
+                    $this->errors[] = 'Uploaded file must be a valid PDF.';
+                    continue;
+                }
+
+                // Validate PDF header magic
+                $fh = @fopen($tmpPath, 'rb');
+                $head = $fh ? fread($fh, 5) : '';
+                if ($fh) fclose($fh);
+                if ($head !== '%PDF-') {
+                    $this->errors[] = 'Uploaded file must be a valid PDF.';
+                    continue;
                 }
                 
                 // Generate unique filename
-                $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
                 $filename = uniqid() . '_' . time() . '.' . $extension;
                 $destination = $uploadDir . $filename;
                 
@@ -291,6 +330,8 @@ class RegistrationController {
                         'path' => 'uploads/verification_documents/' . $filename,
                         'size' => $file['size']
                     ];
+                } else {
+                    $this->errors[] = 'Could not save uploaded file. Please try again.';
                 }
             }
         }

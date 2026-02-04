@@ -79,22 +79,26 @@ class OverviewModel extends BaseModel {
         $stmt->execute([$clinicId]);
         $pendingOrdersCount = $stmt->fetch()['count'];
         
-        // Get pending vet requests (vets with is_active = 0 or email_verified = 0)
+        // Get pending vet requests (role verification pending for vets in this clinic)
         $stmt = $this->db->prepare("
             SELECT COUNT(*) as count
-            FROM vets v
-            JOIN users u ON v.user_id = u.id
-            WHERE v.clinic_id = ? AND (u.is_active = 0 OR u.email_verified = 0)
+            FROM user_roles ur
+            JOIN roles r ON ur.role_id = r.id
+            JOIN vets v ON v.user_id = ur.user_id
+            WHERE v.clinic_id = ?
+              AND r.role_name = 'vet'
+              AND ur.is_active = 1
+              AND ur.verification_status = 'pending'
         ");
         $stmt->execute([$clinicId]);
-        $pendingVetRequestsCount = $stmt->fetch()['count'];
+        $pendingVetRequestsCount = (int)($stmt->fetch()['count'] ?? 0);
         
-        // Build KPIs
+        // Build KPIs (include stable keys for AJAX refresh)
         $kpis = [
-            ['label'=>'Appointments Today','value'=>$todayAppointmentsCount],
-            ['label'=>'Active Vets','value'=>$activeVetsCount],
-            ['label'=>'Pending Shop Orders','value'=>$pendingOrdersCount],
-            ['label'=>'Pending Vet Requests','value'=>$pendingVetRequestsCount],
+            ['key' => 'appointments_today', 'label' => 'Appointments Today', 'value' => (int)$todayAppointmentsCount],
+            ['key' => 'active_vets', 'label' => 'Active Vets', 'value' => (int)$activeVetsCount],
+            ['key' => 'pending_shop_orders', 'label' => 'Pending Shop Orders', 'value' => (int)$pendingOrdersCount],
+            ['key' => 'pending_vet_requests', 'label' => 'Pending Vet Requests', 'value' => (int)$pendingVetRequestsCount],
         ];
         
         // Get today's appointments with details

@@ -43,7 +43,7 @@ $today = date('l, F j, Y');
               <p>No KPI data available.</p>
             <?php else: ?>
               <?php foreach ($kpis as $kpi): ?>
-                <article class="kpi-card" role="article" aria-label="<?php echo htmlspecialchars($kpi['label']); ?>">
+                <article class="kpi-card" role="article" aria-label="<?php echo htmlspecialchars($kpi['label']); ?>" data-kpi-key="<?php echo htmlspecialchars($kpi['key'] ?? ''); ?>">
                   <div class="kpi-number"><?php echo $kpi['value']; ?></div>
                   <div class="kpi-label"><?php echo htmlspecialchars($kpi['label']); ?></div>
                 </article>
@@ -559,7 +559,8 @@ $today = date('l, F j, Y');
 
   <script>
     // Auto-refresh ongoing appointments
-    let refreshInterval;
+    let refreshOngoingInterval;
+    let refreshKpiInterval;
 
     function refreshOngoingAppointments() {
       console.log('[Overview Refresh] Fetching ongoing appointments...');
@@ -638,15 +639,36 @@ $today = date('l, F j, Y');
       return div.innerHTML;
     }
 
+    // Auto-refresh KPI cards
+    function refreshKpis() {
+      fetch('/PETVET/api/clinic-manager/get-kpis.php', {
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (!data.success || !Array.isArray(data.kpis)) return;
+        data.kpis.forEach(kpi => {
+          if (!kpi || !kpi.key) return;
+          const card = document.querySelector(`.kpi-card[data-kpi-key="${CSS.escape(String(kpi.key))}"]`);
+          if (!card) return;
+          const numberEl = card.querySelector('.kpi-number');
+          if (numberEl) numberEl.textContent = kpi.value;
+        });
+      })
+      .catch(() => {});
+    }
+
     // Start auto-refresh every 10 seconds
-    refreshInterval = setInterval(refreshOngoingAppointments, 10000);
-    console.log('[Overview] ✅ Auto-refresh enabled (every 10 seconds)');
+    refreshOngoingInterval = setInterval(refreshOngoingAppointments, 10000);
+    refreshKpiInterval = setInterval(refreshKpis, 10000);
+    refreshKpis();
+    console.log('[Overview] ✅ Auto-refresh enabled (KPIs + ongoing appointments every 10 seconds)');
 
     // Cleanup on page unload
     window.addEventListener('beforeunload', () => {
-      if (refreshInterval) {
-        clearInterval(refreshInterval);
-      }
+      if (refreshOngoingInterval) clearInterval(refreshOngoingInterval);
+      if (refreshKpiInterval) clearInterval(refreshKpiInterval);
     });
   </script>
 </body>

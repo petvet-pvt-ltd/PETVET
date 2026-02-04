@@ -20,6 +20,7 @@ if (isLoggedIn()) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Veterinarian Registration - PetVet</title>
   <link rel="stylesheet" href="/PETVET/public/css/guest/reg-vet.css">
+  <link rel="stylesheet" href="/PETVET/public/css/pet-owner/clinic-selector.css">
 </head>
 
 <body>
@@ -97,18 +98,14 @@ if (isLoggedIn()) {
               <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required>
               <span class="error-msg" id="confirm_password-error"></span>
             </div>
-            <button type="button" onclick="nextStep()">Next</button>
+            <button type="button" id="nextBtn" onclick="nextStep()">Next</button>
           </div>
 
           <!-- Step 2 - Veterinarian Specific Information -->
           <div id="step-2" class="form-step">
             <div>
-              <select name="vet_clinic_id" id="clinic" required>
-                <option value="">Select Vet Clinic</option>
-                <option value="1">Happy Paws Veterinary Clinic</option>
-                <option value="2">Pet Care Medical Center</option>
-                <option value="3">Animal Health Clinic</option>
-              </select>
+              <div id="vetClinicSelectorContainer"></div>
+              <input type="hidden" name="vet_clinic_id" id="clinic" required>
               <span class="error-msg" id="clinic-error"></span>
             </div>
 
@@ -125,8 +122,9 @@ if (isLoggedIn()) {
               <span class="error-msg" id="license-error"></span>
             </div>
             <div>
-              <label>Upload Medical License (PDF, Optional):</label>
-              <input type="file" name="vet_license" accept=".pdf">
+              <label for="vet_license">Proof Document (PDF only)</label>
+              <input type="file" id="vet_license" name="vet_license" accept="application/pdf,.pdf" required>
+              <small class="field-hint">Upload 1 PDF file only (max 5MB).</small>
             </div>
             <div>
               <input type="checkbox" id="consent" required> I confirm the information is accurate.
@@ -143,15 +141,40 @@ if (isLoggedIn()) {
     </div>
   </div>
 
+  <script src="/PETVET/public/js/pet-owner/clinic-selector.js"></script>
   <script>
     const form = document.getElementById("vetForm");
     const step1 = document.getElementById("step-1");
     const step2 = document.getElementById("step-2");
 
+    // Track whether the current email value is known to already exist
+    const emailAvailabilityState = {
+      checkedEmail: null,
+      exists: false
+    };
+
     console.log("JavaScript loaded!");
     console.log("Form element:", form);
     console.log("Step 1:", step1);
     console.log("Step 2:", step2);
+
+    // Initialize clinic selector (logo + name; no distance)
+    // Uses a lightweight clinics endpoint to avoid map geocoding during registration.
+    clinicSelectorInstance = new ClinicSelector({
+      containerId: 'vetClinicSelectorContainer',
+      clinicsUrl: '/PETVET/api/get-clinics.php',
+      enableFavorites: false,
+      showDistance: false,
+      showLocationDetails: true,
+      placeholder: 'Select a vet clinic',
+      onSelect: (clinic) => {
+        const clinicInput = document.getElementById('clinic');
+        clinicInput.value = clinic.id;
+        const err = document.getElementById('clinic-error');
+        if (err) err.textContent = '';
+      }
+    });
+    clinicSelectorInstance.init(null);
 
     // Test if form exists
     if (!form) {
@@ -193,6 +216,27 @@ if (isLoggedIn()) {
       const input = document.getElementById(id);
       const error = document.getElementById(`${id}-error`);
       const value = input.value;
+
+      // If we've already checked this email and it exists, keep showing that error
+      if (id === 'email') {
+        const normalized = value.trim().toLowerCase();
+        const checked = (emailAvailabilityState.checkedEmail || '').toLowerCase();
+        if (emailAvailabilityState.exists && normalized && normalized === checked) {
+          error.textContent = 'This email is already registered. Please use a different email or login.';
+          error.style.display = 'block';
+          input.style.borderColor = "#ef4444";
+          return false;
+        }
+
+        // If user changed the email after an "exists" result, clear that state
+        if (emailAvailabilityState.exists && normalized !== checked) {
+          emailAvailabilityState.exists = false;
+          emailAvailabilityState.checkedEmail = null;
+          error.textContent = '';
+          error.style.display = 'none';
+        }
+      }
+
       const isValid = validationRules[id].validate(value);
       if (!isValid) {
         error.textContent = validationRules[id].message;
@@ -239,32 +283,47 @@ if (isLoggedIn()) {
       
       if (email) {
         // Show loading state
-        const nextBtn = document.getElementById('nextBtn');
-        const originalText = nextBtn.textContent;
-        nextBtn.disabled = true;
-        nextBtn.textContent = 'Checking email...';
+        const nextBtn = document.getElementById('nextBtn') || step1.querySelector('button[type="button"]');
+        const originalText = nextBtn ? nextBtn.textContent : '';
+        if (nextBtn) {
+          nextBtn.disabled = true;
+          nextBtn.textContent = 'Checking email...';
+        }
         
         const emailCheck = await checkEmailAvailability(email);
         
         // Restore button
-        nextBtn.disabled = false;
-        nextBtn.textContent = originalText;
+        if (nextBtn) {
+          nextBtn.disabled = false;
+          nextBtn.textContent = originalText;
+        }
+
+        // If API failed, block next step (safer than proceeding)
+        if (emailCheck && emailCheck.error) {
+          const errorEl = document.getElementById('email-error');
+          emailInput.style.borderColor = "#ef4444";
+          errorEl.textContent = 'Could not verify email right now. Please try again.';
+          errorEl.style.display = 'block';
+          return;
+        }
         
         if (emailCheck.exists) {
           // Email is already taken
           const errorEl = document.getElementById('email-error');
-          emailInput.classList.add('error');
-          emailInput.classList.remove('success');
           errorEl.textContent = 'This email is already registered. Please use a different email or login.';
           errorEl.style.display = 'block';
+          emailInput.style.borderColor = "#ef4444";
+          emailAvailabilityState.checkedEmail = email;
+          emailAvailabilityState.exists = true;
           return;
         } else if (emailCheck.available) {
           // Email is available - continue
-          emailInput.classList.remove('error');
-          emailInput.classList.add('success');
           const errorEl = document.getElementById('email-error');
           errorEl.textContent = '';
           errorEl.style.display = 'none';
+          emailInput.style.borderColor = "#10b981";
+          emailAvailabilityState.checkedEmail = email;
+          emailAvailabilityState.exists = false;
         }
       }
       

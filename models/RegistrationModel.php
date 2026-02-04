@@ -68,14 +68,15 @@ class RegistrationModel {
                 
                 $roleId = $roleData['id'];
                 $isPrimary = ($role === $primaryRole) ? 1 : 0;
+                $verificationStatus = ($role === 'vet') ? 'pending' : 'approved';
                 
                 // Insert user_role with approved status (no admin verification needed)
                 $stmt = $this->db->prepare("
                     INSERT INTO user_roles (user_id, role_id, is_primary, is_active, verification_status, applied_at)
-                    VALUES (?, ?, ?, 1, 'approved', NOW())
+                    VALUES (?, ?, ?, 1, ?, NOW())
                 ");
                 
-                $stmt->execute([$userId, $roleId, $isPrimary]);
+                $stmt->execute([$userId, $roleId, $isPrimary, $verificationStatus]);
             }
             
             $this->db->commit();
@@ -286,9 +287,9 @@ class RegistrationModel {
     private function createVetProfile($userId, $data, $files) {
         try {
             $stmt = $this->db->prepare("
-                INSERT INTO vet_profiles 
+                INSERT INTO vets
                 (user_id, clinic_id, license_number, specialization, years_experience, available, created_at)
-                VALUES (?, ?, ?, ?, ?, 1, NOW())
+                VALUES (?, ?, ?, ?, ?, 0, NOW())
             ");
             
             $clinicId = !empty($data['clinic_id']) ? $data['clinic_id'] : null;
@@ -304,9 +305,10 @@ class RegistrationModel {
                 $experience
             ]);
             
-            // Save medical license document if provided
+            // Save verification document if provided
             if (!empty($files)) {
-                $this->saveVerificationDocument($userId, 'vet', $files);
+                // For vets, treat uploaded PDF as proof/CV (document_type enum doesn't have 'proof')
+                $this->saveVerificationDocument($userId, 'vet', $files, 'other');
             }
             
             return true;
@@ -379,7 +381,7 @@ class RegistrationModel {
     /**
      * Save verification document
      */
-    private function saveVerificationDocument($userId, $role, $fileData) {
+    private function saveVerificationDocument($userId, $role, $fileData, string $documentType = 'license') {
         try {
             // First, get the user_role id
             $stmt = $this->db->prepare("
@@ -401,11 +403,12 @@ class RegistrationModel {
             $stmt = $this->db->prepare("
                 INSERT INTO role_verification_documents 
                 (user_role_id, document_type, document_name, file_path, file_size, mime_type, uploaded_at)
-                VALUES (?, 'license', ?, ?, ?, 'application/pdf', NOW())
+                VALUES (?, ?, ?, ?, ?, 'application/pdf', NOW())
             ");
             
             return $stmt->execute([
                 $userRoleId,
+                $documentType,
                 $fileData['original_name'],
                 $fileData['path'],
                 $fileData['size']

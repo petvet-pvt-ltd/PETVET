@@ -7,11 +7,20 @@ class ClinicSelector {
     constructor(options = {}) {
         this.containerId = options.containerId || 'clinicSelectorContainer';
         this.onSelect = options.onSelect || (() => {});
+
+        // Options
+        this.clinicsUrl = options.clinicsUrl || '/PETVET/api/pet-owner/get-clinics-by-distance.php';
+        this.enableFavorites = options.enableFavorites !== undefined ? options.enableFavorites : true;
+        this.enableSearch = options.enableSearch !== undefined ? options.enableSearch : true;
+        this.showDistance = options.showDistance !== undefined ? options.showDistance : true;
+        this.showLocationDetails = options.showLocationDetails !== undefined ? options.showLocationDetails : true;
+        this.placeholder = options.placeholder || 'Select a clinic';
+
         this.clinics = [];
         this.favorites = new Set();
         this.selectedClinic = null;
         this.searchTerm = '';
-        this.activeFilter = 'all'; // 'all', 'favorites', 'nearest'
+        this.activeFilter = 'all'; // 'all', 'favorites'
         this.userLocation = null;
     }
 
@@ -20,8 +29,10 @@ class ClinicSelector {
      */
     async init(userLocation = null) {
         this.userLocation = userLocation;
-        this.isLoadingDistance = !userLocation; // Show loading if no location yet
-        await this.loadFavorites();
+        this.isLoadingDistance = this.showDistance && !userLocation; // Only if distance is shown
+        if (this.enableFavorites) {
+            await this.loadFavorites();
+        }
         await this.loadClinics();
         this.render();
         this.attachEventListeners();
@@ -79,9 +90,9 @@ class ClinicSelector {
      */
     async loadClinics() {
         try {
-            let url = '/PETVET/api/pet-owner/get-clinics-by-distance.php';
+            let url = this.clinicsUrl;
             
-            if (this.userLocation) {
+            if (this.userLocation && this.showDistance) {
                 url += `?latitude=${this.userLocation.latitude}&longitude=${this.userLocation.longitude}`;
             }
             
@@ -90,6 +101,11 @@ class ClinicSelector {
             
             if (data.success) {
                 this.clinics = data.clinics || [];
+
+                // Keep clinics alphabetical unless distance sorting is in play
+                if (!this.showDistance || !this.userLocation) {
+                    this.clinics.sort((a, b) => String(a.clinic_name || '').localeCompare(String(b.clinic_name || ''), undefined, { sensitivity: 'base' }));
+                }
             }
         } catch (error) {
             console.error('Error loading clinics:', error);
@@ -111,27 +127,31 @@ class ClinicSelector {
                 
                 <div class="clinic-selector-dropdown" id="clinicSelectorDropdown">
                     <div class="clinic-selector-header">
-                        <div class="clinic-selector-search">
-                            <svg class="clinic-selector-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <path d="m21 21-4.35-4.35"></path>
-                            </svg>
-                            <input 
-                                type="text" 
-                                id="clinicSearchInput" 
-                                placeholder="Search clinics by name or location..."
-                                value="${this.searchTerm}"
-                            />
-                        </div>
+                        ${this.enableSearch ? `
+                            <div class="clinic-selector-search">
+                                <svg class="clinic-selector-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <path d="m21 21-4.35-4.35"></path>
+                                </svg>
+                                <input 
+                                    type="text" 
+                                    id="clinicSearchInput" 
+                                    placeholder="Search clinics..."
+                                    value="${this.searchTerm}"
+                                />
+                            </div>
+                        ` : ''}
                         
-                        <div class="clinic-selector-filters">
-                            <button type="button" class="clinic-filter-btn ${this.activeFilter === 'all' ? 'active' : ''}" data-filter="all">
-                                🏥 All Clinics
-                            </button>
-                            <button type="button" class="clinic-filter-btn ${this.activeFilter === 'favorites' ? 'active' : ''}" data-filter="favorites">
-                                ⭐ Favorites
-                            </button>
-                        </div>
+                        ${this.enableFavorites ? `
+                            <div class="clinic-selector-filters">
+                                <button type="button" class="clinic-filter-btn ${this.activeFilter === 'all' ? 'active' : ''}" data-filter="all">
+                                    🏥 All Clinics
+                                </button>
+                                <button type="button" class="clinic-filter-btn ${this.activeFilter === 'favorites' ? 'active' : ''}" data-filter="favorites">
+                                    ⭐ Favorites
+                                </button>
+                            </div>
+                        ` : ''}
                     </div>
                     
                     <div class="clinic-selector-list" id="clinicSelectorList">
@@ -147,22 +167,40 @@ class ClinicSelector {
      */
     renderTriggerContent() {
         if (this.selectedClinic) {
+            const canShowDistance = this.showDistance && !!this.selectedClinic.distance_formatted;
+            const canShowLocation = this.showLocationDetails && !canShowDistance && !!(this.selectedClinic.city || this.selectedClinic.district);
+            const addressText = (this.showLocationDetails && !canShowDistance && (this.selectedClinic.clinic_address || '').trim())
+                ? String(this.selectedClinic.clinic_address).trim()
+                : '';
+            const locationText = addressText || (canShowLocation ? (this.selectedClinic.city || this.selectedClinic.district) : '');
+
+            const initials = String(this.selectedClinic.clinic_name || '?')
+                .trim()
+                .split(/\s+/)
+                .slice(0, 2)
+                .map(w => w.charAt(0).toUpperCase())
+                .join('');
+
             return `
                 <div class="clinic-selector-selected">
                     ${this.selectedClinic.clinic_logo ? `
                         <img src="${this.selectedClinic.clinic_logo}" alt="${this.selectedClinic.clinic_name}" class="clinic-selector-selected-logo">
-                    ` : ''}
+                    ` : `
+                        <div class="clinic-selector-selected-logo-placeholder" aria-hidden="true">${initials}</div>
+                    `}
                     <div class="clinic-selector-selected-info">
                         <div class="clinic-selector-selected-name">${this.selectedClinic.clinic_name}</div>
+                        ${(canShowDistance || locationText) ? `
                         <div class="clinic-selector-selected-distance">
-                            ${this.selectedClinic.distance_formatted ? `
+                            ${canShowDistance ? `
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                                     <circle cx="12" cy="10" r="3"></circle>
                                 </svg>
                                 ${this.selectedClinic.distance_formatted} away
-                            ` : this.selectedClinic.city || ''}
+                            ` : locationText}
                         </div>
+                        ` : ''}
                     </div>
                 </div>
                 <svg class="clinic-selector-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -171,7 +209,7 @@ class ClinicSelector {
             `;
         } else {
             return `
-                <span class="clinic-selector-placeholder">Select a clinic</span>
+                <span class="clinic-selector-placeholder">${this.placeholder}</span>
                 <svg class="clinic-selector-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
@@ -199,18 +237,33 @@ class ClinicSelector {
             const isSelected = this.selectedClinic && this.selectedClinic.id === clinic.id;
             const isNearest = index === 0 && this.activeFilter === 'nearest';
 
+            const showDistancePart = this.showDistance && (clinic.distance_formatted || this.isLoadingDistance);
+            const hasAddress = this.showLocationDetails && !!String(clinic.clinic_address || '').trim();
+            const showLocationPart = this.showLocationDetails && (!!clinic.city || !!clinic.district || hasAddress);
+            const shouldRenderDetails = showDistancePart || showLocationPart;
+
+            const initials = String(clinic.clinic_name || '?')
+                .trim()
+                .split(/\s+/)
+                .slice(0, 2)
+                .map(w => w.charAt(0).toUpperCase())
+                .join('');
+
             return `
                 <div class="clinic-item ${isSelected ? 'selected' : ''}" data-clinic-id="${clinic.id}">
                     ${clinic.clinic_logo ? `
                         <img src="${clinic.clinic_logo}" alt="${clinic.clinic_name}" class="clinic-item-logo">
-                    ` : ''}
+                    ` : `
+                        <div class="clinic-item-logo-placeholder" aria-hidden="true">${initials}</div>
+                    `}
                     
                     <div class="clinic-item-info">
                         <div class="clinic-item-name">
                             ${clinic.clinic_name}
                         </div>
+                        ${shouldRenderDetails ? `
                         <div class="clinic-item-details">
-                            ${clinic.distance_formatted ? `
+                            ${this.showDistance ? (clinic.distance_formatted ? `
                                 <span class="clinic-item-distance">
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
@@ -223,20 +276,23 @@ class ClinicSelector {
                                     <span class="distance-loader"></span>
                                     Calculating distance...
                                 </span>
+                            ` : '')) : ''}
+                            ${this.showLocationDetails && String(clinic.clinic_address || '').trim() ? `
+                                <span class="clinic-item-city">📍 ${String(clinic.clinic_address).trim()}</span>
+                            ` : (this.showLocationDetails && (clinic.city || clinic.district) ? `
+                                <span class="clinic-item-city">📌 ${(clinic.city || clinic.district)}</span>
                             ` : '')}
-                            ${clinic.city ? `
-                                <span class="clinic-item-city">
-                                    📌 ${clinic.city}
-                                </span>
-                            ` : ''}
                         </div>
+                        ` : ''}
                     </div>
 
-                    <button type="button" class="clinic-favorite-btn ${isFavorite ? 'favorited' : ''}" data-clinic-id="${clinic.id}" onclick="event.stopPropagation(); event.preventDefault(); clinicSelectorInstance.toggleFavorite(${clinic.id})">
-                        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </button>
+                    ${this.enableFavorites ? `
+                        <button type="button" class="clinic-favorite-btn ${isFavorite ? 'favorited' : ''}" data-clinic-id="${clinic.id}" onclick="event.stopPropagation(); event.preventDefault(); clinicSelectorInstance.toggleFavorite(${clinic.id})">
+                            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                        </button>
+                    ` : ''}
                 </div>
             `;
         }).join('');
@@ -261,7 +317,9 @@ class ClinicSelector {
         // Apply filter
         switch (this.activeFilter) {
             case 'favorites':
-                filtered = filtered.filter(clinic => this.favorites.has(clinic.id));
+                if (this.enableFavorites) {
+                    filtered = filtered.filter(clinic => this.favorites.has(clinic.id));
+                }
                 break;
         }
 
@@ -295,20 +353,24 @@ class ClinicSelector {
 
         // Search
         const searchInput = document.getElementById('clinicSearchInput');
-        searchInput?.addEventListener('input', (e) => {
-            this.searchTerm = e.target.value;
-            this.updateClinicList();
-        });
-
-        // Filter buttons
-        document.querySelectorAll('.clinic-filter-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.activeFilter = btn.dataset.filter;
-                document.querySelectorAll('.clinic-filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+        if (this.enableSearch) {
+            searchInput?.addEventListener('input', (e) => {
+                this.searchTerm = e.target.value;
                 this.updateClinicList();
             });
-        });
+        }
+
+        // Filter buttons
+        if (this.enableFavorites) {
+            document.querySelectorAll('.clinic-filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.activeFilter = btn.dataset.filter;
+                    document.querySelectorAll('.clinic-filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.updateClinicList();
+                });
+            });
+        }
 
         // Clinic selection
         document.querySelectorAll('.clinic-item').forEach(item => {

@@ -403,6 +403,20 @@ body {
 .pending-name {
     font-weight: 700;
     color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.pending-date {
+    font-weight: 600;
+    font-size: 12px;
+    color: #475569;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    padding: 2px 8px;
+    border-radius: 999px;
 }
 
 .pending-meta {
@@ -410,11 +424,40 @@ body {
     font-size: 13px;
 }
 
-.doc-link {
-    color: #1e40af;
-    text-decoration: underline;
-    margin-right: 8px;
+.pending-contact {
+    color: #64748b;
     font-size: 13px;
+}
+
+.pending-docs {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.doc-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    color: #1e3a8a;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+}
+
+.doc-link:hover {
+    background: #dbeafe;
+}
+
+.doc-empty {
+    font-size: 13px;
+    color: #94a3b8;
 }
 
 .pending-actions {
@@ -465,6 +508,94 @@ body {
 .backdrop.show {
     opacity: 1;
     pointer-events: auto;
+}
+
+/* ===== Confirm Modal (Approve/Decline + Status) ===== */
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.cmc-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1100;
+}
+
+.cmc-modal.show {
+    display: flex;
+}
+
+.cmc-modal-dialog {
+    background: #fff;
+    width: min(420px, 92%);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    animation: modalSlideIn 0.3s ease;
+}
+
+.cmc-modal-dialog h3 {
+    margin: 0 0 12px 0;
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.cmc-modal-dialog p {
+    margin: 0 0 20px 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.cmc-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.cmc-modal-actions .btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.cmc-modal-actions .btn-ghost {
+    background: #fff;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.cmc-modal-actions .btn-ghost:hover {
+    background: #f1f5f9;
+}
+
+.cmc-modal-actions .btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
+}
+
+.cmc-modal-actions .btn-danger:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
 
 @media (max-width: 768px) {
