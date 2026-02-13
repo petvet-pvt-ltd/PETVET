@@ -140,6 +140,11 @@ body{margin:0; background:var(--bg); color:var(--text); line-height:1.55; overfl
 /* Provider Cards Grid */
 .providers-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:var(--space-4)}
 
+/* Cap at 3 cards per row on desktop */
+@media (min-width:1280px){
+    .providers-grid{grid-template-columns:repeat(3, minmax(0, 1fr))}
+}
+
 /* Provider Card (Enhanced Style) */
 .provider-card{
     background:var(--card); 
@@ -554,7 +559,7 @@ body{margin:0; background:var(--bg); color:var(--text); line-height:1.55; overfl
 .service-description{color:var(--muted); font-size:12px; line-height:1.5; margin:0}
 
 .service-meta{display:flex; flex-direction:column; gap:8px}
-.meta-item{display:flex; justify-content:space-between; align-items:center}
+.service-meta .meta-item{display:flex; justify-content:space-between; align-items:center}
 .meta-label{font-size:11px; color:var(--muted); font-weight:600}
 .meta-value{font-size:13px; font-weight:600; color:var(--text)}
 .meta-value.price{color:var(--groomer); font-size:18px}
@@ -693,7 +698,7 @@ body{margin:0; background:var(--bg); color:var(--text); line-height:1.55; overfl
 .discounted-price .value{font-size:19px; color:var(--groomer); font-weight:700}
 
 .package-meta{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px}
-.meta-item{display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted)}
+.package-meta .meta-item{display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted)}
 .meta-icon{font-size:14px}
 
 .package-footer{
@@ -1079,6 +1084,24 @@ body.modal-open{
     
     .package-meta{flex-direction:column; align-items:flex-start}
 
+    /* Groomer services/packages: prevent distance badge overlap on mobile */
+    .service-card,
+    .package-card{width:100%; max-width:560px}
+
+    .service-body,
+    .package-body{padding-bottom:14px}
+
+    .service-body .clinic-distance,
+    .package-body .clinic-distance{
+        position:static;
+        margin-top:10px;
+        align-self:flex-start
+    }
+
+    .provider-info-compact{flex-wrap:wrap}
+    .provider-details-small{min-width:0}
+    .provider-name-small{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
     /* Contact Modal as Bottom Drawer on Mobile */
     .contact-overlay{
         align-items:flex-end;
@@ -1191,6 +1214,9 @@ body.modal-open{
     .provider-avatar{width:70px; height:70px; border-radius:16px}
     .provider-body{padding:12px 14px 14px 14px; gap:10px}
     .provider-actions{padding:12px 14px 14px 14px; gap:12px; flex-direction:row}
+
+    .service-card,
+    .package-card{max-width:520px}
 }
 
 /* Trainer Details Modal */

@@ -37,7 +37,7 @@ class GuestShopModel extends BaseModel {
         try {
             $stmt = $this->db->prepare("
                 SELECT p.id, p.clinic_id, p.name, p.description, p.price, p.category, p.image_url as image, 
-                       p.stock, p.sold, p.is_active, c.name as clinic_name
+                       p.stock, p.sold, p.is_active, c.clinic_name as clinic_name
                 FROM products p
                 LEFT JOIN clinics c ON p.clinic_id = c.id
                 WHERE p.id = ? AND p.is_active = TRUE

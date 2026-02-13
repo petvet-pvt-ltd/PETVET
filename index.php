@@ -87,6 +87,16 @@ if ($requiredRole !== null) {
                 exit;
             }
         }
+
+        // ✅ Suspension enforcement: suspended vets can only access dashboard + settings
+        if (!empty($_SESSION['user_id']) && !empty($_SESSION['clinic_id'])) {
+            $vetPage = $_GET['page'] ?? 'dashboard';
+            $allowedPages = ['dashboard', 'settings'];
+            if (isVetSuspended((int)$_SESSION['user_id'], (int)$_SESSION['clinic_id']) && !in_array($vetPage, $allowedPages, true)) {
+                header('Location: /PETVET/index.php?module=vet&page=dashboard');
+                exit;
+            }
+        }
     }
 }
 

@@ -208,8 +208,13 @@ class ClinicDistanceCalculator {
      * Show loading state while fetching clinics
      */
     showLoadingState() {
+        // If using modern clinic selector, don't block UI while distances load
+        if (document.getElementById('clinicSelectorContainer')) {
+            return;
+        }
+
         const clinicSelect = document.getElementById('clinicSelect');
-        if (clinicSelect) {
+        if (clinicSelect && clinicSelect.tagName === 'SELECT') {
             clinicSelect.disabled = true;
             clinicSelect.innerHTML = '<option value="">📍 Loading clinics by distance...</option>';
         }
@@ -219,8 +224,12 @@ class ClinicDistanceCalculator {
      * Hide loading state
      */
     hideLoadingState() {
+        if (document.getElementById('clinicSelectorContainer')) {
+            return;
+        }
+
         const clinicSelect = document.getElementById('clinicSelect');
-        if (clinicSelect) {
+        if (clinicSelect && clinicSelect.tagName === 'SELECT') {
             clinicSelect.disabled = false;
         }
     }

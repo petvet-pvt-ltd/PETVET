@@ -16,7 +16,12 @@ class VetsModel extends BaseModel {
                 CONCAT(u.first_name, ' ', u.last_name) as name,
                 u.email,
                 u.phone,
-                CASE WHEN v.available = 1 THEN 'Active' ELSE 'Inactive' END as status,
+                CASE
+                    WHEN v.is_suspended = 1 THEN 'Suspended'
+                    WHEN v.is_on_leave = 1 THEN 'On Leave'
+                    WHEN v.available = 1 THEN 'Active'
+                    ELSE 'Inactive'
+                END as status,
                 u.avatar,
                 v.specialization,
                 v.license_number,
@@ -25,6 +30,8 @@ class VetsModel extends BaseModel {
                 v.rating,
                 v.bio,
                 v.available,
+                v.is_suspended,
+                v.is_on_leave,
                 (SELECT MIN(a.appointment_date) 
                  FROM appointments a 
                  WHERE a.vet_id = v.user_id 

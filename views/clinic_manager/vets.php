@@ -143,7 +143,13 @@ $on_duty_today = array_column(array_filter($vets, fn($v)=>in_array($today, $v['o
   </section>
 
   <!-- Filters -->
-  <form method="get" class="cmc-filters">
+  <?php
+    // Build specialization options from vets data
+    $specOptions = array_values(array_filter(array_unique(array_map(fn($x) => $x['specialization'] ?? '', $vets))));
+    sort($specOptions, SORT_STRING | SORT_FLAG_CASE);
+  ?>
+
+  <form method="get" class="cmc-filters" id="vetsFilters">
     <input type="hidden" name="module" value="clinic-manager">
     <input type="hidden" name="page" value="vets">
     <div class="field full-grow">
@@ -154,11 +160,10 @@ $on_duty_today = array_column(array_filter($vets, fn($v)=>in_array($today, $v['o
       <label class="label" for="spec">Specialization</label>
       <select name="spec" id="spec" class="select">
         <option value="all" <?= $spec==='all'?'selected':'' ?>>All</option>
-        <option value="General" <?= $spec==='General'?'selected':'' ?>>General</option>
-        <option value="Surgery" <?= $spec==='Surgery'?'selected':'' ?>>Surgery</option>
-        <option value="Dental" <?= $spec==='Dental'?'selected':'' ?>>Dental</option>
-        <option value="Dermatology" <?= $spec==='Dermatology'?'selected':'' ?>>Dermatology</option>
-        <option value="Radiology" <?= $spec==='Radiology'?'selected':'' ?>>Radiology</option>
+        <?php foreach ($specOptions as $s): ?>
+          <?php if ($s === '' ) continue; ?>
+          <option value="<?= htmlspecialchars($s) ?>" <?= $spec === $s ? 'selected' : '' ?>><?= htmlspecialchars($s) ?></option>
+        <?php endforeach; ?>
       </select>
     </div>
     <div class="field">
@@ -170,13 +175,7 @@ $on_duty_today = array_column(array_filter($vets, fn($v)=>in_array($today, $v['o
         <option value="Suspended" <?= $status==='Suspended'?'selected':'' ?>>Suspended</option>
       </select>
     </div>
-    <div class="field">
-      <label class="label" for="avail">Availability</label>
-      <input type="date" name="avail" id="avail" value="<?= htmlspecialchars($avail) ?>" class="input">
-    </div>
-    <div class="field">
-      <button type="submit" class="btn btn-primary">Apply Filters</button>
-    </div>
+    <!-- Availability filter removed; filters apply immediately -->
     <div class="field">
       <a class="btn btn-ghost" href="/PETVET/index.php?module=clinic-manager&page=vets">Clear Filters</a>
     </div>
@@ -416,6 +415,17 @@ const statusConfirm = document.getElementById('statusModalConfirm');
 let pendingToggleBtn = null;
 let pendingConfirmAction = null;
 
+function setSuspendToggleButtonUI(btn, suspended){
+  if(!btn) return;
+  if(suspended){
+    btn.title = 'Activate';
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#22c55e"/><polygon points="8,6 14,10 8,14" fill="#fff"/></svg>';
+  } else {
+    btn.title = 'Suspend';
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#ef4444"/><rect x="6" y="9" width="8" height="2" rx="1" fill="#fff"/></svg>';
+  }
+}
+
 function openStatusModal(msg, btn){
   statusMsg.textContent = msg;
   pendingToggleBtn = btn;
@@ -478,8 +488,7 @@ statusConfirm.addEventListener('click', async () => {
         pill.classList.remove('status-suspended');
         pill.classList.add('status-active');
         btn.dataset.status = 'Active';
-        btn.title = 'Suspend';
-        btn.textContent = '⛔';
+        setSuspendToggleButtonUI(btn, false);
         // Re-enable leave button when activating
         if(leaveBtn){
           leaveBtn.classList.remove('disabled');
@@ -495,8 +504,7 @@ statusConfirm.addEventListener('click', async () => {
         pill.classList.remove('status-active','status-leave');
         pill.classList.add('status-suspended');
         btn.dataset.status = 'Suspended';
-        btn.title = 'Activate';
-        btn.textContent = '▶️';
+        setSuspendToggleButtonUI(btn, true);
         // Disable leave button while suspended
         if(leaveBtn){
           leaveBtn.classList.add('disabled');
@@ -529,13 +537,7 @@ statusConfirm.addEventListener('click', async () => {
       pill.textContent = originalPillText;
       pill.className = originalPillClasses;
     }
-    if(originalStatus === 'Suspended') {
-      btn.title = 'Activate';
-      btn.textContent = '▶️';
-    } else {
-      btn.title = 'Suspend';
-      btn.textContent = '⛔';
-    }
+    setSuspendToggleButtonUI(btn, originalStatus === 'Suspended');
     if(leaveBtn) {
       if(originalStatus === 'Suspended') {
         leaveBtn.classList.add('disabled');
@@ -661,6 +663,28 @@ document.querySelectorAll('.btn-leave-toggle').forEach(btn => {
     }
   });
 });
+</script>
+<script>
+(function(){
+  const form = document.getElementById('vetsFilters');
+  if(!form) return;
+  const q = form.querySelector('input[name="q"]');
+  const status = form.querySelector('select[name="status"]');
+  const spec = form.querySelector('select[name="spec"]');
+  let timer = null;
+  function submitForm(){
+    form.submit();
+  }
+  if(q){
+    q.addEventListener('input', function(){
+      clearTimeout(timer);
+      timer = setTimeout(submitForm, 300);
+    });
+  }
+  [status,spec].forEach(function(el){
+    if(el) el.addEventListener('change', submitForm);
+  });
+})();
 </script>
 </body>
 </html>

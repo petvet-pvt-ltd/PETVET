@@ -10,6 +10,10 @@
     <title><?php echo htmlspecialchars($clinic['clinic_name']); ?> | PetVet Shop</title>
     <link rel="stylesheet" href="/PETVET/public/css/guest/shop.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="/PETVET/public/css/cart.css?v=<?php echo time(); ?>">
+    <style>
+        .icon-inline{display:inline-flex;align-items:center;justify-content:center;margin-right:6px;vertical-align:middle;}
+        .icon-inline svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    </style>
 </head>
 <body>
     <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
@@ -99,13 +103,13 @@
 
         <!-- Products Section -->
         <section class="products">
-            <h2>🎁 All Products</h2>
+            <h2><span class="icon-inline" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7Z"/><path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7Z"/></svg></span>All Products</h2>
             
             <!-- Search and Filter Section -->
             <div class="search-filter-section">
                 <div class="search-filter-container">
                     <div class="search-box">
-                        <label for="productSearch">🔍 Search:</label>
+                        <label for="productSearch"><span class="icon-inline" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></span>Search:</label>
                         <input type="text" id="productSearch" placeholder="Search products..." onkeyup="filterProducts()" />
                     </div>
                     <div class="filter-controls">
@@ -117,7 +121,7 @@
                             <span>Wishlist</span>
                         </button>
                         <div class="sort-control">
-                            <label for="sortBy">📊 Sort by:</label>
+                            <label for="sortBy"><span class="icon-inline" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V5"/><path d="M10 19V9"/><path d="M16 19v-6"/><path d="M22 19V11"/></svg></span>Sort by:</label>
                             <select id="sortBy" onchange="filterProducts()">
                                 <option value="default">Default</option>
                                 <option value="price-low">Price: Low to High</option>
@@ -168,8 +172,8 @@
                                                src="<?php echo htmlspecialchars($img); ?>" 
                                                alt="<?php echo htmlspecialchars($product['name']); ?>">
                                         <?php endforeach; ?>
-                                        <button class="carousel-prev" onclick="event.preventDefault(); event.stopPropagation();">❮</button>
-                                        <button class="carousel-next" onclick="event.preventDefault(); event.stopPropagation();">❯</button>
+                                        <button class="carousel-prev" onclick="event.preventDefault(); event.stopPropagation();" aria-label="Previous image"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+                                        <button class="carousel-next" onclick="event.preventDefault(); event.stopPropagation();" aria-label="Next image"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
                                         <div class="carousel-dots" onclick="event.preventDefault(); event.stopPropagation();">
                                           <?php foreach ($product['images'] as $idx => $img): ?>
                                             <span class="dot <?php echo $idx === 0 ? 'active' : ''; ?>" data-index="<?php echo $idx; ?>"></span>
@@ -183,10 +187,10 @@
                                 </div>
                                 <div class="product-info">
                                     <h3><?php echo htmlspecialchars($product['name']); ?></h3>
-                                    <p class="seller">🏪 <?php echo htmlspecialchars($clinic['clinic_name']); ?></p>
+                                    <p class="seller"><span class="icon-inline" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 9l1-5h16l1 5"/><path d="M5 22V10"/><path d="M19 22V10"/><path d="M9 22V14h6v8"/></svg></span><?php echo htmlspecialchars($clinic['clinic_name']); ?></p>
                                     <p class="price">Rs. <?php echo number_format($product['price']); ?></p>
                                     <div class="product-meta">
-                                        <span class="stock-info">📦 <?php echo $product['stock'] ?? 0; ?> in stock</span>
+                                        <span class="stock-info"><span class="icon-inline" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7l8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span><?php echo $product['stock'] ?? 0; ?> in stock</span>
                                     </div>
                                 </div>
                             </a>
@@ -217,7 +221,7 @@
                     <?php endforeach; ?>
                 </div>
                 <div class="no-results" id="noResults" style="display: none;">
-                    <span class="no-results-icon">🔍</span>
+                    <span class="no-results-icon" aria-hidden="true"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></span>
                     <p>No products found matching your criteria.</p>
                     <button class="clear-filters-btn" onclick="clearFilters()">Clear Filters</button>
                 </div>

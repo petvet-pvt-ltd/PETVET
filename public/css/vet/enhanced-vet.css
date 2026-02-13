@@ -343,6 +343,200 @@ tbody tr:last-child td {
   font-size: 16px;
 }
 
+/* Suspended screen */
+.suspension-frame {
+  padding: 34px;
+}
+
+.suspension-wrap {
+  display: grid;
+  gap: 18px;
+  font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Geneva, Verdana, Arial, sans-serif;
+  min-height: calc(100vh - 240px);
+  align-content: start;
+}
+
+.suspension-hero {
+  background: linear-gradient(135deg, rgba(23, 41, 63, 0.98) 0%, rgba(42, 74, 111, 0.98) 100%);
+  border-radius: 14px;
+  padding: 36px 34px;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.suspension-hero-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.suspension-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  flex: 0 0 auto;
+}
+
+.suspension-title {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: -0.4px;
+}
+
+.suspension-subtitle {
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.86);
+  font-weight: 600;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.suspension-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.16);
+  color: #fff;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  flex: 0 0 auto;
+}
+
+.suspension-card {
+  background: var(--card);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.suspension-card-inner {
+  padding: 26px 26px;
+}
+.suspension-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.6fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.suspension-side {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: linear-gradient(145deg, #ffffff, #fafbfc);
+  padding: 18px;
+}
+
+.suspension-side h4 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.suspension-actions {
+  margin-top: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.suspension-actions .btn {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Suspended quick actions: override global .btn:hover jump */
+.suspension-actions .btn {
+  transform: none;
+  box-shadow: none;
+  text-decoration: none;
+}
+
+.suspension-actions a,
+.suspension-actions a:hover,
+.suspension-actions a:focus,
+.suspension-actions a:active {
+  text-decoration: none;
+}
+
+.suspension-actions .btn:hover {
+  transform: none;
+  filter: none;
+  box-shadow: 0 6px 18px rgba(23, 41, 63, 0.16);
+}
+
+.suspension-actions .btn:active {
+  transform: none;
+  filter: none;
+}
+
+.suspension-actions .btn:focus-visible {
+  outline: 3px solid rgba(147, 197, 253, 0.55);
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .suspension-frame {
+    padding: 22px;
+  }
+  .suspension-wrap {
+    min-height: auto;
+  }
+  .suspension-grid {
+    grid-template-columns: 1fr;
+  }
+  .suspension-hero {
+    padding: 24px 18px;
+  }
+  .suspension-title {
+    font-size: 28px;
+  }
+}
+
+.suspension-card h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.suspension-card p {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 600;
+  line-height: 1.65;
+}
+
+.suspension-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.suspension-actions .btn {
+  min-width: 160px;
+}
+
+
 /* Form Styling */
 .form-section {
   background: linear-gradient(145deg, #ffffff, #fafbfc);

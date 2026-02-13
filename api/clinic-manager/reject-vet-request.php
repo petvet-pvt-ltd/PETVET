@@ -83,8 +83,8 @@ try {
     );
     $stmt->execute([$_SESSION['user_id'], $userRoleId]);
 
-    // Ensure vet not available
-    $stmt = $pdo->prepare('UPDATE vets SET available = 0, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND clinic_id = ?');
+    // Ensure vet not available (keep flags reset)
+    $stmt = $pdo->prepare('UPDATE vets SET available = 0, is_suspended = 0, suspended_at = NULL, is_on_leave = 0, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND clinic_id = ?');
     $stmt->execute([$vetUserId, $clinicId]);
 
     $pdo->commit();

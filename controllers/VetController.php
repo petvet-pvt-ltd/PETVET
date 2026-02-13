@@ -16,6 +16,7 @@ class VetController extends BaseController
     private MedicalRecordsModel $medicalRecordsModel;
     private PrescriptionsModel $prescriptionsModel;
     private VaccinationsModel $vaccinationsModel;
+    private bool $isSuspended = false;
 
     public function __construct()
     {
@@ -28,6 +29,9 @@ class VetController extends BaseController
             header('Location: /PETVET/index.php?module=guest&page=home');
             exit;
         }
+
+        // ✅ Suspension enforcement (settings + logout still allowed elsewhere)
+        $this->isSuspended = isVetSuspended((int)($_SESSION['user_id'] ?? 0), (int)($_SESSION['clinic_id'] ?? 0));
 
         // ✅ Init models once
         $this->appointmentsModel   = new AppointmentsModel();
@@ -61,17 +65,31 @@ class VetController extends BaseController
     {
         $vet = $this->vetContext();
 
-        $dashboardModel = new DashboardModel($vet['id'], $vet['clinic_id']);
-        $dashboardData  = $dashboardModel->getDashboardData();
+        $dashboardData = [
+            'appointments' => [],
+            'medicalRecords' => [],
+            'prescriptions' => [],
+            'vaccinations' => [],
+        ];
+
+        if (!$this->isSuspended) {
+            $dashboardModel = new DashboardModel($vet['id'], $vet['clinic_id']);
+            $dashboardData  = $dashboardModel->getDashboardData();
+        }
 
         $this->view('vet', 'dashboard', [
-            'dashboardData' => $dashboardData
+            'dashboardData' => $dashboardData,
+            'isSuspended' => $this->isSuspended,
         ]);
     }
 
     /* APPOINTMENTS PAGE */
     public function appointments()
     {
+        if ($this->isSuspended) {
+            header('Location: /PETVET/index.php?module=vet&page=dashboard');
+            exit;
+        }
         $vet = $this->vetContext();
 
         $ongoing   = $this->appointmentsModel->getOngoingAppointmentForVet($vet['id'], $vet['clinic_id']);
@@ -99,6 +117,10 @@ class VetController extends BaseController
     /* MEDICAL RECORDS PAGE */
     public function medicalRecords()
     {
+        if ($this->isSuspended) {
+            header('Location: /PETVET/index.php?module=vet&page=dashboard');
+            exit;
+        }
         $vet = $this->vetContext();
 
         $appointments   = $this->appointmentsModel->getAllAppointmentsForVet($vet['id'], $vet['clinic_id']);
@@ -117,6 +139,10 @@ class VetController extends BaseController
     /* PRESCRIPTIONS PAGE */
     public function prescriptions()
     {
+        if ($this->isSuspended) {
+            header('Location: /PETVET/index.php?module=vet&page=dashboard');
+            exit;
+        }
         $vet = $this->vetContext();
 
         $appointments  = $this->appointmentsModel->getAllAppointmentsForVet($vet['id'], $vet['clinic_id']);
@@ -131,6 +157,10 @@ class VetController extends BaseController
     /* VACCINATIONS PAGE */
     public function vaccinations()
     {
+        if ($this->isSuspended) {
+            header('Location: /PETVET/index.php?module=vet&page=dashboard');
+            exit;
+        }
         $vet = $this->vetContext();
 
         $appointments = $this->appointmentsModel->getAllAppointmentsForVet($vet['id'], $vet['clinic_id']);

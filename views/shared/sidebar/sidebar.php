@@ -76,23 +76,29 @@ echo "<!-- activeModule: $activeModule -->";
     </ul>
     <?php
   } elseif ($activeModule == 'vet') {
+    $vetSuspended = false;
+    if (isLoggedIn() && (currentRole() === 'vet' || ($_SESSION['current_role'] ?? '') === 'vet') && !empty($_SESSION['clinic_id'])) {
+      $vetSuspended = isVetSuspended((int)($_SESSION['user_id'] ?? 0), (int)($_SESSION['clinic_id'] ?? 0));
+    }
     ?>
     <ul class="sidebar-nav-top">
       <a href="/PETVET/index.php?module=vet&page=dashboard" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'dashboard.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/meter.png" class="icon"> Dashboard</li>
       </a>
-      <a href="/PETVET/index.php?module=vet&page=appointments" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'appointments.php') ? 'active' : '' ?>">
-        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Appointments</li>
-      </a>
-      <a href="/PETVET/index.php?module=vet&page=medical-records" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'medical-records.php') ? 'active' : '' ?>">
-        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/folder.png" class="icon"> Medical Records</li>
-      </a>
-      <a href="/PETVET/index.php?module=vet&page=prescriptions" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'prescriptions.php') ? 'active' : '' ?>">
-        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/package-box.png" class="icon"> Prescriptions</li>
-      </a>
-      <a href="/PETVET/index.php?module=vet&page=vaccinations" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'vaccinations.php') ? 'active' : '' ?>">
-        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/pets.png" class="icon"> Vaccinations</li>
-      </a>
+      <?php if (!$vetSuspended): ?>
+        <a href="/PETVET/index.php?module=vet&page=appointments" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'appointments.php') ? 'active' : '' ?>">
+          <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Appointments</li>
+        </a>
+        <a href="/PETVET/index.php?module=vet&page=medical-records" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'medical-records.php') ? 'active' : '' ?>">
+          <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/folder.png" class="icon"> Medical Records</li>
+        </a>
+        <a href="/PETVET/index.php?module=vet&page=prescriptions" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'prescriptions.php') ? 'active' : '' ?>">
+          <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/package-box.png" class="icon"> Prescriptions</li>
+        </a>
+        <a href="/PETVET/index.php?module=vet&page=vaccinations" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'vaccinations.php') ? 'active' : '' ?>">
+          <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/pets.png" class="icon"> Vaccinations</li>
+        </a>
+      <?php endif; ?>
     </ul>
     <?php
   } elseif ($activeModule == 'admin') {

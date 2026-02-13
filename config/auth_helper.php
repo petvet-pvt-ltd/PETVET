@@ -190,3 +190,58 @@ function validateCsrfToken(string $token): bool {
 function csrfField(): string {
     return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(generateCsrfToken()) . '">';
 }
+
+/* ==============================
+   Vet Suspension / Leave Helpers
+   ============================== */
+
+/**
+ * Returns vet access flags for the current clinic.
+ * Requires: user_id + clinic_id.
+ */
+function getVetAccessFlags(int $vetUserId, int $clinicId): array {
+    try {
+        $pdo = db();
+        $stmt = $pdo->prepare('SELECT is_suspended, is_on_leave FROM vets WHERE user_id = ? AND clinic_id = ? LIMIT 1');
+        $stmt->execute([$vetUserId, $clinicId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            return ['is_suspended' => false, 'is_on_leave' => false];
+        }
+        return [
+            'is_suspended' => ((int)($row['is_suspended'] ?? 0)) === 1,
+            'is_on_leave' => ((int)($row['is_on_leave'] ?? 0)) === 1,
+        ];
+    } catch (Throwable $e) {
+        return ['is_suspended' => false, 'is_on_leave' => false];
+    }
+}
+
+function isVetSuspended(?int $vetUserId = null, ?int $clinicId = null): bool {
+    $vetUserId = $vetUserId ?? ($_SESSION['user_id'] ?? null);
+    $clinicId = $clinicId ?? ($_SESSION['clinic_id'] ?? null);
+    if (empty($vetUserId) || empty($clinicId)) return false;
+    $flags = getVetAccessFlags((int)$vetUserId, (int)$clinicId);
+    return (bool)$flags['is_suspended'];
+}
+
+/**
+ * For JSON APIs: block suspended vets except when explicitly allowed.
+ */
+function enforceVetNotSuspendedApi(array $allowWhenSuspended = []): void {
+    if (!isLoggedIn() || currentRole() !== 'vet') return;
+
+    $path = $_SERVER['SCRIPT_NAME'] ?? '';
+    foreach ($allowWhenSuspended as $allowedFragment) {
+        if ($allowedFragment !== '' && str_contains($path, $allowedFragment)) {
+            return;
+        }
+    }
+
+    if (isVetSuspended()) {
+        http_response_code(403);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => 'Your vet account is suspended.']);
+        exit;
+    }
+}

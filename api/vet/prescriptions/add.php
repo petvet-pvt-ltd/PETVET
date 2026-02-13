@@ -8,6 +8,9 @@ header('Content-Type: application/json; charset=utf-8');
 requireLogin('/PETVET/index.php?module=guest&page=login');
 requireRole('vet', '/PETVET/index.php');
 
+// Suspended vets cannot add prescriptions
+enforceVetNotSuspendedApi();
+
 if (empty($_SESSION['clinic_id']) || empty($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'error' => 'Clinic or user not set']);
     exit;
