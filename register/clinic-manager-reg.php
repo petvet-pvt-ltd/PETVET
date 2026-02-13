@@ -111,8 +111,8 @@ exit;
 
             <!-- Upload label and file input -->
             <div>
-              <label for="license_file">Upload PDF with the documents:</label>
-              <input type="file" name="license_file" id="license_file" accept=".pdf,.jpg,.jpeg,.png" required>
+              <label for="clinic_manager_license">Upload PDF with the documents:</label>
+              <input type="file" name="clinic_manager_license" id="clinic_manager_license" accept=".pdf,.jpg,.jpeg,.png" required>
             </div>
 
             <!-- Checkbox -->

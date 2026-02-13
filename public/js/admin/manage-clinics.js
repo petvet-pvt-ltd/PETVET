@@ -88,6 +88,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     <span class="status-badge status-${clinic.verification_status}">
                         ${clinic.verification_status}
                     </span>
+                    ${clinic.verification_status === 'pending' ? `
+                        <div style="margin-top: 5px; font-size: 11px;">
+                            ${clinic.documents && clinic.documents.length > 0 
+                                ? `<span style="color: #10b981;">
+                                    <i class="fas fa-file-pdf"></i> ${clinic.documents.length} doc(s)
+                                   </span>`
+                                : `<span style="color: #f59e0b;">
+                                    <i class="fas fa-exclamation-triangle"></i> No docs
+                                   </span>`
+                            }
+                        </div>
+                    ` : ''}
                 </td>
                 <td>
                     <div class="date-info">
@@ -182,6 +194,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p>${clinic.clinic_description}</p>
                 </div>
             ` : ''}
+
+            ${clinic.documents && clinic.documents.length > 0 ? `
+                <div style="margin-top: 20px; padding: 15px; background: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">
+                        <i class="fas fa-file-pdf"></i> Verification Documents
+                    </h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        ${clinic.documents.map(doc => `
+                            <a href="${doc.url}" target="_blank" rel="noopener noreferrer" 
+                               style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: #fff; border: 2px solid #667eea; border-radius: 6px; color: #667eea; text-decoration: none; font-weight: 600; transition: all 0.2s;"
+                               onmouseover="this.style.background='#667eea'; this.style.color='#fff';"
+                               onmouseout="this.style.background='#fff'; this.style.color='#667eea';">
+                                <i class="fas fa-file-pdf"></i>
+                                <span>${doc.label}</span>
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : `
+                <div style="margin-top: 20px; padding: 15px; background: #fef3c7; border-radius: 8px; border: 1px solid #f59e0b;">
+                    <p style="color: #92400e; margin: 0;">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        <strong>No verification documents uploaded</strong>
+                    </p>
+                </div>
+            `}
 
             ${clinic.verification_status === 'pending' ? `
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e2e8f0; display: flex; gap: 15px; justify-content: center;">

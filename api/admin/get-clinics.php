@@ -6,6 +6,9 @@ try {
     // Get filter parameters
     $status = isset($_GET['status']) ? $_GET['status'] : 'all';
     
+    // Use PDO for consistent querying
+    $pdo = db();
+    
     $query = "SELECT 
         c.id,
         c.clinic_name,
@@ -18,6 +21,7 @@ try {
         c.is_active,
         c.created_at,
         c.clinic_logo,
+        c.license_document,
         COUNT(DISTINCT cs.id) as staff_count,
         COUNT(DISTINCT a.id) as appointment_count
     FROM clinics c
@@ -42,16 +46,39 @@ try {
         END,
         c.created_at DESC";
     
-    $result = mysqli_query($conn, $query);
+    $stmt = $pdo->query($query);
+    $clinics = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    if (!$result) {
-        throw new Exception(mysqli_error($conn));
-    }
+    // For each clinic, fetch associated documents from role_verification_documents
+    $docStmt = $pdo->prepare("
+        SELECT vd.id, vd.document_type, vd.document_name, vd.file_path
+        FROM role_verification_documents vd
+        JOIN user_roles ur ON vd.user_role_id = ur.id
+        JOIN roles r ON ur.role_id = r.id
+        JOIN clinic_manager_profiles cmp ON cmp.user_id = ur.user_id
+        WHERE r.role_name = 'clinic_manager'
+          AND cmp.clinic_id = ?
+        ORDER BY vd.uploaded_at DESC
+    ");
     
-    $clinics = [];
-    while ($row = mysqli_fetch_assoc($result)) {
-        $clinics[] = $row;
+    foreach ($clinics as &$clinic) {
+        $docStmt->execute([$clinic['id']]);
+        $docsRows = $docStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $clinic['documents'] = [];
+        foreach ($docsRows as $d) {
+            $label = $d['document_type'] === 'license' 
+                ? 'License Document (PDF)' 
+                : (ucfirst($d['document_type']) . ' Document');
+            $clinic['documents'][] = [
+                'id' => $d['id'],
+                'label' => $label,
+                'name' => $d['document_name'],
+                'url' => '/PETVET/api/download-file.php?doc_id=' . (int)$d['id']
+            ];
+        }
     }
+    unset($clinic);
     
     // Get statistics
     $statsQuery = "SELECT 
@@ -62,8 +89,8 @@ try {
         SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active
     FROM clinics";
     
-    $statsResult = mysqli_query($conn, $statsQuery);
-    $stats = mysqli_fetch_assoc($statsResult);
+    $statsStmt = $pdo->query($statsQuery);
+    $stats = $statsStmt->fetch(PDO::FETCH_ASSOC);
     
     echo json_encode([
         'success' => true,
