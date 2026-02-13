@@ -8,8 +8,85 @@ class TrainerAppointmentsModel extends BaseModel {
      * Get all pending training requests for the trainer
      */
     public function getPendingRequests($trainerId) {
-        $data = TrainerData::getAllSessions();
-        return $data['pending'];
+        $trainerId = (int)$trainerId;
+        if ($trainerId <= 0) return [];
+
+        $pdo = $this->pdo;
+
+        $sql = "SELECT
+                    r.id AS request_id,
+                    r.training_type,
+                    r.pet_name,
+                    r.pet_breed,
+                    r.preferred_date,
+                    TIME_FORMAT(r.preferred_time, '%h:%i %p') AS preferred_time,
+                    r.location_type,
+                    r.location_address,
+                    r.location_lat,
+                    r.location_lng,
+                    r.location_district,
+                    r.additional_notes,
+                    r.created_at,
+                    CONCAT(u.first_name, ' ', u.last_name) AS pet_owner_name,
+                    COALESCE(u.phone, '') AS pet_owner_phone,
+                    spp.location_latitude AS trainer_lat,
+                    spp.location_longitude AS trainer_lng
+                FROM trainer_training_requests r
+                JOIN users u ON u.id = r.pet_owner_id
+                LEFT JOIN service_provider_profiles spp
+                    ON spp.user_id = r.trainer_id AND spp.role_type = 'trainer'
+                WHERE r.trainer_id = ? AND r.status = 'pending'
+                ORDER BY r.created_at DESC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$trainerId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($rows as &$row) {
+            $locationType = (string)($row['location_type'] ?? '');
+
+            $trainerLat = isset($row['trainer_lat']) ? (float)$row['trainer_lat'] : null;
+            $trainerLng = isset($row['trainer_lng']) ? (float)$row['trainer_lng'] : null;
+
+            $lat = $row['location_lat'] !== null ? (float)$row['location_lat'] : null;
+            $lng = $row['location_lng'] !== null ? (float)$row['location_lng'] : null;
+
+            if ($locationType === 'trainer') {
+                $row['location'] = "At Trainer's Location";
+                // For navigation, use trainer coordinates
+                if ($trainerLat && $trainerLng) {
+                    $row['location_lat'] = $trainerLat;
+                    $row['location_lng'] = $trainerLng;
+                }
+                $row['distance_km'] = '0.0';
+            } else {
+                $row['location'] = (string)($row['location_address'] ?? '');
+                if ($row['location'] === '') {
+                    $row['location'] = 'Selected location';
+                }
+
+                // Distance from trainer to selected location
+                if ($trainerLat && $trainerLng && $lat && $lng) {
+                    $dist = $this->haversineKm($trainerLat, $trainerLng, $lat, $lng);
+                    $row['distance_km'] = number_format($dist, 1);
+                } else {
+                    $row['distance_km'] = null;
+                }
+            }
+        }
+
+        return $rows;
+    }
+
+    private function haversineKm($lat1, $lon1, $lat2, $lon2) {
+        $earthRadius = 6371.0;
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat / 2) * sin($dLat / 2)
+           + cos(deg2rad($lat1)) * cos(deg2rad($lat2))
+           * sin($dLon / 2) * sin($dLon / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        return $earthRadius * $c;
     }
     
     /**
@@ -33,22 +110,55 @@ class TrainerAppointmentsModel extends BaseModel {
      * Accept a training request
      */
     public function acceptRequest($requestId, $trainerId) {
-        // Mock implementation - replace with actual database update
-        return [
-            'success' => true,
-            'message' => 'Training request accepted successfully'
-        ];
+        $requestId = (int)$requestId;
+        $trainerId = (int)$trainerId;
+        if ($requestId <= 0 || $trainerId <= 0) {
+            return ['success' => false, 'message' => 'Invalid request'];
+        }
+
+        try {
+            $stmt = $this->pdo->prepare("UPDATE trainer_training_requests
+                SET status = 'accepted', trainer_response_at = NOW(), decline_reason = NULL
+                WHERE id = ? AND trainer_id = ? AND status = 'pending'");
+            $stmt->execute([$requestId, $trainerId]);
+
+            if ($stmt->rowCount() === 0) {
+                return ['success' => false, 'message' => 'Request not found or already processed'];
+            }
+
+            return ['success' => true, 'message' => 'Training request accepted successfully'];
+        } catch (Throwable $e) {
+            error_log('acceptRequest error: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Server error'];
+        }
     }
     
     /**
      * Decline a training request
      */
     public function declineRequest($requestId, $trainerId, $reason = '') {
-        // Mock implementation - replace with actual database update
-        return [
-            'success' => true,
-            'message' => 'Training request declined'
-        ];
+        $requestId = (int)$requestId;
+        $trainerId = (int)$trainerId;
+        $reason = trim((string)$reason);
+        if ($requestId <= 0 || $trainerId <= 0) {
+            return ['success' => false, 'message' => 'Invalid request'];
+        }
+
+        try {
+            $stmt = $this->pdo->prepare("UPDATE trainer_training_requests
+                SET status = 'declined', trainer_response_at = NOW(), decline_reason = ?
+                WHERE id = ? AND trainer_id = ? AND status = 'pending'");
+            $stmt->execute([$reason !== '' ? $reason : null, $requestId, $trainerId]);
+
+            if ($stmt->rowCount() === 0) {
+                return ['success' => false, 'message' => 'Request not found or already processed'];
+            }
+
+            return ['success' => true, 'message' => 'Training request declined'];
+        } catch (Throwable $e) {
+            error_log('declineRequest error: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Server error'];
+        }
     }
     
     /**
