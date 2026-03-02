@@ -1,5 +1,10 @@
 // Breeder Requests JavaScript
 
+function updateModalOpenState() {
+    const anyOpen = !!document.querySelector('.modal-overlay.active');
+    document.body.classList.toggle('modal-open', anyOpen);
+}
+
 // Filter requests by status
 function filterRequests(status) {
     // Update filter buttons
@@ -35,12 +40,14 @@ function showAcceptModal(requestId, petName, ownerName) {
     loadBreedingPets();
     
     document.getElementById('acceptModal').classList.add('active');
+    updateModalOpenState();
 }
 
 function closeAcceptModal() {
     document.getElementById('acceptModal').classList.remove('active');
     document.getElementById('selectBreedingPet').value = '';
     currentRequestId = null;
+    updateModalOpenState();
 }
 
 function loadBreedingPets() {
@@ -113,12 +120,14 @@ function showDeclineModal(requestId, petName, ownerName) {
     document.getElementById('declinePetName').textContent = petName;
     document.getElementById('declineOwnerName').textContent = ownerName;
     document.getElementById('declineModal').classList.add('active');
+    updateModalOpenState();
 }
 
 function closeDeclineModal() {
     document.getElementById('declineModal').classList.remove('active');
     document.getElementById('declineReason').value = '';
     currentRequestId = null;
+    updateModalOpenState();
 }
 
 function confirmDeclineRequest() {
@@ -156,12 +165,14 @@ function showCompleteModal(requestId, petName, ownerName) {
     document.getElementById('completePetName').textContent = petName;
     document.getElementById('completeOwnerName').textContent = ownerName;
     document.getElementById('completeModal').classList.add('active');
+    updateModalOpenState();
 }
 
 function closeCompleteModal() {
     document.getElementById('completeModal').classList.remove('active');
     document.getElementById('completeNotes').value = '';
     currentRequestId = null;
+    updateModalOpenState();
 }
 
 function confirmCompleteRequest() {
@@ -233,27 +244,28 @@ function showContactModal(ownerName, phone1, phone2) {
     
     // Show modal and freeze background
     modal.classList.add('active');
-    document.body.classList.add('modal-open');
+    updateModalOpenState();
 }
 
 function closeContactModal() {
     const modal = document.getElementById('contactModal');
     modal.classList.remove('active');
-    document.body.classList.remove('modal-open');
+    updateModalOpenState();
 }
 
 // Close modals when clicking outside
 document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('modal-overlay')) {
-        closeAcceptModal();
-        closeDeclineModal();
-        closeCompleteModal();
-        closeContactModal();
-    }
+    if (!e.target.classList.contains('modal-overlay')) return;
+
+    if (e.target.id === 'acceptModal') return closeAcceptModal();
+    if (e.target.id === 'declineModal') return closeDeclineModal();
+    if (e.target.id === 'completeModal') return closeCompleteModal();
+    if (e.target.id === 'contactModal') return closeContactModal();
 });
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     // Show pending requests by default
     filterRequests('pending');
+    updateModalOpenState();
 });
