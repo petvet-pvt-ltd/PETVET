@@ -72,6 +72,19 @@ if (in_array($locationType, ['home','park','other'], true)) {
 try {
     $pdo = db();
 
+    // Prevent duplicate active booking with same trainer
+    $today = (new DateTime('today'))->format('Y-m-d');
+    $dup = $pdo->prepare("SELECT 1
+        FROM trainer_training_requests
+        WHERE pet_owner_id = ? AND trainer_id = ?
+          AND status IN ('pending','accepted')
+          AND preferred_date >= ?
+        LIMIT 1");
+    $dup->execute([$userId, $trainerId, $today]);
+    if ($dup->fetchColumn()) {
+        json_out(['success' => false, 'message' => 'You already have an active booking with this trainer'], 409);
+    }
+
     // Require membership as pet_owner (multi-role safe)
     $roleStmt = $pdo->prepare("SELECT 1
         FROM user_roles ur

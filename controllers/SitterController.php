@@ -21,7 +21,10 @@ class SitterController extends BaseController {
 
     public function bookings() {
         $model = new SitterBookingsModel();
-        $sitterId = $_SESSION['user_id'] ?? 1; // Get from session or mock
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $sitterId = (int)($_SESSION['user_id'] ?? 1); // Get from session or mock
         
         $data = [
             'bookings' => $model->getAllBookings($sitterId),
@@ -42,7 +45,10 @@ class SitterController extends BaseController {
 
         $action = $_POST['action'] ?? '';
         $bookingId = $_POST['booking_id'] ?? 0;
-        $sitterId = $_SESSION['user_id'] ?? 1;
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $sitterId = (int)($_SESSION['user_id'] ?? 1);
 
         $model = new SitterBookingsModel();
         
