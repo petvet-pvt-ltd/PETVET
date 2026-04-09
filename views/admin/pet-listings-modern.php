@@ -85,8 +85,7 @@
     <div class="confirm-dialog">
       <h3>Confirm Approval</h3>
       <p class="confirm-message">
-        Are you sure you want to approve the listing for <strong id="approvePetName"></strong>? 
-        This will make it visible to all users in Explore Pets.
+        Are you sure you want to approve the listing for <strong id="approvePetName"></strong>?
       </p>
       <div class="confirm-actions">
         <button class="btn outline" onclick="closeConfirmApprove()">Cancel</button>
@@ -98,14 +97,14 @@
   <!-- Confirm Decline Modal -->
   <div class="modal-overlay" id="confirmDeclineModal" style="display:none;">
     <div class="confirm-dialog">
-      <h3>Confirm Decline</h3>
+      <h3>Confirm Rejection</h3>
       <p class="confirm-message">
-        Are you sure you want to decline the listing for <strong id="declinePetName"></strong>? 
-        This will permanently delete the listing and cannot be undone.
+        Are you sure you want to reject the listing for <strong id="declinePetName"></strong>? 
+        The owner will still be able to see it in their My Listings with a rejected status.
       </p>
       <div class="confirm-actions">
         <button class="btn outline" onclick="closeConfirmDecline()">Cancel</button>
-        <button class="btn danger" id="confirmDeclineBtn">Decline & Delete</button>
+        <button class="btn danger" id="confirmDeclineBtn">Reject Listing</button>
       </div>
     </div>
   </div>

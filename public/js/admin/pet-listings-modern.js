@@ -414,18 +414,18 @@ async function declineListing() {
     const data = await response.json();
     
     if (data.success) {
-      showSuccess('Listing declined and deleted successfully!');
+      showSuccess('Listing rejected successfully!');
       closeAllModals();
       await fetchListings(); // Refresh
     } else {
-      showError('Failed to decline: ' + data.message);
+      showError('Failed to reject: ' + data.message);
     }
   } catch (error) {
-    console.error('Error declining listing:', error);
+    console.error('Error rejecting listing:', error);
     showError('Network error. Please try again.');
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Yes, Decline';
+    btn.textContent = 'Reject Listing';
   }
 }
 
