@@ -39,7 +39,7 @@ try {
 		$stmt = $pdo->prepare("SELECT
 				r.id,
 				r.trainer_id AS provider_id,
-				COALESCE(NULLIF(TRIM(u.avatar), ''), '/PETVET/public/images/default-avatar.png') AS provider_avatar,
+				COALESCE(NULLIF(TRIM(u.avatar), ''), '/PETVET/public/images/emptyProfPic.png') AS provider_avatar,
 				COALESCE(NULLIF(TRIM(spp.business_name), ''), CONCAT(u.first_name, ' ', u.last_name)) AS provider_display,
 				CONCAT(u.first_name, ' ', u.last_name) AS provider_name,
 				r.pet_name,
@@ -74,7 +74,7 @@ try {
 		$stmt = $pdo->prepare("SELECT
 				r.id,
 				r.sitter_id AS provider_id,
-				COALESCE(NULLIF(TRIM(u.avatar), ''), '/PETVET/public/images/default-avatar.png') AS provider_avatar,
+				COALESCE(NULLIF(TRIM(u.avatar), ''), '/PETVET/public/images/emptyProfPic.png') AS provider_avatar,
 				COALESCE(NULLIF(TRIM(spp.business_name), ''), CONCAT(u.first_name, ' ', u.last_name)) AS provider_display,
 				CONCAT(u.first_name, ' ', u.last_name) AS provider_name,
 				r.pet_name,
@@ -109,7 +109,7 @@ try {
 		$stmt = $pdo->prepare("SELECT
 				r.id,
 				r.breeder_id AS provider_id,
-				COALESCE(NULLIF(TRIM(u.avatar), ''), '/PETVET/public/images/default-avatar.png') AS provider_avatar,
+				COALESCE(NULLIF(TRIM(u.avatar), ''), '/PETVET/public/images/emptyProfPic.png') AS provider_avatar,
 				CONCAT(u.first_name, ' ', u.last_name) AS provider_display,
 				CONCAT(u.first_name, ' ', u.last_name) AS provider_name,
 				r.owner_pet_name AS pet_name,

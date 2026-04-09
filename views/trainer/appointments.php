@@ -176,7 +176,7 @@ $pageTitle = "Training Appointments";
         <div class="bookings-grid" id="bookingsGrid">
             <!-- Pending Requests -->
             <?php foreach ($pendingRequests as $request): ?>
-            <div class="booking-card" data-status="pending">
+            <div class="booking-card" data-status="pending" data-request-id="<?php echo (int)$request['request_id']; ?>">
                 <div class="booking-header">
                     <div>
                         <div class="booking-title">

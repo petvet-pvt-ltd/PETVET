@@ -9,7 +9,10 @@ class TrainerController extends BaseController {
 
     public function dashboard() {
         $model = new TrainerDashboardModel();
-        $trainerId = 1; // Mock trainer ID
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $trainerId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'stats' => $model->getStats($trainerId),
@@ -24,7 +27,7 @@ class TrainerController extends BaseController {
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
         }
-        $trainerId = (int)($_SESSION['user_id'] ?? 1);
+        $trainerId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'pendingRequests' => $model->getPendingRequests($trainerId),
@@ -51,7 +54,7 @@ class TrainerController extends BaseController {
         }
 
         $action = $_POST['action'] ?? '';
-        $trainerId = (int)($_SESSION['user_id'] ?? 1);
+        $trainerId = (int)($_SESSION['user_id'] ?? 0);
         $model = new TrainerAppointmentsModel();
 
         switch ($action) {
@@ -136,7 +139,10 @@ class TrainerController extends BaseController {
 
     public function settings() {
         $model = new TrainerSettingsModel();
-        $trainerId = 1; // Mock trainer ID
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $trainerId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'profile' => $model->getProfile($trainerId),

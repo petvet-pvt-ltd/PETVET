@@ -243,7 +243,7 @@ $pageTitle = "Breeding Requests";
             <?php foreach ($pendingRequests as $request): ?>
             <?php $locationInfo = breeder_extract_location_info($request['message'] ?? ''); ?>
             <?php $displayMessage = breeder_strip_location_details($request['message'] ?? ''); ?>
-            <div class="booking-card" data-status="pending">
+            <div class="booking-card" data-status="pending" data-request-id="<?php echo (int)$request['id']; ?>">
                 <div class="booking-header">
                     <div>
                         <div class="booking-title"><?php echo htmlspecialchars($request['pet_name']); ?> - <?php echo htmlspecialchars($request['breed']); ?></div>
@@ -303,7 +303,7 @@ $pageTitle = "Breeding Requests";
             <!-- Approved Requests -->
             <?php foreach ($approvedRequests as $request): ?>
             <?php $locationInfo = breeder_extract_location_info($request['message'] ?? ''); ?>
-            <div class="booking-card" data-status="approved" style="display: none;">
+            <div class="booking-card" data-status="approved" data-request-id="<?php echo (int)$request['id']; ?>" style="display: none;">
                 <div class="booking-header">
                     <div>
                         <div class="booking-title"><?php echo htmlspecialchars($request['pet_name']); ?> - <?php echo htmlspecialchars($request['breed']); ?></div>
@@ -362,7 +362,7 @@ $pageTitle = "Breeding Requests";
             <!-- Completed Requests -->
             <?php foreach ($completedRequests as $request): ?>
             <?php $locationInfo = breeder_extract_location_info($request['message'] ?? ''); ?>
-            <div class="booking-card" data-status="completed" style="display: none;">
+            <div class="booking-card" data-status="completed" data-request-id="<?php echo (int)$request['id']; ?>" style="display: none;">
                 <div class="booking-header">
                     <div>
                         <div class="booking-title"><?php echo htmlspecialchars($request['pet_name']); ?> - <?php echo htmlspecialchars($request['breed']); ?></div>

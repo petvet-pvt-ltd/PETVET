@@ -8,7 +8,10 @@ class BreederController extends BaseController {
 
     public function dashboard() {
         $model = new BreederDashboardModel();
-        $breederId = $_SESSION['user_id'] ?? 1;
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $breederId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'stats' => $model->getStats($breederId),
@@ -20,7 +23,10 @@ class BreederController extends BaseController {
 
     public function requests() {
         $model = new BreederDashboardModel();
-        $breederId = $_SESSION['user_id'] ?? 1;
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $breederId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'pendingRequests' => $model->getPendingRequests($breederId),
@@ -33,7 +39,10 @@ class BreederController extends BaseController {
 
     public function breedingPets() {
         $model = new BreederPetsModel();
-        $breederId = $_SESSION['user_id'] ?? 1;
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $breederId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'breedingPets' => $model->getBreedingPets($breederId)
@@ -48,7 +57,10 @@ class BreederController extends BaseController {
 
     public function pets() {
         $model = new BreederPetsModel();
-        $breederId = 1; // Mock breeder ID
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $breederId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'pets' => $model->getAllPets($breederId),
@@ -62,7 +74,10 @@ class BreederController extends BaseController {
 
     public function settings() {
         $model = new BreederSettingsModel();
-        $breederId = 1; // Mock breeder ID
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $breederId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'profile' => $model->getProfile($breederId),

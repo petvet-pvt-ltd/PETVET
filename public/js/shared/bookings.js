@@ -27,7 +27,62 @@ function filterBookings(status) {
 // Initialize: show pending bookings by default
 document.addEventListener('DOMContentLoaded', function() {
     filterBookings('pending');
+
+    // Poll every 5s to remove cancelled pending bookings
+    startPendingBookingsPolling();
 });
+
+function setFilterCount(filter, count) {
+    const btn = document.querySelector(`.filter-btn[data-filter="${filter}"]`);
+    if (!btn) return;
+
+    const labels = {
+        pending: 'Pending',
+        confirmed: 'Confirmed',
+        completed: 'Completed'
+    };
+    const label = labels[filter] || filter;
+    btn.textContent = `${label} (${count})`;
+}
+
+function reconcilePendingBookingCards(serverBookingIds) {
+    const serverSet = new Set((serverBookingIds || []).map(v => Number(v)));
+
+    document.querySelectorAll('.booking-card[data-status="pending"][data-booking-id]').forEach(card => {
+        const bookingId = Number(card.dataset.bookingId);
+        if (!bookingId) return;
+        if (!serverSet.has(bookingId)) {
+            card.remove();
+        }
+    });
+
+    setFilterCount('pending', serverSet.size);
+}
+
+function startPendingBookingsPolling() {
+    const endpoint = '/PETVET/api/sitter/poll-pending-bookings.php';
+
+    async function pollOnce() {
+        try {
+            const res = await fetch(endpoint, {
+                method: 'GET',
+                cache: 'no-store',
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (!res.ok) return;
+            const data = await res.json();
+            if (!data || !data.success) return;
+
+            reconcilePendingBookingCards(data.booking_ids || []);
+        } catch (e) {
+            // Ignore transient network errors
+        }
+    }
+
+    pollOnce();
+    setInterval(pollOnce, 5000);
+}
 
 // Contact Modal Functions
 function showContactModal(ownerName, phone1, phone2) {

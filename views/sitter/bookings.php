@@ -201,7 +201,7 @@ function format_sitter_time_range($startTime, $endTime): string {
         <div class="bookings-grid" id="bookingsGrid">
             <!-- Pending Bookings -->
             <?php foreach ($pendingBookings as $booking): ?>
-            <div class="booking-card" data-status="pending">
+            <div class="booking-card" data-status="pending" data-booking-id="<?php echo (int)$booking['id']; ?>">
                 <div class="booking-header">
                     <div>
                         <div class="booking-title"><?php echo htmlspecialchars($booking['pet_name']); ?> - <?php echo htmlspecialchars($booking['service_type']); ?></div>
@@ -263,7 +263,7 @@ function format_sitter_time_range($startTime, $endTime): string {
 
             <!-- Confirmed Bookings -->
             <?php foreach ($activeBookings as $booking): ?>
-            <div class="booking-card" data-status="confirmed" style="display: none;">
+            <div class="booking-card" data-status="confirmed" data-booking-id="<?php echo (int)$booking['id']; ?>" style="display: none;">
                 <div class="booking-header">
                     <div>
                         <div class="booking-title"><?php echo htmlspecialchars($booking['pet_name']); ?> - <?php echo htmlspecialchars($booking['service_type']); ?></div>
@@ -301,7 +301,7 @@ function format_sitter_time_range($startTime, $endTime): string {
 
             <!-- Completed Bookings -->
             <?php foreach ($completedBookings as $booking): ?>
-            <div class="booking-card" data-status="completed" style="display: none;">
+            <div class="booking-card" data-status="completed" data-booking-id="<?php echo (int)$booking['id']; ?>" style="display: none;">
                 <div class="booking-header">
                     <div>
                         <div class="booking-title"><?php echo htmlspecialchars($booking['pet_name']); ?> - <?php echo htmlspecialchars($booking['service_type']); ?></div>

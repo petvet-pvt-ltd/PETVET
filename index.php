@@ -213,7 +213,6 @@ switch ($module) {
             case 'dashboard': $c->dashboard(); break;
             case 'appointments': $c->appointments(); break;
             case 'availability': $c->availability(); break;
-            case 'clients': $c->clients(); break;
             case 'settings': $c->settings(); break;
             default: show404("This trainer page doesn't exist."); break;
         }

@@ -9,7 +9,10 @@ class SitterController extends BaseController {
 
     public function dashboard() {
         $model = new SitterDashboardModel();
-        $sitterId = 1; // Mock sitter ID
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $sitterId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'stats' => $model->getStats($sitterId),
@@ -24,7 +27,7 @@ class SitterController extends BaseController {
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
         }
-        $sitterId = (int)($_SESSION['user_id'] ?? 1); // Get from session or mock
+        $sitterId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'bookings' => $model->getAllBookings($sitterId),
@@ -48,7 +51,7 @@ class SitterController extends BaseController {
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
         }
-        $sitterId = (int)($_SESSION['user_id'] ?? 1);
+        $sitterId = (int)($_SESSION['user_id'] ?? 0);
 
         $model = new SitterBookingsModel();
         
@@ -76,7 +79,10 @@ class SitterController extends BaseController {
 
     public function pets() {
         $model = new SitterPetsModel();
-        $sitterId = 1; // Mock sitter ID
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $sitterId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'currentPets' => $model->getCurrentPets($sitterId),
@@ -89,7 +95,10 @@ class SitterController extends BaseController {
 
     public function settings() {
         $model = new SitterSettingsModel();
-        $sitterId = 1; // Mock sitter ID
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $sitterId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'profile' => $model->getProfile($sitterId),
