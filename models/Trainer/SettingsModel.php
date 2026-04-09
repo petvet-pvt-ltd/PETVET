@@ -4,27 +4,34 @@ require_once __DIR__ . '/../BaseModel.php';
 class TrainerSettingsModel extends BaseModel {
     
     public function getProfile($trainerId) {
-        return [
-            'id' => $trainerId,
-            'name' => 'John Trainer',
-            'email' => 'john.trainer@petvet.com',
-            'phone' => '555-0100',
-            'specialization' => 'Obedience & Agility',
-            'experience_years' => 8,
-            'certifications' => 'Certified Dog Trainer (CDT)',
-            'address' => '123 Training Street',
-            'city' => 'Pet City',
-            'postal_code' => '12345',
-            'avatar' => '/PETVET/public/images/default-avatar.png'
-        ];
+        $trainerId = (int)$trainerId;
+        if ($trainerId <= 0) {
+            return ['avatar' => '/PETVET/public/images/emptyProfPic.png'];
+        }
+
+        try {
+            $stmt = $this->pdo->prepare("SELECT id, first_name, last_name, email, phone, address, avatar FROM users WHERE id = ? LIMIT 1");
+            $stmt->execute([$trainerId]);
+            $u = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$u) {
+                return ['avatar' => '/PETVET/public/images/emptyProfPic.png'];
+            }
+
+            return [
+                'id' => (int)$u['id'],
+                'name' => trim(($u['first_name'] ?? '') . ' ' . ($u['last_name'] ?? '')),
+                'email' => $u['email'] ?? '',
+                'phone' => $u['phone'] ?? '',
+                'address' => $u['address'] ?? '',
+                'avatar' => !empty($u['avatar']) ? $u['avatar'] : '/PETVET/public/images/emptyProfPic.png'
+            ];
+        } catch (Throwable $e) {
+            error_log('TrainerSettingsModel getProfile error: ' . $e->getMessage());
+            return ['avatar' => '/PETVET/public/images/emptyProfPic.png'];
+        }
     }
 
     public function getPreferences($trainerId) {
-        return [
-            'notifications_email' => true,
-            'notifications_sms' => false,
-            'session_reminders' => '24h',
-            'availability' => 'Mon-Fri 9AM-6PM'
-        ];
+        return [];
     }
 }

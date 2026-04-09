@@ -4,28 +4,34 @@ require_once __DIR__ . '/../BaseModel.php';
 class SitterSettingsModel extends BaseModel {
     
     public function getProfile($sitterId) {
-        return [
-            'id' => $sitterId,
-            'name' => 'Sarah Sitter',
-            'email' => 'sarah.sitter@petvet.com',
-            'phone' => '555-0200',
-            'experience_years' => 5,
-            'pet_types' => 'Dogs, Cats',
-            'home_type' => 'House with Yard',
-            'address' => '456 Sitting Lane',
-            'city' => 'Pet Town',
-            'postal_code' => '54321',
-            'avatar' => '/PETVET/public/images/default-avatar.png'
-        ];
+        $sitterId = (int)$sitterId;
+        if ($sitterId <= 0) {
+            return ['avatar' => '/PETVET/public/images/emptyProfPic.png'];
+        }
+
+        try {
+            $stmt = $this->pdo->prepare("SELECT id, first_name, last_name, email, phone, address, avatar FROM users WHERE id = ? LIMIT 1");
+            $stmt->execute([$sitterId]);
+            $u = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$u) {
+                return ['avatar' => '/PETVET/public/images/emptyProfPic.png'];
+            }
+
+            return [
+                'id' => (int)$u['id'],
+                'name' => trim(($u['first_name'] ?? '') . ' ' . ($u['last_name'] ?? '')),
+                'email' => $u['email'] ?? '',
+                'phone' => $u['phone'] ?? '',
+                'address' => $u['address'] ?? '',
+                'avatar' => !empty($u['avatar']) ? $u['avatar'] : '/PETVET/public/images/emptyProfPic.png'
+            ];
+        } catch (Throwable $e) {
+            error_log('SitterSettingsModel getProfile error: ' . $e->getMessage());
+            return ['avatar' => '/PETVET/public/images/emptyProfPic.png'];
+        }
     }
 
     public function getPreferences($sitterId) {
-        return [
-            'notifications_email' => true,
-            'notifications_sms' => true,
-            'booking_reminders' => '48h',
-            'max_pets' => 3,
-            'availability' => 'Flexible'
-        ];
+        return [];
     }
 }

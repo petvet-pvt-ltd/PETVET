@@ -595,7 +595,13 @@ $GLOBALS['currentPage'] = 'services.php';
 
                                 <div class="provider-actions">
                                     <?php if ($serviceType === 'trainers'): ?>
-                                        <button class="btn primary" onclick='openTrainerDetails(<?= json_encode([
+                                        <?php $isTrainerBooked = in_array((int)$provider['id'], $activeTrainerProviderIds, true); ?>
+                                        <button
+                                            class="btn primary trainer-book-btn<?= $isTrainerBooked ? ' is-booked' : '' ?>"
+                                            data-booking-type="trainer"
+                                            data-provider-id="<?= (int)$provider['id'] ?>"
+                                            <?= $isTrainerBooked ? 'disabled' : '' ?>
+                                            onclick='openTrainerDetails(<?= json_encode([
                                             "id" => $provider["id"],
                                             "name" => $provider["name"],
                                             "business_name" => $provider["business_name"] ?? "",
@@ -614,7 +620,8 @@ $GLOBALS['currentPage'] = 'services.php';
                                             "training_advanced_enabled" => $provider["training_advanced_enabled"] ?? false,
                                             "training_advanced_charge" => $provider["training_advanced_charge"] ?? 0,
                                             "training_types" => $provider["training_types"] ?? ["Basic", "Intermediate", "Advanced"]
-                                        ]) ?>, event); return false;'>
+                                        ]) ?>, event); return false;'
+                                        >
                                             View Details
                                         </button>
                                     <?php elseif ($serviceType === 'sitters'): ?>
@@ -636,7 +643,13 @@ $GLOBALS['currentPage'] = 'services.php';
                                             Book Now
                                         </button>
                                     <?php elseif ($serviceType === 'breeders'): ?>
-                                        <button class="btn primary" onclick='openBreederDetails(<?= json_encode([
+                                        <?php $isBreederBooked = in_array((int)$provider['id'], $activeBreederProviderIds, true); ?>
+                                        <button
+                                            class="btn primary breeder-book-btn<?= $isBreederBooked ? ' is-booked' : '' ?>"
+                                            data-booking-type="breeder"
+                                            data-provider-id="<?= (int)$provider['id'] ?>"
+                                            <?= $isBreederBooked ? 'disabled' : '' ?>
+                                            onclick='openBreederDetails(<?= json_encode([
                                             "id" => $provider["id"],
                                             "name" => $provider["name"],
                                             "business_name" => $provider["business_name"] ?? "",
@@ -763,10 +776,12 @@ $GLOBALS['currentPage'] = 'services.php';
             }
         }
 
-        // Initialize filter badge on page load
+        // Initialize filter badge + disabled card buttons on page load
         document.addEventListener('DOMContentLoaded', function() {
             updateFilterBadge();
             updateSitterCardButtons();
+            updateTrainerCardButtons();
+            updateBreederCardButtons();
         });
 
         // Active bookings from server (used for duplicate booking prevention)
@@ -786,6 +801,26 @@ $GLOBALS['currentPage'] = 'services.php';
             buttons.forEach(btn => {
                 const providerId = parseInt(btn.getAttribute('data-provider-id') || '0', 10);
                 const booked = isProviderAlreadyBooked('sitters', providerId);
+                btn.disabled = booked;
+                btn.classList.toggle('is-booked', booked);
+            });
+        }
+
+        function updateTrainerCardButtons() {
+            const buttons = document.querySelectorAll('button.trainer-book-btn[data-provider-id]');
+            buttons.forEach(btn => {
+                const providerId = parseInt(btn.getAttribute('data-provider-id') || '0', 10);
+                const booked = isProviderAlreadyBooked('trainers', providerId);
+                btn.disabled = booked;
+                btn.classList.toggle('is-booked', booked);
+            });
+        }
+
+        function updateBreederCardButtons() {
+            const buttons = document.querySelectorAll('button.breeder-book-btn[data-provider-id]');
+            buttons.forEach(btn => {
+                const providerId = parseInt(btn.getAttribute('data-provider-id') || '0', 10);
+                const booked = isProviderAlreadyBooked('breeders', providerId);
                 btn.disabled = booked;
                 btn.classList.toggle('is-booked', booked);
             });
@@ -984,6 +1019,8 @@ $GLOBALS['currentPage'] = 'services.php';
                 if (json.active_provider_ids) {
                     window.__activeBookingProviderIds = json.active_provider_ids;
                     updateSitterCardButtons();
+                    updateTrainerCardButtons();
+                    updateBreederCardButtons();
                 }
                 renderOwnerBookings();
             } catch (e) {
@@ -1030,10 +1067,10 @@ $GLOBALS['currentPage'] = 'services.php';
                 avatar.alt = 'Provider';
                 avatar.src = (item.provider_avatar && String(item.provider_avatar).trim() !== '')
                     ? String(item.provider_avatar)
-                    : '/PETVET/public/images/default-avatar.png';
+                    : '/PETVET/public/images/emptyProfPic.png';
                 avatar.onerror = function() {
                     this.onerror = null;
-                    this.src = '/PETVET/public/images/default-avatar.png';
+                    this.src = '/PETVET/public/images/emptyProfPic.png';
                 };
                 providerRow.appendChild(avatar);
 
@@ -2313,6 +2350,7 @@ $GLOBALS['currentPage'] = 'services.php';
                     tList.push(bookedTrainerId);
                 }
                 window.__activeBookingProviderIds.trainers = tList;
+                updateTrainerCardButtons();
 
                 alert('Appointment request submitted successfully!\n\nThe trainer will review it under Pending appointments.');
                 pendingAppointmentData = null;
@@ -3403,7 +3441,7 @@ $GLOBALS['currentPage'] = 'services.php';
                     list.push(bookedBreederId);
                 }
                 window.__activeBookingProviderIds.breeders = list;
-                updateSitterCardButtons();
+                updateBreederCardButtons();
 
                 alert('Breeding request submitted successfully!\n\nThe breeder will review it under Pending requests.');
                 pendingBreedingData = null;

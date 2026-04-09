@@ -162,9 +162,6 @@ echo "<!-- activeModule: $activeModule -->";
       <a href="/PETVET/index.php?module=trainer&page=availability" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'availability.php') ? 'active' : '' ?>">
         <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/calendar.png" class="icon"> Availability</li>
       </a>
-      <a href="/PETVET/index.php?module=trainer&page=clients" class="<?= (isset($GLOBALS['currentPage']) && $GLOBALS['currentPage'] == 'clients.php') ? 'active' : '' ?>">
-        <li class="nav-item"><img src="/PETVET/views/shared/images/sidebar/staff.png" class="icon"> Clients</li>
-      </a>
     </ul>
     <?php
   } elseif ($activeModule == 'sitter') {

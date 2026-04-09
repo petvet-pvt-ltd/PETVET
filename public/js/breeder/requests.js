@@ -28,6 +28,68 @@ function filterRequests(status) {
     });
 }
 
+function setFilterCount(filter, count) {
+    const btn = document.querySelector(`.filter-btn[data-filter="${filter}"]`);
+    if (!btn) return;
+
+    const labels = {
+        pending: 'Pending',
+        approved: 'Approved',
+        completed: 'Completed'
+    };
+
+    const label = labels[filter] || filter;
+    btn.textContent = `${label} (${count})`;
+}
+
+function reconcileRequestCardsByStatus(serverByStatus) {
+    const safe = serverByStatus || {};
+    const statuses = ['pending', 'approved', 'completed'];
+
+    statuses.forEach(status => {
+        const serverSet = new Set(((safe[status] || []).map(v => Number(v))));
+
+        document.querySelectorAll(`.booking-card[data-status="${status}"][data-request-id]`).forEach(card => {
+            const requestId = Number(card.dataset.requestId);
+            if (!requestId) return;
+            if (!serverSet.has(requestId)) {
+                card.remove();
+            }
+        });
+
+        setFilterCount(status, serverSet.size);
+    });
+}
+
+function startRequestsPolling() {
+    const endpoint = '/PETVET/api/breeder/poll-requests.php';
+
+    async function pollOnce() {
+        try {
+            const res = await fetch(endpoint, {
+                method: 'GET',
+                cache: 'no-store',
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (!res.ok) return;
+            const data = await res.json();
+            if (!data || !data.success) return;
+
+            reconcileRequestCardsByStatus((data.request_ids || {}));
+        } catch (e) {
+            // Ignore transient network errors
+        }
+    }
+
+    pollOnce();
+    setInterval(pollOnce, 5000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    startRequestsPolling();
+});
+
 // Show Accept Request Modal
 let currentRequestId = null;
 
