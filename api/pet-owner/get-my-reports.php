@@ -34,12 +34,12 @@ try {
     
     // Fetch reports for current user
     // Note: JSON_UNQUOTE removes quotes from JSON_EXTRACT result for proper comparison
-    $stmt = $db->prepare("
-        SELECT * FROM LostFoundReport 
-        WHERE JSON_UNQUOTE(JSON_EXTRACT(description, '$.user_id')) = :user_id
+        $stmt = $db->prepare("
+            SELECT * FROM LostFoundReport 
+            WHERE CAST(JSON_UNQUOTE(JSON_EXTRACT(description, '$.user_id')) AS UNSIGNED) = :user_id
         ORDER BY date_reported DESC
     ");
-    $stmt->execute([':user_id' => $userId]);
+        $stmt->execute([':user_id' => (int)$userId]);
     $reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Parse JSON description field for each report
@@ -65,6 +65,8 @@ try {
                 'phone2' => '',
                 'email' => ''
             ],
+                'pet_id' => $description['pet_id'] ?? null,
+                'listing_source' => !empty($description['pet_id']) ? 'my-pet-missing' : 'manual-report',
             'user_id' => $description['user_id'] ?? null,
             'submitted_at' => $description['submitted_at'] ?? null
         ];
@@ -74,7 +76,7 @@ try {
     echo json_encode([
         'success' => true,
         'count' => count($formattedReports),
-        'user_id' => $userId,
+        'user_id' => (int)$userId,
         'reports' => $formattedReports
     ]);
     

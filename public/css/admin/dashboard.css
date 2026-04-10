@@ -266,6 +266,10 @@
   margin-bottom: 24px;
 }
 
+.dashboard-grid.dashboard-grid-single {
+  grid-template-columns: 1fr;
+}
+
 .chart-large,
 .chart-side {
   background: #fff;

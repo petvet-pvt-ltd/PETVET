@@ -145,11 +145,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const rewardCheckbox = document.getElementById("rewardCheckbox");
   const rewardAmountWrap = document.getElementById("rewardAmountWrap");
   const datetimeField = missingDialog?.querySelector("input[name='datetime']");
+  const markMissingForm = document.getElementById("markMissingForm");
+  let currentMissingPetId = null;
 
   // Open missing popup
   document.querySelectorAll(".markMissingBtn").forEach(btn => {
     btn.addEventListener("click", e => {
       e.preventDefault();
+      currentMissingPetId = btn.getAttribute("data-pet");
       openDialog("markMissingDialog");
     });
   });
@@ -171,6 +174,77 @@ document.addEventListener("DOMContentLoaded", () => {
   // Set current datetime
   if (datetimeField) {
     datetimeField.value = new Date().toISOString().slice(0, 16);
+  }
+
+  // Submit mark missing report to Lost & Found
+  if (markMissingForm) {
+    markMissingForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (!currentMissingPetId) {
+        showToast("Unable to identify pet");
+        return;
+      }
+
+      const locationEl = markMissingForm.querySelector("input[name='location']");
+      const datetimeEl = markMissingForm.querySelector("input[name='datetime']");
+      const circumstancesEl = markMissingForm.querySelector("textarea[name='circumstances']");
+      const featuresEl = markMissingForm.querySelector("input[name='features']");
+      const rewardEl = markMissingForm.querySelector("input[name='reward']");
+      const submitBtn = markMissingForm.querySelector("button[value='submit']");
+
+      if (!locationEl?.value || !datetimeEl?.value) {
+        showToast("Please fill required fields");
+        return;
+      }
+
+      const originalText = submitBtn ? submitBtn.textContent : "Report";
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Submitting...";
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append("pet_id", currentMissingPetId);
+        formData.append("location", locationEl.value);
+        formData.append("datetime", datetimeEl.value);
+        formData.append("circumstances", circumstancesEl?.value || "");
+        formData.append("features", featuresEl?.value || "");
+
+        if (rewardCheckbox?.checked && rewardEl?.value) {
+          formData.append("reward", rewardEl.value);
+        }
+
+        const response = await fetch("/PETVET/api/pet-owner/mark-pet-missing.php", {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          closeDialog("markMissingDialog");
+          markMissingForm.reset();
+          rewardAmountWrap.style.display = "none";
+          showToast("Pet marked as missing successfully");
+
+          setTimeout(() => {
+            window.location.href = "/PETVET/?module=pet-owner&page=lost-found";
+          }, 900);
+        } else {
+          showToast("Error: " + (result.message || "Failed to mark missing"));
+        }
+      } catch (error) {
+        console.error("Mark missing error:", error);
+        showToast("Error submitting missing pet report");
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      }
+    });
   }
 
   // ----- Book Appointment -----
