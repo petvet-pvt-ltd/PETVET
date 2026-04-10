@@ -5,6 +5,9 @@
  */
 
 header('Content-Type: application/json');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
 require_once dirname(__DIR__) . '/config/connect.php';
 
 $sitter_id = $_GET['sitter_id'] ?? null;
@@ -56,10 +59,13 @@ try {
     $stmt->execute([$sitter_id, $dayOfWeek]);
     $weeklySchedule = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Defaults if not set
-    $isAvailableDay = true;
-    $startTime = '09:00:00';
-    $endTime = '18:00:00';
+    // Defaults if not set (match service-provider-availability UI defaults)
+    // - Sunday: unavailable
+    // - Mon–Fri: 09:00–18:00
+    // - Saturday: 10:00–16:00
+    $isAvailableDay = in_array($dayOfWeek, ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], true);
+    $startTime = $dayOfWeek === 'Saturday' ? '10:00:00' : '09:00:00';
+    $endTime = $dayOfWeek === 'Saturday' ? '16:00:00' : '18:00:00';
 
     if ($weeklySchedule) {
         $isAvailableDay = (bool)$weeklySchedule['is_available'];
