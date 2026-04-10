@@ -1582,7 +1582,7 @@ $GLOBALS['currentPage'] = 'services.php';
             if (locationField) locationField.disabled = true;
 
             breederAvailabilityCheckTimeout = setTimeout(() => {
-                fetch(apiUrl)
+                fetch(apiUrl, { cache: 'no-store', headers: { 'Accept': 'application/json' } })
                     .then(r => r.json())
                     .then(data => {
                         if (data && data.success) {
@@ -1735,7 +1735,7 @@ $GLOBALS['currentPage'] = 'services.php';
             }
 
             sitterAvailabilityCheckTimeout = setTimeout(() => {
-                fetch(apiUrl)
+                fetch(apiUrl, { cache: 'no-store', headers: { 'Accept': 'application/json' } })
                     .then(r => r.json())
                     .then(data => {
                         if (data && data.success) {
@@ -1842,9 +1842,9 @@ $GLOBALS['currentPage'] = 'services.php';
             }
             
             // Build API URL - only include time if it's selected
-            let apiUrl = `/PETVET/api/check-trainer-availability.php?trainer_id=${currentTrainer.id}&date=${date}`;
+            let apiUrl = `/PETVET/api/check-trainer-availability.php?trainer_id=${currentTrainer.id}&date=${encodeURIComponent(date)}`;
             if (time) {
-                apiUrl += `&time=${time}`;
+                apiUrl += `&time=${encodeURIComponent(time)}`;
             }
             
             console.log('Checking availability:', apiUrl);
@@ -1854,7 +1854,7 @@ $GLOBALS['currentPage'] = 'services.php';
             
             // Debounce the API call
             availabilityCheckTimeout = setTimeout(() => {
-                fetch(apiUrl)
+                fetch(apiUrl, { cache: 'no-store', headers: { 'Accept': 'application/json' } })
                     .then(response => response.json())
                     .then(data => {
                         console.log('Availability response:', data);
@@ -2203,7 +2203,7 @@ $GLOBALS['currentPage'] = 'services.php';
             try {
                 let url = `/PETVET/api/check-trainer-availability.php?trainer_id=${currentTrainer.id}&date=${encodeURIComponent(date)}`;
                 if (time) url += `&time=${encodeURIComponent(time)}`;
-                const response = await fetch(url);
+                const response = await fetch(url, { cache: 'no-store', headers: { 'Accept': 'application/json' } });
                 const data = await response.json();
                 
                 if (data.success && !data.available) {
@@ -2747,7 +2747,7 @@ $GLOBALS['currentPage'] = 'services.php';
 
                 if (date && time && currentSitter && currentSitter.id) {
                     let url = `/PETVET/api/check-sitter-availability.php?sitter_id=${currentSitter.id}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}`;
-                    const response = await fetch(url);
+                    const response = await fetch(url, { cache: 'no-store', headers: { 'Accept': 'application/json' } });
                     const data = await response.json();
                     if (data && data.success && !data.available) {
                         alert((data.message || 'Sitter is unavailable for the selected date/time.') + '\n\nPlease select a different date or time.');
@@ -3294,7 +3294,7 @@ $GLOBALS['currentPage'] = 'services.php';
             isBreederAlreadyBooked = false;
         }
 
-        function submitBreedingBooking(event) {
+        async function submitBreedingBooking(event) {
             event.preventDefault();
 
             const form = document.getElementById('breedingBookingForm');
@@ -3307,6 +3307,27 @@ $GLOBALS['currentPage'] = 'services.php';
             if (isBreederAlreadyBooked) {
                 alert('You already have an active booking with this breeder.');
                 return;
+            }
+
+            // Final breeder availability check (like trainer/sitter) to enforce latest schedule changes
+            try {
+                const date = document.getElementById('breedingDate')?.value || '';
+                const time = document.getElementById('breedingTime')?.value || '';
+
+                if (date && currentBreeder && currentBreeder.id) {
+                    let url = `/PETVET/api/check-breeder-availability.php?breeder_id=${currentBreeder.id}&date=${encodeURIComponent(date)}`;
+                    if (time) url += `&time=${encodeURIComponent(time)}`;
+                    const response = await fetch(url, { cache: 'no-store', headers: { 'Accept': 'application/json' } });
+                    const data = await response.json();
+
+                    if (data && data.success && !data.available) {
+                        alert((data.message || 'Breeder is unavailable for the selected date/time.') + '\n\nPlease select a different date or time.');
+                        updateBreederSubmitButtonState();
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.error('Final breeder availability check failed:', error);
             }
             
             pendingBreedingData = {

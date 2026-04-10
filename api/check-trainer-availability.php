@@ -4,6 +4,9 @@
  */
 
 header('Content-Type: application/json');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
 require_once dirname(__DIR__) . '/config/connect.php';
 
 $trainer_id = $_GET['trainer_id'] ?? null;
@@ -55,10 +58,13 @@ try {
     $stmt->execute([$trainer_id, $dayOfWeek]);
     $weeklySchedule = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    // If no schedule found, assume default business hours (9 AM - 6 PM)
-    $isAvailableDay = true;
-    $startTime = '09:00:00';
-    $endTime = '18:00:00';
+    // Defaults if not set (match service-provider-availability UI defaults)
+    // - Sunday: unavailable
+    // - Mon–Fri: 09:00–18:00
+    // - Saturday: 10:00–16:00
+    $isAvailableDay = in_array($dayOfWeek, ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], true);
+    $startTime = $dayOfWeek === 'Saturday' ? '10:00:00' : '09:00:00';
+    $endTime = $dayOfWeek === 'Saturday' ? '16:00:00' : '18:00:00';
     
     if ($weeklySchedule) {
         $isAvailableDay = (bool)$weeklySchedule['is_available'];
@@ -99,10 +105,6 @@ try {
     ");
     $stmt->execute([$trainer_id, $date]);
     $blockedDate = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    // Debug logging
-    error_log("Checking blocked dates for trainer_id: $trainer_id, date: $date");
-    error_log("Blocked date result: " . json_encode($blockedDate));
     
     if ($blockedDate) {
         if ($blockedDate['block_type'] === 'full-day') {
