@@ -62,7 +62,7 @@ class BreederDashboardModel extends BaseModel {
             FROM breeding_requests br
             JOIN users u ON br.owner_id = u.id
             WHERE br.breeder_id = ? AND br.status = 'pending'
-            ORDER BY br.requested_date DESC
+            ORDER BY br.requested_date ASC
         ";
         
         if ($limit) {

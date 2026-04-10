@@ -663,6 +663,14 @@ function calculateAge($dob) {
       justify-content: center;
     }
 
+    .notification-avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+    }
+
     .appointment-icon {
       background: #dbeafe;
       color: #2563eb;
@@ -704,6 +712,10 @@ function calculateAge($dob) {
     .notification-text em {
       font-style: italic;
       color: #6b7280;
+    }
+
+    .notification-reason-inline {
+      white-space: nowrap;
     }
 
     .notification-time {
@@ -1626,7 +1638,7 @@ function calculateAge($dob) {
           notificationItem.dataset.id = notification.id;
           notificationItem.dataset.type = notification.type;
           
-          // Create icon based on notification type
+          // Create icon/avatar based on notification type
           let iconSvg = '';
           let iconClass = '';
           
@@ -1648,10 +1660,17 @@ function calculateAge($dob) {
               iconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>';
               break;
           }
+
+          const hasEntityAvatar = ['appointment', 'sitter', 'trainer', 'breeder'].includes(notification.type);
+          const entityAvatar = notification.type === 'appointment'
+            ? (notification.clinic_avatar || '/PETVET/public/images/emptyProfPic.png')
+            : (notification.provider_avatar || '/PETVET/public/images/emptyProfPic.png');
           
           notificationItem.innerHTML = `
             <div class="notification-icon ${iconClass}">
-              ${iconSvg}
+              ${hasEntityAvatar
+                ? `<img class="notification-avatar" src="${entityAvatar}" alt="${notification.type} photo" onerror="this.src='/PETVET/public/images/emptyProfPic.png'">`
+                : iconSvg}
             </div>
             <div class="notification-content">
               <p class="notification-text">${notification.message}</p>

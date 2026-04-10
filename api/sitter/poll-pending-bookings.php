@@ -23,7 +23,7 @@ $sitterId = (int)currentUserId();
 
 try {
     $pdo = db();
-    $stmt = $pdo->prepare("SELECT id FROM sitter_service_requests WHERE sitter_id = ? AND status = 'pending' ORDER BY id DESC");
+    $stmt = $pdo->prepare("SELECT id FROM sitter_service_requests WHERE sitter_id = ? AND status = 'pending' ORDER BY id ASC");
     $stmt->execute([$sitterId]);
     $ids = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
 

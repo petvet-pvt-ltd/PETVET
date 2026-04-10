@@ -71,6 +71,52 @@ $pageTitle = "Training Appointments";
             background: #7c3aed;
         }
 
+        .confirm-btn-cancel {
+            background: #fff;
+            color: #8b5cf6;
+            border: 2px solid #8b5cf6;
+        }
+
+        .confirm-btn-cancel:hover {
+            background: #7c3aed;
+            border-color: #7c3aed;
+            color: #fff;
+        }
+
+        .confirm-reason-group {
+            margin-top: 12px;
+            text-align: left;
+        }
+
+        .confirm-reason-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+
+        .confirm-reason-input {
+            width: 100%;
+            min-height: 70px;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+            outline: none;
+            background: #fff;
+        }
+
+        .confirm-reason-input:focus {
+            border-color: rgba(139, 92, 246, 0.7);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+        }
+
+        #confirmModal .confirm-modal-actions {
+            margin-top: 16px;
+        }
+
         /* Training type badges */
         .training-type-badge {
             display: inline-block;
@@ -453,6 +499,10 @@ $pageTitle = "Training Appointments";
             </div>
             <div class="confirm-modal-message" id="confirmMessage">
                 Are you sure you want to perform this action?
+            </div>
+            <div id="declineReasonGroup" class="confirm-reason-group" style="display:none;">
+                <label for="declineReasonInput" class="confirm-reason-label">Reason (Optional)</label>
+                <textarea id="declineReasonInput" class="confirm-reason-input" rows="3" placeholder="Enter reason for declining..."></textarea>
             </div>
             <div class="confirm-modal-actions">
                 <button class="confirm-btn confirm-btn-cancel" onclick="closeConfirmModal()">Cancel</button>

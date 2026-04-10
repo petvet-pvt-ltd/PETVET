@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: application/json');
 require_once dirname(__DIR__, 2) . '/config/connect.php';
+require_once dirname(__DIR__, 2) . '/helpers/NotificationHelper.php';
 
 session_start();
 
@@ -60,7 +61,10 @@ function getAllRequests($conn, $userId) {
         JOIN users u ON br.owner_id = u.id
         LEFT JOIN breeder_pets bp ON br.breeder_pet_id = bp.id
         WHERE br.breeder_id = ?
-        ORDER BY br.requested_date DESC
+        ORDER BY
+            CASE WHEN br.status = 'pending' THEN 0 ELSE 1 END,
+            CASE WHEN br.status = 'pending' THEN br.requested_date END ASC,
+            br.requested_date DESC
     ");
     $stmt->bind_param("i", $userId);
     $stmt->execute();
@@ -159,6 +163,46 @@ function acceptRequest($conn, $userId) {
     $stmt->bind_param("issii", $breederPetId, $breedingDate, $notes, $requestId, $userId);
     
     if ($stmt->execute()) {
+        // Notify pet owner when breeder accepts
+        try {
+            $infoStmt = $conn->prepare("
+                SELECT
+                    br.owner_id AS pet_owner_id,
+                    br.owner_pet_name AS pet_name,
+                    CONCAT(bu.first_name, ' ', bu.last_name) AS breeder_name,
+                    bp.name AS breeder_pet_name
+                FROM breeding_requests br
+                JOIN users bu ON bu.id = br.breeder_id
+                LEFT JOIN breeder_pets bp ON bp.id = br.breeder_pet_id
+                WHERE br.id = ? AND br.breeder_id = ?
+                LIMIT 1
+            ");
+            $infoStmt->bind_param("ii", $requestId, $userId);
+            $infoStmt->execute();
+            $infoRes = $infoStmt->get_result();
+            $info = $infoRes ? $infoRes->fetch_assoc() : null;
+
+            if ($info) {
+                $petOwnerId = (int)($info['pet_owner_id'] ?? 0);
+                $breederName = (string)($info['breeder_name'] ?? '');
+                $breederPetName = (string)($info['breeder_pet_name'] ?? '');
+                $petName = (string)($info['pet_name'] ?? '');
+
+                if ($petOwnerId > 0 && $breederName !== '' && $petName !== '') {
+                    NotificationHelper::createBreederNotification(
+                        $petOwnerId,
+                        (int)$userId,
+                        $breederName,
+                        $breederPetName,
+                        $petName,
+                        'accepted',
+                        null
+                    );
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('breeder accept notification error: ' . $e->getMessage());
+        }
         echo json_encode(['success' => true, 'message' => 'Request accepted successfully']);
     } else {
         http_response_code(500);
@@ -169,6 +213,9 @@ function acceptRequest($conn, $userId) {
 function declineRequest($conn, $userId) {
     $requestId = $_POST['request_id'] ?? 0;
     $reason = $_POST['reason'] ?? '';
+    if (is_string($reason)) {
+        $reason = substr(trim($reason), 0, 255);
+    }
     
     if (empty($requestId)) {
         http_response_code(400);
@@ -197,6 +244,46 @@ function declineRequest($conn, $userId) {
     $stmt->bind_param("sii", $reason, $requestId, $userId);
     
     if ($stmt->execute()) {
+        // Notify pet owner when breeder declines
+        try {
+            $infoStmt = $conn->prepare("
+                SELECT
+                    br.owner_id AS pet_owner_id,
+                    br.owner_pet_name AS pet_name,
+                    CONCAT(bu.first_name, ' ', bu.last_name) AS breeder_name,
+                    bp.name AS breeder_pet_name
+                FROM breeding_requests br
+                JOIN users bu ON bu.id = br.breeder_id
+                LEFT JOIN breeder_pets bp ON bp.id = br.breeder_pet_id
+                WHERE br.id = ? AND br.breeder_id = ?
+                LIMIT 1
+            ");
+            $infoStmt->bind_param("ii", $requestId, $userId);
+            $infoStmt->execute();
+            $infoRes = $infoStmt->get_result();
+            $info = $infoRes ? $infoRes->fetch_assoc() : null;
+
+            if ($info) {
+                $petOwnerId = (int)($info['pet_owner_id'] ?? 0);
+                $breederName = (string)($info['breeder_name'] ?? '');
+                $breederPetName = (string)($info['breeder_pet_name'] ?? '');
+                $petName = (string)($info['pet_name'] ?? '');
+
+                if ($petOwnerId > 0 && $breederName !== '' && $petName !== '') {
+                    NotificationHelper::createBreederNotification(
+                        $petOwnerId,
+                        (int)$userId,
+                        $breederName,
+                        $breederPetName,
+                        $petName,
+                        'declined',
+                        is_string($reason) ? trim($reason) : ''
+                    );
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('breeder decline notification error: ' . $e->getMessage());
+        }
         echo json_encode(['success' => true, 'message' => 'Request declined successfully']);
     } else {
         http_response_code(500);
@@ -235,6 +322,46 @@ function completeRequest($conn, $userId) {
     $stmt->bind_param("sii", $finalNotes, $requestId, $userId);
     
     if ($stmt->execute()) {
+        // Notify pet owner when breeder marks completed
+        try {
+            $infoStmt = $conn->prepare("\
+                SELECT
+                    br.owner_id AS pet_owner_id,
+                    br.owner_pet_name AS pet_name,
+                    CONCAT(bu.first_name, ' ', bu.last_name) AS breeder_name,
+                    bp.name AS breeder_pet_name
+                FROM breeding_requests br
+                JOIN users bu ON bu.id = br.breeder_id
+                LEFT JOIN breeder_pets bp ON bp.id = br.breeder_pet_id
+                WHERE br.id = ? AND br.breeder_id = ?
+                LIMIT 1
+            ");
+            $infoStmt->bind_param("ii", $requestId, $userId);
+            $infoStmt->execute();
+            $infoRes = $infoStmt->get_result();
+            $info = $infoRes ? $infoRes->fetch_assoc() : null;
+
+            if ($info) {
+                $petOwnerId = (int)($info['pet_owner_id'] ?? 0);
+                $breederName = (string)($info['breeder_name'] ?? '');
+                $breederPetName = (string)($info['breeder_pet_name'] ?? '');
+                $petName = (string)($info['pet_name'] ?? '');
+
+                if ($petOwnerId > 0 && $breederName !== '' && $petName !== '') {
+                    NotificationHelper::createBreederNotification(
+                        $petOwnerId,
+                        (int)$userId,
+                        $breederName,
+                        $breederPetName,
+                        $petName,
+                        'completed',
+                        null
+                    );
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('breeder complete notification error: ' . $e->getMessage());
+        }
         echo json_encode(['success' => true, 'message' => 'Breeding marked as completed successfully']);
     } else {
         http_response_code(500);

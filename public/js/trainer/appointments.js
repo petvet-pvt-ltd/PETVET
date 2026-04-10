@@ -151,6 +151,8 @@ function confirmAction(action, petName, bookingId) {
     const confirmTitle = document.getElementById('confirmTitle');
     const confirmMessage = document.getElementById('confirmMessage');
     const confirmButton = document.getElementById('confirmButton');
+    const declineReasonGroup = document.getElementById('declineReasonGroup');
+    const declineReasonInput = document.getElementById('declineReasonInput');
     
     pendingAction = action;
     pendingRequestId = bookingId;
@@ -161,16 +163,22 @@ function confirmAction(action, petName, bookingId) {
         confirmMessage.textContent = `Are you sure you want to accept the booking for ${petName}? This will confirm the booking and notify the owner.`;
         confirmButton.textContent = 'Yes, Accept';
         confirmButton.className = 'confirm-btn confirm-btn-confirm';
+        if (declineReasonGroup) declineReasonGroup.style.display = 'none';
+        if (declineReasonInput) declineReasonInput.value = '';
     } else if (action === 'decline') {
         confirmTitle.textContent = 'Decline Booking?';
         confirmMessage.textContent = `Are you sure you want to decline the booking for ${petName}? The owner will be notified of your decision.`;
-        confirmButton.textContent = 'Yes, Decline';
+        confirmButton.textContent = 'Confirm Decline';
         confirmButton.className = 'confirm-btn confirm-btn-danger';
+        if (declineReasonGroup) declineReasonGroup.style.display = 'block';
+        if (declineReasonInput) declineReasonInput.value = '';
     } else if (action === 'complete') {
         confirmTitle.textContent = 'Mark as Complete?';
         confirmMessage.textContent = `Are you sure you want to mark the booking for ${petName} as complete? This action cannot be undone.`;
         confirmButton.textContent = 'Yes, Complete';
         confirmButton.className = 'confirm-btn confirm-btn-confirm';
+        if (declineReasonGroup) declineReasonGroup.style.display = 'none';
+        if (declineReasonInput) declineReasonInput.value = '';
     }
     
     // Show modal and freeze background
@@ -180,10 +188,14 @@ function confirmAction(action, petName, bookingId) {
 
 function closeConfirmModal() {
     const confirmModal = document.getElementById('confirmModal');
+    const declineReasonGroup = document.getElementById('declineReasonGroup');
+    const declineReasonInput = document.getElementById('declineReasonInput');
     confirmModal.classList.remove('active');
     document.body.classList.remove('modal-open');
     pendingAction = null;
     pendingRequestId = null;
+    if (declineReasonGroup) declineReasonGroup.style.display = 'none';
+    if (declineReasonInput) declineReasonInput.value = '';
 }
 
 function executeAction() {
@@ -193,6 +205,14 @@ function executeAction() {
     const formData = new FormData();
     formData.append('action', pendingAction);
     formData.append('request_id', pendingRequestId);
+
+    if (pendingAction === 'decline') {
+        const declineReasonInput = document.getElementById('declineReasonInput');
+        const reason = declineReasonInput ? String(declineReasonInput.value || '').trim() : '';
+        if (reason) {
+            formData.append('reason', reason);
+        }
+    }
     
     fetch('/PETVET/index.php?module=trainer&page=appointments&action=handleTrainingAction', {
         method: 'POST',
