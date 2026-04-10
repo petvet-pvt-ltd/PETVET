@@ -49,6 +49,7 @@ try {
         'age' => trim($_POST['age']),
         'gender' => $_POST['gender'],
         'price' => floatval($_POST['price']),
+        'listing_type' => trim($_POST['listing_type'] ?? 'selling'),
         'location' => trim($_POST['location']),
         'description' => trim($_POST['desc'] ?? ''),
         'phone' => trim($_POST['phone']),

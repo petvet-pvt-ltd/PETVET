@@ -1,4 +1,11 @@
-<?php /* public guest page */ ?>
+<?php 
+/* public guest page */ 
+// Data provided by controller: $dogs, $cats, $birds, $other
+$dogs = $GLOBALS['dogs'] ?? [];
+$cats = $GLOBALS['cats'] ?? [];
+$birds = $GLOBALS['birds'] ?? [];
+$other = $GLOBALS['other'] ?? [];
+?>
 
 <html lang="en">
 
@@ -12,7 +19,6 @@
 
 <body>
 
-
   <?php require_once 'navbar.php' ?>
   
   <div class="hero-banner">
@@ -21,271 +27,262 @@
     <div class="hero-content">
       <h1>Welcome to our Adoptions Page!</h1>
       <p>Find your perfect furry companion and give them a forever home</p>
-  <button type="button" id="openAdoptionFormBtn" class="cta-primary">Add a pet for adoption</button>
     </div>
   </div>
-
-  <h1 style="text-align: center;">About our Dogs and Cats</h1>
 
   <section class="intro">
     <div class="intro-container">
       <p>
-        Our adoption process is designed to match you with the perfect companion for your lifestyle. All our pets are thoroughly examined by veterinarians, vaccinated, microchipped, and spayed/neutered before adoption.
+        Our adoption process is designed to match you with the perfect companion for your lifestyle. All pets listed here have been submitted by loving owners looking to find them forever homes.
       </p>
       <div class="features">
         <div class="feature">
           <div class="icon">❤️</div>
           <h3>With Love</h3>
-          <p>Every pet is cared for with love and attention while they wait for their forever home.</p>
-        </div>
-        <div class="feature">
-          <div class="icon">🛡️</div>
-          <h3>Health Guaranteed</h3>
-          <p>All pets are vaccinated, microchipped, and receive a thorough health check.</p>
+          <p>Every pet is looking for a loving home where they can thrive and be happy.</p>
         </div>
         <div class="feature">
           <div class="icon">🏠</div>
           <h3>Perfect Match</h3>
           <p>We help you find the perfect companion that fits your lifestyle and home.</p>
         </div>
+        <div class="feature">
+          <div class="icon">🤝</div>
+          <h3>Direct Contact</h3>
+          <p>Connect directly with pet owners to learn more and arrange a meet-and-greet.</p>
+        </div>
       </div>
     </div>
   </section>
 
   <section class="pets-section">
-    <h2>Meet Our Pets</h2>
+    <h2>Meet Our Pets Available for Adoption</h2>
 
+    <!-- DOGS SECTION -->
+    <?php if (!empty($dogs)): ?>
     <div class="pet-category">
-      <h3><span class="tag2">Puppies</span> Find Your Perfect Puppy</h3>
+      <h3><span class="tag2">🐕 Dogs</span> Find Your Perfect Canine Friend</h3>
       <div class="pet-cards">
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/dog2.png" />
-          <h4>Sheeba</h4>
-          <p>1 year | Male</p>
-          <p>📍 Kaduwela</p>
-          <button onclick="window.location.href='/PETVET/index.php?module=guest&page=petprofile'">View Profile</button>
-        </div>
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/pup2.png"/>
-          <h4>Rover</h4>
-          <p>6 mo | Male</p>
-          <p>📍 Piliyandala</p>
-          <button onclick="window.location.href='/PETVET/index.php?module=guest&page=petprofile'">View Profile</button>
-        </div>
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/pup1.png"/>
-          <h4>Bruno</h4>
-          <p>6 mo | Female</p>
-          <p>📍 Kelaniya</p>
-          <button onclick="window.location.href='/PETVET/index.php?module=guest&page=petprofile'">View Profile</button>
-        </div>
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/pup4.png"/>
-          <h4>Ruby</h4>
-          <p>3 mo | Male</p>
-          <p>📍 Kandy</p>
-          <button onclick="window.location.href='/PETVET/index.php?module=guest&page=petprofile'">View Profile</button>
-        </div>
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/pupn.png"/>
-          <h4>Charlie</h4>
-          <p>8 mo | Male</p>
-          <p>📍 Nugegoda</p>
-          <button onclick="window.location.href='/PETVET/index.php?module=guest&page=petprofile'">View Profile</button>
-        </div>
+        <?php foreach ($dogs as $dog): 
+          $mainImage = !empty($dog['images']) ? $dog['images'][0] : '/PETVET/public/images/placeholder-pet.jpg';
+          $age = htmlspecialchars($dog['age'] ?? 'Unknown');
+          $gender = ucfirst(htmlspecialchars($dog['gender'] ?? ''));
+        ?>
+          <div class="pet-card" data-pet-id="<?= $dog['id'] ?>">
+            <img src="<?= htmlspecialchars($mainImage) ?>" alt="<?= htmlspecialchars($dog['name']) ?>" />
+            <h4><?= htmlspecialchars($dog['name']) ?></h4>
+            <p><?= htmlspecialchars($dog['breed'] ?? 'Mixed') ?></p>
+            <p><?= $age ?> • <?= $gender ?></p>
+            <p>📍 <?= htmlspecialchars($dog['location'] ?? 'Location not specified') ?></p>
+            <button class="view-details-btn" onclick="showPetDetails(<?= $dog['id'] ?>)">View Details</button>
+          </div>
+        <?php endforeach; ?>
       </div>
     </div>
-
+    <?php else: ?>
     <div class="pet-category">
-      <h3><span class="tag1">Adult Dogs</span> Loyal Companions</h3>
+      <h3><span class="tag2">🐕 Dogs</span> Find Your Perfect Canine Friend</h3>
+      <p class="empty-message">No dogs available for adoption at the moment. Check back soon!</p>
+    </div>
+    <?php endif; ?>
+
+    <!-- CATS SECTION -->
+    <?php if (!empty($cats)): ?>
+    <div class="pet-category">
+      <h3><span class="tag4">🐈 Cats</span> Elegant Feline Friends</h3>
       <div class="pet-cards">
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/ad1.png"/>
-          <h4>Luna</h4>
-          <p>3 years | Female</p>
-          <p>📍 Rajagiriye</p>
-          <button onclick="window.location.href='/PETVET/index.php?module=guest&page=petprofile'">View Profile</button>
-        </div>
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/ad2.png"/>
-          <h4>Tina</h4>
-          <p>6 years | Female</p>
-          <p>📍 Kottawa</p>
-          <button onclick="window.location.href='/PETVET/index.php?module=guest&page=petprofile'">View Profile</button>
-        </div>
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/ad3.png"/>
-          <h4>Scoob</h4>
-          <p>5 years | Male</p>
-          <p>📍 Kolonnawa</p>
-          <button onclick="window.location.href='/PETVET/index.php?module=guest&page=petprofile'">View Profile</button>
-        </div>
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/ad4.png"/>
-          <h4>Maddy</h4>
-          <p>2 years | Male</p>
-          <p>📍 Delgoda</p>
-          <button onclick="window.location.href='/PETVET/index.php?module=guest&page=petprofile'">View Profile</button>
-        </div>
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/ad5.png"/>
-          <h4>Tommy</h4>
-          <p>8 years | Male</p>
-          <p>📍 Kaluthara</p>
-          <button onclick="window.location.href='/PETVET/index.php?module=guest&page=petprofile'">View Profile</button>
-        </div>
+        <?php foreach ($cats as $cat): 
+          $mainImage = !empty($cat['images']) ? $cat['images'][0] : '/PETVET/public/images/placeholder-pet.jpg';
+          $age = htmlspecialchars($cat['age'] ?? 'Unknown');
+          $gender = ucfirst(htmlspecialchars($cat['gender'] ?? ''));
+        ?>
+          <div class="pet-card" data-pet-id="<?= $cat['id'] ?>">
+            <img src="<?= htmlspecialchars($mainImage) ?>" alt="<?= htmlspecialchars($cat['name']) ?>" />
+            <h4><?= htmlspecialchars($cat['name']) ?></h4>
+            <p><?= htmlspecialchars($cat['breed'] ?? 'Mixed') ?></p>
+            <p><?= $age ?> • <?= $gender ?></p>
+            <p>📍 <?= htmlspecialchars($cat['location'] ?? 'Location not specified') ?></p>
+            <button class="view-details-btn" onclick="showPetDetails(<?= $cat['id'] ?>)">View Details</button>
+          </div>
+        <?php endforeach; ?>
       </div>
     </div>
-
+    <?php else: ?>
     <div class="pet-category">
-      <h3><span class="tag3">Kittens</span> Playful Furballs</h3>
+      <h3><span class="tag4">🐈 Cats</span> Elegant Feline Friends</h3>
+      <p class="empty-message">No cats available for adoption at the moment. Check back soon!</p>
+    </div>
+    <?php endif; ?>
+
+    <!-- BIRDS SECTION -->
+    <?php if (!empty($birds)): ?>
+    <div class="pet-category">
+      <h3><span class="tag1">🐦 Birds</span> Feathered Companions</h3>
       <div class="pet-cards">
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/kit1.png"/>
-          <h4>Jim</h4>
-          <p>1 year | Female</p>
-          <p>📍 Colombo</p>
-          <button onclick="window.location.href='/PETVET/index.php?module=guest&page=petprofile'">View Profile</button>
-        </div>
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/kit2.png"/>
-          <h4>Gary</h4>
-          <p>2 years | Male</p>
-          <p>📍 Kotahena</p>
-          <button onclick="window.location.href='/PETVET/index.php?module=guest&page=petprofile'">View Profile</button>
-        </div>
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/kit3.png"/>
-          <h4>Sisi</h4>
-          <p>2 years | Female</p>
-          <p>📍 Kadawatha</p>
-          <button onclick="window.location.href='/PETVET/index.php?module=guest&page=petprofile'">View Profile</button>
-        </div>
+        <?php foreach ($birds as $bird): 
+          $mainImage = !empty($bird['images']) ? $bird['images'][0] : '/PETVET/public/images/placeholder-pet.jpg';
+          $age = htmlspecialchars($bird['age'] ?? 'Unknown');
+          $gender = ucfirst(htmlspecialchars($bird['gender'] ?? ''));
+        ?>
+          <div class="pet-card" data-pet-id="<?= $bird['id'] ?>">
+            <img src="<?= htmlspecialchars($mainImage) ?>" alt="<?= htmlspecialchars($bird['name']) ?>" />
+            <h4><?= htmlspecialchars($bird['name']) ?></h4>
+            <p><?= htmlspecialchars($bird['breed'] ?? 'Unknown breed') ?></p>
+            <p><?= $age ?> • <?= $gender ?></p>
+            <p>📍 <?= htmlspecialchars($bird['location'] ?? 'Location not specified') ?></p>
+            <button class="view-details-btn" onclick="showPetDetails(<?= $bird['id'] ?>)">View Details</button>
+          </div>
+        <?php endforeach; ?>
       </div>
     </div>
-
+    <?php else: ?>
     <div class="pet-category">
-      <h3><span class="tag4">Cats</span> Elegant Feline Friends</h3>
+      <h3><span class="tag1">🐦 Birds</span> Feathered Companions</h3>
+      <p class="empty-message">No birds available for adoption at the moment. Check back soon!</p>
+    </div>
+    <?php endif; ?>
+
+    <!-- OTHER PETS SECTION -->
+    <?php if (!empty($other)): ?>
+    <div class="pet-category">
+      <h3><span class="tag3">🐾 Other Pets</span> Unique Companions</h3>
       <div class="pet-cards">
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/cat1.png"/>
-          <h4>Shadow</h4>
-          <p>3 years | Female</p>
-          <p>📍 Rathnapura</p>
-          <button onclick="window.location.href='/PETVET/index.php?module=guest&page=petprofile'">View Profile</button>
-        </div>
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/cat2.png"/>
-          <h4>Simba</h4>
-          <p>4 years | Female</p>
-          <p>📍 Kosgoda</p>
-          <button onclick="window.location.href='/PETVET/index.php?module=guest&page=petprofile'">View Profile</button>
-        </div>
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/cat3.png"/>
-          <h4>Cleo</h4>
-          <p>3 years | Male</p>
-          <p>📍 Kaduwela</p>
-          <button onclick="window.location.href='petprofile.php'">View Profile</button>
-        </div>
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/cat4.png"/>
-          <h4>Mino</h4>
-          <p>2 years | Male</p>
-          <p>📍 Malabe</p>
-          <button onclick="window.location.href='petprofile.php'">View Profile</button>
-        </div>
-        <div class="pet-card">
-          <img src="/PETVET/views/shared/images/cat5.png"/>
-          <h4>Mimmy</h4>
-          <p>5 years | Male</p>
-          <p>📍 Angoda</p>
-          <button onclick="window.location.href='petprofile.php'">View Profile</button>
-        </div>
+        <?php foreach ($other as $pet): 
+          $mainImage = !empty($pet['images']) ? $pet['images'][0] : '/PETVET/public/images/placeholder-pet.jpg';
+          $age = htmlspecialchars($pet['age'] ?? 'Unknown');
+          $gender = ucfirst(htmlspecialchars($pet['gender'] ?? ''));
+        ?>
+          <div class="pet-card" data-pet-id="<?= $pet['id'] ?>">
+            <img src="<?= htmlspecialchars($mainImage) ?>" alt="<?= htmlspecialchars($pet['name']) ?>" />
+            <h4><?= htmlspecialchars($pet['name']) ?></h4>
+            <p><?= htmlspecialchars($pet['species']) ?> • <?= htmlspecialchars($pet['breed'] ?? 'Unknown breed') ?></p>
+            <p><?= $age ?> • <?= $gender ?></p>
+            <p>📍 <?= htmlspecialchars($pet['location'] ?? 'Location not specified') ?></p>
+            <button class="view-details-btn" onclick="showPetDetails(<?= $pet['id'] ?>)">View Details</button>
+          </div>
+        <?php endforeach; ?>
       </div>
     </div>
+    <?php else: ?>
+    <div class="pet-category">
+      <h3><span class="tag3">🐾 Other Pets</span> Unique Companions</h3>
+      <p class="empty-message">No other pets available for adoption at the moment. Check back soon!</p>
+    </div>
+    <?php endif; ?>
+
+    <?php if (empty($dogs) && empty($cats) && empty($birds) && empty($other)): ?>
+    <div class="empty-all">
+      <p>😊 Currently no pets are available for adoption. Please check back soon!</p>
+    </div>
+    <?php endif; ?>
   </section>
 
-
-  <!-- Modal: Adoption Form -->
-  <div id="adoptionModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="adoptionModalTitle">
-    <div class="modal__dialog">
-      <section class="adoption-form">
-        <button type="button" class="modal__close" aria-label="Close">&times;</button>
-        <h2 id="adoptionModalTitle">Want to Help Someone Get Adopted?</h2>
-        <p>If you have a pet that needs a new home, fill out this form and we'll list them here.</p>
-        <form>
-          <div class="grid">
-            <input type="text" placeholder="Pet Name" required />
-            <select required>
-              <option>Dog</option>
-              <option>Cat</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div class="grid">
-            <input type="text" placeholder="Age (e.g., 2 yrs, 4 months)" required />
-            <input type="text" placeholder="Location " required />
-          </div>
-          <textarea rows="4" placeholder="Pet description, personality, habits, etc." required></textarea>
-          <label>Upload Photos (Max 3)</label>
-          <input type="file" multiple accept="image/*" id="adoptionPhotos" data-max-files="3" />
-          <small class="muted">You can upload up to 3 photos of your pet.</small>
-          <h4>Contact Information</h4>
-          <div class="grid">
-            <input type="text" placeholder="Your Name" required />
-            <input type="email" placeholder="Email" required />
-          </div>
-          <input type="tel" placeholder="Phone Number" />
-          <button type="submit">Submit Pet for Adoption</button>
-        </form>
-      </section>
+  <!-- Pet Details Modal -->
+  <div id="petDetailsModal" class="modal" aria-hidden="true" role="dialog">
+    <div class="modal__dialog modal__dialog--large">
+      <button type="button" class="modal__close" aria-label="Close">&times;</button>
+      <div id="petDetailsContent">
+        <!-- Content will be loaded dynamically -->
+      </div>
     </div>
   </div>
 
   <script>
-    // Open/close modal helpers
-    (function() {
-      const openBtn = document.getElementById('openAdoptionFormBtn');
-      const modal = document.getElementById('adoptionModal');
-      const closeBtn = modal.querySelector('.modal__close');
-      const photosInput = document.getElementById('adoptionPhotos');
+    // Store all pets data for quick access
+    const petsData = {
+      <?php 
+      $allPets = array_merge($dogs, $cats, $birds, $other);
+      foreach ($allPets as $index => $pet): 
+      ?>
+      <?= $pet['id'] ?>: <?= json_encode($pet) ?><?= $index < count($allPets) - 1 ? ',' : '' ?>
+      <?php endforeach; ?>
+    };
 
-      const open = () => {
-        modal.classList.add('open');
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
-        // focus first field for accessibility
-        const firstInput = modal.querySelector('input, select, textarea, button');
-        if (firstInput) setTimeout(() => firstInput.focus(), 50);
-      };
+    function showPetDetails(petId) {
+      const pet = petsData[petId];
+      if (!pet) {
+        alert('Pet details not found');
+        return;
+      }
+
+      const modal = document.getElementById('petDetailsModal');
+      const content = document.getElementById('petDetailsContent');
+      
+      // Build images HTML
+      let imagesHTML = '';
+      if (pet.images && pet.images.length > 0) {
+        imagesHTML = `
+          <div class="pet-images">
+            <img src="${pet.images[0]}" alt="${pet.name}" class="main-image" id="mainPetImage" />
+            ${pet.images.length > 1 ? `
+              <div class="thumbnail-images">
+                ${pet.images.map((img, idx) => 
+                  `<img src="${img}" alt="Photo ${idx + 1}" class="thumbnail" onclick="changeMainImage('${img}')" />`
+                ).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      } else {
+        imagesHTML = `<div class="pet-images"><img src="/PETVET/public/images/placeholder-pet.jpg" alt="${pet.name}" class="main-image" /></div>`;
+      }
+
+      content.innerHTML = `
+        <div class="pet-details">
+          ${imagesHTML}
+          <div class="pet-info">
+            <h2>${pet.name}</h2>
+            <div class="pet-meta">
+              <span><strong>Species:</strong> ${pet.species}</span>
+              <span><strong>Breed:</strong> ${pet.breed || 'Mixed'}</span>
+              <span><strong>Age:</strong> ${pet.age}</span>
+              <span><strong>Gender:</strong> ${pet.gender}</span>
+            </div>
+            ${pet.description ? `<div class="pet-description"><h3>About ${pet.name}</h3><p>${pet.description}</p></div>` : ''}
+            <div class="pet-location">
+              <strong>📍 Location:</strong> ${pet.location || 'Not specified'}
+            </div>
+            <div class="contact-info">
+              <h3>Contact Owner</h3>
+              <p><strong>Name:</strong> ${pet.owner_name || 'Not provided'}</p>
+              ${pet.phone ? `<p><strong>Phone:</strong> <a href="tel:${pet.phone}">${pet.phone}</a></p>` : ''}
+              ${pet.phone2 ? `<p><strong>Alternative Phone:</strong> <a href="tel:${pet.phone2}">${pet.phone2}</a></p>` : ''}
+              ${pet.email ? `<p><strong>Email:</strong> <a href="mailto:${pet.email}">${pet.email}</a></p>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('modal-open');
+    }
+
+    function changeMainImage(src) {
+      const mainImg = document.getElementById('mainPetImage');
+      if (mainImg) {
+        mainImg.src = src;
+      }
+    }
+
+    // Modal close handlers
+    (function() {
+      const modal = document.getElementById('petDetailsModal');
+      const closeBtn = modal?.querySelector('.modal__close');
 
       const close = () => {
         modal.classList.remove('open');
         modal.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('modal-open');
-        openBtn && openBtn.focus();
       };
 
-      openBtn && openBtn.addEventListener('click', open);
       closeBtn && closeBtn.addEventListener('click', close);
-      modal.addEventListener('click', (e) => {
+      modal && modal.addEventListener('click', (e) => {
         if (e.target === modal) close();
       });
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.classList.contains('open')) close();
+        if (e.key === 'Escape' && modal && modal.classList.contains('open')) close();
       });
-
-      // Validate max 3 images
-      if (photosInput) {
-        photosInput.addEventListener('change', function() {
-          const maxFiles = parseInt(this.getAttribute('data-max-files')) || 3;
-          if (this.files.length > maxFiles) {
-            alert(`You can only upload up to ${maxFiles} images. Please select fewer files.`);
-            this.value = '';
-          }
-        });
-      }
     })();
   </script>
 

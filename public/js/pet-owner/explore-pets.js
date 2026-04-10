@@ -4,12 +4,75 @@ document.addEventListener('DOMContentLoaded', () => {
 	const qsa = (s, el=document) => Array.from(el.querySelectorAll(s));
 	const money = n => 'Rs ' + Number(n).toLocaleString();
 
+	// Toggle functionality for Selling/Adopting sections
+	let currentView = 'sale';
+	const segBtns = qsa('.seg-btn');
+	const sellingGrid = qs('#sellingGrid');
+	const adoptingGrid = qs('#adoptingGrid');
+
+	function setView(v) {
+		currentView = (v === 'adoption') ? 'adoption' : 'sale';
+		
+		segBtns.forEach(b => {
+			const isActive = b.getAttribute('data-view') === currentView;
+			b.classList.toggle('is-active', isActive);
+			b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+		});
+		
+		if (sellingGrid) {
+			sellingGrid.classList.toggle('hidden', currentView !== 'sale');
+		}
+		if (adoptingGrid) {
+			adoptingGrid.classList.toggle('hidden', currentView !== 'adoption');
+		}
+		
+		// Update URL and localStorage
+		const url = new URL(location.href);
+		url.searchParams.set('view', currentView);
+		history.replaceState({}, '', url);
+		localStorage.setItem('explorePetsView', currentView);
+		
+		// Apply filters to current view (if applyFilters is defined)
+		if (typeof applyFilters === 'function') {
+			applyFilters();
+		}
+	}
+
+	// Initialize view from URL or localStorage (defer execution)
+	const params = new URLSearchParams(location.search);
+	currentView = params.get('view') || localStorage.getItem('explorePetsView') || 'sale';
+	
+	// Set initial view without calling applyFilters yet
+	segBtns.forEach(b => {
+		const isActive = b.getAttribute('data-view') === currentView;
+		b.classList.toggle('is-active', isActive);
+		b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+	});
+	if (sellingGrid) {
+		sellingGrid.classList.toggle('hidden', currentView !== 'sale');
+	}
+	if (adoptingGrid) {
+		adoptingGrid.classList.toggle('hidden', currentView !== 'adoption');
+	}
+
+	// Attach event listeners to toggle buttons
+	segBtns.forEach(btn => {
+		btn.addEventListener('click', (e) => {
+			const v = btn.getAttribute('data-view');
+			setView(v);
+		});
+	});
+
 	// Leaflet map for sell pet modal
 	let sellMap = null;
 	let sellMarker = null;
 	
 	// Initialize Leaflet map for sell modal
 	function initSellMap(lat = 6.9271, lng = 79.8612) {
+		if (!window.L || !document.getElementById('sellMapContainer')) {
+			return;
+		}
+
 		if (sellMap) {
 			sellMap.remove();
 		}
@@ -199,6 +262,12 @@ document.addEventListener('DOMContentLoaded', () => {
 			                     listing.status === 'approved' ? '<span class="status-badge approved">Approved</span>' :
 			                     listing.status === 'rejected' ? '<span class="status-badge rejected">Rejected</span>' :
 			                     '<span class="status-badge sold">Sold</span>';
+			
+			// Show price for sale listings, show "For Adoption" badge for adoption listings
+			const priceBadge = listing.listing_type === 'adoption' 
+				? '<span class="listing-badge adoption">For Adoption</span>'
+				: `<span class="listing-badge price">Rs ${Number(listing.price).toLocaleString()}</span>`;
+			
 			return `
 				<div class="listing-item" data-id="${listing.id}">
 					<img src="${mainImage}" alt="${listing.name}" class="listing-thumb">
@@ -206,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
 						<h4 class="listing-title">${listing.name}</h4>
 						<div class="listing-meta">${listing.species} • ${listing.breed}</div>
 						<div class="listing-meta small">${listing.age} • ${listing.gender}</div>
-						<span class="listing-badge price">Rs ${Number(listing.price).toLocaleString()}</span>
+						${priceBadge}
 						${statusBadge}
 					</div>
 					<div class="listing-actions">
@@ -224,6 +293,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	// Buttons
 	qs('#btnSellPet')?.addEventListener('click',()=>{
+		// Reset form to default state (for sale)
+		if (sellListingType) {
+			sellListingType.value = 'sale';
+		}
+		if (priceFieldWrapper) {
+			priceFieldWrapper.style.display = '';
+		}
+		if (sellPrice) {
+			sellPrice.setAttribute('required', 'required');
+			sellPrice.value = '';
+		}
 		openModal('sellModal');
 		// Initialize map when modal opens
 		setTimeout(() => {
@@ -236,7 +316,10 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 	
 	// Cancel buttons for new modal structure
-	qs('#cancelSell')?.addEventListener('click', () => closeModal('sellModal'));
+	qs('#cancelSell')?.addEventListener('click', () => {
+		sellForm?.reset();
+		closeModal('sellModal');
+	});
 	qs('#closeMyListings')?.addEventListener('click', () => closeModal('myListingsModal'));
 	qs('#cancelEdit')?.addEventListener('click', () => closeModal('editListingModal'));
 	qs('#closeEditModal')?.addEventListener('click', () => closeModal('editListingModal'));
@@ -282,6 +365,8 @@ document.addEventListener('DOMContentLoaded', () => {
 					confirmDialog.style.display = 'none';
 					currentDeleteId = null;
 					await fetchMyListings(); // Refresh the list
+					// Also refresh the main grids by reloading the page
+					window.location.reload();
 				} else {
 					alert(data.message || 'Failed to delete listing');
 				}
@@ -417,14 +502,33 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	}
 
+	// Delete Card functionality
+	function setupDeleteButtons() {
+		const deleteBtns = qsa('.delete-card-btn');
+		deleteBtns.forEach(btn => {
+			btn.addEventListener('click', (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				
+				const listingId = btn.getAttribute('data-id');
+				if (!listingId) return;
+				
+				currentDeleteId = listingId;
+				confirmDialog.style.display = 'flex';
+			});
+		});
+	}
+
 	// Filters
 	const searchInput = qs('#searchInput');
 	const speciesFilter = qs('#speciesFilter');
 	const sortBy = qs('#sortBy');
-	const grid = qs('#listingsGrid');
 
 	function applyFilters(){
+		// Get the current active grid
+		const grid = currentView === 'sale' ? sellingGrid : adoptingGrid;
 		if(!grid) return;
+		
 		const term = (searchInput?.value||'').trim().toLowerCase();
 		const species = speciesFilter?.value || '';
 		let cards = qsa('.card', grid);
@@ -455,49 +559,45 @@ document.addEventListener('DOMContentLoaded', () => {
 		// Re-setup carousels and contact buttons after DOM changes
 		setupCarousels();
 		setupContactButtons();
+		setupDeleteButtons();
 	}
 	[searchInput,speciesFilter,sortBy].forEach(el=> el?.addEventListener('input', applyFilters));
+	[searchInput,speciesFilter,sortBy].forEach(el=> el?.addEventListener('change', applyFilters));
 
-	// Grid events
-	grid?.addEventListener('click', e => {
-		const card = e.target.closest('.card');
-		if(!card) return;
-		if(e.target.classList.contains('view')){
-			showDetails(card);
-		}
+	// Grid events - handle both grids
+	[sellingGrid, adoptingGrid].forEach(grid => {
+		grid?.addEventListener('click', e => {
+			const card = e.target.closest('.card');
+			if(!card) return;
+			if(e.target.classList.contains('view')){
+				showDetails(card);
+			}
+		});
 	});
 
 	function showDetails(card){
 		const title = card.querySelector('h3')?.textContent || 'Pet';
 		const price = card.dataset.price || 0;
+		const listingType = card.dataset.listingType || 'sale';
 		const img = card.querySelector('img')?.src || '';
 		const meta = card.querySelector('.meta')?.textContent || '';
 		const desc = card.querySelector('.desc')?.textContent || '';
 		const sellerName = card.querySelector('.seller-name strong')?.textContent || 'Seller';
 		const sellerLoc = card.querySelector('.seller-loc')?.textContent || '';
 		
-		let contactDetails = '';
-		if (sellerName === 'You' || sellerName === window.EXPLORE_CURRENT_USER_NAME) {
-			contactDetails = '<div class="seller-lg"><strong>Contact:</strong> 077-123-4567<br>Email: you@example.com</div>';
-		} else if (sellerName === 'Kasun Perera') {
-			contactDetails = '<div class="seller-lg"><strong>Contact:</strong> 077-987-6543<br>Email: kasun.perera@petvet.lk</div>';
-		} else if (sellerName === 'Nirmala') {
-			contactDetails = '<div class="seller-lg"><strong>Contact:</strong> 076-555-1212<br>Email: nirmala@example.com</div>';
-		} else {
-			contactDetails = '<div class="seller-lg"><strong>Contact:</strong> Not available</div>';
-		}
+		// Only show price for sale listings
+		const priceHTML = listingType === 'sale' ? `<div class="price-lg highlight">${money(price)}</div>` : '';
 		
 		qs('#detailsTitle').textContent = title;
 		qs('#detailsBody').innerHTML = `
 			<div class="details details-modal-custom">
 				<div class="details-img-wrap"><img src="${img}" alt="${title}"></div>
 				<div class="details-info">
-					<div class="price-lg highlight">${money(price)}</div>
+					${priceHTML}
 					<div class="meta-lg"><span>${meta}</span></div>
 					<p class="desc-lg">${desc}</p>
 					<div class="seller-lg">
 						<div class="seller-row"><span class="seller-label">Posted by</span><span class="seller-name"><strong>${sellerName}</strong></span><span class="seller-loc">${sellerLoc}</span></div>
-						<div class="contact-row"><span class="contact-label">Contact</span><span class="contact-details">${contactDetails}</span></div>
 					</div>
 				</div>
 			</div>`;
@@ -509,6 +609,33 @@ document.addEventListener('DOMContentLoaded', () => {
 	const sellImagesInput = qs('#sellImages');
 	const sellImagePreviews = qs('#sellImagePreviews');
 	const sellImageFallback = qs('#sellImageFallback');
+	const sellListingType = qs('#sellListingType');
+	const priceFieldWrapper = qs('#priceFieldWrapper');
+	const sellPrice = qs('#sellPrice');
+
+	// Toggle price field based on listing type
+	if (sellListingType && priceFieldWrapper && sellPrice) {
+		sellListingType.addEventListener('change', function() {
+			if (this.value === 'adoption') {
+				priceFieldWrapper.style.display = 'none';
+				sellPrice.value = '0';
+				sellPrice.removeAttribute('required');
+			} else {
+				priceFieldWrapper.style.display = '';
+				sellPrice.setAttribute('required', 'required');
+				if (sellPrice.value === '0') {
+					sellPrice.value = '';
+				}
+			}
+		});
+		
+		// Initialize on page load
+		if (sellListingType.value === 'adoption') {
+			priceFieldWrapper.style.display = 'none';
+			sellPrice.value = '0';
+			sellPrice.removeAttribute('required');
+		}
+	}
 
 	if (sellImagesInput && sellImagePreviews) {
 		sellImagesInput.addEventListener('change', () => {
@@ -547,7 +674,6 @@ document.addEventListener('DOMContentLoaded', () => {
 	const sellBreed = qs('#sellBreed');
 	const sellAge = qs('#sellAge');
 	const sellPhone = qs('#sellPhone');
-	const sellPrice = qs('#sellPrice');
 
 	// Helper functions for validation feedback
 	const addErrorState = (field, message) => {
@@ -792,11 +918,13 @@ document.addEventListener('DOMContentLoaded', () => {
 			hasErrors = true;
 		}
 
-		if (sellPrice) {
+		// Only validate price if listing type is 'sale'
+		const listingType = sellListingType?.value || 'sale';
+		if (listingType === 'sale' && sellPrice) {
 			const priceValue = parseFloat(sellPrice.value);
-			if (isNaN(priceValue) || priceValue < 0) {
+			if (isNaN(priceValue) || priceValue <= 0) {
 				addErrorState(sellPrice, '❌ Price must be a positive number');
-				errors.push('Price is invalid');
+				errors.push('Price must be greater than 0 for sale listings');
 				hasErrors = true;
 			}
 		}
@@ -908,6 +1036,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		// Setup carousel and contact for new card
 		setupCarousels();
 		setupContactButtons();
+		setupDeleteButtons();
 		
 		alert('Listing published successfully!');
 	}
@@ -941,6 +1070,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		editForm.querySelector('[name="age"]').value = listing.age;
 		editForm.querySelector('[name="gender"]').value = listing.gender;
 		editForm.querySelector('[name="price"]').value = listing.price;
+		editForm.querySelector('[name="listing_type"]').value = listing.listing_type || 'sale';
 		// Map 'description' to 'desc' field
 		editForm.querySelector('[name="desc"]').value = listing.description || listing.desc || '';
 		editForm.querySelector('[name="location"]').value = listing.location;
@@ -1281,6 +1411,12 @@ document.addEventListener('DOMContentLoaded', () => {
 	// Initialize carousels and contact buttons on page load
 	setupCarousels();
 	setupContactButtons();
+	setupDeleteButtons();
+	
+	// Initialize filters on page load for the active view
+	if (typeof applyFilters === 'function') {
+		applyFilters();
+	}
 	
 	// Initialize distance calculation for explore pets
 	initPetDistanceCalculation();

@@ -88,7 +88,7 @@ class PetOwnerController extends BaseController {
         $explorePetsModel = new ExplorePetsModel();
         
         // Get current user ID (mock for now)
-        $currentUserId = 1;
+        $currentUserId = $_SESSION['user_id'] ?? 1;
         
         $data = [
             'currentUser' => ['id' => $currentUserId, 'name' => 'You'],
@@ -157,7 +157,6 @@ class PetOwnerController extends BaseController {
         if (isset($_GET['search'])) $filters['search'] = $_GET['search'];
         if (isset($_GET['city'])) $filters['city'] = $_GET['city'];
         if (isset($_GET['experience'])) $filters['experience'] = $_GET['experience'];
-        if (isset($_GET['sort'])) $filters['sort'] = $_GET['sort'];
         
         // Service-specific filters
         if ($serviceType === 'trainers' && isset($_GET['specialization'])) {
@@ -180,6 +179,8 @@ class PetOwnerController extends BaseController {
         
         if ($serviceType === 'groomers') {
             if (isset($_GET['show'])) $filters['show'] = $_GET['show'];
+            if (isset($_GET['service_type'])) $filters['service_type'] = $_GET['service_type'];
+            if (isset($_GET['specialization'])) $filters['specialization'] = $_GET['specialization'];
             if (isset($_GET['min_price'])) $filters['min_price'] = $_GET['min_price'];
             if (isset($_GET['max_price'])) $filters['max_price'] = $_GET['max_price'];
             if (isset($_GET['groomer_id'])) $filters['groomer_id'] = $_GET['groomer_id'];
