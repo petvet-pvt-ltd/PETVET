@@ -26,23 +26,14 @@ try {
         exit;
     }
     
-    // Get images to delete files from server
-    $images = $model->getImages($listingId);
-    foreach ($images as $imageUrl) {
-        $filepath = __DIR__ . '/../../public' . str_replace('/PETVET/public', '', $imageUrl);
-        if (file_exists($filepath)) {
-            unlink($filepath);
-        }
-    }
-    
-    // Delete listing (this will also delete images and badges via CASCADE)
-    if ($model->deleteListing($listingId)) {
+    // Update status to rejected instead of deleting
+    if ($model->updateStatus($listingId, 'rejected')) {
         echo json_encode([
             'success' => true,
-            'message' => 'Listing declined and removed successfully'
+            'message' => 'Listing marked as rejected successfully'
         ]);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to decline listing']);
+        echo json_encode(['success' => false, 'message' => 'Failed to reject listing']);
     }
     
 } catch (Exception $e) {

@@ -113,8 +113,8 @@
 /* Listings Grid */
 .listings-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
 }
 
 .listing-card {
@@ -146,11 +146,11 @@
 
 .status-badge-overlay {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 4px 12px;
+  top: 8px;
+  right: 8px;
+  padding: 4px 10px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   backdrop-filter: blur(4px);
 }
@@ -171,12 +171,12 @@
 }
 
 .listing-body {
-  padding: 16px;
+  padding: 14px;
 }
 
 .listing-title {
-  margin: 0 0 8px;
-  font-size: 18px;
+  margin: 0 0 6px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text);
 }
@@ -185,8 +185,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 12px;
-  font-size: 13px;
+  margin-bottom: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 
@@ -197,16 +197,16 @@
 }
 
 .listing-price {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--primary);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .listing-owner {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--muted);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .listing-owner strong {
@@ -216,7 +216,7 @@
 .listing-actions {
   display: flex;
   gap: 8px;
-  padding-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
 }
 
@@ -226,10 +226,10 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: 7px 12px;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;

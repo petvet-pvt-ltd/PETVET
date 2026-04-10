@@ -3,18 +3,21 @@ require_once __DIR__ . '/BaseController.php';
 require_once __DIR__ . '/../models/Guest/GuestShopModel.php';
 require_once __DIR__ . '/../models/Guest/GuestExplorePetsModel.php';
 require_once __DIR__ . '/../models/Guest/GuestLostFoundModel.php';
+require_once __DIR__ . '/../models/Guest/GuestAdoptModel.php';
 require_once __DIR__ . '/../models/RegistrationModel.php';
 
 class GuestController extends BaseController {
     private $shopModel;
     private $explorePetsModel;
     private $lostFoundModel;
+    private $adoptModel;
     private $registrationModel;
 
     public function __construct() {
         $this->shopModel = new GuestShopModel();
         $this->explorePetsModel = new GuestExplorePetsModel();
         $this->lostFoundModel = new GuestLostFoundModel();
+        $this->adoptModel = new GuestAdoptModel();
         $this->registrationModel = new RegistrationModel();
     }
 
@@ -121,10 +124,12 @@ class GuestController extends BaseController {
     public function explorePets() {
         $sellers = $this->explorePetsModel->getAllSellers();
         $pets = $this->explorePetsModel->getAllPets();
+        $adoptionPetsBySpecies = $this->adoptModel->getAdoptionPetsBySpecies();
         
         $this->guestView('explore-pets', [
             'sellers' => $sellers,
-            'pets' => $pets
+            'pets' => $pets,
+            'adoptionPetsBySpecies' => $adoptionPetsBySpecies
         ]);
     }
 
@@ -191,6 +196,11 @@ class GuestController extends BaseController {
             // Otherwise, just show the clinic manager registration form
             include __DIR__ . '/../views/guest/clinic-manager-register.php';
         }
+    }
+
+    public function adopt() {
+        header('Location: /PETVET/index.php?module=guest&page=explore-pets&view=adoption#adoption-section');
+        exit;
     }
 
     // Modified view method for guest pages (no sidebar)

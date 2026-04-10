@@ -52,42 +52,67 @@ $sellers = $sellers ?? [];
 $pets = $pets ?? [];
 $myListings = $myListings ?? [];
 $availableSpecies = $availableSpecies ?? [];
+
+// Separate pets by listing type
+$sellingPets = [];
+$adoptingPets = [];
+foreach($pets as $pet) {
+  if (($pet['listing_type'] ?? 'sale') === 'adoption') {
+    $adoptingPets[] = $pet;
+  } else {
+    $sellingPets[] = $pet;
+  }
+}
 ?>
   <header class="page-header">
     <div class="title-wrap">
       <h2>Explore Pets</h2>
-      <p class="subtitle">Browse pets for sale or list your own.</p>
+      <p class="subtitle">Browse pets for sale or adoption, and list your own.</p>
     </div>
     <div class="actions">
       <button class="btn outline" id="btnMyListings">My Listings</button>
-      <button class="btn primary" id="btnSellPet">Sell a Pet</button>
+      <button class="btn primary" id="btnSellPet">List a Pet</button>
     </div>
   </header>
 
-  <section class="filters">
-    <div class="field grow"><input type="text" id="searchInput" placeholder="Search by name, breed, or seller..."></div>
-    <div class="field">
-      <select id="speciesFilter">
-        <option value="">All Species</option><option>Dog</option><option>Cat</option><option>Bird</option><option>Other</option>
-      </select>
+  <section class="explore-controls">
+    <div class="segmented" role="tablist" aria-label="Selling or Adopting">
+      <button type="button" role="tab" aria-selected="true" class="seg-btn is-active" data-view="sale">For Sale</button>
+      <button type="button" role="tab" aria-selected="false" class="seg-btn" data-view="adoption">For Adoption</button>
     </div>
-    <div class="field">
-      <select id="sortBy">
-        <option value="nearest">Sort: Nearest</option>
-        <option value="newest">Sort: Newest</option>
-        <option value="priceLow">Price: Low → High</option>
-        <option value="priceHigh">Price: High → Low</option>
-        <option value="age">Age</option>
-      </select>
+    <div class="filters">
+      <div class="field grow"><input type="text" id="searchInput" placeholder="Search by name, breed, or seller..."></div>
+      <div class="field">
+        <select id="speciesFilter">
+          <option value="">All Species</option><option>Dog</option><option>Cat</option><option>Bird</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <select id="sortBy">
+          <option value="nearest">Sort: Nearest</option>
+          <option value="newest">Sort: Newest</option>
+          <option value="priceLow">Price: Low → High</option>
+          <option value="priceHigh">Price: High → Low</option>
+          <option value="age">Age</option>
+        </select>
+      </div>
     </div>
   </section>
 
-  <section id="listingsGrid" class="grid">
-  <?php foreach($pets as $pet): 
+  <section id="sellingGrid" class="grid">
+  <?php foreach($sellingPets as $pet): 
     $seller=$sellers[$pet['seller_id']] ?? ['name'=>'Unknown','location'=>'','phone'=>'','phone2'=>'','email'=>''];
     $images = $pet['images'] ?? [];
+    $isOwner = $pet['seller_id'] == $currentUser['id'];
   ?>
-    <article class="card" data-species="<?= htmlspecialchars($pet['species']) ?>" data-price="<?= (int)$pet['price'] ?>" data-pet-id="<?= $pet['id'] ?>" data-latitude="<?= $pet['latitude'] ?? '' ?>" data-longitude="<?= $pet['longitude'] ?? '' ?>">
+    <article class="card" data-species="<?= htmlspecialchars($pet['species']) ?>" data-price="<?= (int)$pet['price'] ?>" data-pet-id="<?= $pet['id'] ?>" data-latitude="<?= $pet['latitude'] ?? '' ?>" data-longitude="<?= $pet['longitude'] ?? '' ?>" data-listing-type="<?= htmlspecialchars($pet['listing_type'] ?? 'sale') ?>">
+      <?php if($isOwner): ?>
+        <button class="delete-card-btn" data-id="<?= $pet['id'] ?>" title="Delete listing">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/>
+          </svg>
+        </button>
+      <?php endif; ?>
       <div class="media">
         <?php if(!empty($images)): ?>
           <img src="<?= htmlspecialchars($images[0]) ?>" alt="<?= htmlspecialchars($pet['name']) ?>" class="carousel-image" data-index="0">
@@ -138,10 +163,73 @@ $availableSpecies = $availableSpecies ?? [];
   <?php endforeach; ?>
   </section>
 
+  <section id="adoptingGrid" class="grid hidden">
+  <?php foreach($adoptingPets as $pet): 
+    $seller=$sellers[$pet['seller_id']] ?? ['name'=>'Unknown','location'=>'','phone'=>'','phone2'=>'','email'=>''];
+    $images = $pet['images'] ?? [];
+    $isOwner = $pet['seller_id'] == $currentUser['id'];
+  ?>
+    <article class="card" data-species="<?= htmlspecialchars($pet['species']) ?>" data-price="<?= (int)$pet['price'] ?>" data-pet-id="<?= $pet['id'] ?>" data-latitude="<?= $pet['latitude'] ?? '' ?>" data-longitude="<?= $pet['longitude'] ?? '' ?>" data-listing-type="<?= htmlspecialchars($pet['listing_type'] ?? 'adoption') ?>">
+      <?php if($isOwner): ?>
+        <button class="delete-card-btn" data-id="<?= $pet['id'] ?>" title="Delete listing">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/>
+          </svg>
+        </button>
+      <?php endif; ?>
+      <div class="media">
+        <?php if(!empty($images)): ?>
+          <img src="<?= htmlspecialchars($images[0]) ?>" alt="<?= htmlspecialchars($pet['name']) ?>" class="carousel-image" data-index="0">
+          <?php if(count($images) > 1): ?>
+            <?php foreach(array_slice($images, 1) as $idx => $image): ?>
+              <img src="<?= htmlspecialchars($image) ?>" alt="Photo <?= $idx + 2 ?>" class="carousel-image" style="display:none;" data-index="<?= $idx + 1 ?>">
+            <?php endforeach; ?>
+            <button class="carousel-nav prev" data-direction="prev"></button>
+            <button class="carousel-nav next" data-direction="next"></button>
+            <div class="carousel-indicators">
+              <?php foreach($images as $idx => $image): ?>
+                <button class="carousel-indicator <?= $idx === 0 ? 'active' : '' ?>" data-index="<?= $idx ?>"></button>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
+        <?php endif; ?>
+      </div>
+      <div class="body">
+        <div class="line1">
+          <h3><?= htmlspecialchars($pet['name']) ?></h3>
+          <span class="meta"><?= htmlspecialchars($pet['species']) ?> • <?= htmlspecialchars($pet['breed']) ?> • <?= htmlspecialchars($pet['age']) ?></span>
+        </div>
+        <p class="desc"><?= htmlspecialchars($pet['desc']) ?></p>
+        <div class="badges">
+          <?php foreach($pet['badges'] as $b): ?><span class="badge"><?= htmlspecialchars($b) ?></span><?php endforeach; ?>
+        </div>
+        <div class="seller">
+          <span class="seller-name">Posted by <strong><?= htmlspecialchars($seller['name']) ?></strong></span>
+          <span class="seller-loc"><?= htmlspecialchars($pet['location'] ?? '') ?></span>
+        </div>
+        <p class="pet-distance" data-pet-id="<?= $pet['id'] ?>" style="color: #3b82f6; font-size: 0.9em; margin-top: 4px;">
+          <span class="distance-loader">⏳ Calculating distance...</span>
+        </p>
+      </div>
+      <div class="actions-row">
+        <button class="btn ghost view" data-id="<?= $pet['id'] ?>">View Details</button>
+        <button class="btn buy contact-seller-btn" 
+          data-id="<?= $pet['id'] ?>"
+          data-name="<?= htmlspecialchars($seller['name']) ?>"
+          data-phone="<?= htmlspecialchars($seller['phone'] ?? '') ?>"
+          data-phone2="<?= htmlspecialchars($seller['phone2'] ?? '') ?>"
+          data-email="<?= htmlspecialchars($seller['email'] ?? '') ?>">
+          Contact Owner
+        </button>
+      </div>
+    </article>
+  <?php endforeach; ?>
+  </section>
+
   <!-- Sell Pet -->
   <div class="modal-overlay" id="sellModal" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sellTitle">
-      <h3 id="sellTitle">Sell a Pet</h3>
+      <h3 id="sellTitle">List a Pet</h3>
       <form id="sellForm" autocomplete="off">
         <div class="form-grid">
           <label>Pet Name
@@ -175,7 +263,14 @@ $availableSpecies = $availableSpecies ?? [];
               <option>Female</option>
             </select>
           </label>
-          <label>Price (Rs)
+          <label>Listing Type
+            <select name="listing_type" id="sellListingType" required>
+              <option value="sale">For Sale</option>
+              <option value="adoption">For Adoption</option>
+            </select>
+            <small class="field-hint">Choose whether you're selling or offering for adoption</small>
+          </label>
+          <label id="priceFieldWrapper">Price (Rs)
             <input type="number" name="price" id="sellPrice" min="0" step="500" required placeholder="e.g., 50000" autocomplete="off">
             <small class="field-hint">Enter price in Sri Lankan Rupees</small>
           </label>
@@ -280,6 +375,13 @@ $availableSpecies = $availableSpecies ?? [];
             <label>Price (Rs)
               <input type="number" name="price" id="editPrice" min="0" step="500" required autocomplete="off">
               <small class="field-hint">Enter price in Sri Lankan Rupees</small>
+            </label>
+            <label>Listing Type
+              <select name="listing_type" id="editListingType" required>
+                <option value="sale">For Sale</option>
+                <option value="adoption">For Adoption</option>
+              </select>
+              <small class="field-hint">Choose whether you're selling or offering for adoption</small>
             </label>
             <label class="full">Description<textarea name="desc" rows="3"></textarea></label>
             <label class="full">

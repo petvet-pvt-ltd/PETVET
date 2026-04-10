@@ -293,7 +293,7 @@ switch ($module) {
         }
 
         // Pages that use GuestController
-        if (in_array($page, ['shop','shop-clinic','shop-product','explore-pets','lost-found','register','vet-register','clinic-manager-register'], true)) {
+        if (in_array($page, ['shop','shop-clinic','shop-product','explore-pets','lost-found','adopt','register','vet-register','clinic-manager-register'], true)) {
             require_once __DIR__ . '/controllers/GuestController.php';
             $c = new GuestController();
             switch ($page) {
@@ -302,6 +302,7 @@ switch ($module) {
                 case 'shop-product': $c->shopProduct(); break;
                 case 'explore-pets': $c->explorePets(); break;
                 case 'lost-found': $c->lostFound(); break;
+                case 'adopt': $c->adopt(); break;
                 case 'register': $c->register(); break;
                 case 'vet-register': $c->vetRegister(); break;
                 case 'clinic-manager-register': $c->clinicManagerRegister(); break;

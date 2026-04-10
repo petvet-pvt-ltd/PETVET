@@ -22,7 +22,7 @@
   </section>
 
   <div class="container">
-  <a href="/PETVET/index.php?module=guest&page=adopt" class="back-link">← Back to all pets</a>
+  <a href="/PETVET/index.php?module=guest&page=explore-pets#adoption-section" class="back-link">← Back to all pets</a>
 
     <!-- Main Content -->
     <section class="main-content">

@@ -19,7 +19,6 @@
   <ul class="nav-links">
   <li><a href="/PETVET/index.php?module=guest&page=home" class="<?= $active === 'home' ? 'active' : '' ?>">Home</a></li>
   <li><a href="/PETVET/index.php?module=guest&page=shop" class="<?= $active === 'shop' ? 'active' : '' ?>">Pet Shop</a></li>
-  <li><a href="/PETVET/index.php?module=guest&page=adopt" class="<?= $active === 'adopt' ? 'active' : '' ?>">Pet Adoption</a></li>
   <li><a href="/PETVET/index.php?module=guest&page=explore-pets" class="<?= $active === 'explore-pets' ? 'active' : '' ?>">Explore Pets</a></li>
   <li><a href="/PETVET/index.php?module=guest&page=lost-found" class="<?= $active === 'lost-found' ? 'active' : '' ?>">Lost & Found</a></li>
   <!-- <li><a href="/PETVET/index.php?module=guest&page=about" class="<?= $active === 'about' ? 'active' : '' ?>">About</a></li> -->

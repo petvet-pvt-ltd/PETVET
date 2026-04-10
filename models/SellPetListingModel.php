@@ -43,9 +43,9 @@ class SellPetListingModel {
         $lng = $data['longitude'];
         
         $query = "INSERT INTO sell_pet_listings (
-            user_id, name, species, breed, age, gender, price, location, 
+            user_id, name, species, breed, age, gender, price, listing_type, location, 
             description, phone, phone2, email, latitude, longitude, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')";
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')";
         
         $stmt = mysqli_prepare($this->conn, $query);
         
@@ -56,7 +56,7 @@ class SellPetListingModel {
         
         mysqli_stmt_bind_param(
             $stmt, 
-            "isssssdsssssdd",
+            "isssssdssssssdd",
             $data['user_id'],
             $data['name'],
             $data['species'],
@@ -64,6 +64,7 @@ class SellPetListingModel {
             $data['age'],
             $data['gender'],
             $data['price'],
+            $data['listing_type'],
             $data['location'],
             $data['description'],
             $data['phone'],
@@ -87,19 +88,20 @@ class SellPetListingModel {
     public function updateListing($id, $data) {
         $query = "UPDATE sell_pet_listings SET 
             name = ?, species = ?, breed = ?, age = ?, gender = ?, 
-            price = ?, location = ?, description = ?, phone = ?, phone2 = ?, email = ?
+            price = ?, listing_type = ?, location = ?, description = ?, phone = ?, phone2 = ?, email = ?
             WHERE id = ?";
         
         $stmt = mysqli_prepare($this->conn, $query);
         mysqli_stmt_bind_param(
             $stmt,
-            "sssssdsssssi",
+            "sssssdssssssi",
             $data['name'],
             $data['species'],
             $data['breed'],
             $data['age'],
             $data['gender'],
             $data['price'],
+            $data['listing_type'],
             $data['location'],
             $data['description'],
             $data['phone'],

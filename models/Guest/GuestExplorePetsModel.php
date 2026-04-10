@@ -6,7 +6,7 @@ class GuestExplorePetsModel extends BaseModel {
     public function getAllSellers() {
         global $conn;
         
-        // Fetch sellers (users) who have approved listings
+        // Fetch sellers (users) who have approved sale listings
         $sql = "SELECT DISTINCT 
                     u.id, 
                     CONCAT(u.first_name, ' ', u.last_name) as name,
@@ -16,7 +16,8 @@ class GuestExplorePetsModel extends BaseModel {
                     l.email
                 FROM users u
                 INNER JOIN sell_pet_listings l ON u.id = l.user_id
-                WHERE l.status = 'approved'";
+            WHERE l.status = 'approved'
+            AND l.listing_type = 'sale'";
         
         $result = mysqli_query($conn, $sql);
         
@@ -43,7 +44,7 @@ class GuestExplorePetsModel extends BaseModel {
     public function getAllPets() {
         global $conn;
         
-        // Fetch only approved listings from database
+        // Fetch only approved sale listings from database
         $sql = "SELECT 
                     l.id, 
                     l.name, 
@@ -52,8 +53,11 @@ class GuestExplorePetsModel extends BaseModel {
                     l.age, 
                     l.gender, 
                     l.price, 
+                    l.listing_type,
                     l.description as `desc`, 
                     l.location,
+                    l.latitude,
+                    l.longitude,
                     l.user_id as seller_id,
                     l.created_at as date_posted,
                     CONCAT(u.first_name, ' ', u.last_name) as seller_name,
@@ -61,6 +65,7 @@ class GuestExplorePetsModel extends BaseModel {
                 FROM sell_pet_listings l
                 LEFT JOIN users u ON l.user_id = u.id
                 WHERE l.status = 'approved'
+                AND l.listing_type = 'sale'
                 ORDER BY l.created_at DESC";
         
         $result = mysqli_query($conn, $sql);
@@ -104,13 +109,17 @@ class GuestExplorePetsModel extends BaseModel {
                 'name' => $row['name'],
                 'species' => $row['species'],
                 'breed' => $row['breed'],
-                'age' => $row['age'] . 'y',
+                'age' => $row['age'],
                 'gender' => $row['gender'],
                 'badges' => $badges,
                 'price' => $row['price'],
                 'desc' => $row['desc'] ?? '',
                 'images' => $images,
                 'seller_id' => $row['seller_id'],
+                'location' => $row['location'] ?? '',
+                'latitude' => $row['latitude'] ?? '',
+                'longitude' => $row['longitude'] ?? '',
+                'listing_type' => $row['listing_type'] ?? 'sale',
                 'date_posted' => $row['date_posted']
             ];
         }
@@ -121,10 +130,11 @@ class GuestExplorePetsModel extends BaseModel {
     public function getAvailableSpecies() {
         global $conn;
         
-        // Get unique species from approved listings
+        // Get unique species from approved sale listings
         $sql = "SELECT DISTINCT species 
                 FROM sell_pet_listings 
-                WHERE status = 'approved' 
+            WHERE status = 'approved'
+            AND listing_type = 'sale'
                 ORDER BY species ASC";
         
         $result = mysqli_query($conn, $sql);

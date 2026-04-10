@@ -1,22 +1,18 @@
 <?php
 session_start();
+
+// Set header first before any output
+header('Content-Type: application/json');
+
 require_once __DIR__ . '/../../config/connect.php';
 require_once __DIR__ . '/../../models/SellPetListingModel.php';
 
 // Enable error reporting for debugging
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Don't display errors, only log them
+ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
-header('Content-Type: application/json');
-
 try {
-    // Check if user is logged in
-    if (!isset($_SESSION['user_id'])) {
-        echo json_encode(['success' => false, 'message' => 'Please login to create a listing']);
-        exit;
-    }
-
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         echo json_encode(['success' => false, 'message' => 'Invalid request method']);
         exit;
@@ -33,12 +29,6 @@ try {
         }
     }
     
-    // Validate price separately (allow 0 for adoption listings)
-    if (!isset($_POST['price'])) {
-        echo json_encode(['success' => false, 'message' => "Field 'price' is required"]);
-        exit;
-    }
-    
     // Prepare data
     $latitude = null;
     $longitude = null;
@@ -48,15 +38,24 @@ try {
         $longitude = floatval($_POST['longitude']);
     }
     
+    // Use current user ID if logged in, otherwise NULL for guests
+    $user_id = $_SESSION['user_id'] ?? null;
+    
+    // For guest submissions (no user_id), email is required for contact
+    if (is_null($user_id) && empty($_POST['email'])) {
+        echo json_encode(['success' => false, 'message' => 'Please provide an email address so people can contact you about this pet']);
+        exit;
+    }
+    
     $data = [
-        'user_id' => $_SESSION['user_id'],
+        'user_id' => $user_id,
         'name' => trim($_POST['name']),
         'species' => trim($_POST['species']),
         'breed' => trim($_POST['breed']),
         'age' => trim($_POST['age']),
         'gender' => $_POST['gender'],
-        'price' => floatval($_POST['price']),
-        'listing_type' => trim($_POST['listing_type'] ?? 'sale'),
+        'price' => 0, // Free adoption
+        'listing_type' => 'adoption',
         'location' => trim($_POST['location']),
         'description' => trim($_POST['desc'] ?? ''),
         'phone' => trim($_POST['phone']),
@@ -71,7 +70,7 @@ try {
     
     if (!$listingId) {
         $error = mysqli_error($GLOBALS['conn'] ?? null);
-        error_log("Failed to create listing in database: " . $error);
+        error_log("Failed to create adoption listing in database: " . $error);
         echo json_encode(['success' => false, 'message' => 'Failed to create listing in database', 'error' => $error]);
         exit;
     }
@@ -120,7 +119,7 @@ try {
         }
         
         if ($uploadedCount === 0) {
-            error_log("No images were uploaded successfully");
+            error_log("No images were uploaded successfully for listing $listingId");
         }
     }
     
@@ -133,17 +132,17 @@ try {
     
     echo json_encode([
         'success' => true,
-        'message' => 'Listing created successfully! It will be visible after admin approval.',
+        'message' => 'Pet listed successfully! It will be visible after admin approval.',
         'listing_id' => $listingId
     ]);
     
 } catch (Exception $e) {
-    error_log("Error creating pet listing: " . $e->getMessage());
+    error_log("Error creating adoption listing: " . $e->getMessage());
     error_log("Stack trace: " . $e->getTraceAsString());
     echo json_encode([
         'success' => false, 
         'message' => 'An error occurred while creating the listing',
-        'error' => $e->getMessage() // Include error message for debugging
+        'error' => $e->getMessage()
     ]);
 }
 ?>
