@@ -35,6 +35,9 @@ try {
                 n.entity_type,
                 n.action_data,
                 n.created_at,
+                DATE_FORMAT(n.created_at, '%Y-%m-%dT%H:%i:%sZ') AS created_at_iso,
+                UNIX_TIMESTAMP(n.created_at) AS created_at_ts,
+                TIMESTAMPDIFF(SECOND, n.created_at, UTC_TIMESTAMP()) AS age_seconds,
                 CASE WHEN nr.id IS NOT NULL THEN 1 ELSE 0 END as is_read
             FROM notifications n
             LEFT JOIN notification_reads nr ON n.id = nr.notification_id AND nr.pet_owner_id = ?

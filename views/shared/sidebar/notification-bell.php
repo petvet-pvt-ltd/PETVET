@@ -309,7 +309,10 @@ if ($currentModule !== 'pet-owner') {
     // Load notifications via AJAX
     async function loadNotifications() {
         try {
-            const response = await fetch('/PETVET/api/pet-owner/get-notifications.php');
+            const response = await fetch(`/PETVET/api/pet-owner/get-notifications.php?t=${Date.now()}`, {
+                cache: 'no-store',
+                credentials: 'same-origin'
+            });
             const data = await response.json();
             
             if (data.success) {
@@ -338,7 +341,11 @@ if ($currentModule !== 'pet-owner') {
             item.dataset.notificationId = notification.id;
             
             const icon = getNotificationIcon(notification.type);
-            const timeAgo = getTimeAgo(new Date(notification.created_at));
+            const timeAgo = getTimeAgoFromServer(
+                notification.age_seconds,
+                notification.created_at_ts,
+                notification.created_at_iso ?? notification.created_at
+            );
             
             item.innerHTML = `
                 <div class="notification-icon ${notification.type}-icon">
@@ -368,6 +375,9 @@ if ($currentModule !== 'pet-owner') {
 
     // Get time ago string
     function getTimeAgo(date) {
+        if (!(date instanceof Date) || isNaN(date.getTime())) {
+            return 'Just now';
+        }
         const seconds = Math.floor((new Date() - date) / 1000);
         
         let interval = seconds / 31536000;
@@ -387,6 +397,70 @@ if ($currentModule !== 'pet-owner') {
         
         return Math.floor(seconds) + ' seconds ago';
     }
+
+    function getTimeAgoFromServer(ageSeconds, createdAtTs, fallbackValue) {
+        const serverAge = Number(ageSeconds);
+        if (Number.isFinite(serverAge) && serverAge >= 0) {
+            return formatSecondsAgo(serverAge);
+        }
+
+        const ts = Number(createdAtTs);
+        if (Number.isFinite(ts) && ts > 0) {
+            const nowSeconds = Math.floor(Date.now() / 1000);
+            const diff = Math.max(0, nowSeconds - ts);
+            return formatSecondsAgo(diff);
+        }
+
+        return getTimeAgo(parseNotificationDate(fallbackValue));
+    }
+
+    function formatSecondsAgo(seconds) {
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + ' years ago';
+
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + ' months ago';
+
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + ' days ago';
+
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + ' hours ago';
+
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + ' minutes ago';
+
+        return Math.floor(seconds) + ' seconds ago';
+    }
+
+    // Parse notification date safely (treats DB timestamps as UTC when missing timezone)
+    function parseNotificationDate(value) {
+        if (!value) return new Date();
+
+        if (value instanceof Date) return value;
+
+        if (typeof value === 'number' && Number.isFinite(value)) {
+            return new Date(value * 1000);
+        }
+
+        const raw = String(value).trim();
+        if (/^\d+$/.test(raw)) {
+            return new Date(parseInt(raw, 10) * 1000);
+        }
+        if (raw === '') return new Date();
+
+        // If timezone is missing, assume UTC and append Z
+        const hasTimezone = /[zZ]|[+-]\d{2}:?\d{2}$/.test(raw);
+        const iso = raw.includes('T') ? raw : raw.replace(' ', 'T');
+        const safe = hasTimezone ? iso : iso + 'Z';
+
+        const parsed = new Date(safe);
+        if (isNaN(parsed.getTime())) {
+            return new Date();
+        }
+        return parsed;
+    }
+
 
     // Mark single notification as read
     async function markNotificationRead(notificationId) {

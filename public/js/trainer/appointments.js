@@ -240,16 +240,70 @@ function showCompleteSessionModal(session) {
     document.getElementById('nextSessionTime').value = '';
     document.getElementById('nextSessionGoals').value = '';
     document.getElementById('markProgramComplete').checked = false;
-    
-    // Check if this is the last session - suggest marking complete
-    if (session.session_count >= session.total_sessions) {
-        document.getElementById('markProgramComplete').checked = true;
+
+    // Set min date to today and reset min time
+    const dateInput = document.getElementById('nextSessionDate');
+    const timeInput = document.getElementById('nextSessionTime');
+    if (dateInput) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        dateInput.min = `${yyyy}-${mm}-${dd}`;
     }
+    if (timeInput) {
+        timeInput.min = '';
+    }
+    
+    updateCompleteSessionVisibility();
     
     // Show modal
     modal.style.display = 'flex';
     document.body.classList.add('modal-open');
 }
+
+function updateCompleteSessionVisibility() {
+    const markComplete = document.getElementById('markProgramComplete');
+    const nextSection = document.getElementById('nextSessionSection');
+    if (!markComplete || !nextSection) return;
+
+    const checked = markComplete.checked;
+    nextSection.style.display = checked ? 'none' : 'block';
+}
+
+document.addEventListener('change', function(event) {
+    if (event.target && event.target.id === 'markProgramComplete') {
+        updateCompleteSessionVisibility();
+    }
+});
+
+document.addEventListener('change', function(event) {
+    if (event.target && event.target.id === 'nextSessionDate') {
+        const dateInput = event.target;
+        const timeInput = document.getElementById('nextSessionTime');
+        if (!timeInput) return;
+
+        const selectedDate = dateInput.value;
+        if (!selectedDate) {
+            timeInput.min = '';
+            return;
+        }
+
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${yyyy}-${mm}-${dd}`;
+
+        if (selectedDate === todayStr) {
+            const hours = String(today.getHours()).padStart(2, '0');
+            const mins = String(today.getMinutes()).padStart(2, '0');
+            timeInput.min = `${hours}:${mins}`;
+        } else {
+            timeInput.min = '';
+        }
+    }
+});
 
 function closeCompleteSessionModal() {
     const modal = document.getElementById('completeSessionModal');
@@ -277,7 +331,32 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.set('action', markComplete ? 'mark_program_complete' : 'complete');
             
             if (markComplete) {
+                const confirmEnd = window.confirm('Are you sure you want to end this training program?');
+                if (!confirmEnd) {
+                    return;
+                }
                 formData.set('final_notes', notes);
+            } else {
+                const confirmSave = window.confirm('Save and complete this session?');
+                if (!confirmSave) {
+                    return;
+                }
+                const nextDate = formData.get('next_session_date');
+                const nextTime = formData.get('next_session_time');
+                if (!nextDate || !nextTime) {
+                    alert('Please set the next session date and time');
+                    return;
+                }
+
+                const nextDateTime = new Date(`${nextDate}T${nextTime}`);
+                if (isNaN(nextDateTime.getTime())) {
+                    alert('Please enter a valid next session date and time');
+                    return;
+                }
+                if (nextDateTime <= new Date()) {
+                    alert('Next session must be scheduled in the future');
+                    return;
+                }
             }
             
             // Send AJAX request

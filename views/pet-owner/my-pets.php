@@ -1579,7 +1579,10 @@ function calculateAge($dob) {
       // Fetch notifications from server
       function fetchNotifications() {
         console.log('📥 Fetching notifications... (previous unread: ' + previousUnreadCount + ')');
-        fetch('/PETVET/api/pet-owner/get-notifications.php')
+        fetch(`/PETVET/api/pet-owner/get-notifications.php?t=${Date.now()}`, {
+          cache: 'no-store',
+          credentials: 'same-origin'
+        })
           .then(response => response.json())
           .then(data => {
             console.log('📦 API Response:', data);
@@ -1654,7 +1657,7 @@ function calculateAge($dob) {
               <p class="notification-text">${notification.message}</p>
               <div class="notification-meta">
                 ${notification.clinic_name ? `<span class="clinic-badge">${notification.clinic_name}</span>` : ''}
-                <span class="notification-time">${getTimeAgo(notification.created_at)}</span>
+                <span class="notification-time">${getTimeAgoFromServer(notification)}</span>
               </div>
             </div>
           `;
@@ -1663,11 +1666,28 @@ function calculateAge($dob) {
         });
       }
 
-      // Time ago formatting
-      function getTimeAgo(dateString) {
+      function getTimeAgoFromServer(notification) {
+        const ageSeconds = Number(notification.age_seconds);
+        if (Number.isFinite(ageSeconds) && ageSeconds >= 0) {
+          return formatSecondsAgoShort(ageSeconds);
+        }
+
+        const ts = Number(notification.created_at_ts);
+        if (Number.isFinite(ts) && ts > 0) {
+          const nowSeconds = Math.floor(Date.now() / 1000);
+          return formatSecondsAgoShort(Math.max(0, nowSeconds - ts));
+        }
+
+        return formatSecondsAgoShort(parseLocalSeconds(notification.created_at));
+      }
+
+      function parseLocalSeconds(dateString) {
         const date = new Date(dateString);
         const seconds = Math.floor((new Date() - date) / 1000);
-        
+        return Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+      }
+
+      function formatSecondsAgoShort(seconds) {
         if (seconds < 60) return 'Just now';
         const minutes = Math.floor(seconds / 60);
         if (minutes < 60) return `${minutes}m ago`;
@@ -1675,6 +1695,7 @@ function calculateAge($dob) {
         if (hours < 24) return `${hours}h ago`;
         const days = Math.floor(hours / 24);
         if (days < 7) return `${days}d ago`;
+        const date = new Date(Date.now() - (seconds * 1000));
         return date.toLocaleDateString();
       }
 

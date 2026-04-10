@@ -45,9 +45,11 @@ try {
 				r.pet_name,
 				r.pet_breed,
 				r.training_type AS service_label,
-				r.preferred_date AS start_date,
-				TIME_FORMAT(r.preferred_time, '%H:%i') AS start_time,
-				r.status
+				COALESCE(r.next_session_date, r.preferred_date) AS start_date,
+				TIME_FORMAT(COALESCE(r.next_session_time, r.preferred_time), '%H:%i') AS start_time,
+				r.status,
+				r.location_type,
+				r.location_address
 			FROM trainer_training_requests r
 			JOIN users u ON u.id = r.trainer_id
 			LEFT JOIN service_provider_profiles spp
@@ -56,6 +58,22 @@ try {
 			ORDER BY r.created_at DESC");
 		$stmt->execute([$userId]);
 		$data['trainers'] = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+		foreach ($data['trainers'] as &$row) {
+			$locationType = (string)($row['location_type'] ?? '');
+			$locationLabel = '';
+			if ($locationType === 'home') {
+				$locationLabel = 'At my location';
+			} elseif ($locationType === 'trainer') {
+				$locationLabel = "At trainer's location";
+			} else {
+				$locationLabel = (string)($row['location_address'] ?? '');
+				if ($locationLabel === '') {
+					$locationLabel = 'Selected location';
+				}
+			}
+			$row['location_label'] = $locationLabel;
+		}
 
 		$stmt2 = $pdo->prepare("SELECT DISTINCT trainer_id
 			FROM trainer_training_requests

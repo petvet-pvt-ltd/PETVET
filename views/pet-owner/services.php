@@ -1092,6 +1092,7 @@ $GLOBALS['currentPage'] = 'services.php';
                 if (item.start_date) dt.push(String(item.start_date));
                 if (item.start_time) dt.push(String(item.start_time));
                 if (dt.length) parts.push(dt.join(' '));
+                if (item.location_label) parts.push(String(item.location_label));
                 meta.textContent = parts.filter(Boolean).join(' • ');
                 left.appendChild(meta);
 
