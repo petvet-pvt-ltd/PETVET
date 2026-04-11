@@ -30,16 +30,20 @@ try {
 
     $petId = $_POST['pet_id'] ?? null;
     $location = trim($_POST['location'] ?? '');
-    $datetime = $_POST['datetime'] ?? '';
+    $date = $_POST['date'] ?? '';
+    $time = $_POST['time'] ?? '';
+    $datetime = $_POST['datetime'] ?? ''; // backward compatibility
+    $latitude = $_POST['latitude'] ?? null;
+    $longitude = $_POST['longitude'] ?? null;
     $circumstances = trim($_POST['circumstances'] ?? '');
     $features = trim($_POST['features'] ?? '');
     $reward = $_POST['reward'] ?? null;
 
-    if (empty($petId) || empty($location) || empty($datetime)) {
+    if (empty($petId) || empty($location)) {
         http_response_code(400);
         echo json_encode([
             'success' => false,
-            'message' => 'Required fields: pet_id, location, datetime'
+            'message' => 'Required fields: pet_id, location'
         ]);
         exit;
     }
@@ -57,22 +61,69 @@ try {
         exit;
     }
 
-    $dateTimeParts = explode('T', $datetime);
-    $date = $dateTimeParts[0] ?? '';
-    $time = $dateTimeParts[1] ?? '';
+    // Prefer date/time split fields; fallback to datetime-local if present.
+    if (empty($date) && !empty($datetime)) {
+        $dateTimeParts = explode('T', $datetime);
+        $date = $dateTimeParts[0] ?? '';
+        $time = $dateTimeParts[1] ?? '';
+    }
 
     if (empty($date)) {
         http_response_code(400);
         echo json_encode([
             'success' => false,
-            'message' => 'Invalid datetime format'
+            'message' => 'Last seen date is required'
         ]);
         exit;
+    }
+
+    if (empty($time)) {
+        $time = date('H:i');
     }
 
     $userStmt = $db->prepare("SELECT email, phone FROM users WHERE id = ?");
     $userStmt->execute([(int)$userId]);
     $userContact = $userStmt->fetch(PDO::FETCH_ASSOC) ?: ['email' => '', 'phone' => ''];
+
+    // Handle up to 3 uploaded photos (optional)
+    $photoPaths = [];
+    if (isset($_FILES['photos']) && !empty($_FILES['photos']['name'][0])) {
+        $uploadDir = __DIR__ . '/../../uploads/lost-found/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        $maxSize = 5 * 1024 * 1024;
+        $fileCount = min(count($_FILES['photos']['name']), 3);
+
+        for ($i = 0; $i < $fileCount; $i++) {
+            if ($_FILES['photos']['error'][$i] !== UPLOAD_ERR_OK) {
+                continue;
+            }
+
+            $tmpName = $_FILES['photos']['tmp_name'][$i];
+            $fileName = $_FILES['photos']['name'][$i];
+            $fileSize = $_FILES['photos']['size'][$i];
+            $fileType = $_FILES['photos']['type'][$i];
+
+            if (!in_array($fileType, $allowedTypes) || $fileSize > $maxSize) {
+                continue;
+            }
+
+            $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+            $newFileName = uniqid('pet_missing_') . '.' . $ext;
+            $destination = $uploadDir . $newFileName;
+
+            if (move_uploaded_file($tmpName, $destination)) {
+                $photoPaths[] = '/PETVET/uploads/lost-found/' . $newFileName;
+            }
+        }
+    }
+
+    if (empty($photoPaths) && !empty($pet['photo_url'])) {
+        $photoPaths = [$pet['photo_url']];
+    }
 
     $description = [
         'species' => $pet['species'] ?? '',
@@ -83,14 +134,14 @@ try {
         'features' => $features,
         'reward' => ($reward !== null && $reward !== '') ? (float)$reward : null,
         'time' => $time,
-        'photos' => !empty($pet['photo_url']) ? [$pet['photo_url']] : [],
+        'photos' => $photoPaths,
         'contact' => [
             'phone' => $userContact['phone'] ?? '',
             'phone2' => '',
             'email' => $userContact['email'] ?? ''
         ],
-        'latitude' => null,
-        'longitude' => null,
+        'latitude' => $latitude !== null && $latitude !== '' ? (float)$latitude : null,
+        'longitude' => $longitude !== null && $longitude !== '' ? (float)$longitude : null,
         'user_id' => (int)$userId,
         'pet_id' => (int)$petId,
         'submitted_at' => date('Y-m-d H:i:s')

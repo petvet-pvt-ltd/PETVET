@@ -50,6 +50,8 @@ class LostFoundModel extends BaseModel {
                 'last_seen' => $report['location'],
                 'date' => $report['date_reported'],
                 'notes' => $description['notes'] ?? '',
+                'owner_user_id' => $description['user_id'] ?? null,
+                'reported_pet_id' => $description['pet_id'] ?? null,
                 'contact' => $description['contact'] ?? [
                     'name' => 'Anonymous',
                     'email' => '',

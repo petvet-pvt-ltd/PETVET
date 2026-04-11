@@ -3,6 +3,12 @@
 let userLocation = null;
 let reportsWithDistance = new Map(); // Map of report_id => distance data
 
+// Global location map variables
+let reportMap = null;
+let reportMarker = null;
+let editMap = null;
+let editMarker = null;
+
 // Helper function for querySelector (global scope for use in async functions)
 const qs = s => document.querySelector(s);
 const qsa = s => document.querySelectorAll(s);
@@ -44,12 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
 	const speciesSel  = qs('#species');
 	const sortSel     = qs('#sortBy');
 
-	// Leaflet map instances
-	let reportMap = null;
-	let reportMarker = null;
-	let editMap = null;
-	let editMarker = null;
-
 	// Report Pet Modal
 	const reportModal = qs('#reportModal');
 	const openReportBtns = ['#openReport','#emptyReportLost','#emptyReportFound']
@@ -85,137 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
 	let currentView = 'lost';
 	let currentDeleteId = null;
 	let myListings = []; // Demo data - in production, fetch from server
-
-	// Initialize Leaflet map for report modal
-	function initReportMap() {
-		if (reportMap) {
-			reportMap.remove();
-		}
-
-		// Default center - Sri Lanka (Colombo)
-		const defaultLat = 6.9271;
-		const defaultLng = 79.8612;
-
-		reportMap = L.map('mapContainer').setView([defaultLat, defaultLng], 13);
-
-		// Add OpenStreetMap tiles
-		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-			maxZoom: 19
-		}).addTo(reportMap);
-
-		// Add click handler
-		reportMap.on('click', function(e) {
-			const { lat, lng } = e.latlng;
-			
-			// Update hidden fields
-			qs('#rLatitude').value = lat.toFixed(6);
-			qs('#rLongitude').value = lng.toFixed(6);
-			
-			// Update marker
-			if (reportMarker) {
-				reportMarker.setLatLng([lat, lng]);
-			} else {
-				reportMarker = L.marker([lat, lng]).addTo(reportMap);
-			}
-
-			// Reverse geocode to get address
-			fetchAddress(lat, lng, 'rLocation');
-		});
-
-		// Try to get user's current location
-		if (navigator.geolocation) {
-			navigator.geolocation.getCurrentPosition(
-				(position) => {
-					const { latitude, longitude } = position.coords;
-					reportMap.setView([latitude, longitude], 15);
-				},
-				(error) => {
-					console.log('Geolocation error:', error);
-				}
-			);
-		}
-	}
-
-	// Initialize Leaflet map for edit modal
-	function initEditMap(lat, lng) {
-		if (editMap) {
-			editMap.remove();
-		}
-
-		// Use provided coordinates or default
-		const centerLat = lat || 6.9271;
-		const centerLng = lng || 79.8612;
-
-		editMap = L.map('editMapContainer').setView([centerLat, centerLng], 13);
-
-		// Add OpenStreetMap tiles
-		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-			maxZoom: 19
-		}).addTo(editMap);
-
-		// Add marker if coordinates provided
-		if (lat && lng) {
-			editMarker = L.marker([lat, lng]).addTo(editMap);
-		}
-
-		// Add click handler
-		editMap.on('click', function(e) {
-			const { lat, lng } = e.latlng;
-			
-			// Update hidden fields
-			qs('#editLatitude').value = lat.toFixed(6);
-			qs('#editLongitude').value = lng.toFixed(6);
-			
-			// Update marker
-			if (editMarker) {
-				editMarker.setLatLng([lat, lng]);
-			} else {
-				editMarker = L.marker([lat, lng]).addTo(editMap);
-			}
-
-			// Reverse geocode to get address
-			fetchAddress(lat, lng, 'editLocation');
-		});
-	}
-
-	// Reverse geocode using Nominatim API via PHP proxy (to avoid CORS issues)
-	async function fetchAddress(lat, lng, targetInputId) {
-		const inputElement = qs('#' + targetInputId);
-		if (!inputElement) {
-			console.error('Input element not found:', targetInputId);
-			return;
-		}
-		
-		inputElement.value = 'Getting location...';
-		
-		try {
-			// Use PHP proxy to avoid CORS issues
-			const response = await fetch(
-				`/PETVET/api/pet-owner/reverse-geocode.php?lat=${lat}&lng=${lng}`
-			);
-			
-			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
-			}
-			
-			const data = await response.json();
-			
-			if (data.success && data.location) {
-				inputElement.value = data.location;
-			} else if (data.fallback) {
-				inputElement.value = data.fallback;
-			} else {
-				// Fallback to coordinates
-				inputElement.value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-			}
-		} catch (error) {
-			console.error('Geocoding error:', error);
-			// On error, show coordinates
-			inputElement.value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-		}
-	}
 
 	const params = new URLSearchParams(location.search);
 	currentView = params.get('view') || localStorage.getItem('lfView') || 'lost';
@@ -1049,4 +918,139 @@ function updateAllRelativeTimes() {
 	
 	// Update every minute
 	setTimeout(updateAllRelativeTimes, 60000);
+}
+
+// =====================================
+// LOCATION-RELATED FUNCTIONS
+// =====================================
+
+// Initialize Leaflet map for report modal
+function initReportMap() {
+	if (reportMap) {
+		reportMap.remove();
+	}
+
+	// Default center - Sri Lanka (Colombo)
+	const defaultLat = 6.9271;
+	const defaultLng = 79.8612;
+
+	reportMap = L.map('mapContainer').setView([defaultLat, defaultLng], 13);
+
+	// Add OpenStreetMap tiles
+	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+		maxZoom: 19
+	}).addTo(reportMap);
+
+	// Add click handler
+	reportMap.on('click', function(e) {
+		const { lat, lng } = e.latlng;
+		
+		// Update hidden fields
+		qs('#rLatitude').value = lat.toFixed(6);
+		qs('#rLongitude').value = lng.toFixed(6);
+		
+		// Update marker
+		if (reportMarker) {
+			reportMarker.setLatLng([lat, lng]);
+		} else {
+			reportMarker = L.marker([lat, lng]).addTo(reportMap);
+		}
+
+		// Reverse geocode to get address
+		fetchAddress(lat, lng, 'rLocation');
+	});
+
+	// Try to get user's current location
+	if (navigator.geolocation) {
+		navigator.geolocation.getCurrentPosition(
+			(position) => {
+				const { latitude, longitude } = position.coords;
+				reportMap.setView([latitude, longitude], 15);
+			},
+			(error) => {
+				console.log('Geolocation error:', error);
+			}
+		);
+	}
+}
+
+// Initialize Leaflet map for edit modal
+function initEditMap(lat, lng) {
+	if (editMap) {
+		editMap.remove();
+	}
+
+	// Use provided coordinates or default
+	const centerLat = lat || 6.9271;
+	const centerLng = lng || 79.8612;
+
+	editMap = L.map('editMapContainer').setView([centerLat, centerLng], 13);
+
+	// Add OpenStreetMap tiles
+	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+		maxZoom: 19
+	}).addTo(editMap);
+
+	// Add marker if coordinates provided
+	if (lat && lng) {
+		editMarker = L.marker([lat, lng]).addTo(editMap);
+	}
+
+	// Add click handler
+	editMap.on('click', function(e) {
+		const { lat, lng } = e.latlng;
+		
+		// Update hidden fields
+		qs('#editLatitude').value = lat.toFixed(6);
+		qs('#editLongitude').value = lng.toFixed(6);
+		
+		// Update marker
+		if (editMarker) {
+			editMarker.setLatLng([lat, lng]);
+		} else {
+			editMarker = L.marker([lat, lng]).addTo(editMap);
+		}
+
+		// Reverse geocode to get address
+		fetchAddress(lat, lng, 'editLocation');
+	});
+}
+
+// Reverse geocode using Nominatim API via PHP proxy (to avoid CORS issues)
+async function fetchAddress(lat, lng, targetInputId) {
+	const inputElement = qs('#' + targetInputId);
+	if (!inputElement) {
+		console.error('Input element not found:', targetInputId);
+		return;
+	}
+	
+	inputElement.value = 'Getting location...';
+	
+	try {
+		// Use PHP proxy to avoid CORS issues
+		const response = await fetch(
+			`/PETVET/api/pet-owner/reverse-geocode.php?lat=${lat}&lng=${lng}`
+		);
+		
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+		
+		const data = await response.json();
+		
+		if (data.success && data.location) {
+			inputElement.value = data.location;
+		} else if (data.fallback) {
+			inputElement.value = data.fallback;
+		} else {
+			// Fallback to coordinates
+			inputElement.value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+		}
+	} catch (error) {
+		console.error('Geocoding error:', error);
+		// On error, show coordinates
+		inputElement.value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+	}
 }
