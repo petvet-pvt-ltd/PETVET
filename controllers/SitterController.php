@@ -4,6 +4,7 @@ require_once __DIR__ . '/../models/Sitter/DashboardModel.php';
 require_once __DIR__ . '/../models/Sitter/BookingsModel.php';
 require_once __DIR__ . '/../models/Sitter/PetsModel.php';
 require_once __DIR__ . '/../models/Sitter/SettingsModel.php';
+require_once __DIR__ . '/../helpers/NotificationHelper.php';
 
 class SitterController extends BaseController {
 
@@ -58,12 +59,70 @@ class SitterController extends BaseController {
         switch ($action) {
             case 'accept':
                 $result = $model->acceptBooking($bookingId, $sitterId);
+                if (!empty($result['success'])) {
+                    $booking = $model->getBookingById($bookingId, $sitterId);
+                    if ($booking) {
+                        $petOwnerId = (int)($booking['pet_owner_id'] ?? 0);
+                        $sitterName = (string)($booking['sitter_name'] ?? '');
+                        $petName = (string)($booking['pet_name'] ?? '');
+                        if ($petOwnerId > 0 && $sitterName !== '' && $petName !== '') {
+                            NotificationHelper::createSitterNotification(
+                                $petOwnerId,
+                                $sitterId,
+                                $sitterName,
+                                $petName,
+                                'accepted',
+                                null
+                            );
+                        }
+                    }
+                }
                 break;
             case 'decline':
-                $result = $model->declineBooking($bookingId, $sitterId);
+                $reason = $_POST['reason'] ?? '';
+                if (is_string($reason)) {
+                    $reason = substr(trim($reason), 0, 255);
+                }
+                $result = $model->declineBooking($bookingId, $sitterId, $reason);
+                if (!empty($result['success'])) {
+                    $booking = $model->getBookingById($bookingId, $sitterId);
+                    if ($booking) {
+                        $petOwnerId = (int)($booking['pet_owner_id'] ?? 0);
+                        $sitterName = (string)($booking['sitter_name'] ?? '');
+                        $petName = (string)($booking['pet_name'] ?? '');
+                        if ($petOwnerId > 0 && $sitterName !== '' && $petName !== '') {
+                            NotificationHelper::createSitterNotification(
+                                $petOwnerId,
+                                $sitterId,
+                                $sitterName,
+                                $petName,
+                                'declined',
+                                is_string($reason) ? $reason : ''
+                            );
+                        }
+                    }
+                }
                 break;
             case 'complete':
                 $result = $model->completeBooking($bookingId, $sitterId);
+                if (!empty($result['success'])) {
+                    $booking = $model->getBookingById($bookingId, $sitterId);
+                    if ($booking) {
+                        $petOwnerId = (int)($booking['pet_owner_id'] ?? 0);
+                        $sitterName = (string)($booking['sitter_name'] ?? '');
+                        $petName = (string)($booking['pet_name'] ?? '');
+                        if ($petOwnerId > 0 && $sitterName !== '' && $petName !== '') {
+                            NotificationHelper::createSitterNotification(
+                                $petOwnerId,
+                                $sitterId,
+                                $sitterName,
+                                $petName,
+                                'completed',
+                                null
+                            );
+                        }
+                    }
+                }
                 break;
             default:
                 $result = ['success' => false, 'message' => 'Invalid action'];

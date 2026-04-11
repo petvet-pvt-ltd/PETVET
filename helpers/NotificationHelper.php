@@ -120,8 +120,11 @@ class NotificationHelper {
                 $message = "Sitter <strong>$sitter_name</strong> has accepted your request for <strong>$pet_name</strong>";
             } elseif ($status === 'declined') {
                 $title = 'Sitter Request Declined';
-                $reason_text = $reason ? "Reason: <em>$reason</em>" : '';
-                $message = "Sitter <strong>$sitter_name</strong> declined your request. $reason_text";
+                $reason_text = $reason ? ' <span class="notification-reason-inline">Reason:&nbsp;<em>"' . $reason . '"</em></span>' : '';
+                $message = "Sitter <strong>$sitter_name</strong> declined your request." . $reason_text;
+            } elseif ($status === 'completed') {
+                $title = 'Sitter Booking Completed';
+                $message = "Sitter <strong>$sitter_name</strong> marked your booking for <strong>$pet_name</strong> as completed.";
             }
             
             $sql = "INSERT INTO notifications (pet_owner_id, type, title, message, entity_id, entity_type, action_data)
@@ -173,8 +176,8 @@ class NotificationHelper {
                 }
             } elseif ($status === 'declined') {
                 $title = 'Trainer Request Declined';
-                $reason_text = $reason ? "Reason: <em>$reason</em>" : '';
-                $message = "Trainer <strong>$trainer_name</strong> declined your request. $reason_text";
+                $reason_text = $reason ? ' <span class="notification-reason-inline">Reason:&nbsp;<em>"' . $reason . '"</em></span>' : '';
+                $message = "Trainer <strong>$trainer_name</strong> declined your request." . $reason_text;
             } elseif ($status === 'session_completed') {
                 $title = 'Training Session Completed';
                 $sessionText = $session_number ? "Session <strong>$session_number</strong>" : 'A training session';
@@ -241,8 +244,12 @@ class NotificationHelper {
                 $message = "Breeder <strong>$breeder_name</strong> accepted your request for <strong>$pet_name</strong>. Breeder's Pet: <strong>$breeder_pet_name</strong>";
             } elseif ($status === 'declined') {
                 $title = 'Breeder Request Declined';
-                $reason_text = $reason ? "Reason: <em>$reason</em>" : '';
-                $message = "Breeder <strong>$breeder_name</strong> declined your request. $reason_text";
+                $reason_text = $reason ? ' <span class="notification-reason-inline">Reason:&nbsp;<em>"' . $reason . '"</em></span>' : '';
+                $message = "Breeder <strong>$breeder_name</strong> declined your request." . $reason_text;
+            } elseif ($status === 'completed') {
+                $title = 'Breeding Completed';
+                $breederPetText = $breeder_pet_name ? " Breeder's Pet: <strong>$breeder_pet_name</strong>." : '';
+                $message = "Breeder <strong>$breeder_name</strong> marked the breeding request for <strong>$pet_name</strong> as completed." . $breederPetText;
             }
             
             $sql = "INSERT INTO notifications (pet_owner_id, type, title, message, entity_id, entity_type, action_data)

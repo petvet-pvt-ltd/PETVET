@@ -35,7 +35,7 @@ class TrainerAppointmentsModel extends BaseModel {
                 LEFT JOIN service_provider_profiles spp
                     ON spp.user_id = r.trainer_id AND spp.role_type = 'trainer'
                 WHERE r.trainer_id = ? AND r.status = 'pending'
-                ORDER BY r.created_at DESC";
+                ORDER BY r.created_at ASC";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$trainerId]);
@@ -244,7 +244,7 @@ class TrainerAppointmentsModel extends BaseModel {
     public function declineRequest($requestId, $trainerId, $reason = '') {
         $requestId = (int)$requestId;
         $trainerId = (int)$trainerId;
-        $reason = trim((string)$reason);
+        $reason = substr(trim((string)$reason), 0, 255);
         if ($requestId <= 0 || $trainerId <= 0) {
             return ['success' => false, 'message' => 'Invalid request'];
         }

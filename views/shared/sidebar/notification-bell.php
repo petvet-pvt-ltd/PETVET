@@ -159,6 +159,14 @@ if ($currentModule !== 'pet-owner') {
         font-size: 20px;
     }
 
+    .notification-avatar {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        display: block;
+    }
+
     .appointment-icon {
         background: #dbeafe;
         color: #2563eb;
@@ -199,6 +207,10 @@ if ($currentModule !== 'pet-owner') {
     .notification-text em {
         font-style: italic;
         color: #6b7280;
+    }
+
+    .notification-reason-inline {
+        white-space: nowrap;
     }
 
     .notification-time {
@@ -346,10 +358,17 @@ if ($currentModule !== 'pet-owner') {
                 notification.created_at_ts,
                 notification.created_at_iso ?? notification.created_at
             );
+
+            const hasEntityAvatar = ['appointment', 'sitter', 'trainer', 'breeder'].includes(notification.type);
+            const entityAvatar = notification.type === 'appointment'
+                ? (notification.clinic_avatar || '/PETVET/public/images/emptyProfPic.png')
+                : (notification.provider_avatar || '/PETVET/public/images/emptyProfPic.png');
             
             item.innerHTML = `
                 <div class="notification-icon ${notification.type}-icon">
-                    ${icon}
+                    ${hasEntityAvatar
+                        ? `<img class="notification-avatar" src="${entityAvatar}" alt="${notification.type} photo" onerror="this.src='/PETVET/public/images/emptyProfPic.png'">`
+                        : icon}
                 </div>
                 <div class="notification-content">
                     <p class="notification-text">${notification.message}</p>
