@@ -9,7 +9,10 @@ class ClinicSelector {
         this.onSelect = options.onSelect || (() => {});
 
         // Options
+        // When user location is available, we can load distance-sorted clinics.
         this.clinicsUrl = options.clinicsUrl || '/PETVET/api/pet-owner/get-clinics-by-distance.php';
+        // When user location is not available yet, load clinics immediately (alphabetical) from a fast endpoint.
+        this.fallbackClinicsUrl = options.fallbackClinicsUrl || '/PETVET/api/get-clinics.php';
         this.enableFavorites = options.enableFavorites !== undefined ? options.enableFavorites : true;
         this.enableSearch = options.enableSearch !== undefined ? options.enableSearch : true;
         this.showDistance = options.showDistance !== undefined ? options.showDistance : true;
@@ -33,9 +36,20 @@ class ClinicSelector {
         if (this.enableFavorites) {
             await this.loadFavorites();
         }
-        await this.loadClinics();
+        // Render clinics immediately (without waiting for geolocation/distance)
+        if (!this.userLocation && Array.isArray(window.clinicsData) && window.clinicsData.length > 0) {
+            this.clinics = window.clinicsData;
+            this.clinics.sort((a, b) => String(a.clinic_name || '').localeCompare(String(b.clinic_name || ''), undefined, { sensitivity: 'base' }));
+        } else {
+            await this.loadClinics();
+        }
         this.render();
         this.attachEventListeners();
+
+        // If we used preloaded clinics, still refresh from API in background (keeps data current)
+        if (!this.userLocation) {
+            this.loadClinics().then(() => this.updateClinicList()).catch(() => {});
+        }
     }
 
     /**
@@ -90,10 +104,12 @@ class ClinicSelector {
      */
     async loadClinics() {
         try {
-            let url = this.clinicsUrl;
-            
+            let url;
+
             if (this.userLocation && this.showDistance) {
-                url += `?latitude=${this.userLocation.latitude}&longitude=${this.userLocation.longitude}`;
+                url = this.clinicsUrl + `?latitude=${this.userLocation.latitude}&longitude=${this.userLocation.longitude}`;
+            } else {
+                url = this.fallbackClinicsUrl;
             }
             
             const response = await fetch(url);

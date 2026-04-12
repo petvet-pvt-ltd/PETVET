@@ -23,6 +23,8 @@ body{margin:0; background:var(--bg); color:var(--text); line-height:1.55; overfl
 
 /* Page Header */
 .page-header{margin-bottom:var(--space-4)}
+.header-actions{display:flex; justify-content:flex-end; align-items:center; gap:10px}
+.owner-bookings-btn{white-space:nowrap}
 .title-wrap h2{
     font-size:28px; 
     font-weight:800; 
@@ -35,6 +37,173 @@ body{margin:0; background:var(--bg); color:var(--text); line-height:1.55; overfl
 }
 .subtitle{color:#64748b !important; font-size:14px; margin-top:6px; font-weight:500}
 .page-header p{color:#64748b !important; font-size:14px}
+
+/* Disabled / booked buttons (CSS-driven) */
+.btn:disabled{opacity:.6; cursor:not-allowed; transform:none}
+.btn.primary:disabled{background:var(--primary)}
+.btn.outline:disabled{background:#fff}
+
+button.sitter-book-btn.is-booked{opacity:.6; cursor:not-allowed}
+
+/* My Bookings modal content */
+.owner-bookings-content{
+    max-width:760px;
+    width:92%;
+    padding:22px;
+    border-radius:16px;
+    border:1px solid var(--border);
+    box-shadow:var(--shadow);
+}
+
+#ownerBookingsModal .modal-header{
+    padding:0;
+    margin:0 0 14px 0;
+    border-bottom:1px solid var(--border);
+    padding-bottom:14px;
+}
+
+#ownerBookingsModal .modal-header h3{
+    margin:0;
+    font-size:16px;
+    font-weight:800;
+    letter-spacing:-0.2px;
+    color:var(--text);
+}
+
+#ownerBookingsModal .modal-close{
+    width:34px;
+    height:34px;
+    border-radius:10px;
+}
+
+.owner-bookings-tabs{
+    display:flex;
+    gap:8px;
+    padding:6px;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:var(--bg-soft);
+}
+
+.owner-bookings-tab{
+    flex:1;
+    border:1px solid transparent;
+    background:transparent;
+    border-radius:12px;
+    padding:9px 10px;
+    font-weight:800;
+    color:var(--muted);
+    cursor:pointer;
+    transition:var(--transition);
+}
+
+.owner-bookings-tab:hover{background:#fff}
+.owner-bookings-tab.active{background:#fff; border-color:var(--border); color:var(--text)}
+
+.owner-bookings-body{margin-top:var(--space-3)}
+
+.owner-bookings-loading{
+    color:var(--muted);
+    font-size:13px;
+    padding:10px 6px;
+}
+
+.owner-bookings-error{
+    color:var(--text);
+    background:var(--primary-light);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:12px;
+    font-size:13px;
+}
+
+.owner-bookings-list{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    max-height:58vh;
+    overflow:auto;
+    padding-right:2px;
+}
+
+.owner-bookings-empty{
+    color:var(--muted);
+    font-size:13px;
+    padding:14px 6px;
+}
+
+.owner-bookings-item{
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:14px;
+    background:#fff;
+    transition:var(--transition);
+}
+
+.owner-bookings-item:hover{
+    transform:translateY(-1px);
+    box-shadow:0 10px 26px rgba(2,6,23,.08);
+}
+
+.owner-bookings-item-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+}
+
+.owner-bookings-item-main{min-width:0}
+
+.owner-bookings-provider{display:flex; align-items:center; gap:10px; min-width:0}
+.owner-bookings-avatar{width:40px; height:40px; border-radius:12px; object-fit:cover; border:1px solid var(--border); background:var(--bg-soft); flex-shrink:0}
+
+.owner-bookings-item-title{
+    font-weight:900;
+    color:var(--text);
+    font-size:14px;
+    line-height:1.25;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.owner-bookings-item-meta{
+    color:var(--muted);
+    font-size:12.5px;
+    margin-top:6px;
+    line-height:1.35;
+}
+
+.owner-bookings-item-actions{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-items:flex-end;
+    flex-shrink:0;
+}
+
+.owner-bookings-status{
+    display:inline-flex;
+    align-items:center;
+    padding:6px 12px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:var(--bg-soft);
+    color:var(--text);
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:.03em;
+}
+
+.owner-bookings-cancel{padding:8px 14px}
+
+@media (max-width:600px){
+    .owner-bookings-content{width:94%; padding:18px}
+    .owner-bookings-item-top{flex-direction:column; align-items:stretch}
+    .owner-bookings-item-actions{flex-direction:row; justify-content:space-between; align-items:center}
+    .owner-bookings-status{order:1}
+    .owner-bookings-cancel{order:2}
+}
 
 /* Service Selector - Compact */
 .service-selector{
@@ -139,6 +308,11 @@ body{margin:0; background:var(--bg); color:var(--text); line-height:1.55; overfl
 
 /* Provider Cards Grid */
 .providers-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:var(--space-4)}
+
+/* Cap at 3 cards per row on desktop */
+@media (min-width:1280px){
+    .providers-grid{grid-template-columns:repeat(3, minmax(0, 1fr))}
+}
 
 /* Provider Card (Enhanced Style) */
 .provider-card{
@@ -554,7 +728,7 @@ body{margin:0; background:var(--bg); color:var(--text); line-height:1.55; overfl
 .service-description{color:var(--muted); font-size:12px; line-height:1.5; margin:0}
 
 .service-meta{display:flex; flex-direction:column; gap:8px}
-.meta-item{display:flex; justify-content:space-between; align-items:center}
+.service-meta .meta-item{display:flex; justify-content:space-between; align-items:center}
 .meta-label{font-size:11px; color:var(--muted); font-weight:600}
 .meta-value{font-size:13px; font-weight:600; color:var(--text)}
 .meta-value.price{color:var(--groomer); font-size:18px}
@@ -693,7 +867,7 @@ body{margin:0; background:var(--bg); color:var(--text); line-height:1.55; overfl
 .discounted-price .value{font-size:19px; color:var(--groomer); font-weight:700}
 
 .package-meta{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px}
-.meta-item{display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted)}
+.package-meta .meta-item{display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted)}
 .meta-icon{font-size:14px}
 
 .package-footer{
@@ -1079,6 +1253,24 @@ body.modal-open{
     
     .package-meta{flex-direction:column; align-items:flex-start}
 
+    /* Groomer services/packages: prevent distance badge overlap on mobile */
+    .service-card,
+    .package-card{width:100%; max-width:560px}
+
+    .service-body,
+    .package-body{padding-bottom:14px}
+
+    .service-body .clinic-distance,
+    .package-body .clinic-distance{
+        position:static;
+        margin-top:10px;
+        align-self:flex-start
+    }
+
+    .provider-info-compact{flex-wrap:wrap}
+    .provider-details-small{min-width:0}
+    .provider-name-small{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
     /* Contact Modal as Bottom Drawer on Mobile */
     .contact-overlay{
         align-items:flex-end;
@@ -1191,6 +1383,9 @@ body.modal-open{
     .provider-avatar{width:70px; height:70px; border-radius:16px}
     .provider-body{padding:12px 14px 14px 14px; gap:10px}
     .provider-actions{padding:12px 14px 14px 14px; gap:12px; flex-direction:row}
+
+    .service-card,
+    .package-card{max-width:520px}
 }
 
 /* Trainer Details Modal */

@@ -27,7 +27,63 @@ function filterBookings(status) {
 // Initialize: show pending bookings by default
 document.addEventListener('DOMContentLoaded', function() {
     filterBookings('pending');
+
+    // Poll every 5s to remove cancelled pending requests
+    startPendingRequestsPolling();
 });
+
+function setFilterCount(filter, count) {
+    const btn = document.querySelector(`.filter-btn[data-filter="${filter}"]`);
+    if (!btn) return;
+
+    const labels = {
+        pending: 'Pending',
+        confirmed: 'Confirmed',
+        completed: 'Completed'
+    };
+
+    const label = labels[filter] || filter;
+    btn.textContent = `${label} (${count})`;
+}
+
+function reconcilePendingRequestCards(serverRequestIds) {
+    const serverSet = new Set((serverRequestIds || []).map(v => Number(v)));
+
+    document.querySelectorAll('.booking-card[data-status="pending"][data-request-id]').forEach(card => {
+        const requestId = Number(card.dataset.requestId);
+        if (!requestId) return;
+        if (!serverSet.has(requestId)) {
+            card.remove();
+        }
+    });
+
+    setFilterCount('pending', serverSet.size);
+}
+
+function startPendingRequestsPolling() {
+    const endpoint = '/PETVET/api/trainer/poll-pending-requests.php';
+
+    async function pollOnce() {
+        try {
+            const res = await fetch(endpoint, {
+                method: 'GET',
+                cache: 'no-store',
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (!res.ok) return;
+            const data = await res.json();
+            if (!data || !data.success) return;
+
+            reconcilePendingRequestCards(data.request_ids || []);
+        } catch (e) {
+            // Ignore transient network errors
+        }
+    }
+
+    pollOnce();
+    setInterval(pollOnce, 5000);
+}
 
 // Contact Modal Functions
 function showContactModal(ownerName, phone1, phone2) {
@@ -88,7 +144,7 @@ document.addEventListener('click', function(event) {
 
 // Confirmation Dialog Functions
 let pendingAction = null;
-let pendingBookingId = null;
+let pendingRequestId = null;
 
 function confirmAction(action, petName, bookingId) {
     const confirmModal = document.getElementById('confirmModal');
@@ -97,7 +153,7 @@ function confirmAction(action, petName, bookingId) {
     const confirmButton = document.getElementById('confirmButton');
     
     pendingAction = action;
-    pendingBookingId = bookingId;
+    pendingRequestId = bookingId;
     
     // Set modal content based on action
     if (action === 'accept') {
@@ -127,18 +183,18 @@ function closeConfirmModal() {
     confirmModal.classList.remove('active');
     document.body.classList.remove('modal-open');
     pendingAction = null;
-    pendingBookingId = null;
+    pendingRequestId = null;
 }
 
 function executeAction() {
-    if (!pendingAction || !pendingBookingId) return;
+    if (!pendingAction || !pendingRequestId) return;
     
     // Send AJAX request to controller
     const formData = new FormData();
     formData.append('action', pendingAction);
-    formData.append('booking_id', pendingBookingId);
+    formData.append('request_id', pendingRequestId);
     
-    fetch('/PETVET/index.php?module=sitter&action=handleBookingAction', {
+    fetch('/PETVET/index.php?module=trainer&page=appointments&action=handleTrainingAction', {
         method: 'POST',
         body: formData
     })

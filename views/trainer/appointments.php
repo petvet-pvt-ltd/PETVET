@@ -97,6 +97,56 @@ $pageTitle = "Training Appointments";
             background: #fecaca;
             color: #991b1b;
         }
+
+        /* Distance badge (same visual style used on Services page) */
+        .booking-status-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .clinic-item-distance{
+            display:inline-flex;
+            align-items:center;
+            gap:0.35rem;
+            font-size:0.8rem;
+            color:#3b82f6;
+            font-weight:600;
+            background:#eff6ff;
+            padding:0.35rem 0.7rem;
+            border-radius:6px;
+            border:1px solid #bfdbfe;
+            box-shadow:0 1px 2px rgba(59, 130, 246, 0.1);
+            white-space:nowrap
+        }
+
+        .clinic-item-distance svg{
+            color:#3b82f6;
+            flex-shrink:0;
+        }
+
+        .map-nav-btn{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            width:28px;
+            height:28px;
+            border-radius:6px;
+            border:1px solid #d1d5db;
+            background:#fff;
+            margin-left:0.5rem;
+            text-decoration:none;
+        }
+
+        .map-nav-btn:hover{
+            background:#f9fafb;
+        }
+
+        .map-nav-btn svg{
+            width:16px;
+            height:16px;
+            color:#374151;
+        }
     </style>
 </head>
 <body>
@@ -126,7 +176,7 @@ $pageTitle = "Training Appointments";
         <div class="bookings-grid" id="bookingsGrid">
             <!-- Pending Requests -->
             <?php foreach ($pendingRequests as $request): ?>
-            <div class="booking-card" data-status="pending">
+            <div class="booking-card" data-status="pending" data-request-id="<?php echo (int)$request['request_id']; ?>">
                 <div class="booking-header">
                     <div>
                         <div class="booking-title">
@@ -137,7 +187,18 @@ $pageTitle = "Training Appointments";
                         </div>
                         <div class="booking-date"><?php echo date('M d, Y', strtotime($request['preferred_date'])); ?></div>
                     </div>
-                    <div class="booking-status status-pending">Pending</div>
+                    <div class="booking-status-wrap">
+                        <?php if (!empty($request['distance_km'])): ?>
+                            <span class="clinic-item-distance" title="Distance from your location">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 0 1 18 0Z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                                <?php echo htmlspecialchars($request['distance_km']); ?> km
+                            </span>
+                        <?php endif; ?>
+                        <div class="booking-status status-pending">Pending</div>
+                    </div>
                 </div>
                 <div class="booking-details">
                     <div class="detail-item">
@@ -154,7 +215,19 @@ $pageTitle = "Training Appointments";
                     </div>
                     <div class="detail-item">
                         <span class="detail-icon">📍</span>
-                        <span><?php echo htmlspecialchars($request['location']); ?></span>
+                        <span>
+                            <?php echo htmlspecialchars($request['location']); ?>
+                            <?php if (!empty($request['location_lat']) && !empty($request['location_lng'])): ?>
+                                <a class="map-nav-btn" target="_blank" rel="noopener"
+                                   href="https://www.google.com/maps?q=<?php echo urlencode($request['location_lat'] . ',' . $request['location_lng']); ?>"
+                                   title="Open in Google Maps">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 0 1 18 0Z"></path>
+                                        <circle cx="12" cy="10" r="3"></circle>
+                                    </svg>
+                                </a>
+                            <?php endif; ?>
+                        </span>
                     </div>
                 </div>
                 <?php if (!empty($request['additional_notes'])): ?>

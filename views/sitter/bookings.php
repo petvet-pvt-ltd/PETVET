@@ -12,6 +12,58 @@ $GLOBALS['module'] = $module;
 $GLOBALS['currentPage'] = $currentPage;
 require_once dirname(__DIR__, 2) . '/config/config.php';
 $pageTitle = "Bookings";
+
+function format_sitter_date_range(?string $start, ?string $end): string {
+    $start = trim((string)$start);
+    $end = trim((string)$end);
+    if ($start === '') return '';
+    if ($end === '' || $end === $start) {
+        return date('M j, Y', strtotime($start));
+    }
+
+    $sd = new DateTime($start);
+    $ed = new DateTime($end);
+
+    // Inclusive day count for multi-day bookings
+    $dayCount = null;
+    try {
+        $diffDays = (int)$sd->diff($ed)->days;
+        $dayCount = $diffDays + 1;
+    } catch (Throwable $e) {
+        $dayCount = null;
+    }
+
+    $suffix = ($dayCount && $dayCount > 1) ? ' (' . $dayCount . ' days)' : '';
+
+    if ($sd->format('Y') === $ed->format('Y') && $sd->format('m') === $ed->format('m')) {
+        // Same month/year: "Feb 2–5, 2026"
+        return $sd->format('M j') . '–' . $ed->format('j, Y') . $suffix;
+    }
+    if ($sd->format('Y') === $ed->format('Y')) {
+        // Same year: "Feb 28 – Mar 2, 2026"
+        return $sd->format('M j') . ' – ' . $ed->format('M j, Y') . $suffix;
+    }
+    // Different years
+    return $sd->format('M j, Y') . ' – ' . $ed->format('M j, Y') . $suffix;
+}
+
+function format_sitter_time_range($startTime, $endTime): string {
+    $startTime = trim((string)$startTime);
+    $endTime = trim((string)$endTime);
+
+    if ($startTime === '' && $endTime === '') return '';
+
+    // If start_time already contains a range (e.g., "9:00 AM - 6:00 PM"), don't duplicate.
+    if ($startTime !== '' && (strpos($startTime, '-') !== false || ($endTime !== '' && stripos($startTime, $endTime) !== false))) {
+        return $startTime;
+    }
+
+    if ($startTime !== '' && $endTime !== '') {
+        return $startTime . ' - ' . $endTime;
+    }
+
+    return $startTime !== '' ? $startTime : $endTime;
+}
 ?>
 
 <!DOCTYPE html>
@@ -70,6 +122,56 @@ $pageTitle = "Bookings";
         .confirm-btn-confirm:hover {
             background: #138496;
         }
+
+        /* Distance badge (same visual style used on Services page) */
+        .booking-status-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .clinic-item-distance{
+            display:inline-flex;
+            align-items:center;
+            gap:0.35rem;
+            font-size:0.8rem;
+            color:#3b82f6;
+            font-weight:600;
+            background:#eff6ff;
+            padding:0.35rem 0.7rem;
+            border-radius:6px;
+            border:1px solid #bfdbfe;
+            box-shadow:0 1px 2px rgba(59, 130, 246, 0.1);
+            white-space:nowrap
+        }
+
+        .clinic-item-distance svg{
+            color:#3b82f6;
+            flex-shrink:0;
+        }
+
+        .map-nav-btn{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            width:28px;
+            height:28px;
+            border-radius:6px;
+            border:1px solid #d1d5db;
+            background:#fff;
+            margin-left:0.5rem;
+            text-decoration:none;
+        }
+
+        .map-nav-btn:hover{
+            background:#f9fafb;
+        }
+
+        .map-nav-btn svg{
+            width:16px;
+            height:16px;
+            color:#374151;
+        }
     </style>
 </head>
 <body>
@@ -99,13 +201,24 @@ $pageTitle = "Bookings";
         <div class="bookings-grid" id="bookingsGrid">
             <!-- Pending Bookings -->
             <?php foreach ($pendingBookings as $booking): ?>
-            <div class="booking-card" data-status="pending">
+            <div class="booking-card" data-status="pending" data-booking-id="<?php echo (int)$booking['id']; ?>">
                 <div class="booking-header">
                     <div>
                         <div class="booking-title"><?php echo htmlspecialchars($booking['pet_name']); ?> - <?php echo htmlspecialchars($booking['service_type']); ?></div>
-                        <div class="booking-date"><?php echo date('M d, Y', strtotime($booking['start_date'])); ?><?php if ($booking['start_date'] != $booking['end_date']): ?> - <?php echo date('M d, Y', strtotime($booking['end_date'])); ?><?php endif; ?></div>
+                        <div class="booking-date"><?php echo htmlspecialchars(format_sitter_date_range($booking['start_date'] ?? '', $booking['end_date'] ?? '')); ?></div>
                     </div>
-                    <div class="booking-status status-pending">Pending</div>
+                    <div class="booking-status-wrap">
+                        <?php if (!empty($booking['distance_km'])): ?>
+                            <span class="clinic-item-distance" title="Distance from your location">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 0 1 18 0Z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                                <?php echo htmlspecialchars($booking['distance_km']); ?> km
+                            </span>
+                        <?php endif; ?>
+                        <div class="booking-status status-pending">Pending</div>
+                    </div>
                 </div>
                 <div class="booking-details">
                     <div class="detail-item">
@@ -114,7 +227,7 @@ $pageTitle = "Bookings";
                     </div>
                     <div class="detail-item">
                         <span class="detail-icon">⏰</span>
-                        <span><?php echo htmlspecialchars($booking['start_time']); ?> - <?php echo htmlspecialchars($booking['end_time']); ?></span>
+                        <span><?php echo htmlspecialchars(format_sitter_time_range($booking['start_time'] ?? '', $booking['end_time'] ?? '')); ?></span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-icon"><?php echo $booking['pet_type'] == 'Dog' ? '🐕' : '🐱'; ?></span>
@@ -122,7 +235,19 @@ $pageTitle = "Bookings";
                     </div>
                     <div class="detail-item">
                         <span class="detail-icon">📍</span>
-                        <span><?php echo htmlspecialchars($booking['location']); ?></span>
+                        <span>
+                            <?php echo htmlspecialchars($booking['location']); ?>
+                            <?php if (!empty($booking['location_lat']) && !empty($booking['location_lng'])): ?>
+                                <a class="map-nav-btn" target="_blank" rel="noopener"
+                                   href="https://www.google.com/maps?q=<?php echo urlencode($booking['location_lat'] . ',' . $booking['location_lng']); ?>"
+                                   title="Open in Google Maps">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 0 1 18 0Z"></path>
+                                        <circle cx="12" cy="10" r="3"></circle>
+                                    </svg>
+                                </a>
+                            <?php endif; ?>
+                        </span>
                     </div>
                 </div>
                 <div class="booking-description">
@@ -138,11 +263,11 @@ $pageTitle = "Bookings";
 
             <!-- Confirmed Bookings -->
             <?php foreach ($activeBookings as $booking): ?>
-            <div class="booking-card" data-status="confirmed" style="display: none;">
+            <div class="booking-card" data-status="confirmed" data-booking-id="<?php echo (int)$booking['id']; ?>" style="display: none;">
                 <div class="booking-header">
                     <div>
                         <div class="booking-title"><?php echo htmlspecialchars($booking['pet_name']); ?> - <?php echo htmlspecialchars($booking['service_type']); ?></div>
-                        <div class="booking-date"><?php echo date('M d, Y', strtotime($booking['start_date'])); ?><?php if ($booking['start_date'] != $booking['end_date']): ?> - <?php echo date('M d, Y', strtotime($booking['end_date'])); ?><?php endif; ?></div>
+                        <div class="booking-date"><?php echo htmlspecialchars(format_sitter_date_range($booking['start_date'] ?? '', $booking['end_date'] ?? '')); ?></div>
                     </div>
                     <div class="booking-status status-confirmed">Confirmed</div>
                 </div>
@@ -153,7 +278,7 @@ $pageTitle = "Bookings";
                     </div>
                     <div class="detail-item">
                         <span class="detail-icon">⏰</span>
-                        <span><?php echo htmlspecialchars($booking['start_time']); ?> - <?php echo htmlspecialchars($booking['end_time']); ?></span>
+                        <span><?php echo htmlspecialchars(format_sitter_time_range($booking['start_time'] ?? '', $booking['end_time'] ?? '')); ?></span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-icon"><?php echo $booking['pet_type'] == 'Dog' ? '🐕' : '🐱'; ?></span>
@@ -176,11 +301,11 @@ $pageTitle = "Bookings";
 
             <!-- Completed Bookings -->
             <?php foreach ($completedBookings as $booking): ?>
-            <div class="booking-card" data-status="completed" style="display: none;">
+            <div class="booking-card" data-status="completed" data-booking-id="<?php echo (int)$booking['id']; ?>" style="display: none;">
                 <div class="booking-header">
                     <div>
                         <div class="booking-title"><?php echo htmlspecialchars($booking['pet_name']); ?> - <?php echo htmlspecialchars($booking['service_type']); ?></div>
-                        <div class="booking-date"><?php echo date('M d, Y', strtotime($booking['start_date'])); ?><?php if ($booking['start_date'] != $booking['end_date']): ?> - <?php echo date('M d, Y', strtotime($booking['end_date'])); ?><?php endif; ?></div>
+                        <div class="booking-date"><?php echo htmlspecialchars(format_sitter_date_range($booking['start_date'] ?? '', $booking['end_date'] ?? '')); ?></div>
                     </div>
                     <div class="booking-status status-completed">Completed</div>
                 </div>
@@ -191,7 +316,7 @@ $pageTitle = "Bookings";
                     </div>
                     <div class="detail-item">
                         <span class="detail-icon">⏰</span>
-                        <span><?php echo htmlspecialchars($booking['start_time']); ?> - <?php echo htmlspecialchars($booking['end_time']); ?></span>
+                        <span><?php echo htmlspecialchars(format_sitter_time_range($booking['start_time'] ?? '', $booking['end_time'] ?? '')); ?></span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-icon"><?php echo $booking['pet_type'] == 'Dog' ? '🐕' : '🐱'; ?></span>

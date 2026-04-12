@@ -83,8 +83,8 @@ try {
     );
     $stmt->execute([$_SESSION['user_id'], $userRoleId]);
 
-    // Activate vet availability
-    $stmt = $pdo->prepare('UPDATE vets SET available = 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND clinic_id = ?');
+    // Activate vet availability (also ensure not suspended/on-leave)
+    $stmt = $pdo->prepare('UPDATE vets SET available = 1, is_suspended = 0, suspended_at = NULL, is_on_leave = 0, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND clinic_id = ?');
     $stmt->execute([$vetUserId, $clinicId]);
 
     $pdo->commit();

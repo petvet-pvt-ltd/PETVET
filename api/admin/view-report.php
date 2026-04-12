@@ -19,6 +19,8 @@ try {
         case 'users':
             $stmt = $pdo->query("
                 SELECT u.id, CONCAT(u.first_name, ' ', u.last_name) as full_name, u.email, 
+                       GROUP_CONCAT(r.role_display_name SEPARATOR ', ') as roles,
+                       GROUP_CONCAT(DISTINCT ur.verification_status SEPARATOR ', ') as verification,
                        u.created_at, u.last_login
                 FROM users u
                 LEFT JOIN user_roles ur ON u.id = ur.user_id
@@ -32,12 +34,20 @@ try {
             $html .= '<thead><tr style="background:#F3F4F6;"><th style="padding:12px;text-align:left;border-bottom:2px solid #E5E7EB;">ID</th><th style="padding:12px;text-align:left;border-bottom:2px solid #E5E7EB;">Name</th><th style="padding:12px;text-align:left;border-bottom:2px solid #E5E7EB;">Email</th><th style="padding:12px;text-align:left;border-bottom:2px solid #E5E7EB;">Roles</th><th style="padding:12px;text-align:left;border-bottom:2px solid #E5E7EB;">Status</th><th style="padding:12px;text-align:left;border-bottom:2px solid #E5E7EB;">Created</th></tr></thead><tbody>';
             
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $verificationStatus = $row['verification'] ?? 'N/A';
+                $statusColor = '#FEF3C7;color:#D97706'; // default yellow for pending
+                if (strpos($verificationStatus, 'approved') !== false) {
+                    $statusColor = '#D1FAE5;color:#059669'; // green for approved
+                } elseif (strpos($verificationStatus, 'rejected') !== false) {
+                    $statusColor = '#FEE2E2;color:#DC2626'; // red for rejected
+                }
+                
                 $html .= '<tr style="border-bottom:1px solid #E5E7EB;">';
                 $html .= '<td style="padding:12px;">' . htmlspecialchars($row['id']) . '</td>';
                 $html .= '<td style="padding:12px;">' . htmlspecialchars($row['full_name']) . '</td>';
                 $html .= '<td style="padding:12px;">' . htmlspecialchars($row['email']) . '</td>';
                 $html .= '<td style="padding:12px;">' . htmlspecialchars($row['roles'] ?? 'No role') . '</td>';
-                $html .= '<td style="padding:12px;"><span style="padding:4px 8px;border-radius:4px;background:' . ($row['verification'] === 'approved' ? '#D1FAE5;color:#059669' : '#FEF3C7;color:#D97706') . ';">' . htmlspecialchars($row['verification'] ?? 'N/A') . '</span></td>';
+                $html .= '<td style="padding:12px;"><span style="padding:4px 8px;border-radius:4px;background:' . $statusColor . ';">' . htmlspecialchars($verificationStatus) . '</span></td>';
                 $html .= '<td style="padding:12px;">' . date('M d, Y', strtotime($row['created_at'])) . '</td>';
                 $html .= '</tr>';
             }
@@ -69,35 +79,6 @@ try {
             }
             $html .= '</tbody></table>';
             $html .= '<p style="margin-top:16px;color:#6B7280;font-size:14px;">Showing last 100 clinics. Download CSV for full report.</p>';
-            break;
-
-        case 'appointments':
-            $stmt = $pdo->query("
-                SELECT a.id, CONCAT(u.first_name, ' ', u.last_name) as owner, p.pet_name, c.clinic_name,
-                       a.appointment_date, a.appointment_time, a.status, a.created_at
-                FROM appointments a
-                LEFT JOIN pets p ON a.pet_id = p.id
-                LEFT JOIN users u ON p.user_id = u.id
-                LEFT JOIN clinics c ON a.clinic_id = c.id
-                ORDER BY a.created_at DESC
-                LIMIT 100
-            ");
-            
-            $html = '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
-            $html .= '<thead><tr style="background:#F3F4F6;"><th style="padding:12px;text-align:left;border-bottom:2px solid #E5E7EB;">ID</th><th style="padding:12px;text-align:left;border-bottom:2px solid #E5E7EB;">Owner</th><th style="padding:12px;text-align:left;border-bottom:2px solid #E5E7EB;">Pet</th><th style="padding:12px;text-align:left;border-bottom:2px solid #E5E7EB;">Clinic</th><th style="padding:12px;text-align:left;border-bottom:2px solid #E5E7EB;">Date & Time</th><th style="padding:12px;text-align:left;border-bottom:2px solid #E5E7EB;">Status</th></tr></thead><tbody>';
-            
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $html .= '<tr style="border-bottom:1px solid #E5E7EB;">';
-                $html .= '<td style="padding:12px;">' . htmlspecialchars($row['id']) . '</td>';
-                $html .= '<td style="padding:12px;">' . htmlspecialchars($row['owner'] ?? 'N/A') . '</td>';
-                $html .= '<td style="padding:12px;">' . htmlspecialchars($row['pet_name'] ?? 'N/A') . '</td>';
-                $html .= '<td style="padding:12px;">' . htmlspecialchars($row['clinic_name'] ?? 'N/A') . '</td>';
-                $html .= '<td style="padding:12px;">' . date('M d, Y', strtotime($row['appointment_date'])) . ' ' . date('h:i A', strtotime($row['appointment_time'])) . '</td>';
-                $html .= '<td style="padding:12px;"><span style="padding:4px 8px;border-radius:4px;background:' . ($row['status'] === 'confirmed' ? '#D1FAE5;color:#059669' : ($row['status'] === 'pending' ? '#FEF3C7;color:#D97706' : '#FEE2E2;color:#DC2626')) . ';">' . htmlspecialchars($row['status']) . '</span></td>';
-                $html .= '</tr>';
-            }
-            $html .= '</tbody></table>';
-            $html .= '<p style="margin-top:16px;color:#6B7280;font-size:14px;">Showing last 100 appointments. Download CSV for full report.</p>';
             break;
 
         case 'activity':

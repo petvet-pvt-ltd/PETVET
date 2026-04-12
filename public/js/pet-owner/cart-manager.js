@@ -7,6 +7,7 @@ class CartManager {
         this.cartModal = null;
         this.userLocation = null;
         this.deliveryInfo = null;
+        this.locationStatus = 'unknown'; // unknown | granted | denied | unsupported | error
         this.init();
     }
 
@@ -42,13 +43,35 @@ class CartManager {
         this.injectCartIcon();
         this.injectCartModal();
         this.setupEventListeners();
+        this.loadCachedLocation();
         this.requestUserLocation(); // Get user location for delivery calculation
         this.updateCartCount(); // Initial fetch
+    }
+
+    loadCachedLocation() {
+        try {
+            const raw = localStorage.getItem('petvet_user_location');
+            if (!raw) return;
+            const cached = JSON.parse(raw);
+            if (!cached || typeof cached !== 'object') return;
+
+            const ts = typeof cached.ts === 'number' ? cached.ts : 0;
+            const isFresh = Date.now() - ts < 5 * 60 * 1000;
+            if (!isFresh) return;
+
+            if (typeof cached.latitude === 'number' && typeof cached.longitude === 'number') {
+                this.userLocation = { latitude: cached.latitude, longitude: cached.longitude };
+                this.locationStatus = 'granted';
+            }
+        } catch (e) {
+            // Ignore cache errors
+        }
     }
 
     requestUserLocation() {
         if (!navigator.geolocation) {
             console.warn('Geolocation not supported');
+            this.locationStatus = 'unsupported';
             return;
         }
 
@@ -64,10 +87,29 @@ class CartManager {
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude
                 };
+                this.locationStatus = 'granted';
+                try {
+                    localStorage.setItem('petvet_user_location', JSON.stringify({
+                        latitude: this.userLocation.latitude,
+                        longitude: this.userLocation.longitude,
+                        ts: Date.now()
+                    }));
+                } catch (e) {}
                 console.log('User location obtained for delivery calculation');
+
+                // If cart is open, refresh delivery + UI
+                if (this.cartModal && this.cartModal.style.display === 'flex') {
+                    this.loadCartItems();
+                }
             },
             (error) => {
                 console.warn('Location error:', error.message);
+                this.locationStatus = (error && error.code === 1) ? 'denied' : 'error';
+
+                // If cart is open, re-render to enforce checkout block
+                if (this.cartModal && this.cartModal.style.display === 'flex') {
+                    this.loadCartItems();
+                }
             },
             options
         );
@@ -275,9 +317,22 @@ class CartManager {
             `;
         }
         
+        const needsLocation = !this.userLocation;
+        const waitingForDelivery = !!this.userLocation && !this.deliveryInfo;
+
         // Update checkout button state
         if (checkoutBtn) {
-            if (exceedsLimit) {
+            if (needsLocation) {
+                checkoutBtn.disabled = true;
+                checkoutBtn.textContent = 'Enable Location';
+                checkoutBtn.style.opacity = '0.5';
+                checkoutBtn.style.cursor = 'not-allowed';
+            } else if (waitingForDelivery) {
+                checkoutBtn.disabled = true;
+                checkoutBtn.textContent = 'Calculating Delivery...';
+                checkoutBtn.style.opacity = '0.7';
+                checkoutBtn.style.cursor = 'wait';
+            } else if (exceedsLimit) {
                 checkoutBtn.disabled = true;
                 checkoutBtn.textContent = `Limit Exceeded (${totalQuantity}/${maxItems})`;
                 checkoutBtn.style.opacity = '0.5';
@@ -511,6 +566,22 @@ class CartManager {
         const checkoutBtn = document.getElementById('petvet-checkout-btn');
         
         if (!checkoutBtn || checkoutBtn.disabled) {
+            return;
+        }
+
+        // Hard block: location must be available to calculate delivery charges
+        if (!this.userLocation) {
+            alert('Please enable location access to calculate delivery charges before checkout.');
+            return;
+        }
+
+        if (!this.deliveryInfo) {
+            alert('Delivery charges are still being calculated. Please wait a moment and try again.');
+            return;
+        }
+
+        if (this.deliveryInfo.exceeds_max_distance) {
+            alert('Delivery is not available for your location.');
             return;
         }
 

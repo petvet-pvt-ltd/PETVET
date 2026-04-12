@@ -9,7 +9,10 @@ class SitterController extends BaseController {
 
     public function dashboard() {
         $model = new SitterDashboardModel();
-        $sitterId = 1; // Mock sitter ID
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $sitterId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'stats' => $model->getStats($sitterId),
@@ -21,7 +24,10 @@ class SitterController extends BaseController {
 
     public function bookings() {
         $model = new SitterBookingsModel();
-        $sitterId = $_SESSION['user_id'] ?? 1; // Get from session or mock
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $sitterId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'bookings' => $model->getAllBookings($sitterId),
@@ -42,7 +48,10 @@ class SitterController extends BaseController {
 
         $action = $_POST['action'] ?? '';
         $bookingId = $_POST['booking_id'] ?? 0;
-        $sitterId = $_SESSION['user_id'] ?? 1;
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $sitterId = (int)($_SESSION['user_id'] ?? 0);
 
         $model = new SitterBookingsModel();
         
@@ -70,7 +79,10 @@ class SitterController extends BaseController {
 
     public function pets() {
         $model = new SitterPetsModel();
-        $sitterId = 1; // Mock sitter ID
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $sitterId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'currentPets' => $model->getCurrentPets($sitterId),
@@ -83,7 +95,10 @@ class SitterController extends BaseController {
 
     public function settings() {
         $model = new SitterSettingsModel();
-        $sitterId = 1; // Mock sitter ID
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $sitterId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'profile' => $model->getProfile($sitterId),

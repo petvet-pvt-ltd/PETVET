@@ -68,34 +68,6 @@ $pdo = db();
         </div>
       </div>
 
-      <!-- Appointments Report -->
-      <div style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #E5E7EB;">
-        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
-          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-          </div>
-          <div>
-            <h3 style="font-size: 18px; font-weight: 600; color: #1F2937; margin: 0 0 4px 0;">Appointments Report</h3>
-            <p style="font-size: 14px; color: #6B7280; margin: 0;">All appointments data</p>
-          </div>
-        </div>
-        <div style="display: flex; gap: 12px;">
-          <a href="/PETVET/api/admin/download-report.php?type=appointments&format=csv" style="flex: 1; text-decoration: none;">
-            <button style="width: 100%; padding: 10px 16px; background: #06B6D4; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#0891B2'" onmouseout="this.style.background='#06B6D4'">
-              Download CSV
-            </button>
-          </a>
-          <button onclick="viewReport('appointments')" style="flex: 1; padding: 10px 16px; background: white; color: #06B6D4; border: 2px solid #06B6D4; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#CFFAFE'" onmouseout="this.style.background='white'">
-            View Report
-          </button>
-        </div>
-      </div>
-
       <!-- Activity Report -->
       <div style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #E5E7EB;">
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">

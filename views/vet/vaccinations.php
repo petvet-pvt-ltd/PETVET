@@ -6,6 +6,8 @@ $data = [
     'appointments'  => $appointments ?? [],
     'vaccinations'  => $vaccinations ?? []
 ];
+
+$showBackToOngoing = isset($_GET['from']) && $_GET['from'] === 'ongoing';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -81,6 +83,12 @@ $data = [
 
         <button class="btn success" type="submit">💉 Save Vaccination</button>
       </form>
+
+      <?php if ($showBackToOngoing): ?>
+        <div style="margin-top: 12px;">
+          <a class="btn navy" href="/PETVET/?module=vet&page=dashboard#ongoing-section">← Back to Ongoing Appointment</a>
+        </div>
+      <?php endif; ?>
     </section>
 
     <section>

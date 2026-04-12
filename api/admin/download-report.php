@@ -74,34 +74,6 @@ switch ($type) {
         }
         break;
 
-    case 'appointments':
-        fputcsv($output, ['ID', 'Pet Owner', 'Pet Name', 'Clinic', 'Date', 'Time', 'Status', 'Created At']);
-        
-        $stmt = $pdo->query("
-            SELECT a.id, CONCAT(u.first_name, ' ', u.last_name) as owner, p.pet_name, c.clinic_name,
-                   a.appointment_date, a.appointment_time, a.status, a.created_at
-            FROM appointments a
-            LEFT JOIN pets p ON a.pet_id = p.id
-            LEFT JOIN users u ON p.user_id = u.id
-            LEFT JOIN clinics c ON a.clinic_id = c.id
-            ORDER BY a.created_at DESC
-            LIMIT 1000
-        ");
-        
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            fputcsv($output, [
-                $row['id'],
-                $row['owner'] ?? 'N/A',
-                $row['pet_name'] ?? 'N/A',
-                $row['clinic_name'] ?? 'N/A',
-                $row['appointment_date'],
-                $row['appointment_time'],
-                $row['status'],
-                $row['created_at']
-            ]);
-        }
-        break;
-
     case 'activity':
         fputcsv($output, ['Metric', 'Value']);
         

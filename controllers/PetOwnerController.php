@@ -137,6 +137,16 @@ class PetOwnerController extends BaseController {
     }
 
     public function services() {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+
+        $ownerId = (int)($_SESSION['user_id'] ?? 0);
+        if ($ownerId <= 0) {
+            header('Location: /PETVET/index.php?module=guest&page=login');
+            exit;
+        }
+
         $servicesModel = new ServicesModel();
         
         // Get service type and filters from query params
@@ -179,12 +189,50 @@ class PetOwnerController extends BaseController {
         // Fetch providers and cities for dropdown
         $providers = $servicesModel->getServiceProviders($serviceType, $filters);
         $cities = $servicesModel->getCities($serviceType);
+
+        // Provider IDs that already have an active booking (used to grey out booking buttons)
+        $activeBookingProviderIds = [
+            'trainers' => [],
+            'sitters' => [],
+            'breeders' => []
+        ];
+        try {
+            $pdo = db();
+            $today = (new DateTime('today'))->format('Y-m-d');
+
+            $stmt = $pdo->prepare("SELECT DISTINCT trainer_id
+                FROM trainer_training_requests
+                WHERE pet_owner_id = ?
+                  AND status IN ('pending','accepted')
+                  AND preferred_date >= ?");
+            $stmt->execute([$ownerId, $today]);
+            $activeBookingProviderIds['trainers'] = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+
+            $stmt = $pdo->prepare("SELECT DISTINCT sitter_id
+                FROM sitter_service_requests
+                WHERE pet_owner_id = ?
+                  AND status IN ('pending','accepted')
+                  AND end_date >= ?");
+            $stmt->execute([$ownerId, $today]);
+            $activeBookingProviderIds['sitters'] = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+
+            $stmt = $pdo->prepare("SELECT DISTINCT breeder_id
+                FROM breeding_requests
+                WHERE owner_id = ?
+                  AND status IN ('pending','approved')
+                  AND preferred_date >= ?");
+            $stmt->execute([$ownerId, $today]);
+            $activeBookingProviderIds['breeders'] = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+        } catch (Throwable $e) {
+            error_log('services activeBookingProviderIds error: ' . $e->getMessage());
+        }
         
         $data = [
             'serviceType' => $serviceType,
             'providers' => $providers,
             'cities' => $cities,
-            'filters' => $filters
+            'filters' => $filters,
+            'activeBookingProviderIds' => $activeBookingProviderIds
         ];
         
                 

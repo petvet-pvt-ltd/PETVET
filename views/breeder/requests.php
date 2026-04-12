@@ -2,6 +2,100 @@
 // This view expects data from BreederController::requests()
 // Variables available: $pendingRequests, $approvedRequests, $completedRequests
 
+function breeder_extract_location_info(?string $message): array {
+    $out = [
+        'text' => '',
+        'maps_href' => ''
+    ];
+
+    $message = (string)($message ?? '');
+    if ($message === '') return $out;
+
+    $pos = strpos($message, 'Location Details:');
+    if ($pos === false) return $out;
+
+    $block = substr($message, $pos);
+    $lines = preg_split("/\r\n|\n|\r/", (string)$block);
+
+    $locationLabel = '';
+    $district = '';
+    $mapLocation = '';
+    $lat = '';
+    $lng = '';
+
+    foreach ($lines as $line) {
+        $line = trim((string)$line);
+        if ($line === '' || stripos($line, 'Location Details:') === 0) continue;
+
+        if (stripos($line, '- Location:') === 0) {
+            $locationLabel = trim(substr($line, strlen('- Location:')));
+            continue;
+        }
+        if (stripos($line, '- District:') === 0) {
+            $district = trim(substr($line, strlen('- District:')));
+            continue;
+        }
+        if (stripos($line, '- Map Location:') === 0) {
+            $mapLocation = trim(substr($line, strlen('- Map Location:')));
+            continue;
+        }
+        if (stripos($line, '- Coordinates:') === 0) {
+            $coordPart = trim(substr($line, strlen('- Coordinates:')));
+            if (preg_match('/^\s*([\-0-9.]+)\s*,\s*([\-0-9.]+)\s*$/', $coordPart, $m)) {
+                $lat = $m[1];
+                $lng = $m[2];
+            }
+            continue;
+        }
+    }
+
+    if ($mapLocation !== '') {
+        $out['text'] = $mapLocation;
+        $out['maps_href'] = 'https://www.google.com/maps?q=' . urlencode($mapLocation);
+        return $out;
+    }
+
+    if ($lat !== '' && $lng !== '') {
+        $out['text'] = $lat . ', ' . $lng;
+        $out['maps_href'] = 'https://www.google.com/maps?q=' . urlencode($lat . ',' . $lng);
+        return $out;
+    }
+
+    if ($locationLabel !== '' && $district !== '') {
+        $out['text'] = $locationLabel . ' (' . $district . ')';
+        $out['maps_href'] = 'https://www.google.com/maps?q=' . urlencode($district);
+        return $out;
+    }
+
+    if ($district !== '') {
+        $out['text'] = $district;
+        $out['maps_href'] = 'https://www.google.com/maps?q=' . urlencode($district);
+        return $out;
+    }
+
+    if ($locationLabel !== '') {
+        $out['text'] = $locationLabel;
+        $out['maps_href'] = '';
+        return $out;
+    }
+
+    return $out;
+}
+
+function breeder_strip_location_details(?string $message): string {
+    $message = (string)($message ?? '');
+    if ($message === '') return '';
+
+    $posLocation = strpos($message, 'Location Details:');
+    $posAppt = strpos($message, 'Appointment Details:');
+
+    $positions = array_filter([$posLocation, $posAppt], static fn($p) => $p !== false);
+    if (empty($positions)) return trim($message);
+
+    $pos = min($positions);
+    return trim(substr($message, 0, $pos));
+}
+
 if (!isset($pendingRequests)) $pendingRequests = [];
 if (!isset($approvedRequests)) $approvedRequests = [];
 if (!isset($completedRequests)) $completedRequests = [];
@@ -93,6 +187,31 @@ $pageTitle = "Breeding Requests";
         .call-btn:hover {
             background: #d97706;
         }
+
+        /* Match trainer/sitter map button so SVG doesn't render huge */
+        .map-nav-btn{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            width:28px;
+            height:28px;
+            border-radius:6px;
+            border:1px solid #d1d5db;
+            background:#fff;
+            margin-left:0.5rem;
+            text-decoration:none;
+            flex-shrink:0;
+        }
+
+        .map-nav-btn:hover{
+            background:#f9fafb;
+        }
+
+        .map-nav-btn svg{
+            width:16px;
+            height:16px;
+            color:#374151;
+        }
     </style>
 </head>
 <body>
@@ -122,7 +241,9 @@ $pageTitle = "Breeding Requests";
         <div class="bookings-container">
             <!-- Pending Requests -->
             <?php foreach ($pendingRequests as $request): ?>
-            <div class="booking-card" data-status="pending">
+            <?php $locationInfo = breeder_extract_location_info($request['message'] ?? ''); ?>
+            <?php $displayMessage = breeder_strip_location_details($request['message'] ?? ''); ?>
+            <div class="booking-card" data-status="pending" data-request-id="<?php echo (int)$request['id']; ?>">
                 <div class="booking-header">
                     <div>
                         <div class="booking-title"><?php echo htmlspecialchars($request['pet_name']); ?> - <?php echo htmlspecialchars($request['breed']); ?></div>
@@ -143,16 +264,28 @@ $pageTitle = "Breeding Requests";
                         <span class="detail-icon">📅</span>
                         <span>Preferred Date: <?php echo date('M d, Y', strtotime($request['preferred_date'])); ?></span>
                     </div>
-                    <?php if (!empty($request['phone'])): ?>
+                    <?php if (!empty($locationInfo['text'])): ?>
                     <div class="detail-item">
-                        <span class="detail-icon">📞</span>
-                        <span><?php echo htmlspecialchars($request['phone']); ?></span>
+                        <span class="detail-icon">📍</span>
+                        <span>
+                            <?php echo htmlspecialchars($locationInfo['text']); ?>
+                            <?php if (!empty($locationInfo['maps_href'])): ?>
+                                <a class="map-nav-btn" target="_blank" rel="noopener"
+                                   href="<?php echo htmlspecialchars($locationInfo['maps_href']); ?>"
+                                   title="Open in Google Maps">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 0 1 18 0Z"></path>
+                                        <circle cx="12" cy="10" r="3"></circle>
+                                    </svg>
+                                </a>
+                            <?php endif; ?>
+                        </span>
                     </div>
                     <?php endif; ?>
                 </div>
-                <?php if (!empty($request['message'])): ?>
+                <?php if ($displayMessage !== ''): ?>
                 <div class="booking-description">
-                    <strong>Message / Notes:</strong> <?php echo htmlspecialchars($request['message']); ?>
+                    <strong>Message / Notes:</strong> <?php echo htmlspecialchars($displayMessage); ?>
                 </div>
                 <?php endif; ?>
                 <div class="booking-actions">
@@ -169,7 +302,8 @@ $pageTitle = "Breeding Requests";
 
             <!-- Approved Requests -->
             <?php foreach ($approvedRequests as $request): ?>
-            <div class="booking-card" data-status="approved" style="display: none;">
+            <?php $locationInfo = breeder_extract_location_info($request['message'] ?? ''); ?>
+            <div class="booking-card" data-status="approved" data-request-id="<?php echo (int)$request['id']; ?>" style="display: none;">
                 <div class="booking-header">
                     <div>
                         <div class="booking-title"><?php echo htmlspecialchars($request['pet_name']); ?> - <?php echo htmlspecialchars($request['breed']); ?></div>
@@ -190,10 +324,22 @@ $pageTitle = "Breeding Requests";
                         <span class="detail-icon">❤️</span>
                         <span>Breeding Pet: <?php echo htmlspecialchars($request['breeder_pet_name']); ?></span>
                     </div>
-                    <?php if (!empty($request['phone'])): ?>
+                    <?php if (!empty($locationInfo['text'])): ?>
                     <div class="detail-item">
-                        <span class="detail-icon">📞</span>
-                        <span><?php echo htmlspecialchars($request['phone']); ?></span>
+                        <span class="detail-icon">📍</span>
+                        <span>
+                            <?php echo htmlspecialchars($locationInfo['text']); ?>
+                            <?php if (!empty($locationInfo['maps_href'])): ?>
+                                <a class="map-nav-btn" target="_blank" rel="noopener"
+                                   href="<?php echo htmlspecialchars($locationInfo['maps_href']); ?>"
+                                   title="Open in Google Maps">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 0 1 18 0Z"></path>
+                                        <circle cx="12" cy="10" r="3"></circle>
+                                    </svg>
+                                </a>
+                            <?php endif; ?>
+                        </span>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -215,7 +361,8 @@ $pageTitle = "Breeding Requests";
 
             <!-- Completed Requests -->
             <?php foreach ($completedRequests as $request): ?>
-            <div class="booking-card" data-status="completed" style="display: none;">
+            <?php $locationInfo = breeder_extract_location_info($request['message'] ?? ''); ?>
+            <div class="booking-card" data-status="completed" data-request-id="<?php echo (int)$request['id']; ?>" style="display: none;">
                 <div class="booking-header">
                     <div>
                         <div class="booking-title"><?php echo htmlspecialchars($request['pet_name']); ?> - <?php echo htmlspecialchars($request['breed']); ?></div>
@@ -236,6 +383,24 @@ $pageTitle = "Breeding Requests";
                         <span class="detail-icon">❤️</span>
                         <span>Breeding Pet: <?php echo htmlspecialchars($request['breeder_pet_name']); ?></span>
                     </div>
+                    <?php if (!empty($locationInfo['text'])): ?>
+                    <div class="detail-item">
+                        <span class="detail-icon">📍</span>
+                        <span>
+                            <?php echo htmlspecialchars($locationInfo['text']); ?>
+                            <?php if (!empty($locationInfo['maps_href'])): ?>
+                                <a class="map-nav-btn" target="_blank" rel="noopener"
+                                   href="<?php echo htmlspecialchars($locationInfo['maps_href']); ?>"
+                                   title="Open in Google Maps">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 0 1 18 0Z"></path>
+                                        <circle cx="12" cy="10" r="3"></circle>
+                                    </svg>
+                                </a>
+                            <?php endif; ?>
+                        </span>
+                    </div>
+                    <?php endif; ?>
                 </div>
                 <?php if (!empty($request['final_notes'])): ?>
                 <div class="booking-description">

@@ -42,6 +42,10 @@ if ($role_check->get_result()->num_rows === 0) {
     exit;
 }
 
+// Monthly cleanup: delete blocked dates from previous months.
+// This is intentionally not real-time; it's a lightweight, idempotent cleanup.
+cleanupOldBlockedDatesMonthly($conn);
+
 // Handle different actions
 switch ($action) {
     case 'get_schedule':
@@ -68,6 +72,24 @@ switch ($action) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Invalid action']);
         break;
+}
+
+/**
+ * Delete old blocked dates (previous months) from the shared blocked dates table.
+ * Runs lazily when this API is used; safe to run multiple times.
+ */
+function cleanupOldBlockedDatesMonthly($conn): void {
+    $firstDayOfCurrentMonth = date('Y-m-01');
+
+    try {
+        $stmt = $conn->prepare("DELETE FROM service_provider_blocked_dates WHERE blocked_date < ?");
+        $stmt->bind_param('s', $firstDayOfCurrentMonth);
+        $stmt->execute();
+    } catch (mysqli_sql_exception $e) {
+        // If the table doesn't exist yet or another transient DB issue occurs,
+        // do not break availability endpoints.
+        error_log('cleanupOldBlockedDatesMonthly error: ' . $e->getMessage());
+    }
 }
 
 /**

@@ -9,7 +9,10 @@ class TrainerController extends BaseController {
 
     public function dashboard() {
         $model = new TrainerDashboardModel();
-        $trainerId = 1; // Mock trainer ID
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $trainerId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'stats' => $model->getStats($trainerId),
@@ -21,7 +24,10 @@ class TrainerController extends BaseController {
 
     public function appointments() {
         $model = new TrainerAppointmentsModel();
-        $trainerId = 1; // Mock trainer ID - replace with actual session user ID
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $trainerId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'pendingRequests' => $model->getPendingRequests($trainerId),
@@ -37,6 +43,10 @@ class TrainerController extends BaseController {
      */
     public function handleTrainingAction() {
         header('Content-Type: application/json');
+
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
         
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             echo json_encode(['success' => false, 'message' => 'Invalid request method']);
@@ -44,18 +54,18 @@ class TrainerController extends BaseController {
         }
 
         $action = $_POST['action'] ?? '';
-        $trainerId = 1; // Mock trainer ID - replace with actual session user ID
+        $trainerId = (int)($_SESSION['user_id'] ?? 0);
         $model = new TrainerAppointmentsModel();
 
         switch ($action) {
             case 'accept':
-                $requestId = $_POST['request_id'] ?? 0;
+                $requestId = (int)($_POST['request_id'] ?? 0);
                 $result = $model->acceptRequest($requestId, $trainerId);
                 echo json_encode($result);
                 break;
 
             case 'decline':
-                $requestId = $_POST['request_id'] ?? 0;
+                $requestId = (int)($_POST['request_id'] ?? 0);
                 $reason = $_POST['reason'] ?? '';
                 $result = $model->declineRequest($requestId, $trainerId, $reason);
                 echo json_encode($result);
@@ -129,7 +139,10 @@ class TrainerController extends BaseController {
 
     public function settings() {
         $model = new TrainerSettingsModel();
-        $trainerId = 1; // Mock trainer ID
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $trainerId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
             'profile' => $model->getProfile($trainerId),
