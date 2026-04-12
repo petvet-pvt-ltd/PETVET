@@ -666,6 +666,14 @@ function calculateAge($dob) {
       justify-content: center;
     }
 
+    .notification-avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+    }
+
     .appointment-icon {
       background: #dbeafe;
       color: #2563eb;
@@ -707,6 +715,10 @@ function calculateAge($dob) {
     .notification-text em {
       font-style: italic;
       color: #6b7280;
+    }
+
+    .notification-reason-inline {
+      white-space: nowrap;
     }
 
     .notification-time {
@@ -1626,7 +1638,10 @@ function calculateAge($dob) {
       // Fetch notifications from server
       function fetchNotifications() {
         console.log('📥 Fetching notifications... (previous unread: ' + previousUnreadCount + ')');
-        fetch('/PETVET/api/pet-owner/get-notifications.php')
+        fetch(`/PETVET/api/pet-owner/get-notifications.php?t=${Date.now()}`, {
+          cache: 'no-store',
+          credentials: 'same-origin'
+        })
           .then(response => response.json())
           .then(data => {
             console.log('📦 API Response:', data);
@@ -1670,7 +1685,7 @@ function calculateAge($dob) {
           notificationItem.dataset.id = notification.id;
           notificationItem.dataset.type = notification.type;
           
-          // Create icon based on notification type
+          // Create icon/avatar based on notification type
           let iconSvg = '';
           let iconClass = '';
           
@@ -1692,16 +1707,23 @@ function calculateAge($dob) {
               iconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>';
               break;
           }
+
+          const hasEntityAvatar = ['appointment', 'sitter', 'trainer', 'breeder'].includes(notification.type);
+          const entityAvatar = notification.type === 'appointment'
+            ? (notification.clinic_avatar || '/PETVET/public/images/emptyProfPic.png')
+            : (notification.provider_avatar || '/PETVET/public/images/emptyProfPic.png');
           
           notificationItem.innerHTML = `
             <div class="notification-icon ${iconClass}">
-              ${iconSvg}
+              ${hasEntityAvatar
+                ? `<img class="notification-avatar" src="${entityAvatar}" alt="${notification.type} photo" onerror="this.src='/PETVET/public/images/emptyProfPic.png'">`
+                : iconSvg}
             </div>
             <div class="notification-content">
               <p class="notification-text">${notification.message}</p>
               <div class="notification-meta">
                 ${notification.clinic_name ? `<span class="clinic-badge">${notification.clinic_name}</span>` : ''}
-                <span class="notification-time">${getTimeAgo(notification.created_at)}</span>
+                <span class="notification-time">${getTimeAgoFromServer(notification)}</span>
               </div>
             </div>
           `;
@@ -1710,11 +1732,28 @@ function calculateAge($dob) {
         });
       }
 
-      // Time ago formatting
-      function getTimeAgo(dateString) {
+      function getTimeAgoFromServer(notification) {
+        const ageSeconds = Number(notification.age_seconds);
+        if (Number.isFinite(ageSeconds) && ageSeconds >= 0) {
+          return formatSecondsAgoShort(ageSeconds);
+        }
+
+        const ts = Number(notification.created_at_ts);
+        if (Number.isFinite(ts) && ts > 0) {
+          const nowSeconds = Math.floor(Date.now() / 1000);
+          return formatSecondsAgoShort(Math.max(0, nowSeconds - ts));
+        }
+
+        return formatSecondsAgoShort(parseLocalSeconds(notification.created_at));
+      }
+
+      function parseLocalSeconds(dateString) {
         const date = new Date(dateString);
         const seconds = Math.floor((new Date() - date) / 1000);
-        
+        return Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+      }
+
+      function formatSecondsAgoShort(seconds) {
         if (seconds < 60) return 'Just now';
         const minutes = Math.floor(seconds / 60);
         if (minutes < 60) return `${minutes}m ago`;
@@ -1722,6 +1761,7 @@ function calculateAge($dob) {
         if (hours < 24) return `${hours}h ago`;
         const days = Math.floor(hours / 24);
         if (days < 7) return `${days}d ago`;
+        const date = new Date(Date.now() - (seconds * 1000));
         return date.toLocaleDateString();
       }
 

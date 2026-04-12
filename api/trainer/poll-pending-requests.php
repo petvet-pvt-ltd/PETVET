@@ -23,7 +23,7 @@ $trainerId = (int)currentUserId();
 
 try {
     $pdo = db();
-    $stmt = $pdo->prepare("SELECT id FROM trainer_training_requests WHERE trainer_id = ? AND status = 'pending' ORDER BY id DESC");
+    $stmt = $pdo->prepare("SELECT id FROM trainer_training_requests WHERE trainer_id = ? AND status = 'pending' ORDER BY id ASC");
     $stmt->execute([$trainerId]);
     $ids = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
 

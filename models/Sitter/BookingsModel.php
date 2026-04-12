@@ -3,6 +3,58 @@ require_once __DIR__ . '/../BaseModel.php';
 
 class SitterBookingsModel extends BaseModel {
 
+    private function ensureCompletedStatusSupported(): void {
+        try {
+            if (!$this->tableExists('sitter_service_requests')) {
+                return;
+            }
+
+            $stmt = $this->pdo->prepare("SELECT COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT
+                FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = 'sitter_service_requests'
+                  AND COLUMN_NAME = 'status'");
+            $stmt->execute();
+            $col = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$col) {
+                return;
+            }
+
+            $columnType = (string)($col['COLUMN_TYPE'] ?? '');
+            if (stripos($columnType, 'enum(') !== 0) {
+                return;
+            }
+
+            if (stripos($columnType, "'completed'") !== false) {
+                return;
+            }
+
+            if (!preg_match_all("/'((?:\\\\'|[^'])*)'/", $columnType, $m)) {
+                return;
+            }
+            $values = array_map(static fn($v) => str_replace("\\'", "'", $v), $m[1]);
+            $values[] = 'completed';
+            $values = array_values(array_unique($values));
+
+            $enumListSql = implode(',', array_map(static function ($v) {
+                return "'" . str_replace("'", "\\'", (string)$v) . "'";
+            }, $values));
+
+            $isNullable = strtoupper((string)($col['IS_NULLABLE'] ?? 'NO')) === 'YES';
+            $default = $col['COLUMN_DEFAULT'] ?? null;
+
+            $alter = "ALTER TABLE sitter_service_requests MODIFY COLUMN status ENUM($enumListSql) "
+                . ($isNullable ? 'NULL' : 'NOT NULL');
+            if ($default !== null && $default !== '') {
+                $alter .= " DEFAULT '" . str_replace("'", "\\'", (string)$default) . "'";
+            }
+
+            $this->pdo->exec($alter);
+        } catch (Throwable $e) {
+            error_log('ensureCompletedStatusSupported error: ' . $e->getMessage());
+        }
+    }
+
     private function tableExists(string $tableName): bool {
         try {
             $stmt = $this->pdo->prepare("SELECT 1
@@ -64,7 +116,7 @@ class SitterBookingsModel extends BaseModel {
                 LEFT JOIN service_provider_profiles spp
                     ON spp.user_id = r.sitter_id AND spp.role_type = 'sitter'
                 WHERE r.sitter_id = ? AND r.status = 'pending'
-                ORDER BY r.created_at DESC";
+                ORDER BY r.created_at ASC";
 
         try {
             $stmt = $pdo->prepare($sql);
@@ -161,7 +213,7 @@ class SitterBookingsModel extends BaseModel {
                 LEFT JOIN service_provider_profiles spp
                     ON spp.user_id = r.sitter_id AND spp.role_type = 'sitter'
                 WHERE r.sitter_id = ? AND r.status = 'accepted'
-                ORDER BY r.created_at DESC";
+                ORDER BY r.start_date ASC, r.start_time ASC, r.created_at ASC";
 
         try {
             $stmt = $pdo->prepare($sql);
@@ -320,21 +372,24 @@ class SitterBookingsModel extends BaseModel {
         }
     }
 
-    public function declineBooking($bookingId, $sitterId) {
+    public function declineBooking($bookingId, $sitterId, $reason = '') {
         $bookingId = (int)$bookingId;
         $sitterId = (int)$sitterId;
         if ($bookingId <= 0 || $sitterId <= 0) {
             return ['success' => false, 'message' => 'Invalid booking'];
         }
 
+        $reason = is_string($reason) ? substr(trim($reason), 0, 255) : '';
+        $reasonValue = ($reason === '') ? null : $reason;
+
         try {
             if (!$this->tableExists('sitter_service_requests')) {
                 return ['success' => false, 'message' => 'Bookings table is not set up yet'];
             }
             $stmt = $this->pdo->prepare("UPDATE sitter_service_requests
-                SET status = 'declined', sitter_response_at = NOW()
+                SET status = 'declined', sitter_response_at = NOW(), decline_reason = ?
                 WHERE id = ? AND sitter_id = ? AND status = 'pending'");
-            $stmt->execute([$bookingId, $sitterId]);
+            $stmt->execute([$reasonValue, $bookingId, $sitterId]);
 
             if ($stmt->rowCount() === 0) {
                 return ['success' => false, 'message' => 'Booking not found or already processed'];
@@ -359,6 +414,9 @@ class SitterBookingsModel extends BaseModel {
                 return ['success' => false, 'message' => 'Bookings table is not set up yet'];
             }
 
+            // Ensure DB schema supports status='completed' (some installs have enum without it)
+            $this->ensureCompletedStatusSupported();
+
             // Try to set completed_at if the column exists; if not, fall back to status-only.
             try {
                 $stmt = $this->pdo->prepare("UPDATE sitter_service_requests
@@ -366,7 +424,14 @@ class SitterBookingsModel extends BaseModel {
                     WHERE id = ? AND sitter_id = ? AND status = 'accepted'");
                 $stmt->execute([$bookingId, $sitterId]);
             } catch (PDOException $e) {
-                if (($e->errorInfo[0] ?? null) === '42S22') {
+                $sqlState = (string)($e->errorInfo[0] ?? '');
+                $driverCode = (string)($e->errorInfo[1] ?? '');
+
+                // Unknown column completed_at, or enum truncation warning in strict mode.
+                if ($sqlState === '42S22' || $driverCode === '1265') {
+                    if ($driverCode === '1265') {
+                        $this->ensureCompletedStatusSupported();
+                    }
                     $stmt = $this->pdo->prepare("UPDATE sitter_service_requests
                         SET status = 'completed'
                         WHERE id = ? AND sitter_id = ? AND status = 'accepted'");
@@ -398,6 +463,7 @@ class SitterBookingsModel extends BaseModel {
 
         $sql = "SELECT
                     r.id,
+                    r.pet_owner_id,
                     r.pet_name,
                     r.pet_type,
                     r.pet_breed,
@@ -417,10 +483,12 @@ class SitterBookingsModel extends BaseModel {
                     CONCAT(u.first_name, ' ', u.last_name) AS owner_name,
                     COALESCE(u.phone, '') AS owner_phone,
                     '' AS owner_phone_2,
+                    CONCAT(su.first_name, ' ', su.last_name) AS sitter_name,
                     spp.location_latitude AS sitter_lat,
                     spp.location_longitude AS sitter_lng
                 FROM sitter_service_requests r
                 JOIN users u ON u.id = r.pet_owner_id
+                JOIN users su ON su.id = r.sitter_id
                 LEFT JOIN service_provider_profiles spp
                     ON spp.user_id = r.sitter_id AND spp.role_type = 'sitter'
                 WHERE r.id = ? AND r.sitter_id = ?

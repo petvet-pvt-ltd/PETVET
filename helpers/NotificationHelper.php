@@ -120,8 +120,11 @@ class NotificationHelper {
                 $message = "Sitter <strong>$sitter_name</strong> has accepted your request for <strong>$pet_name</strong>";
             } elseif ($status === 'declined') {
                 $title = 'Sitter Request Declined';
-                $reason_text = $reason ? "Reason: <em>$reason</em>" : '';
-                $message = "Sitter <strong>$sitter_name</strong> declined your request. $reason_text";
+                $reason_text = $reason ? ' <span class="notification-reason-inline">Reason:&nbsp;<em>"' . $reason . '"</em></span>' : '';
+                $message = "Sitter <strong>$sitter_name</strong> declined your request." . $reason_text;
+            } elseif ($status === 'completed') {
+                $title = 'Sitter Booking Completed';
+                $message = "Sitter <strong>$sitter_name</strong> marked your booking for <strong>$pet_name</strong> as completed.";
             }
             
             $sql = "INSERT INTO notifications (pet_owner_id, type, title, message, entity_id, entity_type, action_data)
@@ -155,7 +158,7 @@ class NotificationHelper {
     /**
      * Create trainer notification
      */
-    public static function createTrainerNotification($pet_owner_id, $trainer_id, $trainer_name, $pet_name, $status, $reason = null) {
+    public static function createTrainerNotification($pet_owner_id, $trainer_id, $trainer_name, $pet_name, $status, $reason = null, $session_date = null, $session_time = null, $location_label = null, $training_type = null, $session_number = null, $next_session_date = null, $next_session_time = null) {
         $pdo = db();
         
         try {
@@ -164,14 +167,31 @@ class NotificationHelper {
             
             if ($status === 'accepted') {
                 $title = 'Trainer Request Accepted';
+                $dateText = $session_date ? " on <strong>$session_date</strong>" : '';
+                $timeText = $session_time ? " at <strong>$session_time</strong>" : '';
+                $venueText = $location_label ? " at <strong>$location_label</strong>" : '';
                 $message = "Trainer <strong>$trainer_name</strong> has accepted your request for <strong>$pet_name</strong>";
+                if ($dateText || $timeText || $venueText) {
+                    $message .= ". Training scheduled$dateText$timeText$venueText";
+                }
             } elseif ($status === 'declined') {
                 $title = 'Trainer Request Declined';
-                $reason_text = $reason ? "Reason: <em>$reason</em>" : '';
-                $message = "Trainer <strong>$trainer_name</strong> declined your request. $reason_text";
+                $reason_text = $reason ? ' <span class="notification-reason-inline">Reason:&nbsp;<em>"' . $reason . '"</em></span>' : '';
+                $message = "Trainer <strong>$trainer_name</strong> declined your request." . $reason_text;
             } elseif ($status === 'session_completed') {
                 $title = 'Training Session Completed';
-                $message = "Training session for <strong>$pet_name</strong> with <strong>$trainer_name</strong> has been completed.";
+                $sessionText = $session_number ? "Session <strong>$session_number</strong>" : 'A training session';
+                $typeText = $training_type ? " ($training_type)" : '';
+                $message = "$sessionText$typeText for <strong>$pet_name</strong> with <strong>$trainer_name</strong> has been completed.";
+                if ($next_session_date || $next_session_time) {
+                    $dateText = $next_session_date ? " on <strong>$next_session_date</strong>" : '';
+                    $timeText = $next_session_time ? " at <strong>$next_session_time</strong>" : '';
+                    $message .= " Next session scheduled$dateText$timeText.";
+                }
+            } elseif ($status === 'program_completed') {
+                $title = 'Training Program Completed';
+                $typeText = $training_type ? " ($training_type)" : '';
+                $message = "Training program$typeText for <strong>$pet_name</strong> with <strong>$trainer_name</strong> has been completed.";
             }
             
             $sql = "INSERT INTO notifications (pet_owner_id, type, title, message, entity_id, entity_type, action_data)
@@ -182,7 +202,14 @@ class NotificationHelper {
                 'trainer_id' => $trainer_id,
                 'trainer_name' => $trainer_name,
                 'pet_name' => $pet_name,
-                'reason' => $reason
+                'reason' => $reason,
+                'session_date' => $session_date,
+                'session_time' => $session_time,
+                'location' => $location_label,
+                'training_type' => $training_type,
+                'session_number' => $session_number,
+                'next_session_date' => $next_session_date,
+                'next_session_time' => $next_session_time
             ]);
             
             $stmt->execute([
@@ -217,8 +244,12 @@ class NotificationHelper {
                 $message = "Breeder <strong>$breeder_name</strong> accepted your request for <strong>$pet_name</strong>. Breeder's Pet: <strong>$breeder_pet_name</strong>";
             } elseif ($status === 'declined') {
                 $title = 'Breeder Request Declined';
-                $reason_text = $reason ? "Reason: <em>$reason</em>" : '';
-                $message = "Breeder <strong>$breeder_name</strong> declined your request. $reason_text";
+                $reason_text = $reason ? ' <span class="notification-reason-inline">Reason:&nbsp;<em>"' . $reason . '"</em></span>' : '';
+                $message = "Breeder <strong>$breeder_name</strong> declined your request." . $reason_text;
+            } elseif ($status === 'completed') {
+                $title = 'Breeding Completed';
+                $breederPetText = $breeder_pet_name ? " Breeder's Pet: <strong>$breeder_pet_name</strong>." : '';
+                $message = "Breeder <strong>$breeder_name</strong> marked the breeding request for <strong>$pet_name</strong> as completed." . $breederPetText;
             }
             
             $sql = "INSERT INTO notifications (pet_owner_id, type, title, message, entity_id, entity_type, action_data)

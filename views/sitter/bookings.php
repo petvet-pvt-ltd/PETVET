@@ -123,6 +123,52 @@ function format_sitter_time_range($startTime, $endTime): string {
             background: #138496;
         }
 
+        .confirm-btn-cancel {
+            background: #fff;
+            color: #17a2b8;
+            border: 2px solid #17a2b8;
+        }
+
+        .confirm-btn-cancel:hover {
+            background: #138496;
+            border-color: #138496;
+            color: #fff;
+        }
+
+        .confirm-reason-group {
+            margin-top: 12px;
+            text-align: left;
+        }
+
+        .confirm-reason-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+
+        .confirm-reason-input {
+            width: 100%;
+            min-height: 70px;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+            outline: none;
+            background: #fff;
+        }
+
+        .confirm-reason-input:focus {
+            border-color: rgba(23, 162, 184, 0.7);
+            box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.15);
+        }
+
+        #confirmModal .confirm-modal-actions {
+            margin-top: 16px;
+        }
+
         /* Distance badge (same visual style used on Services page) */
         .booking-status-wrap {
             display: inline-flex;
@@ -286,7 +332,19 @@ function format_sitter_time_range($startTime, $endTime): string {
                     </div>
                     <div class="detail-item">
                         <span class="detail-icon">📍</span>
-                        <span><?php echo htmlspecialchars($booking['location']); ?></span>
+                        <span>
+                            <?php echo htmlspecialchars($booking['location']); ?>
+                            <?php if (!empty($booking['location_lat']) && !empty($booking['location_lng'])): ?>
+                                <a class="map-nav-btn" target="_blank" rel="noopener"
+                                   href="https://www.google.com/maps?q=<?php echo urlencode($booking['location_lat'] . ',' . $booking['location_lng']); ?>"
+                                   title="Open in Google Maps">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 0 1 18 0Z"></path>
+                                        <circle cx="12" cy="10" r="3"></circle>
+                                    </svg>
+                                </a>
+                            <?php endif; ?>
+                        </span>
                     </div>
                 </div>
                 <div class="booking-description">
@@ -362,6 +420,10 @@ function format_sitter_time_range($startTime, $endTime): string {
             </div>
             <div class="confirm-modal-message" id="confirmMessage">
                 Are you sure you want to perform this action?
+            </div>
+            <div id="declineReasonGroup" class="confirm-reason-group" style="display:none;">
+                <label for="declineReasonInput" class="confirm-reason-label">Reason (Optional)</label>
+                <textarea id="declineReasonInput" class="confirm-reason-input" rows="3" placeholder="Enter reason for declining..."></textarea>
             </div>
             <div class="confirm-modal-actions">
                 <button class="confirm-btn confirm-btn-cancel" onclick="closeConfirmModal()">Cancel</button>

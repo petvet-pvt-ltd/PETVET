@@ -241,7 +241,6 @@ switch ($module) {
         switch ($page) {
             case 'dashboard': $c->dashboard(); break;
             case 'bookings': $c->bookings(); break;
-            case 'pets': $c->pets(); break;
             case 'availability': $c->availability(); break;
             case 'settings': $c->settings(); break;
             default: show404("This sitter page doesn't exist."); break;

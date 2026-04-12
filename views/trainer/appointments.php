@@ -71,6 +71,52 @@ $pageTitle = "Training Appointments";
             background: #7c3aed;
         }
 
+        .confirm-btn-cancel {
+            background: #fff;
+            color: #8b5cf6;
+            border: 2px solid #8b5cf6;
+        }
+
+        .confirm-btn-cancel:hover {
+            background: #7c3aed;
+            border-color: #7c3aed;
+            color: #fff;
+        }
+
+        .confirm-reason-group {
+            margin-top: 12px;
+            text-align: left;
+        }
+
+        .confirm-reason-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+
+        .confirm-reason-input {
+            width: 100%;
+            min-height: 70px;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+            outline: none;
+            background: #fff;
+        }
+
+        .confirm-reason-input:focus {
+            border-color: rgba(139, 92, 246, 0.7);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+        }
+
+        #confirmModal .confirm-modal-actions {
+            margin-top: 16px;
+        }
+
         /* Training type badges */
         .training-type-badge {
             display: inline-block;
@@ -259,7 +305,18 @@ $pageTitle = "Training Appointments";
                         </div>
                         <div class="booking-date"><?php echo date('M d, Y', strtotime($session['next_session_date'])); ?></div>
                     </div>
-                    <div class="booking-status status-confirmed">Confirmed</div>
+                        <div class="booking-status-wrap">
+                            <?php if (!empty($session['distance_km'])): ?>
+                                <span class="clinic-item-distance" title="Distance from your location">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 0 1 18 0Z"></path>
+                                        <circle cx="12" cy="10" r="3"></circle>
+                                    </svg>
+                                    <?php echo htmlspecialchars($session['distance_km']); ?> km
+                                </span>
+                            <?php endif; ?>
+                            <div class="booking-status status-confirmed">Confirmed</div>
+                        </div>
                 </div>
                 <div class="booking-details">
                     <div class="detail-item">
@@ -275,14 +332,30 @@ $pageTitle = "Training Appointments";
                         <span><?php echo htmlspecialchars($session['pet_breed']); ?></span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-icon">📍</span>
-                        <span><?php echo htmlspecialchars($session['location']); ?></span>
+                            <span class="detail-icon">📍</span>
+                            <span>
+                                <?php echo htmlspecialchars($session['location']); ?>
+                                <?php if (!empty($session['location_lat']) && !empty($session['location_lng'])): ?>
+                                    <a class="map-nav-btn" target="_blank" rel="noopener"
+                                       href="https://www.google.com/maps?q=<?php echo urlencode($session['location_lat'] . ',' . $session['location_lng']); ?>"
+                                       title="Open in Google Maps">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 0 1 18 0Z"></path>
+                                            <circle cx="12" cy="10" r="3"></circle>
+                                        </svg>
+                                    </a>
+                                <?php endif; ?>
+                            </span>
                     </div>
                 </div>
                 <div class="booking-description">
-                    <strong>Sessions Completed:</strong> <?php echo $session['session_number']; ?>
+                        <?php if (!empty($session['session_number'])): ?>
+                            <strong>Sessions Completed:</strong> <?php echo (int)$session['session_number']; ?>
+                        <?php else: ?>
+                            <strong>Status:</strong> Not started yet
+                        <?php endif; ?>
                     <?php if (!empty($session['next_session_goals'])): ?>
-                    <br><strong>Today's Goals:</strong> <?php echo htmlspecialchars($session['next_session_goals']); ?>
+                    <br><strong>Goals:</strong> <?php echo htmlspecialchars($session['next_session_goals']); ?>
                     <?php endif; ?>
                 </div>
                 <div class="booking-actions">
@@ -364,6 +437,11 @@ $pageTitle = "Training Appointments";
             <form id="completeSessionForm" style="padding-top: 1rem;">
                 <input type="hidden" id="sessionId" name="session_id">
                 
+                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: rgba(139, 92, 246, 0.1); border-radius: 6px; margin-bottom: 1rem;">
+                    <input type="checkbox" id="markProgramComplete" name="mark_program_complete" style="width: 18px; height: 18px;">
+                    <label for="markProgramComplete" style="margin: 0; font-weight: 500;">Mark entire training program as complete</label>
+                </div>
+
                 <div style="margin-bottom: 1rem;">
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Session Notes *</label>
                     <textarea id="sessionNotes" name="notes" rows="6" placeholder="Record observations, behavior changes, commands practiced, special notes about the dog, challenges faced, improvements noticed, etc." required style="width: 100%; padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem; box-sizing: border-box; resize: vertical;"></textarea>
@@ -388,11 +466,6 @@ $pageTitle = "Training Appointments";
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Next Session Goals</label>
                         <textarea id="nextSessionGoals" name="next_session_goals" rows="3" placeholder="What will you focus on in the next session?" style="width: 100%; padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem; box-sizing: border-box; resize: vertical;"></textarea>
                     </div>
-                </div>
-
-                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: rgba(139, 92, 246, 0.1); border-radius: 6px; margin-bottom: 1rem;">
-                    <input type="checkbox" id="markProgramComplete" name="mark_program_complete" style="width: 18px; height: 18px;">
-                    <label for="markProgramComplete" style="margin: 0; font-weight: 500;">Mark entire training program as complete</label>
                 </div>
 
                 <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
@@ -426,6 +499,10 @@ $pageTitle = "Training Appointments";
             </div>
             <div class="confirm-modal-message" id="confirmMessage">
                 Are you sure you want to perform this action?
+            </div>
+            <div id="declineReasonGroup" class="confirm-reason-group" style="display:none;">
+                <label for="declineReasonInput" class="confirm-reason-label">Reason (Optional)</label>
+                <textarea id="declineReasonInput" class="confirm-reason-input" rows="3" placeholder="Enter reason for declining..."></textarea>
             </div>
             <div class="confirm-modal-actions">
                 <button class="confirm-btn confirm-btn-cancel" onclick="closeConfirmModal()">Cancel</button>
