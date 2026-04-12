@@ -279,10 +279,10 @@ function format_sitter_time_range($startTime, $endTime): string {
                         <span class="detail-icon"><?php echo $booking['pet_type'] == 'Dog' ? '🐕' : '🐱'; ?></span>
                         <span><?php echo htmlspecialchars($booking['pet_breed']); ?></span>
                     </div>
-                    <div class="detail-item">
+                    <div class="detail-item detail-item--location">
                         <span class="detail-icon">📍</span>
-                        <span>
-                            <?php echo htmlspecialchars($booking['location']); ?>
+                        <span class="detail-value--location">
+                            <span class="location-text"><?php echo htmlspecialchars($booking['location']); ?></span>
                             <?php if (!empty($booking['location_lat']) && !empty($booking['location_lng'])): ?>
                                 <a class="map-nav-btn" target="_blank" rel="noopener"
                                    href="https://www.google.com/maps?q=<?php echo urlencode($booking['location_lat'] . ',' . $booking['location_lng']); ?>"
@@ -330,10 +330,10 @@ function format_sitter_time_range($startTime, $endTime): string {
                         <span class="detail-icon"><?php echo $booking['pet_type'] == 'Dog' ? '🐕' : '🐱'; ?></span>
                         <span><?php echo htmlspecialchars($booking['pet_breed']); ?></span>
                     </div>
-                    <div class="detail-item">
+                    <div class="detail-item detail-item--location">
                         <span class="detail-icon">📍</span>
-                        <span>
-                            <?php echo htmlspecialchars($booking['location']); ?>
+                        <span class="detail-value--location">
+                            <span class="location-text"><?php echo htmlspecialchars($booking['location']); ?></span>
                             <?php if (!empty($booking['location_lat']) && !empty($booking['location_lng'])): ?>
                                 <a class="map-nav-btn" target="_blank" rel="noopener"
                                    href="https://www.google.com/maps?q=<?php echo urlencode($booking['location_lat'] . ',' . $booking['location_lng']); ?>"
@@ -380,9 +380,9 @@ function format_sitter_time_range($startTime, $endTime): string {
                         <span class="detail-icon"><?php echo $booking['pet_type'] == 'Dog' ? '🐕' : '🐱'; ?></span>
                         <span><?php echo htmlspecialchars($booking['pet_breed']); ?></span>
                     </div>
-                    <div class="detail-item">
+                    <div class="detail-item detail-item--location">
                         <span class="detail-icon">📍</span>
-                        <span><?php echo htmlspecialchars($booking['location']); ?></span>
+                        <span class="detail-value--location"><span class="location-text"><?php echo htmlspecialchars($booking['location']); ?></span></span>
                     </div>
                 </div>
                 <div class="booking-description">

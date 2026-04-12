@@ -259,10 +259,10 @@ $pageTitle = "Training Appointments";
                         <span class="detail-icon">🐕</span>
                         <span><?php echo htmlspecialchars($request['pet_breed']); ?></span>
                     </div>
-                    <div class="detail-item">
+                    <div class="detail-item detail-item--location">
                         <span class="detail-icon">📍</span>
-                        <span>
-                            <?php echo htmlspecialchars($request['location']); ?>
+                        <span class="detail-value--location">
+                            <span class="location-text"><?php echo htmlspecialchars($request['location']); ?></span>
                             <?php if (!empty($request['location_lat']) && !empty($request['location_lng'])): ?>
                                 <a class="map-nav-btn" target="_blank" rel="noopener"
                                    href="https://www.google.com/maps?q=<?php echo urlencode($request['location_lat'] . ',' . $request['location_lng']); ?>"
@@ -331,10 +331,10 @@ $pageTitle = "Training Appointments";
                         <span class="detail-icon">🐕</span>
                         <span><?php echo htmlspecialchars($session['pet_breed']); ?></span>
                     </div>
-                    <div class="detail-item">
+                    <div class="detail-item detail-item--location">
                             <span class="detail-icon">📍</span>
-                            <span>
-                                <?php echo htmlspecialchars($session['location']); ?>
+                            <span class="detail-value--location">
+                                <span class="location-text"><?php echo htmlspecialchars($session['location']); ?></span>
                                 <?php if (!empty($session['location_lat']) && !empty($session['location_lng'])): ?>
                                     <a class="map-nav-btn" target="_blank" rel="noopener"
                                        href="https://www.google.com/maps?q=<?php echo urlencode($session['location_lat'] . ',' . $session['location_lng']); ?>"
