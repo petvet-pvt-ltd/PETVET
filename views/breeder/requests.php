@@ -289,7 +289,7 @@ $pageTitle = "Breeding Requests";
                 </div>
                 <?php endif; ?>
                 <div class="booking-actions">
-                    <button class="btn btn-primary" onclick="showAcceptModal(<?php echo $request['id']; ?>, '<?php echo addslashes($request['pet_name']); ?>', '<?php echo addslashes($request['owner_name']); ?>')">Accept</button>
+                    <button class="btn btn-primary" onclick="showAcceptModal(<?php echo $request['id']; ?>, '<?php echo addslashes($request['pet_name']); ?>', '<?php echo addslashes($request['owner_name']); ?>', '<?php echo addslashes($request['gender']); ?>')">Accept</button>
                     <button class="btn btn-danger" onclick="showDeclineModal(<?php echo $request['id']; ?>, '<?php echo addslashes($request['pet_name']); ?>', '<?php echo addslashes($request['owner_name']); ?>')">Decline</button>
                     <button class="btn btn-outline" 
                         data-owner-name="<?php echo htmlspecialchars($request['owner_name'] ?? ''); ?>" 
