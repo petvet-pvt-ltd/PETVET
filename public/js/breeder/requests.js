@@ -92,9 +92,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Show Accept Request Modal
 let currentRequestId = null;
+let currentClientPetGender = '';
 
-function showAcceptModal(requestId, petName, ownerName) {
+function normalizeGender(value) {
+    const v = String(value || '').trim().toLowerCase();
+    if (v === 'male' || v === 'm') return 'male';
+    if (v === 'female' || v === 'f') return 'female';
+    return '';
+}
+
+function showAcceptModal(requestId, petName, ownerName, clientPetGender) {
     currentRequestId = requestId;
+    currentClientPetGender = normalizeGender(clientPetGender);
     document.getElementById('acceptPetName').textContent = petName;
     document.getElementById('acceptOwnerName').textContent = ownerName;
     
@@ -109,6 +118,7 @@ function closeAcceptModal() {
     document.getElementById('acceptModal').classList.remove('active');
     document.getElementById('selectBreedingPet').value = '';
     currentRequestId = null;
+    currentClientPetGender = '';
     updateModalOpenState();
 }
 
@@ -125,7 +135,9 @@ function loadBreedingPets() {
                     data.pets.forEach(pet => {
                         const option = document.createElement('option');
                         option.value = pet.id;
-                        option.textContent = `${pet.name} (${pet.breed})`;
+                        option.dataset.gender = normalizeGender(pet.gender);
+                        const genderLabel = String(pet.gender || '').trim();
+                        option.textContent = genderLabel ? `${pet.name} (${pet.breed}) - ${genderLabel}` : `${pet.name} (${pet.breed})`;
                         select.appendChild(option);
                     });
                 } else {
@@ -143,10 +155,19 @@ function loadBreedingPets() {
 }
 
 function confirmAcceptRequest() {
-    const breedingPetId = document.getElementById('selectBreedingPet').value;
+    const select = document.getElementById('selectBreedingPet');
+    const breedingPetId = select.value;
     
     if (!breedingPetId) {
         alert('Please select a breeding pet');
+        return;
+    }
+
+    // Prevent same-gender breeding selection
+    const selectedOption = select.options[select.selectedIndex];
+    const breederPetGender = selectedOption ? normalizeGender(selectedOption.dataset.gender) : '';
+    if (currentClientPetGender && breederPetGender && currentClientPetGender === breederPetGender) {
+        alert('Breeding not possible: selected pet has the same gender as the client pet. Please choose an opposite gender pet.');
         return;
     }
     
