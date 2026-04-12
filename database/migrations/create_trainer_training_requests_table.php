@@ -32,7 +32,7 @@ try {
 
         additional_notes TEXT NULL,
 
-        status ENUM('pending','accepted','declined') NOT NULL DEFAULT 'pending',
+        status ENUM('pending','accepted','declined','completed') NOT NULL DEFAULT 'pending',
         trainer_response_at DATETIME NULL,
         decline_reason VARCHAR(255) NULL,
 

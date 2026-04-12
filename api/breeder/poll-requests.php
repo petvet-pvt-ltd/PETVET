@@ -41,6 +41,11 @@ try {
         $out[$status][] = $id;
     }
 
+    // Stable ordering (oldest-first), especially for pending
+    sort($out['pending']);
+    sort($out['approved']);
+    sort($out['completed']);
+
     echo json_encode([
         'success' => true,
         'request_ids' => $out,

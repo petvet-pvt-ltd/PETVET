@@ -125,7 +125,7 @@ $activeClinics = $stmt->fetchColumn() ?: 0;
     </div>
 
     <!-- Enhanced Charts Section -->
-    <div class="dashboard-grid">
+    <div class="dashboard-grid dashboard-grid-single">
       <div class="chart-large">
         <div class="chart-header">
           <div>
@@ -157,52 +157,6 @@ $activeClinics = $stmt->fetchColumn() ?: 0;
               <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">System</div>
               <div style="font-size: 20px; font-weight: 700;">Settings</div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="chart-side">
-        <div class="chart-header">
-          <div>
-            <h3>System Status</h3>
-            <p class="muted">Platform health</p>
-          </div>
-        </div>
-        <div style="padding: 20px;">
-          <div style="margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-              <span style="font-size: 14px; color: #6B7280;">Database</span>
-              <span style="font-size: 14px; font-weight: 600; color: #059669;">Online</span>
-            </div>
-            <div style="height: 6px; background: #E5E7EB; border-radius: 3px; overflow: hidden;">
-              <div style="width: 100%; height: 100%; background: linear-gradient(90deg, #059669, #10B981);"></div>
-            </div>
-          </div>
-          <div style="margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-              <span style="font-size: 14px; color: #6B7280;">Server</span>
-              <span style="font-size: 14px; font-weight: 600; color: #059669;">Healthy</span>
-            </div>
-            <div style="height: 6px; background: #E5E7EB; border-radius: 3px; overflow: hidden;">
-              <div style="width: 95%; height: 100%; background: linear-gradient(90deg, #059669, #10B981);"></div>
-            </div>
-          </div>
-          <div style="margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-              <span style="font-size: 14px; color: #6B7280;">API Status</span>
-              <span style="font-size: 14px; font-weight: 600; color: #059669;">Active</span>
-            </div>
-            <div style="height: 6px; background: #E5E7EB; border-radius: 3px; overflow: hidden;">
-              <div style="width: 100%; height: 100%; background: linear-gradient(90deg, #059669, #10B981);"></div>
-            </div>
-          </div>
-          <div style="margin-top: 30px; padding: 15px; background: #F3F4F6; border-radius: 8px;">
-            <div style="font-size: 12px; color: #6B7280; margin-bottom: 5px;">Total Users</div>
-            <div style="font-size: 24px; font-weight: 700; color: #1F2937;"><?= $totalUsers ?></div>
-          </div>
-          <div style="margin-top: 15px; padding: 15px; background: #F3F4F6; border-radius: 8px;">
-            <div style="font-size: 12px; color: #6B7280; margin-bottom: 5px;">Active Clinics</div>
-            <div style="font-size: 24px; font-weight: 700; color: #1F2937;"><?= $activeClinics ?></div>
           </div>
         </div>
       </div>

@@ -363,7 +363,9 @@ document.addEventListener('DOMContentLoaded', () => {
 					email: report.contact.email,
 					photos: report.photos || [],
 					latitude: report.latitude,
-					longitude: report.longitude
+					longitude: report.longitude,
+					petId: report.pet_id || null,
+					listingSource: report.listing_source || (report.pet_id ? 'my-pet-missing' : 'manual-report')
 				}));
 			} else {
 				console.error('Failed to load listings:', result.message);
@@ -387,28 +389,60 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 
 		myListingsContent.innerHTML = '';
-		myListings.forEach((listing) => {
-			const item = document.createElement('div');
-			item.className = 'listing-item';
-			
-			const photoHtml = listing.photos && listing.photos[0] 
-				? `<img src="${listing.photos[0]}" class="listing-thumb" alt="${listing.name}">`
-				: `<div class="listing-thumb-fallback">${listing.species.charAt(0).toUpperCase()}</div>`;
 
-			item.innerHTML = `
-				${photoHtml}
-				<div class="listing-details">
-					<h4 class="listing-title">${listing.name || 'Unknown Name'}</h4>
-					<div class="listing-meta">${listing.species} • ${listing.location} • ${listing.date}</div>
-					<span class="listing-badge ${listing.type}">${listing.type.toUpperCase()}</span>
-				</div>
-				<div class="listing-actions">
-					<button class="btn outline edit-listing-btn" data-id="${listing.id}">Edit</button>
-					<button class="btn danger delete-listing-btn" data-id="${listing.id}" data-name="${listing.name || 'this pet'}">Delete</button>
+		const myPetMissingListings = myListings.filter(listing => listing.listingSource === 'my-pet-missing');
+		const otherListings = myListings.filter(listing => listing.listingSource !== 'my-pet-missing');
+
+		const renderSection = (title, subtitle, listings) => {
+			if (!listings.length) return;
+
+			const section = document.createElement('section');
+			section.className = 'listing-section';
+			section.innerHTML = `
+				<div class="listing-section-header">
+					<h4 class="listing-section-title">${title}</h4>
+					<p class="listing-section-subtitle">${subtitle}</p>
 				</div>
 			`;
-			myListingsContent.appendChild(item);
-		});
+
+			listings.forEach((listing) => {
+				const item = document.createElement('div');
+				item.className = 'listing-item';
+
+				const photoHtml = listing.photos && listing.photos[0]
+					? `<img src="${listing.photos[0]}" class="listing-thumb" alt="${listing.name}">`
+					: `<div class="listing-thumb-fallback">${listing.species.charAt(0).toUpperCase()}</div>`;
+
+				item.innerHTML = `
+					${photoHtml}
+					<div class="listing-details">
+						<h4 class="listing-title">${listing.name || 'Unknown Name'}</h4>
+						<div class="listing-meta">${listing.species} • ${listing.location} • ${listing.date}</div>
+						<span class="listing-badge ${listing.type}">${listing.type.toUpperCase()}</span>
+					</div>
+					<div class="listing-actions">
+						<button class="btn outline edit-listing-btn" data-id="${listing.id}">Edit</button>
+						<button class="btn danger delete-listing-btn" data-id="${listing.id}" data-name="${listing.name || 'this pet'}">Delete</button>
+					</div>
+				`;
+
+				section.appendChild(item);
+			});
+
+			myListingsContent.appendChild(section);
+		};
+
+		renderSection(
+			'Missing Pets (From My Pets)',
+			'Pets you marked as missing from your My Pets page.',
+			myPetMissingListings
+		);
+
+		renderSection(
+			'Other Reports',
+			'Lost or found listings you reported directly in Lost & Found.',
+			otherListings
+		);
 
 		setupListingButtons();
 	}

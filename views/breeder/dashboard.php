@@ -20,6 +20,31 @@ $pageTitle = "Dashboard";
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?> - PetVet Breeder</title>
     <link rel="stylesheet" href="<?= asset('css/breeder/dashboard.css') ?>">
+    <style>
+        /* Force stats cards layout to match sitter dashboard */
+        .main-content .stats-grid{display:grid !important; grid-template-columns:repeat(4, 1fr) !important; gap:20px !important; margin-bottom:30px !important}
+        @media (max-width:1200px){.main-content .stats-grid{grid-template-columns:repeat(2, 1fr) !important; gap:15px !important}}
+        @media (max-width:768px){.main-content .stats-grid{grid-template-columns:repeat(2, 1fr) !important; gap:10px !important}}
+
+        /* Match sitter card look (container only; does not change fonts) */
+        .main-content .stats-grid .stat-card{
+            background:#fff !important;
+            padding:25px !important;
+            border-radius:12px !important;
+            box-shadow:0 2px 10px rgba(0, 0, 0, 0.1) !important;
+            border-left:4px solid #f59e0b !important;
+            transition:transform 0.2s ease, box-shadow 0.2s ease !important;
+            display:block !important;
+        }
+        .main-content .stats-grid .stat-card:hover{
+            transform:translateY(-2px) !important;
+            box-shadow:0 4px 20px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        /* Slightly larger text inside the 4 stat cards only */
+        .main-content .stats-grid .stat-card .stat-number{font-size:34px !important;}
+        .main-content .stats-grid .stat-card .stat-label{font-size:16px !important;}
+    </style>
 </head>
 <body>
     <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>

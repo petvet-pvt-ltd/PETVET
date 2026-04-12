@@ -227,34 +227,50 @@ body {
 .upcoming-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 6px;
+  max-height: 480px;
+  overflow-y: scroll;
+  padding-right: 6px;
+  scroll-behavior: smooth;
+}
+
+.upcoming-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.upcoming-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.upcoming-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.upcoming-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .upcoming-item {
   display: flex;
+  align-items: center;
   gap: 16px;
-  padding: 16px;
-  border-radius: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
   background: #f8fafc;
   transition: background-color 0.2s, transform 0.2s;
   cursor: pointer;
+  min-height: 50px;
 }
 
 .upcoming-item:hover {
   background: #f1f5f9;
-  transform: translateX(4px);
+  transform: translateX(2px);
 }
 
 .upcoming-date {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: white;
-  border-radius: 8px;
-  padding: 8px 12px;
-  min-width: 60px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: none;
 }
 
 .date-day {
@@ -275,25 +291,36 @@ body {
 .upcoming-details {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  gap: 24px;
+  align-items: center;
 }
 
 .upcoming-time {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #3b82f6;
+  white-space: nowrap;
+  min-width: 70px;
 }
 
 .upcoming-client {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #1e293b;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .upcoming-vet {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 100px;
 }
 
 /* Utility Classes */
