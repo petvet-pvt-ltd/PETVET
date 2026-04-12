@@ -141,6 +141,36 @@ body.modal-open {
     font-size: 16px;
 }
 
+/* Location value layout (keeps long addresses + map button aligned) */
+.detail-item--location {
+    align-items: center;
+}
+
+.detail-item--location .detail-icon {
+    line-height: 1;
+}
+
+.detail-value--location {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.detail-value--location .location-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.detail-value--location .map-nav-btn {
+    margin-left: 0;
+    flex-shrink: 0;
+}
+
 .booking-description {
     background: #f8f9fa;
     padding: 15px;
