@@ -9,12 +9,13 @@ class MedicalRecordsModel extends BaseModel
             SELECT 
                 mr.*,
                 mr.appointment_id,
-                p.name AS pet_name,
-                CONCAT(u.first_name, ' ', u.last_name) AS owner_name
+                                COALESCE(p.name, a.guest_pet_name) AS pet_name,
+                                COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) AS owner_name,
+                                a.guest_phone AS guest_phone
             FROM medical_records mr
             JOIN appointments a ON a.id = mr.appointment_id
-            JOIN pets p        ON p.id = a.pet_id
-            JOIN users u       ON u.id = a.pet_owner_id
+                        LEFT JOIN pets p   ON p.id = a.pet_id
+                        LEFT JOIN users u  ON u.id = a.pet_owner_id
             WHERE a.vet_id = :vet_id
               AND a.clinic_id = :clinic_id
             ORDER BY mr.created_at DESC
@@ -30,12 +31,13 @@ class MedicalRecordsModel extends BaseModel
             SELECT 
                 mr.*,
                 mr.appointment_id,
-                p.name AS pet_name,
-                CONCAT(u.first_name, ' ', u.last_name) AS owner_name
+                                COALESCE(p.name, a.guest_pet_name) AS pet_name,
+                                COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) AS owner_name,
+                                a.guest_phone AS guest_phone
             FROM medical_records mr
             JOIN appointments a ON a.id = mr.appointment_id
-            JOIN pets p        ON p.id = a.pet_id
-            JOIN users u       ON u.id = a.pet_owner_id
+                        LEFT JOIN pets p   ON p.id = a.pet_id
+                        LEFT JOIN users u  ON u.id = a.pet_owner_id
             WHERE mr.appointment_id = :appointment_id
               AND a.vet_id = :vet_id
               AND a.clinic_id = :clinic_id

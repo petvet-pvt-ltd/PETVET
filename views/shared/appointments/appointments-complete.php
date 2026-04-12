@@ -358,17 +358,35 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
             </p>
         </div>
 
-        <!-- Step 4: Pet and Client Details -->
+        <!-- Step 4: Contact & Pet Details -->
         <div class="form-section" id="receptionistDetailsSection" style="display:none;">
-            <h4 class="section-title">Step 4: Pet & Client Details</h4>
+            <h4 class="section-title">Step 4: Contact & Pet Details</h4>
             <div class="form-group">
-                <label>Pet Name</label>
-                <input type="text" id="newPetName" placeholder="Enter pet name" required>
+                <label>Phone Number</label>
+                <input type="tel" id="newCustomerPhone" placeholder="0701234567" required>
             </div>
             <div class="form-group">
                 <label>Client Name</label>
                 <input type="text" id="newClientName" placeholder="Enter client name" required>
             </div>
+            <div class="form-group">
+                <label>Pet Name</label>
+                <input type="text" id="newPetName" placeholder="Enter pet name" required>
+            </div>
+            <div class="form-group" style="display:none;">
+                <label>Pet Type</label>
+                <select id="newPetType" class="select" required>
+                    <option value="other" selected>Other</option>
+                    <option value="dog">Dog</option>
+                    <option value="cat">Cat</option>
+                    <option value="bird">Bird</option>
+                    <option value="rabbit">Rabbit</option>
+                    <option value="hamster">Hamster</option>
+                    <option value="guinea_pig">Guinea Pig</option>
+                    <option value="reptile">Reptile</option>
+                </select>
+            </div>
+            <input type="hidden" id="newCustomerEmail" value="">
         </div>
 
         <div class="modal-actions">

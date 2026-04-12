@@ -802,16 +802,73 @@
     
     // Add appointment with validation
     window.saveAppointment = function() {
-        const petInput = document.getElementById('newPetName');
-        const clientInput = document.getElementById('newClientName');
+        const phoneInput = document.getElementById('newCustomerPhone');
         const vetInput = document.getElementById('newVetName');
         const dateInput = document.getElementById('newDate');
         const timeInput = document.getElementById('newTime');
         const appointmentTypeInput = document.getElementById('newAppointmentType');
+        const emailInput = document.getElementById('newCustomerEmail');
         
-        // Validate all fields are filled
-        if (!petInput.value.trim() || !clientInput.value.trim() || !vetInput.value.trim() || 
-            !dateInput.value || !timeInput.value || !appointmentTypeInput.value) {
+        // Check if this is a registered user
+        const isRegisteredUser = window.currentRegisteredUserId != null;
+        
+        // For registered users, get pet info from dropdown
+        // For walk-ins, get pet info from text inputs
+        let petId = null;
+        let petName = '';
+        let petType = '';
+        let clientName = '';
+        let guestPhone = phoneInput.value.trim();
+        let guestClientName = '';
+        let guestEmail = emailInput.value.trim() || null;
+        
+        if (isRegisteredUser) {
+            const petSelect = document.getElementById('registeredUserPetSelect');
+            const newPetNameInput = document.getElementById('newRegisteredPetName');
+            const newPetTypeInput = document.getElementById('newRegisteredPetType');
+            
+            if (!petSelect.value) {
+                showNotification('Please select a pet from the list or add a new pet', 'Pet Selection Required', 'error');
+                return;
+            }
+            
+            if (petSelect.value === 'other') {
+                // Adding a new pet
+                if (!newPetNameInput.value.trim() || !newPetTypeInput.value) {
+                    showNotification('Please enter the new pet name and type', 'New Pet Required', 'error');
+                    return;
+                }
+                petName = newPetNameInput.value.trim();
+                petType = newPetTypeInput.value;
+            } else {
+                // Using existing pet - get from user_pets array
+                // We need to find the pet name and species from the dropdown
+                const selectedOption = petSelect.options[petSelect.selectedIndex];
+                petId = petSelect.value;
+                petName = selectedOption.text;
+                // Pet type should be fetched or stored during dropdown population
+                // For now, we'll need to enhance this later, but we have pet_id
+            }
+        } else {
+            // Walk-in flow
+            const petInput = document.getElementById('newPetName');
+            const clientInput = document.getElementById('newClientName');
+            const petTypeInput = document.getElementById('newPetType');
+            
+            if (!petInput.value.trim() || !clientInput.value.trim() || !petTypeInput.value) {
+                showNotification('Please complete all steps and fill in all required fields', 'Validation Error', 'error');
+                return;
+            }
+            
+            petName = petInput.value.trim();
+            petType = petTypeInput.value;
+            clientName = clientInput.value.trim();
+            guestClientName = clientName;
+        }
+        
+        // Validate common fields
+        if (!phoneInput.value.trim() || !vetInput.value || !dateInput.value || !timeInput.value || 
+            !appointmentTypeInput.value) {
             showNotification('Please complete all steps and fill in all required fields', 'Validation Error', 'error');
             return;
         }
@@ -829,6 +886,9 @@
         const vetSelect = document.getElementById('newVetName');
         const vetName = vetSelect.options[vetSelect.selectedIndex].text;
         
+        // Get pet type name for display
+        const displayPetType = isRegisteredUser ? (petType || 'Pet') : (document.getElementById('newPetType').options[document.getElementById('newPetType').selectedIndex].text);
+        
         // Format for confirmation
         const dateFormatted = new Date(dateInput.value).toLocaleDateString('en-US', {
             weekday: 'long',
@@ -843,9 +903,12 @@
             hour12: true
         });
         
+        const displayOwner = isRegisteredUser ? (document.getElementById('registeredUserName').textContent || 'Registered User') : guestClientName;
+        
         const confirmMessage = `Please confirm the new appointment details:<br><br>
-                               <strong>Pet:</strong> ${petInput.value}<br>
-                               <strong>Owner:</strong> ${clientInput.value}<br>
+                               <strong>Phone:</strong> ${guestPhone}<br>
+                               <strong>Owner:</strong> ${displayOwner}<br>
+                               <strong>Pet:</strong> ${petName} (${displayPetType})<br>
                                <strong>Type:</strong> ${appointmentTypeInput.options[appointmentTypeInput.selectedIndex].text}<br>
                                <strong>Vet:</strong> ${vetName}<br>
                                <strong>Date:</strong> ${dateFormatted}<br>
@@ -863,6 +926,37 @@
             const urlParams = new URLSearchParams(window.location.search);
             const module = urlParams.get('module') || 'clinic-manager';
             
+            // Build request body based on user type
+            const requestBody = {
+                vet_id: vetInput.value,
+                appointment_date: dateInput.value,
+                appointment_time: timeInput.value,
+                appointment_type: appointmentTypeInput.value
+            };
+            
+            if (isRegisteredUser && petId) {
+                // Registered user with existing pet
+                requestBody.pet_owner_id = window.currentRegisteredUserId;
+                requestBody.pet_id = petId;
+                requestBody.is_walk_in = false;
+            } else if (isRegisteredUser) {
+                // Registered user adding new pet
+                const newPetNameInput = document.getElementById('newRegisteredPetName');
+                const newPetTypeInput = document.getElementById('newRegisteredPetType');
+                requestBody.pet_owner_id = window.currentRegisteredUserId;
+                requestBody.new_pet_name = newPetNameInput.value.trim();
+                requestBody.new_pet_type = newPetTypeInput.value;
+                requestBody.is_walk_in = false;
+            } else {
+                // Walk-in customer
+                requestBody.guest_phone = guestPhone;
+                requestBody.guest_client_name = guestClientName;
+                requestBody.guest_pet_name = petName;
+                requestBody.guest_pet_type = petType;
+                requestBody.guest_email = guestEmail;
+                requestBody.is_walk_in = true;
+            }
+            
             // Submit to API
             fetch(`/PETVET/api/${module}/add-appointment.php`, {
                 method: 'POST',
@@ -870,14 +964,7 @@
                     'Content-Type': 'application/json',
                 },
                 credentials: 'same-origin',
-                body: JSON.stringify({
-                    pet_name: petInput.value.trim(),
-                    client_name: clientInput.value.trim(),
-                    vet_id: vetInput.value,
-                    appointment_date: dateInput.value,
-                    appointment_time: timeInput.value,
-                    appointment_type: appointmentTypeInput.value
-                })
+                body: JSON.stringify(requestBody)
             })
             .then(response => response.json())
             .then(data => {
@@ -887,7 +974,7 @@
                 }
                 
                 if (data.success) {
-                    showNotification(`Appointment successfully created for ${petInput.value} on ${dateFormatted} at ${timeFormatted}`, 'Appointment Created', 'success');
+                    showNotification(`Appointment successfully created for ${petName} on ${dateFormatted} at ${timeFormatted}`, 'Appointment Created', 'success');
                     closeModal('addModal');
                     
                     // Reset form using receptionist booking reset function
@@ -968,13 +1055,15 @@
         const apiModule = module.replace('_', '-');
         
         // Use module-specific API endpoint
-        const apiUrl = `/PETVET/api/${apiModule}/get-appointments.php?view=${currentView}&vet=${encodeURIComponent(selectedVet)}`;
+        const cacheBust = Date.now();
+        const apiUrl = `/PETVET/api/${apiModule}/get-appointments.php?view=${currentView}&vet=${encodeURIComponent(selectedVet)}&ts=${cacheBust}`;
         
         console.log(`🔄 Refreshing calendar (${currentView} view) from: ${apiUrl}${forceUpdate ? ' [FORCED]' : ''}`);
         
         fetch(apiUrl, {
             method: 'GET',
-            credentials: 'same-origin'
+            credentials: 'same-origin',
+            cache: 'no-store'
         })
         .then(response => {
             if (!response.ok) {

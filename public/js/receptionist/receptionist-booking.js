@@ -9,6 +9,184 @@ let receptionistSelectedDate = null;
 let receptionistSelectedTime = null;
 let receptionistSelectedVet = null;
 let receptionistDisabledDates = [];
+let walkinCustomerPhone = null;
+
+/**
+ * Handle phone number input validation
+ */
+function handlePhoneInput() {
+  const phoneInput = document.getElementById('newCustomerPhone');
+  const phone = phoneInput.value.trim();
+
+  // Store phone without validation
+  walkinCustomerPhone = phone;
+}
+
+/**
+ * Manually check history when button is clicked
+ */
+function handleCheckHistoryButtonClick() {
+  const phoneInput = document.getElementById('newCustomerPhone');
+  const phone = phoneInput.value.trim();
+  
+  if (!phone) {
+    showNotification('Please enter a valid phone number', 'Invalid Phone', 'error');
+    return;
+  }
+  
+  walkinCustomerPhone = phone;
+  checkPreviousVisits(phone);
+}
+
+/**
+ * Check for previous visits by phone number with loading state
+ */
+function checkPreviousVisits(phone) {
+  const checkHistoryBtn = document.getElementById('checkHistoryBtn');
+  const summaryDiv = document.getElementById('previousVisitsSummary');
+  const visitsList = document.getElementById('previousVisitsList');
+  const module = new URLSearchParams(window.location.search).get('module') || 'clinic-manager';
+  
+  // Show loading state
+  if (checkHistoryBtn) {
+    checkHistoryBtn.disabled = true;
+    checkHistoryBtn.innerHTML = '<span style="margin-right: 8px;">⏳</span>Checking...';
+  }
+  
+  // Show loading in previous visits section
+  if (visitsList) {
+    visitsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #64748b;"><span style="font-size: 20px; display: inline-block;">⏳</span> Loading...</div>';
+    if (summaryDiv) summaryDiv.style.display = 'block';
+  }
+  
+  fetch(`/PETVET/api/${module}/check-walk-in-history.php?phone=` + encodeURIComponent(phone), {
+    credentials: 'same-origin'
+  })
+  .then(response => {
+    // Check for non-200 status
+    if (!response.ok) {
+      return response.json().then(data => {
+        throw new Error(data.error || `Server error: ${response.status}`);
+      });
+    }
+    return response.json();
+  })
+  .then(data => {
+    // Restore button
+    if (checkHistoryBtn) {
+      checkHistoryBtn.disabled = false;
+      checkHistoryBtn.innerHTML = 'Check History';
+    }
+    
+    if (!data.success) {
+      const errorMsg = 'Error: ' + (data.error || 'Failed to check history');
+      if (typeof showNotification === 'function') {
+        showNotification(errorMsg, 'Error', 'error');
+      } else {
+        console.error(errorMsg);
+        alert(errorMsg);
+      }
+      if (summaryDiv) summaryDiv.style.display = 'none';
+      return;
+    }
+    
+    // Show registered user info if applicable
+    const registeredUserInfo = document.getElementById('registeredUserInfo');
+    const userNameEl = document.getElementById('registeredUserName');
+    const petSelectionSection = document.getElementById('receptionistPetSelectionSection');
+    
+    if (data.is_registered_user) {
+      if (userNameEl) userNameEl.textContent = data.user_name;
+      if (registeredUserInfo) registeredUserInfo.style.display = 'block';
+      if (petSelectionSection) petSelectionSection.style.display = 'block';
+      
+      // Populate pet dropdown
+      populatePetDropdown(data.user_pets, data.user_id);
+      
+      // Mark as registered user
+      window.currentRegisteredUserId = data.user_id;
+    } else {
+      if (registeredUserInfo) registeredUserInfo.style.display = 'none';
+      if (petSelectionSection) petSelectionSection.style.display = 'none';
+      window.currentRegisteredUserId = null;
+    }
+    
+    // Show previous visits
+    if (data.previous_visits && data.previous_visits.length > 0) {
+      visitsList.innerHTML = data.previous_visits.map(visit => `
+        <div style="
+          padding: 10px;
+          border-bottom: 1px solid #e2e8f0;
+          font-size: 12px;
+          color: #334155;
+        ">
+          <strong>${visit.date}</strong> - ${visit.pet_name} (${visit.pet_type}) - ${visit.type}
+        </div>
+      `).join('');
+      summaryDiv.style.display = 'block';
+    } else {
+      visitsList.innerHTML = '<div style="padding: 15px; text-align: center; color: #94a3b8; font-size: 13px;">No previous visits found</div>';
+      summaryDiv.style.display = 'block';
+    }
+    
+    // Show vet selection section
+    const vetSection = document.getElementById('receptionistVetSection');
+    if (vetSection) vetSection.style.display = 'block';
+  })
+  .catch(err => {
+    console.error('Error checking previous visits:', err);
+    
+    // Restore button
+    if (checkHistoryBtn) {
+      checkHistoryBtn.disabled = false;
+      checkHistoryBtn.innerHTML = 'Check History';
+    }
+    
+    // Show error without showNotification (fallback if function not available)
+    if (typeof showNotification === 'function') {
+      showNotification('Failed to check history: ' + err.message, 'Error', 'error');
+    } else {
+      console.error('Error:', err.message);
+      alert('Failed to check history: ' + err.message);
+    }
+    if (summaryDiv) summaryDiv.style.display = 'none';
+  });
+}
+
+/**
+ * Populate pet dropdown for registered users
+ */
+function populatePetDropdown(userPets, userId) {
+  const petSelect = document.getElementById('registeredUserPetSelect');
+  if (!petSelect) return;
+  
+  // Clear existing pets (keep Select pet and Add New Pet options)
+  petSelect.innerHTML = '<option value="">Select pet</option>';
+  
+  // Add user's pets
+  userPets.forEach(pet => {
+    const option = document.createElement('option');
+    option.value = pet.id;
+    option.textContent = pet.name;
+    petSelect.appendChild(option);
+  });
+  
+  // Add "Add New Pet" option
+  const newPetOption = document.createElement('option');
+  newPetOption.value = 'other';
+  newPetOption.textContent = '+ Add New Pet';
+  petSelect.appendChild(newPetOption);
+  
+  // Add listener
+  petSelect.addEventListener('change', function() {
+    const newPetFields = document.getElementById('newPetFieldsForRegistered');
+    if (this.value === 'other') {
+      if (newPetFields) newPetFields.style.display = 'block';
+    } else {
+      if (newPetFields) newPetFields.style.display = 'none';
+    }
+  });
+}
 
 /**
  * Initialize receptionist booking calendar
@@ -18,6 +196,12 @@ function initReceptionistBooking() {
   
   // Load disabled dates for the clinic
   loadReceptionistDisabledDates();
+  
+  // Add phone input listener
+  const phoneInput = document.getElementById('newCustomerPhone');
+  if (phoneInput) {
+    phoneInput.addEventListener('input', handlePhoneInput);
+  }
 }
 
 /**
@@ -298,19 +482,17 @@ function handleReceptionistVetSelection() {
         dateSection.style.display = 'block';
       }
       
-      // If vet changed, reset date, time, and details
+      // If vet changed, reload dates and reset time selection
       if (previousVet && previousVet !== receptionistSelectedVet) {
         resetFromVetChange();
       }
-      
-      // If date is already selected, reload time slots for new vet
+
+      // Reload disabled dates and calendar, then reload time slots if date selected
+      loadReceptionistDisabledDates();
       if (receptionistSelectedDate) {
         const dateString = formatDateForAPI(receptionistSelectedDate);
         loadReceptionistTimeSlots(dateString);
       }
-      
-      // Render calendar with vet-specific disabled dates
-      renderReceptionistCalendar();
     } else {
       // Hide all subsequent sections if vet is deselected
       hideSubsequentSections('vet');
@@ -330,6 +512,8 @@ function validateReceptionistBooking() {
   const newPetName = document.getElementById('newPetName');
   const newClientName = document.getElementById('newClientName');
   const newAppointmentType = document.getElementById('newAppointmentType');
+  const newCustomerPhone = document.getElementById('newCustomerPhone');
+  const newPetType = document.getElementById('newPetType');
   const saveBtn = document.getElementById('saveAppointmentBtn');
   
   if (!saveBtn) return;
@@ -339,7 +523,9 @@ function validateReceptionistBooking() {
                   newVetName?.value &&
                   newPetName?.value &&
                   newClientName?.value &&
-                  newAppointmentType?.value;
+                  newAppointmentType?.value &&
+                  newCustomerPhone?.value &&
+                  newPetType?.value;
   
   saveBtn.disabled = !isValid;
   
@@ -377,14 +563,10 @@ function formatTime12Hour(time24) {
  * Reset from vet change (cascade reset)
  */
 function resetFromVetChange() {
-  receptionistSelectedDate = null;
   receptionistSelectedTime = null;
-  
-  document.getElementById('newDate').value = '';
+
   document.getElementById('newTime').value = '';
-  document.getElementById('newPetName').value = '';
-  document.getElementById('newClientName').value = '';
-  
+
   const timeSection = document.getElementById('receptionistTimeSection');
   const detailsSection = document.getElementById('receptionistDetailsSection');
   
@@ -403,8 +585,6 @@ function resetFromDateChange() {
   receptionistSelectedTime = null;
   
   document.getElementById('newTime').value = '';
-  document.getElementById('newPetName').value = '';
-  document.getElementById('newClientName').value = '';
   
   const detailsSection = document.getElementById('receptionistDetailsSection');
   if (detailsSection) detailsSection.style.display = 'none';
@@ -414,8 +594,7 @@ function resetFromDateChange() {
  * Reset from time change (cascade reset)
  */
 function resetFromTimeChange() {
-  document.getElementById('newPetName').value = '';
-  document.getElementById('newClientName').value = '';
+  return;
 }
 
 /**
@@ -448,28 +627,38 @@ function resetReceptionistBooking() {
   receptionistSelectedDate = null;
   receptionistSelectedTime = null;
   receptionistSelectedVet = null;
+  walkinCustomerPhone = null;
+  window.currentRegisteredUserId = null;
   
+  const vetSection = document.getElementById('receptionistVetSection');
   const dateSection = document.getElementById('receptionistDateSection');
   const timeSection = document.getElementById('receptionistTimeSection');
   const detailsSection = document.getElementById('receptionistDetailsSection');
-  
+
+  if (vetSection) vetSection.style.display = 'block';
   if (dateSection) dateSection.style.display = 'none';
   if (timeSection) timeSection.style.display = 'none';
   if (detailsSection) detailsSection.style.display = 'none';
   
+  const phoneField = document.getElementById('newCustomerPhone');
   const appointmentTypeField = document.getElementById('newAppointmentType');
   const newDateField = document.getElementById('newDate');
   const newTimeField = document.getElementById('newTime');
   const newVetNameField = document.getElementById('newVetName');
   const newPetNameField = document.getElementById('newPetName');
   const newClientNameField = document.getElementById('newClientName');
+  const newPetTypeField = document.getElementById('newPetType');
+  const newEmailField = document.getElementById('newCustomerEmail');
   
+  if (phoneField) phoneField.value = '';
   if (appointmentTypeField) appointmentTypeField.value = '';
   if (newDateField) newDateField.value = '';
   if (newTimeField) newTimeField.value = '';
   if (newVetNameField) newVetNameField.value = '';
   if (newPetNameField) newPetNameField.value = '';
   if (newClientNameField) newClientNameField.value = '';
+  if (newPetTypeField) newPetTypeField.value = 'other';
+  if (newEmailField) newEmailField.value = '';
   
   loadReceptionistDisabledDates();
   validateReceptionistBooking();

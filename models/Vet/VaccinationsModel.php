@@ -9,12 +9,13 @@ class VaccinationsModel extends BaseModel
             SELECT 
                 vax.*,
                 vax.appointment_id,
-                p.name AS pet_name,
-                CONCAT(u.first_name, ' ', u.last_name) AS owner_name
+                                COALESCE(p.name, a.guest_pet_name) AS pet_name,
+                                COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) AS owner_name,
+                                a.guest_phone AS guest_phone
             FROM vaccinations vax
             JOIN appointments a ON a.id = vax.appointment_id
-            JOIN pets p        ON p.id = a.pet_id
-            JOIN users u       ON u.id = a.pet_owner_id
+                        LEFT JOIN pets p   ON p.id = a.pet_id
+                        LEFT JOIN users u  ON u.id = a.pet_owner_id
             WHERE a.vet_id = :vet_id
               AND a.clinic_id = :clinic_id
             ORDER BY vax.created_at DESC
@@ -40,12 +41,13 @@ class VaccinationsModel extends BaseModel
             SELECT 
                 vax.*,
                 vax.appointment_id,
-                p.name AS pet_name,
-                CONCAT(u.first_name, ' ', u.last_name) AS owner_name
+                                COALESCE(p.name, a.guest_pet_name) AS pet_name,
+                                COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) AS owner_name,
+                                a.guest_phone AS guest_phone
             FROM vaccinations vax
             JOIN appointments a ON a.id = vax.appointment_id
-            JOIN pets p        ON p.id = a.pet_id
-            JOIN users u       ON u.id = a.pet_owner_id
+                        LEFT JOIN pets p   ON p.id = a.pet_id
+                        LEFT JOIN users u  ON u.id = a.pet_owner_id
             WHERE vax.appointment_id = :appointment_id
               AND a.vet_id = :vet_id
               AND a.clinic_id = :clinic_id

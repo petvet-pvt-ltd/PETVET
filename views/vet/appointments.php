@@ -43,25 +43,25 @@ $data = [
 
     <section>
       <h3>Ongoing Appointments</h3>
-      <input id="searchBarOngoing" placeholder="Search appointments...">
+      <input id="searchBarOngoing" placeholder="Search by pet, owner, or phone...">
       <div id="ongoingTableContainer" class="table-wrap"></div>
     </section>
 
     <section>
       <h3>Upcoming Appointments</h3>
-      <input id="searchBarUpcoming" placeholder="Search appointments...">
+      <input id="searchBarUpcoming" placeholder="Search by pet, owner, or phone...">
       <div id="upcomingTableContainer" class="table-wrap"></div>
     </section>
 
     <section>
       <h3>Completed Appointments</h3>
-      <input id="searchBarCompleted" placeholder="Search appointments...">
+      <input id="searchBarCompleted" placeholder="Search by pet, owner, or phone...">
       <div id="completedTableContainer" class="table-wrap"></div>
     </section>
 
     <section>
       <h3>Cancelled Appointments</h3>
-      <input id="searchBarCancelled" placeholder="Search appointments...">
+      <input id="searchBarCancelled" placeholder="Search by pet, owner, or phone...">
       <div id="cancelledTableContainer" class="table-wrap"></div>
     </section>
   </div>
