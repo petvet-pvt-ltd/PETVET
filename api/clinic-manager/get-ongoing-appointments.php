@@ -40,14 +40,14 @@ try {
             a.appointment_time,
             a.appointment_type,
             a.duration_minutes,
-            p.name as pet_name,
-            p.species,
-            CONCAT(u_owner.first_name, ' ', u_owner.last_name) as owner_name,
+            COALESCE(p.name, a.guest_pet_name) as pet_name,
+            COALESCE(p.species, a.guest_pet_type) as species,
+            COALESCE(CONCAT(u_owner.first_name, ' ', u_owner.last_name), a.guest_client_name) as owner_name,
             CONCAT(u_vet.first_name, ' ', u_vet.last_name) as vet_name,
             a.vet_id
         FROM appointments a
-        JOIN pets p ON a.pet_id = p.id
-        JOIN users u_owner ON a.pet_owner_id = u_owner.id
+        LEFT JOIN pets p ON a.pet_id = p.id
+        LEFT JOIN users u_owner ON a.pet_owner_id = u_owner.id
         JOIN users u_vet ON a.vet_id = u_vet.id
         WHERE a.clinic_id = ? 
         AND a.appointment_date = ?

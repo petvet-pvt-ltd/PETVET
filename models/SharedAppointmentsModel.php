@@ -45,17 +45,17 @@ class SharedAppointmentsModel extends BaseModel {
                     a.appointment_time as time,
                     a.appointment_type as type,
                     a.status,
-                    p.name as pet,
-                    p.species as animal,
-                    CONCAT(u.first_name, ' ', u.last_name) as client,
-                    u.phone as client_phone,
+                    COALESCE(p.name, a.guest_pet_name) as pet,
+                    COALESCE(p.species, a.guest_pet_type) as animal,
+                    COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) as client,
+                    COALESCE(u.phone, a.guest_phone) as client_phone,
                     CONCAT(v.first_name, ' ', v.last_name) as vet,
                     a.vet_id
                 FROM appointments a
-                JOIN pets p ON a.pet_id = p.id
-                JOIN users u ON a.pet_owner_id = u.id
+                LEFT JOIN pets p ON a.pet_id = p.id
+                LEFT JOIN users u ON a.pet_owner_id = u.id
                 LEFT JOIN users v ON a.vet_id = v.id
-                WHERE a.status IN ('approved', 'completed') $clinicFilter
+                WHERE a.status = 'approved' $clinicFilter
                 ORDER BY a.appointment_date, a.appointment_time
             ";
             

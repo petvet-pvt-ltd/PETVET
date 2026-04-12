@@ -6,6 +6,9 @@
 
 session_start();
 header('Content-Type: application/json');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
 
 require_once __DIR__ . '/../../config/connect.php';
 require_once __DIR__ . '/../../config/auth_helper.php';
@@ -41,18 +44,18 @@ try {
             a.appointment_time as time,
             a.appointment_type as type,
             a.status,
-            p.name as pet,
-            p.species as animal,
-            CONCAT(u.first_name, ' ', u.last_name) as client,
-            u.phone as client_phone,
+            COALESCE(p.name, a.guest_pet_name) as pet,
+            COALESCE(p.species, a.guest_pet_type) as animal,
+            COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) as client,
+            COALESCE(u.phone, a.guest_phone) as client_phone,
             a.vet_id,
             CONCAT(vet.first_name, ' ', vet.last_name) as vet
         FROM appointments a
-        JOIN pets p ON a.pet_id = p.id
-        JOIN users u ON a.pet_owner_id = u.id
+        LEFT JOIN pets p ON a.pet_id = p.id
+        LEFT JOIN users u ON a.pet_owner_id = u.id
         LEFT JOIN users vet ON a.vet_id = vet.id
         WHERE a.clinic_id = ?
-        AND a.status IN ('approved', 'completed')
+        AND a.status = 'approved'
     ";
     
     $params = [$clinicId];

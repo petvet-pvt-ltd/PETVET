@@ -8,11 +8,12 @@ class AppointmentsModel extends BaseModel
         $sql = "
             SELECT 
                 a.*,
-                p.name AS pet_name,
-                CONCAT(u.first_name, ' ', u.last_name) AS owner_name
+                COALESCE(p.name, a.guest_pet_name) AS pet_name,
+                COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) AS owner_name,
+                a.guest_phone AS guest_phone
             FROM appointments a
-            JOIN pets p ON a.pet_id = p.id
-            JOIN users u ON a.pet_owner_id = u.id
+            LEFT JOIN pets p ON a.pet_id = p.id
+            LEFT JOIN users u ON a.pet_owner_id = u.id
             WHERE a.vet_id = :vet_id
               AND a.clinic_id = :clinic_id
               AND a.status = 'approved'
@@ -29,11 +30,12 @@ class AppointmentsModel extends BaseModel
         $sql = "
             SELECT 
                 a.*,
-                p.name AS pet_name,
-                CONCAT(u.first_name, ' ', u.last_name) AS owner_name
+                COALESCE(p.name, a.guest_pet_name) AS pet_name,
+                COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) AS owner_name,
+                a.guest_phone AS guest_phone
             FROM appointments a
-            JOIN pets p ON a.pet_id = p.id
-            JOIN users u ON a.pet_owner_id = u.id
+            LEFT JOIN pets p ON a.pet_id = p.id
+            LEFT JOIN users u ON a.pet_owner_id = u.id
             WHERE a.vet_id = :vet_id
               AND a.clinic_id = :clinic_id
               AND a.status = 'ongoing'
@@ -51,11 +53,12 @@ class AppointmentsModel extends BaseModel
         $sql = "
             SELECT 
                 a.*,
-                p.name AS pet_name,
-                CONCAT(u.first_name, ' ', u.last_name) AS owner_name
+                COALESCE(p.name, a.guest_pet_name) AS pet_name,
+                COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) AS owner_name,
+                a.guest_phone AS guest_phone
             FROM appointments a
-            JOIN pets p ON a.pet_id = p.id
-            JOIN users u ON a.pet_owner_id = u.id
+            LEFT JOIN pets p ON a.pet_id = p.id
+            LEFT JOIN users u ON a.pet_owner_id = u.id
             WHERE a.vet_id = :vet_id
               AND a.clinic_id = :clinic_id
               AND a.status = 'completed'
@@ -71,11 +74,12 @@ class AppointmentsModel extends BaseModel
         $sql = "
             SELECT 
                 a.*,
-                p.name AS pet_name,
-                CONCAT(u.first_name, ' ', u.last_name) AS owner_name
+                COALESCE(p.name, a.guest_pet_name) AS pet_name,
+                COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) AS owner_name,
+                a.guest_phone AS guest_phone
             FROM appointments a
-            JOIN pets p ON a.pet_id = p.id
-            JOIN users u ON a.pet_owner_id = u.id
+            LEFT JOIN pets p ON a.pet_id = p.id
+            LEFT JOIN users u ON a.pet_owner_id = u.id
             WHERE a.vet_id = :vet_id
               AND a.clinic_id = :clinic_id
               AND a.status = 'cancelled'
@@ -91,11 +95,12 @@ class AppointmentsModel extends BaseModel
         $sql = "
             SELECT 
                 a.*,
-                p.name AS pet_name,
-                CONCAT(u.first_name, ' ', u.last_name) AS owner_name
+                COALESCE(p.name, a.guest_pet_name) AS pet_name,
+                COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) AS owner_name,
+                a.guest_phone AS guest_phone
             FROM appointments a
-            JOIN pets p ON a.pet_id = p.id
-            JOIN users u ON a.pet_owner_id = u.id
+            LEFT JOIN pets p ON a.pet_id = p.id
+            LEFT JOIN users u ON a.pet_owner_id = u.id
             WHERE a.vet_id = :vet_id
               AND a.clinic_id = :clinic_id
             ORDER BY a.appointment_date DESC, a.appointment_time DESC

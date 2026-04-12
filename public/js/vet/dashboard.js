@@ -91,7 +91,15 @@ function updateStatus(id, status){
 
 function startAppointment(id){
   const ongoing = window.PETVET_INITIAL_DATA.appointments.find(a=>a.status==='ongoing');
-  if(ongoing) updateStatus(ongoing.id,'completed');
+  if (ongoing && String(ongoing.id) === String(id)) {
+    return;
+  }
+
+  if (ongoing) {
+    alert('You already have an ongoing appointment. Please complete or cancel it before starting another.');
+    return;
+  }
+
   updateStatus(id,'ongoing');
 }
 
