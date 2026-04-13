@@ -9,10 +9,10 @@ define('PROJECT_ROOT', '/PETVET');  // Change this when project folder name chan
 define('PROJECT_NAME', 'PETVET');
 define('PROJECT_VERSION', '1.0.0');
 
-// Database Configuration (if needed later)
-// define('DB_HOST', 'localhost');
-// define('DB_NAME', 'petvet');
-// define('DB_USER', 'root');
+// // Database Configuration (if needed later)
+//  define('DB_HOST', 'localhost');
+//  define('DB_NAME', 'petvet');
+//  define('DB_USER', 'root');
 // define('DB_PASS', '');
 
 // Helper function to get the base URL for assets and links

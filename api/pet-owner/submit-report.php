@@ -43,6 +43,7 @@ try {
     $phone = $_POST['phone'] ?? '';
     $phone2 = $_POST['phone2'] ?? '';
     $email = $_POST['email'] ?? '';
+    $reward = $_POST['reward'] ?? '';
     
     // Validate required fields
     if (empty($type) || empty($species) || empty($location) || empty($date)) {
@@ -60,6 +61,26 @@ try {
         echo json_encode(['success' => false, 'message' => 'Invalid type. Must be "lost" or "found".']);
         exit;
     }
+
+    // Validate phone number format (10 digits or +94 with 9 digits)
+if (empty($phone)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Phone number is required']);
+    exit;
+}
+
+if (!preg_match('/^(\d{10}|\+94\d{9})$/', $phone)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Phone must be 10 digits or +94 with 9 digits']);
+    exit;
+}
+
+// Validate secondary phone if provided
+if (!empty($phone2) && !preg_match('/^(\d{10}|\+94\d{9})$/', $phone2)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Secondary phone must be 10 digits or +94 with 9 digits']);
+    exit;
+}
     
     // Handle photo upload
     $photoPath = null;

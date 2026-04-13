@@ -46,6 +46,7 @@ class LostFoundModel extends BaseModel {
                 'breed' => $description['breed'] ?? 'Unknown',
                 'age' => $description['age'] ?? 'Unknown',
                 'color' => $description['color'] ?? '',
+                'reward' => $description['reward'] ?? 0,
                 'photo' => $photos, // Array of photo URLs
                 'last_seen' => $report['location'],
                 'date' => $report['date_reported'],

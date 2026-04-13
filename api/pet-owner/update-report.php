@@ -143,6 +143,14 @@ try {
             $photoPaths = $newPhotos;
         }
     }
+
+    <?php
+    $lastSeenDate = DateTime::createFromFormat('Y-m-d', $date);
+    $today = new DateTime('today');
+    $daysMissing = 0;
+    if ($lastSeenDate instanceof DateTime) {
+        $daysMissing = max(0, (int)$lastSeenDate->diff($today)->format('%r%a'));
+    }
     
     // Prepare updated description as JSON
     $updatedDescription = [
@@ -160,6 +168,7 @@ try {
         'latitude' => $latitude,
         'longitude' => $longitude,
         'user_id' => $userId,
+        'days_missing' => $daysMissing,
         'submitted_at' => $existingDescription['submitted_at'] ?? date('Y-m-d H:i:s'),
         'updated_at' => date('Y-m-d H:i:s')
     ];

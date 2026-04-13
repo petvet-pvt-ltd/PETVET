@@ -98,6 +98,9 @@ function lf_fmtDate($ymd){
 						<span class="muted">• <?php echo lf_esc($r['species']); ?><?php echo $r['breed']? ' · '.lf_esc($r['breed']) : ''; ?><?php echo $r['age']? ' · '.lf_esc($r['age']) : ''; ?></span>
 					</h4>
 					<p class="meta"><strong>Last seen:</strong> <?php echo lf_esc($r['last_seen']); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
+					<?php if(!empty($r['reward']) && $r['reward'] > 0): ?>
+						<p>Reward: $<?php echo number_format($r['reward'], 2); ?></p>
+					<?php endif; ?>
 				<p class="time-ago" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-date="<?php echo lf_esc($r['date']); ?>" style="color: var(--primary); font-weight: 500; font-size: 0.9em; margin-top: 4px;"></p>
 				<p class="report-distance" data-report-id="<?php echo lf_esc($r['id']); ?>">
 					<span class="distance-loader">⏳ Calculating distance...</span>
@@ -202,6 +205,12 @@ function lf_fmtDate($ymd){
 					<input type="text" id="rColor" placeholder="Golden / Black">
 				</label>
 			</div>
+			<div class="row">
+				
+				<label class="field">Reward
+					<input type="number" id="rReward" placeholder="0.00" min="0">
+				</label>
+			</div>
 			<label class="field">Select location on map
 				<div id="mapContainer" style="height: 450px; width: 100%; border-radius: 8px; margin-top: 8px; border: 1px solid var(--line, #e0e0e0);"></div>
 				<input type="hidden" id="rLatitude" required>
@@ -300,6 +309,12 @@ function lf_fmtDate($ymd){
 				</label>
 				<label class="field">Color
 					<input type="text" id="editColor" placeholder="Golden / Black">
+				</label>
+			</div>
+				<div class="row">
+				
+				<label class="field">Reward
+					<input type="number" id="editReward" placeholder="0.00">
 				</label>
 			</div>
 			<label class="field">Select location on map
