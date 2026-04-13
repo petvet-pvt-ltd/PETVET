@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const data = window.PETVET_INITIAL_DATA ?? {};
+  const currentVetId = Number(window.PETVET_CURRENT_VET_ID || 0);
   const appointments = data.appointments || [];
   let vaccinations = data.vaccinations || [];
 
@@ -7,6 +8,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchBar = document.getElementById("searchBar");
   const formSection = document.getElementById("vaccFormSection");
   const form = document.getElementById("vaccinationForm");
+
+  let baseVaccinations = vaccinations;
+  let onlyMyRecords = false;
 
   function renderVaccinations(list) {
     if (!container) return;
@@ -24,6 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <th>Date</th>
             <th>Pet</th>
             <th>Owner</th>
+            <th>Veterinarian</th>
             <th>Vaccines</th>
             <th>Reports</th>
           </tr>
@@ -60,6 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td>${v.date || v.created_at || ""}</td>
                 <td>${v.pet_name || v.petName || ""}</td>
                 <td>${v.owner_name || v.ownerName || ""}</td>
+                <td>${v.vet_name || '-'}</td>
                 <td>${vaccinesHtml}</td>
                 <td>${reportsHtml || '-'}</td>
               </tr>
@@ -97,36 +103,83 @@ document.addEventListener("DOMContentLoaded", () => {
   const from = url.searchParams.get("from");
   const apptId = url.searchParams.get("appointment");
 
+  const applyFiltersAndRender = () => {
+    const q = (searchBar?.value || '').toLowerCase();
+
+    const filtered = baseVaccinations.filter(v => {
+      if (onlyMyRecords && currentVetId && Number(v.vet_id || 0) !== currentVetId) {
+        return false;
+      }
+
+      if (!q) return true;
+      return Object.values(v).some(val => String(val).toLowerCase().includes(q));
+    });
+
+    renderVaccinations(filtered);
+  };
+
+  const renderMyRecordsToggle = () => {
+    console.log('renderMyRecordsToggle called: from=' + from + ', apptId=' + apptId + ', searchBar=' + !!searchBar);
+    if (from !== 'ongoing' || !apptId) {
+      console.log('Toggle skipped: from !== ongoing or no apptId');
+      return;
+    }
+    if (!searchBar || !searchBar.parentNode) {
+      console.log('Toggle skipped: searchBar not found or no parentNode');
+      return;
+    }
+
+    console.log('Creating toggle...');
+    const wrap = document.createElement('div');
+    wrap.style.margin = '10px 0 0';
+    wrap.style.padding = '10px';
+    wrap.style.backgroundColor = '#f5f5f5';
+    wrap.style.borderRadius = '4px';
+    wrap.style.border = '1px solid #ddd';
+    wrap.innerHTML = `
+      <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:500;">
+        <input type="checkbox" id="myVetOnlyToggle" style="cursor:pointer;">
+        <span>Show only my records</span>
+      </label>
+    `;
+
+    searchBar.parentNode.insertBefore(wrap, searchBar.nextSibling);
+    console.log('Toggle inserted successfully');
+
+    const toggle = document.getElementById('myVetOnlyToggle');
+    if (toggle) {
+      toggle.addEventListener('change', () => {
+        onlyMyRecords = toggle.checked;
+        applyFiltersAndRender();
+      });
+    }
+  };
+
   if (from === "ongoing" && apptId) {
     showForm(true, apptId);
     // Show all vaccinations for this pet
     const appt = appointments.find(a => String(a.id) === String(apptId));
     if(appt){
       const petName = appt.pet_name || appt.petName;
-      const filtered = vaccinations.filter(v => (v.pet_name || v.petName) === petName);
-      renderVaccinations(filtered);
+      baseVaccinations = vaccinations.filter(v => (v.pet_name || v.petName) === petName);
     } else {
-      renderVaccinations(vaccinations);
+      baseVaccinations = vaccinations;
     }
   } else if (from === "completed" && apptId) {
     showForm(false);
-    const filtered = vaccinations.filter(v => String(v.appointment_id) === String(apptId));
-    renderVaccinations(filtered);
+    baseVaccinations = vaccinations.filter(v => String(v.appointment_id) === String(apptId));
   } else {
     showForm(false);
-    renderVaccinations(vaccinations);
+    baseVaccinations = vaccinations;
   }
+
+  renderMyRecordsToggle();
+  applyFiltersAndRender();
 
   // Search
   if (searchBar) {
-    searchBar.addEventListener("input", (e) => {
-      const q = e.target.value.toLowerCase();
-      const filtered = vaccinations.filter(v =>
-        String(v.pet_name || "").toLowerCase().includes(q) ||
-        String(v.owner_name || "").toLowerCase().includes(q) ||
-        String(v.vaccine || "").toLowerCase().includes(q)
-      );
-      renderVaccinations(filtered);
+    searchBar.addEventListener("input", () => {
+      applyFiltersAndRender();
     });
   }
 

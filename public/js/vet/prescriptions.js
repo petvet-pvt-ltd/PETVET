@@ -40,6 +40,7 @@ function renderPrescriptions(list) {
             <th>Date</th>
             <th>Pet</th>
             <th>Owner</th>
+            <th>Veterinarian</th>
             <th>Medications</th>
             <th>Notes</th>
             <th>Reports</th>
@@ -79,6 +80,7 @@ function renderPrescriptions(list) {
         <td>${r.date || r.created_at || ''}</td>
         <td>${r.petName || r.pet_name || ''}</td>
         <td>${r.ownerName || r.owner_name || ''}</td>
+        <td>${r.vet_name || '-'}</td>
         <td>${medicationsHtml}</td>
         <td>${r.notes || ''}</td>
         <td>${reportsHtml || '-'}</td>
@@ -93,10 +95,67 @@ function renderPrescriptions(list) {
 document.addEventListener('DOMContentLoaded', () => {
   const d = window.PETVET_INITIAL_DATA;
   if (!d) return;
+  const currentVetId = Number(window.PETVET_CURRENT_VET_ID || 0);
 
   const url = new URL(window.location.href);
   const from = url.searchParams.get('from');
   const apptId = url.searchParams.get('appointment');
+
+  const search = document.getElementById('searchBar');
+  let basePrescriptions = d.prescriptions || [];
+  let onlyMyRecords = false;
+
+  const applyFiltersAndRender = () => {
+    const q = (search?.value || '').toLowerCase();
+
+    const filtered = basePrescriptions.filter(p => {
+      if (onlyMyRecords && currentVetId && Number(p.vet_id || 0) !== currentVetId) {
+        return false;
+      }
+
+      if (!q) return true;
+      return Object.values(p).some(v => String(v).toLowerCase().includes(q));
+    });
+
+    renderPrescriptions(filtered);
+  };
+
+  const renderMyRecordsToggle = () => {
+    console.log('renderMyRecordsToggle called: from=' + from + ', apptId=' + apptId + ', search=' + !!search);
+    if (from !== 'ongoing' || !apptId) {
+      console.log('Toggle skipped: from !== ongoing or no apptId');
+      return;
+    }
+    if (!search || !search.parentNode) {
+      console.log('Toggle skipped: search not found or no parentNode');
+      return;
+    }
+
+    console.log('Creating toggle...');
+    const wrap = document.createElement('div');
+    wrap.style.margin = '10px 0 0';
+    wrap.style.padding = '10px';
+    wrap.style.backgroundColor = '#f5f5f5';
+    wrap.style.borderRadius = '4px';
+    wrap.style.border = '1px solid #ddd';
+    wrap.innerHTML = `
+      <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:500;">
+        <input type="checkbox" id="myVetOnlyToggle" style="cursor:pointer;">
+        <span>Show only my records</span>
+      </label>
+    `;
+
+    search.parentNode.insertBefore(wrap, search.nextSibling);
+    console.log('Toggle inserted successfully');
+
+    const toggle = document.getElementById('myVetOnlyToggle');
+    if (toggle) {
+      toggle.addEventListener('change', () => {
+        onlyMyRecords = toggle.checked;
+        applyFiltersAndRender();
+      });
+    }
+  };
 
   if (from === 'ongoing' && apptId) {
     showForm(true, apptId);
@@ -104,32 +163,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const appt = d.appointments.find(a => String(a.id) === String(apptId));
     if(appt){
       const petName = appt.pet_name || appt.petName;
-      renderPrescriptions(
-        d.prescriptions.filter(p => (p.petName || p.pet_name) === petName)
-      );
+      basePrescriptions = d.prescriptions.filter(p => (p.petName || p.pet_name) === petName);
     } else {
-      renderPrescriptions();
+      basePrescriptions = d.prescriptions || [];
     }
   }
   else if (from === 'completed' && apptId) {
     showForm(false);
-    renderPrescriptions(
-      d.prescriptions.filter(p => String(p.appointment_id) === String(apptId))
-    );
+    basePrescriptions = d.prescriptions.filter(p => String(p.appointment_id) === String(apptId));
   }
   else {
     showForm(false);
-    renderPrescriptions();
+    basePrescriptions = d.prescriptions || [];
   }
 
-  const search = document.getElementById('searchBar');
+  renderMyRecordsToggle();
+  applyFiltersAndRender();
+
   if (search) {
     search.addEventListener('input', () => {
-      const q = search.value.toLowerCase();
-      const filtered = d.prescriptions.filter(p =>
-        Object.values(p).some(v => String(v).toLowerCase().includes(q))
-      );
-      renderPrescriptions(filtered);
+      applyFiltersAndRender();
     });
   }
 

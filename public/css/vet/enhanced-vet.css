@@ -273,9 +273,25 @@ tbody tr:last-child td {
   text-align: center;
 }
 
+a.btn,
+a.btn:hover,
+a.btn:focus,
+a.btn:active,
+a.btn:visited,
+a.btn:focus-visible {
+  text-decoration: none !important;
+}
+
 .btn:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
+  text-decoration: none;
+}
+
+.btn:focus,
+.btn:active,
+.btn:visited {
+  text-decoration: none;
 }
 
 .btn.navy,

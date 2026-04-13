@@ -60,6 +60,17 @@ class VetController extends BaseController
         ];
     }
 
+    private function findAppointmentInList(array $appointments, int $appointmentId): ?array
+    {
+        foreach ($appointments as $appointment) {
+            if ((int)($appointment['id'] ?? 0) === $appointmentId) {
+                return $appointment;
+            }
+        }
+
+        return null;
+    }
+
     /* DASHBOARD PAGE */
     public function dashboard()
     {
@@ -128,11 +139,31 @@ class VetController extends BaseController
         $prescriptions  = $this->prescriptionsModel->getPrescriptionsForVet($vet['id'], $vet['clinic_id']);
         $vaccinations   = $this->vaccinationsModel->getVaccinationsForVet($vet['id'], $vet['clinic_id']);
 
+        $from = $_GET['from'] ?? '';
+        $appointmentId = isset($_GET['appointment']) ? (int)$_GET['appointment'] : 0;
+
+        if ($from === 'ongoing' && $appointmentId > 0) {
+            $appointment = $this->findAppointmentInList($appointments, $appointmentId);
+
+            if ($appointment) {
+                $petId = (int)($appointment['pet_id'] ?? 0);
+                $guestPetName = trim((string)($appointment['guest_pet_name'] ?? ''));
+                $guestClientName = trim((string)($appointment['guest_client_name'] ?? ''));
+
+                if ($petId > 0) {
+                    $medicalRecords = $this->medicalRecordsModel->getMedicalRecordsByPetAcrossVets($petId);
+                } elseif ($guestPetName !== '') {
+                    $medicalRecords = $this->medicalRecordsModel->getMedicalRecordsByGuestPetAcrossVets($guestPetName, $guestClientName);
+                }
+            }
+        }
+
         $this->view('vet', 'medical-records', compact(
             'appointments',
             'medicalRecords',
             'prescriptions',
-            'vaccinations'
+            'vaccinations',
+            'vet'
         ));
     }
 
@@ -148,9 +179,29 @@ class VetController extends BaseController
         $appointments  = $this->appointmentsModel->getAllAppointmentsForVet($vet['id'], $vet['clinic_id']);
         $prescriptions = $this->prescriptionsModel->getPrescriptionsForVet($vet['id'], $vet['clinic_id']);
 
+        $from = $_GET['from'] ?? '';
+        $appointmentId = isset($_GET['appointment']) ? (int)$_GET['appointment'] : 0;
+
+        if ($from === 'ongoing' && $appointmentId > 0) {
+            $appointment = $this->findAppointmentInList($appointments, $appointmentId);
+
+            if ($appointment) {
+                $petId = (int)($appointment['pet_id'] ?? 0);
+                $guestPetName = trim((string)($appointment['guest_pet_name'] ?? ''));
+                $guestClientName = trim((string)($appointment['guest_client_name'] ?? ''));
+
+                if ($petId > 0) {
+                    $prescriptions = $this->prescriptionsModel->getPrescriptionsByPetAcrossVets($petId);
+                } elseif ($guestPetName !== '') {
+                    $prescriptions = $this->prescriptionsModel->getPrescriptionsByGuestPetAcrossVets($guestPetName, $guestClientName);
+                }
+            }
+        }
+
         $this->view('vet', 'prescriptions', compact(
             'appointments',
-            'prescriptions'
+            'prescriptions',
+            'vet'
         ));
     }
 
@@ -166,9 +217,29 @@ class VetController extends BaseController
         $appointments = $this->appointmentsModel->getAllAppointmentsForVet($vet['id'], $vet['clinic_id']);
         $vaccinations = $this->vaccinationsModel->getVaccinationsForVet($vet['id'], $vet['clinic_id']);
 
+        $from = $_GET['from'] ?? '';
+        $appointmentId = isset($_GET['appointment']) ? (int)$_GET['appointment'] : 0;
+
+        if ($from === 'ongoing' && $appointmentId > 0) {
+            $appointment = $this->findAppointmentInList($appointments, $appointmentId);
+
+            if ($appointment) {
+                $petId = (int)($appointment['pet_id'] ?? 0);
+                $guestPetName = trim((string)($appointment['guest_pet_name'] ?? ''));
+                $guestClientName = trim((string)($appointment['guest_client_name'] ?? ''));
+
+                if ($petId > 0) {
+                    $vaccinations = $this->vaccinationsModel->getVaccinationsByPetAcrossVets($petId);
+                } elseif ($guestPetName !== '') {
+                    $vaccinations = $this->vaccinationsModel->getVaccinationsByGuestPetAcrossVets($guestPetName, $guestClientName);
+                }
+            }
+        }
+
         $this->view('vet', 'vaccinations', compact(
             'appointments',
-            'vaccinations'
+            'vaccinations',
+            'vet'
         ));
     }
 
