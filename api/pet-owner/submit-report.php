@@ -13,6 +13,7 @@ header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
 require_once __DIR__ . '/../../config/connect.php';
+require_once __DIR__ . '/../../models/PetOwner/LostFoundModel.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -44,20 +45,17 @@ try {
     $phone2 = $_POST['phone2'] ?? '';
     $email = $_POST['email'] ?? '';
     
-    // Validate required fields
-    if (empty($type) || empty($species) || empty($location) || empty($date)) {
+    // Validate all fields using model
+    $lostFoundModel = new LostFoundModel();
+    $validation = $lostFoundModel->validateReportFields($type, $species, $name, $color, $location, $date, $time, $phone, $phone2, $email, $notes);
+    
+    if (!$validation['valid']) {
         http_response_code(400);
         echo json_encode([
-            'success' => false, 
-            'message' => 'Required fields: type, species, location, date'
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $validation['errors']
         ]);
-        exit;
-    }
-    
-    // Validate type
-    if (!in_array($type, ['lost', 'found'])) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Invalid type. Must be "lost" or "found".']);
         exit;
     }
     
@@ -132,21 +130,9 @@ try {
     
     $descriptionJson = json_encode($additionalData, JSON_UNESCAPED_UNICODE);
     
-    // Insert into database
-    $db = db();
-    $stmt = $db->prepare("
-        INSERT INTO LostFoundReport (type, location, date_reported, description) 
-        VALUES (:type, :location, :date_reported, :description)
-    ");
-    
-    $stmt->execute([
-        ':type' => $type,
-        ':location' => $location,
-        ':date_reported' => $date,
-        ':description' => $descriptionJson
-    ]);
-    
-    $reportId = $db->lastInsertId();
+    // Insert into database using model
+    $lostFoundModel = new LostFoundModel();
+    $reportId = $lostFoundModel->insertReport($type, $location, $date, $descriptionJson);
     
     // Return success response
     http_response_code(201);
