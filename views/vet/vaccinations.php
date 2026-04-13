@@ -6,6 +6,8 @@ $data = [
     'appointments'  => $appointments ?? [],
     'vaccinations'  => $vaccinations ?? []
 ];
+
+$showBackToOngoing = isset($_GET['from']) && $_GET['from'] === 'ongoing';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -81,6 +83,12 @@ $data = [
 
         <button class="btn success" type="submit">💉 Save Vaccination</button>
       </form>
+
+      <?php if ($showBackToOngoing): ?>
+        <div style="margin-top: 12px;">
+          <a class="btn navy" href="/PETVET/?module=vet&page=dashboard#ongoing-section">← Back to Ongoing Appointment</a>
+        </div>
+      <?php endif; ?>
     </section>
 
     <section>
@@ -93,6 +101,7 @@ $data = [
 
 <script>
 window.PETVET_INITIAL_DATA = <?php echo json_encode($data, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>;
+window.PETVET_CURRENT_VET_ID = <?php echo json_encode((int)($vet['id'] ?? 0)); ?>;
 </script>
 <script src="/PETVET/public/js/vet/file-viewer-modal.js"></script>
 <script src="/PETVET/public/js/vet/vaccinations.js"></script>

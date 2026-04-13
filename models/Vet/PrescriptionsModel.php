@@ -9,13 +9,16 @@ class PrescriptionsModel extends BaseModel
             SELECT 
                 pr.*,
                 pr.appointment_id,
-                                COALESCE(p.name, a.guest_pet_name) AS pet_name,
-                                COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) AS owner_name,
-                                a.guest_phone AS guest_phone
+                COALESCE(p.name, a.guest_pet_name) AS pet_name,
+                COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) AS owner_name,
+                a.guest_phone AS guest_phone,
+                a.vet_id,
+                CONCAT(v.first_name, ' ', v.last_name) AS vet_name
             FROM prescriptions pr
             JOIN appointments a ON a.id = pr.appointment_id
-                        LEFT JOIN pets p   ON p.id = a.pet_id
-                        LEFT JOIN users u  ON u.id = a.pet_owner_id
+            LEFT JOIN pets p   ON p.id = a.pet_id
+            LEFT JOIN users u  ON u.id = a.pet_owner_id
+            LEFT JOIN users v  ON v.id = a.vet_id
             WHERE a.vet_id = :vet_id
               AND a.clinic_id = :clinic_id
             ORDER BY pr.created_at DESC
@@ -41,13 +44,16 @@ class PrescriptionsModel extends BaseModel
             SELECT 
                 pr.*,
                 pr.appointment_id,
-                                COALESCE(p.name, a.guest_pet_name) AS pet_name,
-                                COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) AS owner_name,
-                                a.guest_phone AS guest_phone
+                COALESCE(p.name, a.guest_pet_name) AS pet_name,
+                COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) AS owner_name,
+                a.guest_phone AS guest_phone,
+                a.vet_id,
+                CONCAT(v.first_name, ' ', v.last_name) AS vet_name
             FROM prescriptions pr
             JOIN appointments a ON a.id = pr.appointment_id
-                        LEFT JOIN pets p   ON p.id = a.pet_id
-                        LEFT JOIN users u  ON u.id = a.pet_owner_id
+            LEFT JOIN pets p   ON p.id = a.pet_id
+            LEFT JOIN users u  ON u.id = a.pet_owner_id
+            LEFT JOIN users v  ON v.id = a.vet_id
             WHERE pr.appointment_id = :appointment_id
               AND a.vet_id = :vet_id
               AND a.clinic_id = :clinic_id
@@ -102,5 +108,81 @@ class PrescriptionsModel extends BaseModel
             'dosage' => $dosage,
             'notes' => ($notes === '' ? null : $notes)
         ]);
+    }
+
+    public function getPrescriptionsByPetAcrossVets(int $petId): array
+    {
+        $sql = "
+            SELECT
+                pr.*,
+                pr.appointment_id,
+                COALESCE(p.name, a.guest_pet_name) AS pet_name,
+                COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) AS owner_name,
+                a.guest_phone AS guest_phone,
+                a.vet_id,
+                CONCAT(v.first_name, ' ', v.last_name) AS vet_name
+            FROM prescriptions pr
+            JOIN appointments a ON a.id = pr.appointment_id
+            LEFT JOIN pets p ON p.id = a.pet_id
+            LEFT JOIN users u ON u.id = a.pet_owner_id
+            LEFT JOIN users v ON v.id = a.vet_id
+            WHERE a.pet_id = :pet_id
+            ORDER BY pr.created_at DESC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['pet_id' => $petId]);
+        $prescriptions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($prescriptions as &$prescription) {
+            $itemSql = "SELECT medication, dosage FROM prescription_items WHERE prescription_id = ? ORDER BY id";
+            $itemStmt = $this->pdo->prepare($itemSql);
+            $itemStmt->execute([$prescription['id']]);
+            $prescription['medications'] = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return $prescriptions;
+    }
+
+    public function getPrescriptionsByGuestPetAcrossVets(string $guestPetName, ?string $guestClientName = null): array
+    {
+        $sql = "
+            SELECT
+                pr.*,
+                pr.appointment_id,
+                COALESCE(p.name, a.guest_pet_name) AS pet_name,
+                COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) AS owner_name,
+                a.guest_phone AS guest_phone,
+                a.vet_id,
+                CONCAT(v.first_name, ' ', v.last_name) AS vet_name
+            FROM prescriptions pr
+            JOIN appointments a ON a.id = pr.appointment_id
+            LEFT JOIN pets p ON p.id = a.pet_id
+            LEFT JOIN users u ON u.id = a.pet_owner_id
+            LEFT JOIN users v ON v.id = a.vet_id
+            WHERE a.pet_id IS NULL
+              AND a.guest_pet_name = :guest_pet_name
+        ";
+
+        $params = ['guest_pet_name' => $guestPetName];
+        if ($guestClientName !== null && $guestClientName !== '') {
+            $sql .= " AND a.guest_client_name = :guest_client_name";
+            $params['guest_client_name'] = $guestClientName;
+        }
+
+        $sql .= " ORDER BY pr.created_at DESC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $prescriptions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($prescriptions as &$prescription) {
+            $itemSql = "SELECT medication, dosage FROM prescription_items WHERE prescription_id = ? ORDER BY id";
+            $itemStmt = $this->pdo->prepare($itemSql);
+            $itemStmt->execute([$prescription['id']]);
+            $prescription['medications'] = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return $prescriptions;
     }
 }
