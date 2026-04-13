@@ -41,6 +41,7 @@ function renderRecords(list){
           <th>Date</th>
           <th>Pet</th>
           <th>Owner</th>
+          <th>Veterinarian</th>
           <th>Symptoms</th>
           <th>Diagnosis</th>
           <th>Treatment</th>
@@ -71,6 +72,7 @@ function renderRecords(list){
         <td>${r.date || r.created_at || ''}</td>
         <td>${r.pet_name || r.petName || ''}</td>
         <td>${r.owner_name || r.ownerName || ''}</td>
+        <td>${r.vet_name || '-'}</td>
         <td>${r.symptoms || ''}</td>
         <td>${r.diagnosis || ''}</td>
         <td>${r.treatment || ''}</td>
@@ -86,11 +88,68 @@ function renderRecords(list){
 document.addEventListener('DOMContentLoaded', () => {
   const d = window.PETVET_INITIAL_DATA;
   if(!d) return;
+  const currentVetId = Number(window.PETVET_CURRENT_VET_ID || 0);
 
   const url = new URL(window.location.href);
   const from = url.searchParams.get('from');
   let apptId = url.searchParams.get('appointment');
   apptId = apptId ? Number(apptId) : null;
+
+  const search = document.getElementById('searchBar');
+  let baseRecords = d.medicalRecords || [];
+  let onlyMyRecords = false;
+
+  const applyFiltersAndRender = () => {
+    const q = (search?.value || '').toLowerCase();
+
+    const filtered = baseRecords.filter(r => {
+      if (onlyMyRecords && currentVetId && Number(r.vet_id || 0) !== currentVetId) {
+        return false;
+      }
+
+      if (!q) return true;
+      return Object.values(r).some(v => String(v).toLowerCase().includes(q));
+    });
+
+    renderRecords(filtered);
+  };
+
+  const renderMyRecordsToggle = () => {
+    console.log('renderMyRecordsToggle called: from=' + from + ', apptId=' + apptId + ', search=' + !!search);
+    if (from !== 'ongoing' || !apptId) {
+      console.log('Toggle skipped: from !== ongoing or no apptId');
+      return;
+    }
+    if (!search || !search.parentNode) {
+      console.log('Toggle skipped: search not found or no parentNode');
+      return;
+    }
+
+    console.log('Creating toggle...');
+    const wrap = document.createElement('div');
+    wrap.style.margin = '10px 0 0';
+    wrap.style.padding = '10px';
+    wrap.style.backgroundColor = '#f5f5f5';
+    wrap.style.borderRadius = '4px';
+    wrap.style.border = '1px solid #ddd';
+    wrap.innerHTML = `
+      <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:500;">
+        <input type="checkbox" id="myVetOnlyToggle" style="cursor:pointer;">
+        <span>Show only my records</span>
+      </label>
+    `;
+
+    search.parentNode.insertBefore(wrap, search.nextSibling);
+    console.log('Toggle inserted successfully');
+
+    const toggle = document.getElementById('myVetOnlyToggle');
+    if (toggle) {
+      toggle.addEventListener('change', () => {
+        onlyMyRecords = toggle.checked;
+        applyFiltersAndRender();
+      });
+    }
+  };
 
   function filterRecordsByPet(petName){
     return d.medicalRecords.filter(r =>
@@ -110,27 +169,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const appt = d.appointments.find(a => Number(a.id) === apptId);
     if(appt){
       const petName = appt.pet_name || appt.petName;
-      renderRecords(filterRecordsByPet(petName));
+      baseRecords = filterRecordsByPet(petName);
     } else {
-      renderRecords(d.medicalRecords);
+      baseRecords = d.medicalRecords || [];
     }
   } else if(from === 'completed' && apptId){
     showForm(false);
-    renderRecords(filterRecordsByAppointment());
+    baseRecords = filterRecordsByAppointment();
   } else {
     showForm(false);
-    renderRecords(d.medicalRecords);
+    baseRecords = d.medicalRecords || [];
   }
 
+  renderMyRecordsToggle();
+  applyFiltersAndRender();
+
   // Search
-  const search = document.getElementById('searchBar');
   if(search){
     search.addEventListener('input', () => {
-      const q = search.value.toLowerCase();
-      const filtered = d.medicalRecords.filter(r =>
-        Object.values(r).some(v => String(v).toLowerCase().includes(q))
-      );
-      renderRecords(filtered);
+      applyFiltersAndRender();
     });
   }
 

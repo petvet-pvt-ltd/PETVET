@@ -101,6 +101,7 @@ $showBackToOngoing = isset($_GET['from']) && $_GET['from'] === 'ongoing';
 
 <script>
 window.PETVET_INITIAL_DATA = <?php echo json_encode($data, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>;
+window.PETVET_CURRENT_VET_ID = <?php echo json_encode((int)($vet['id'] ?? 0)); ?>;
 </script>
 <script src="/PETVET/public/js/vet/file-viewer-modal.js"></script>
 <script src="/PETVET/public/js/vet/vaccinations.js"></script>
