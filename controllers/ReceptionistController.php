@@ -33,11 +33,14 @@ class ReceptionistController extends BaseController {
                     u.last_name AS owner_last_name,
                     p.name AS pet_name,
                     p.species AS animal_type,
+                    a.guest_client_name,
+                    a.guest_pet_name,
+                    a.guest_pet_type,
                     v.first_name AS vet_first_name,
                     v.last_name AS vet_last_name
                 FROM appointments a
-                JOIN users u ON a.pet_owner_id = u.id
-                JOIN pets p ON a.pet_id = p.id
+                LEFT JOIN users u ON a.pet_owner_id = u.id
+                LEFT JOIN pets p ON a.pet_id = p.id
                 JOIN users v ON a.vet_id = v.id
                 WHERE a.clinic_id = :clinic_id
                   AND a.status = 'completed'
@@ -50,9 +53,9 @@ class ReceptionistController extends BaseController {
             foreach ($appointments as $appt) {
                 $pendingPayments[] = [
                     'id' => $appt['id'],  // Real appointment ID from database
-                    'client' => trim($appt['owner_first_name'] . ' ' . $appt['owner_last_name']),
-                    'pet' => $appt['pet_name'],
-                    'animal' => ucfirst($appt['animal_type']),
+                    'client' => trim(($appt['owner_first_name'] || $appt['owner_last_name']) ? ($appt['owner_first_name'] . ' ' . $appt['owner_last_name']) : ($appt['guest_client_name'] ?? '')),
+                    'pet' => $appt['pet_name'] ?? $appt['guest_pet_name'],
+                    'animal' => ucfirst($appt['animal_type'] ?? ($appt['guest_pet_type'] ?? 'Pet')),
                     'vet' => 'Dr. ' . trim($appt['vet_first_name'] . ' ' . $appt['vet_last_name']),
                     'type' => ucfirst($appt['appointment_type']),
                     'date' => $appt['appointment_date'],
@@ -98,13 +101,15 @@ class ReceptionistController extends BaseController {
                         u.first_name AS owner_first_name,
                         u.last_name AS owner_last_name,
                         pet.name AS pet_name,
+                        a.guest_client_name,
+                        a.guest_pet_name,
                         v.first_name AS vet_first_name,
                         v.last_name AS vet_last_name,
                         a.appointment_type
                     FROM appointments a
                     JOIN payments p ON p.appointment_id = a.id
-                    JOIN users u ON a.pet_owner_id = u.id
-                    JOIN pets pet ON a.pet_id = pet.id
+                    LEFT JOIN users u ON a.pet_owner_id = u.id
+                    LEFT JOIN pets pet ON a.pet_id = pet.id
                     JOIN users v ON a.vet_id = v.id
                     WHERE a.clinic_id = :clinic_id
                       AND a.status = 'paid'
@@ -117,8 +122,8 @@ class ReceptionistController extends BaseController {
                     $paymentRecords[] = [
                         'invoice_number' => $rec['invoice_number'],
                         'date' => $rec['date'],
-                        'client' => trim($rec['owner_first_name'] . ' ' . $rec['owner_last_name']),
-                        'pet' => $rec['pet_name'],
+                        'client' => trim(($rec['owner_first_name'] || $rec['owner_last_name']) ? ($rec['owner_first_name'] . ' ' . $rec['owner_last_name']) : ($rec['guest_client_name'] ?? '')),
+                        'pet' => $rec['pet_name'] ?? $rec['guest_pet_name'],
                         'vet' => 'Dr. ' . trim($rec['vet_first_name'] . ' ' . $rec['vet_last_name']),
                         'amount' => (float)$rec['amount'],
                         'status' => 'Paid'

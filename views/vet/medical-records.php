@@ -89,7 +89,7 @@ $showBackToOngoing = isset($_GET['from']) && $_GET['from'] === 'ongoing';
 
     <section>
       <h3>Medical Records</h3>
-      <input id="searchBar" placeholder="Search records by pet, owner, or diagnosis...">
+      <input id="searchBar" placeholder="Search records by pet, owner, phone, or diagnosis...">
       <div id="recordsContainer" class="table-wrap"></div>
     </section>
   </div>

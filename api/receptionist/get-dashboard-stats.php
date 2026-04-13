@@ -57,13 +57,13 @@ try {
             a.appointment_time,
             a.duration_minutes,
             a.appointment_type,
-            p.name as pet,
-            p.species as animal,
-            CONCAT(u.first_name, ' ', u.last_name) as client,
+            COALESCE(p.name, a.guest_pet_name) as pet,
+            COALESCE(p.species, a.guest_pet_type) as animal,
+            COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) as client,
             COALESCE(CONCAT(v.first_name, ' ', v.last_name), 'Any Available Vet') as vet
         FROM appointments a
-        JOIN pets p ON a.pet_id = p.id
-        JOIN users u ON a.pet_owner_id = u.id
+        LEFT JOIN pets p ON a.pet_id = p.id
+        LEFT JOIN users u ON a.pet_owner_id = u.id
         LEFT JOIN users v ON a.vet_id = v.id
         WHERE a.appointment_date = ? 
         AND a.status = 'ongoing' $clinicFilter
@@ -101,13 +101,13 @@ try {
             a.id,
             a.appointment_time,
             a.appointment_type,
-            p.name as pet,
-            p.species as animal,
-            CONCAT(u.first_name, ' ', u.last_name) as client,
+            COALESCE(p.name, a.guest_pet_name) as pet,
+            COALESCE(p.species, a.guest_pet_type) as animal,
+            COALESCE(CONCAT(u.first_name, ' ', u.last_name), a.guest_client_name) as client,
             COALESCE(CONCAT(v.first_name, ' ', v.last_name), 'Any Available Vet') as vet
         FROM appointments a
-        JOIN pets p ON a.pet_id = p.id
-        JOIN users u ON a.pet_owner_id = u.id
+        LEFT JOIN pets p ON a.pet_id = p.id
+        LEFT JOIN users u ON a.pet_owner_id = u.id
         LEFT JOIN users v ON a.vet_id = v.id
         WHERE a.appointment_date = ? 
         AND a.status = 'approved' $clinicFilter

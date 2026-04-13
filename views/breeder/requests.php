@@ -265,10 +265,10 @@ $pageTitle = "Breeding Requests";
                         <span>Preferred Date: <?php echo date('M d, Y', strtotime($request['preferred_date'])); ?></span>
                     </div>
                     <?php if (!empty($locationInfo['text'])): ?>
-                    <div class="detail-item">
+                    <div class="detail-item detail-item--location">
                         <span class="detail-icon">📍</span>
-                        <span>
-                            <?php echo htmlspecialchars($locationInfo['text']); ?>
+                        <span class="detail-value--location">
+                            <span class="location-text"><?php echo htmlspecialchars($locationInfo['text']); ?></span>
                             <?php if (!empty($locationInfo['maps_href'])): ?>
                                 <a class="map-nav-btn" target="_blank" rel="noopener"
                                    href="<?php echo htmlspecialchars($locationInfo['maps_href']); ?>"
@@ -289,7 +289,7 @@ $pageTitle = "Breeding Requests";
                 </div>
                 <?php endif; ?>
                 <div class="booking-actions">
-                    <button class="btn btn-primary" onclick="showAcceptModal(<?php echo $request['id']; ?>, '<?php echo addslashes($request['pet_name']); ?>', '<?php echo addslashes($request['owner_name']); ?>')">Accept</button>
+                    <button class="btn btn-primary" onclick="showAcceptModal(<?php echo $request['id']; ?>, '<?php echo addslashes($request['pet_name']); ?>', '<?php echo addslashes($request['owner_name']); ?>', '<?php echo addslashes($request['gender']); ?>')">Accept</button>
                     <button class="btn btn-danger" onclick="showDeclineModal(<?php echo $request['id']; ?>, '<?php echo addslashes($request['pet_name']); ?>', '<?php echo addslashes($request['owner_name']); ?>')">Decline</button>
                     <button class="btn btn-outline" 
                         data-owner-name="<?php echo htmlspecialchars($request['owner_name'] ?? ''); ?>" 
@@ -325,10 +325,10 @@ $pageTitle = "Breeding Requests";
                         <span>Breeding Pet: <?php echo htmlspecialchars($request['breeder_pet_name']); ?></span>
                     </div>
                     <?php if (!empty($locationInfo['text'])): ?>
-                    <div class="detail-item">
+                    <div class="detail-item detail-item--location">
                         <span class="detail-icon">📍</span>
-                        <span>
-                            <?php echo htmlspecialchars($locationInfo['text']); ?>
+                        <span class="detail-value--location">
+                            <span class="location-text"><?php echo htmlspecialchars($locationInfo['text']); ?></span>
                             <?php if (!empty($locationInfo['maps_href'])): ?>
                                 <a class="map-nav-btn" target="_blank" rel="noopener"
                                    href="<?php echo htmlspecialchars($locationInfo['maps_href']); ?>"
@@ -384,10 +384,10 @@ $pageTitle = "Breeding Requests";
                         <span>Breeding Pet: <?php echo htmlspecialchars($request['breeder_pet_name']); ?></span>
                     </div>
                     <?php if (!empty($locationInfo['text'])): ?>
-                    <div class="detail-item">
+                    <div class="detail-item detail-item--location">
                         <span class="detail-icon">📍</span>
-                        <span>
-                            <?php echo htmlspecialchars($locationInfo['text']); ?>
+                        <span class="detail-value--location">
+                            <span class="location-text"><?php echo htmlspecialchars($locationInfo['text']); ?></span>
                             <?php if (!empty($locationInfo['maps_href'])): ?>
                                 <a class="map-nav-btn" target="_blank" rel="noopener"
                                    href="<?php echo htmlspecialchars($locationInfo['maps_href']); ?>"
