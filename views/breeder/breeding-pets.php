@@ -35,6 +35,38 @@ $pageTitle = "Breeding Pets";
             </button>
         </div>
 
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <div class="filters-header">
+                <h3>Filters</h3>
+                <button class="btn btn-outline btn-sm" onclick="resetFilters()">Reset All</button>
+            </div>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label for="filterBreed">Breed</label>
+                    <input type="text" id="filterBreed" class="form-control" placeholder="Search breed..." onkeyup="applyFilters()">
+                </div>
+             
+                <div class="filter-group">
+                    <label for="filterAge">Age Range</label>
+                    <select id="filterAge" class="form-control" onchange="applyFilters()">
+                        <option value="">All Ages</option>
+                        <option value="0-2">Young (0-2 years)</option>
+                        <option value="3-5">Adult (3-5 years)</option>
+                        <option value="6+">Senior (6+ years)</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterStatus">Status</label>
+                    <select id="filterStatus" class="form-control" onchange="applyFilters()">
+                        <option value="">All Status</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
         <!-- Pets Table -->
         <div class="table-container">
             <table class="pets-table">
@@ -166,7 +198,12 @@ $pageTitle = "Breeding Pets";
 
                         <div class="form-group">
                             <label for="petDob">Date of Birth *</label>
-                            <input type="date" id="petDob" name="dob" class="form-control" required max="<?php echo date('Y-m-d'); ?>">
+                            <input type="date" id="petDob" name="dob" class="form-control" required max="<?php echo date('Y-m-d'); ?>" onchange="calculateAge()">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="petAge">Age</label>
+                            <input type="text" id="petAge" class="form-control" readonly placeholder="Auto-calculated from Date of Birth">
                         </div>
 
                         <div class="form-group full-width">

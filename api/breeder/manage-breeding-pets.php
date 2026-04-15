@@ -49,8 +49,7 @@ try {
 function getAllBreedingPets($conn, $userId) {
     $stmt = $conn->prepare("
         SELECT id, name, breed, gender, date_of_birth as dob, 
-               photo, description, is_active,
-               TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) as age
+               photo, description, is_active, age
         FROM breeder_pets
         WHERE breeder_id = ?
         ORDER BY created_at DESC
@@ -85,6 +84,18 @@ function addBreedingPet($conn, $userId) {
         return;
     }
     
+    // Calculate age from date of birth
+    $age = 0;
+    try {
+        $dobDate = new DateTime($dob);
+        $today = new DateTime();
+        $age = $today->diff($dobDate)->y;
+    } catch (Exception $e) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid date format: ' . $e->getMessage()]);
+        return;
+    }
+    
     // Handle photo upload
     $photoPath = null;
     if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
@@ -104,10 +115,10 @@ function addBreedingPet($conn, $userId) {
     }
     
     $stmt = $conn->prepare("
-        INSERT INTO breeder_pets (breeder_id, name, breed, gender, date_of_birth, photo, description, is_active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO breeder_pets (breeder_id, name, breed, gender, date_of_birth, age, photo, description, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
-    $stmt->bind_param("issssssi", $userId, $name, $breed, $gender, $dob, $photoPath, $description, $isActive);
+    $stmt->bind_param("issssissi", $userId, $name, $breed, $gender, $dob, $age, $photoPath, $description, $isActive);
     
     if ($stmt->execute()) {
         echo json_encode([
@@ -130,6 +141,18 @@ function updateBreedingPet($conn, $userId) {
     $description = $_POST['description'] ?? '';
     // Handle checkbox - it's checked if the field exists in POST
     $isActive = isset($_POST['is_active']) ? 1 : 0;
+    
+    // Calculate age from date of birth
+    $age = 0;
+    try {
+        $dobDate = new DateTime($dob);
+        $today = new DateTime();
+        $age = $today->diff($dobDate)->y;
+    } catch (Exception $e) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid date format: ' . $e->getMessage()]);
+        return;
+    }
     
     // Validate required fields
     if (empty($petId) || empty($name) || empty($breed) || empty($gender) || empty($dob)) {
@@ -172,17 +195,17 @@ function updateBreedingPet($conn, $userId) {
     if ($updatePhoto) {
         $stmt = $conn->prepare("
             UPDATE breeder_pets 
-            SET name = ?, breed = ?, gender = ?, date_of_birth = ?, photo = ?, description = ?, is_active = ?
+            SET name = ?, breed = ?, gender = ?, date_of_birth = ?, age = ?, photo = ?, description = ?, is_active = ?
             WHERE id = ? AND breeder_id = ?
         ");
-        $stmt->bind_param("sssssssii", $name, $breed, $gender, $dob, $photoPath, $description, $isActive, $petId, $userId);
+        $stmt->bind_param("ssssissiii", $name, $breed, $gender, $dob, $age, $photoPath, $description, $isActive, $petId, $userId);
     } else {
         $stmt = $conn->prepare("
             UPDATE breeder_pets 
-            SET name = ?, breed = ?, gender = ?, date_of_birth = ?, description = ?, is_active = ?
+            SET name = ?, breed = ?, gender = ?, date_of_birth = ?, age = ?, description = ?, is_active = ?
             WHERE id = ? AND breeder_id = ?
         ");
-        $stmt->bind_param("sssssiii", $name, $breed, $gender, $dob, $description, $isActive, $petId, $userId);
+        $stmt->bind_param("ssssisiii", $name, $breed, $gender, $dob, $age, $description, $isActive, $petId, $userId);
     }
     
     if ($stmt->execute()) {
