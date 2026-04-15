@@ -142,6 +142,14 @@
           </select>
         </label>
 
+        <!-- Weight -->
+        <label>Weight (kg)
+          <input type="number" name="weight" id="weight" min="0" step="0.5" placeholder="e.g., 25.5" 
+            title="Weight should be a positive number."
+            autocomplete="off">
+          <small class="field-hint">Enter weight in kilograms</small>
+        </label>
+
         <!-- Price -->
         <label>Price (Rs)
           <input type="number" name="price" id="price" min="0" step="500" required

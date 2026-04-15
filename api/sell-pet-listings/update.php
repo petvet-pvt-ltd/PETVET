@@ -54,7 +54,8 @@ try {
         'description' => trim($_POST['desc'] ?? ''),
         'phone' => trim($_POST['phone']),
         'phone2' => trim($_POST['phone2'] ?? ''),
-        'email' => trim($_POST['email'] ?? '')
+        'email' => trim($_POST['email'] ?? ''),
+        'weight' => !empty($_POST['weight']) ? floatval($_POST['weight']) : null
     ];
     
     // Update listing

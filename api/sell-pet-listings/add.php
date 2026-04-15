@@ -48,6 +48,11 @@ try {
         $longitude = floatval($_POST['longitude']);
     }
     
+    $weight = null;
+    if (!empty($_POST['weight'])) {
+        $weight = floatval($_POST['weight']);
+    }
+    
     $data = [
         'user_id' => $_SESSION['user_id'],
         'name' => trim($_POST['name']),
@@ -62,6 +67,7 @@ try {
         'phone' => trim($_POST['phone']),
         'phone2' => trim($_POST['phone2'] ?? ''),
         'email' => trim($_POST['email'] ?? ''),
+        'weight' => $weight,
         'latitude' => $latitude,
         'longitude' => $longitude
     ];

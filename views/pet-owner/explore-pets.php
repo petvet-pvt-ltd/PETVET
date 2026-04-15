@@ -263,6 +263,11 @@ foreach($pets as $pet) {
               <option>Female</option>
             </select>
           </label>
+          <label>Weight (kg)
+            <input type="number" name="weight" id="sellWeight" placeholder="e.g., 25.5" min="0" step="0.5"
+              title="Weight should be a positive number" autocomplete="off">
+            <small class="field-hint">Weight in kilograms</small>
+          </label>
           <label>Listing Type
             <select name="listing_type" id="sellListingType" required>
               <option value="sale">For Sale</option>
@@ -371,6 +376,11 @@ foreach($pets as $pet) {
             </label>
             <label>Gender
               <select name="gender"><option>Male</option><option>Female</option></select>
+            </label>
+            <label>Weight (kg)
+              <input type="number" name="weight" id="editWeight" placeholder="e.g., 25.5" min="0" step="0.5"
+                title="Weight should be a positive number" autocomplete="off">
+              <small class="field-hint">Weight in kilograms</small>
             </label>
             <label>Price (Rs)
               <input type="number" name="price" id="editPrice" min="0" step="500" required autocomplete="off">

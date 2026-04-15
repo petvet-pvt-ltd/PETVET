@@ -34,7 +34,9 @@ try {
     $model = new SellPetListingModel();
     
     // Get all listings (not just approved ones)
-    $query = "SELECT l.*, 
+    $query = "SELECT l.id, l.user_id, l.name, l.species, l.breed, l.age, l.gender, CAST(l.weight AS DECIMAL(10,2)) as weight, 
+              l.price, l.listing_type, l.location, l.description, l.phone, l.phone2, l.email,
+              l.latitude, l.longitude, l.status, l.created_at, l.updated_at,
               CONCAT(u.first_name, ' ', u.last_name) as username,
               u.email as user_email 
               FROM sell_pet_listings l 
@@ -53,6 +55,11 @@ try {
     foreach ($listings as &$listing) {
         $images = $model->getImages($listing['id']);
         $badges = $model->getBadges($listing['id']);
+        
+        // Convert weight to float for proper JSON serialization
+        if ($listing['weight'] !== null) {
+            $listing['weight'] = floatval($listing['weight']);
+        }
         
         // Format images as objects with image_url property
         $listing['images'] = array_map(function($url) {

@@ -1,188 +1,237 @@
 <?php
-require_once __DIR__ . '/../config/connect.php';
+require_once __DIR__ . '/BaseModel.php';
 
-class SellPetListingModel {
-    private $conn;
-    
-    public function __construct() {
-        global $conn;
-        $this->conn = $conn;
-    }
+class SellPetListingModel extends BaseModel {
     
     // Get all approved listings
     public function getAllListings() {
-        $query = "SELECT * FROM sell_pet_listings WHERE status = 'approved' ORDER BY created_at DESC";
-        $result = mysqli_query($this->conn, $query);
-        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT * FROM sell_pet_listings 
+                WHERE status = 'approved' 
+                ORDER BY created_at DESC
+            ");
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Get all listings error: " . $e->getMessage());
+            return [];
+        }
     }
     
     // Get listings by user ID
     public function getUserListings($userId) {
-        $query = "SELECT * FROM sell_pet_listings WHERE user_id = ? ORDER BY created_at DESC";
-        $stmt = mysqli_prepare($this->conn, $query);
-        mysqli_stmt_bind_param($stmt, "i", $userId);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT * FROM sell_pet_listings 
+                WHERE user_id = ? 
+                ORDER BY created_at DESC
+            ");
+            $stmt->execute([$userId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Get user listings error: " . $e->getMessage());
+            return [];
+        }
     }
     
     // Get single listing by ID
     public function getListingById($id) {
-        $query = "SELECT * FROM sell_pet_listings WHERE id = ?";
-        $stmt = mysqli_prepare($this->conn, $query);
-        mysqli_stmt_bind_param($stmt, "i", $id);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        return $result ? mysqli_fetch_assoc($result) : null;
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT * FROM sell_pet_listings 
+                WHERE id = ?
+            ");
+            $stmt->execute([$id]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Get listing by ID error: " . $e->getMessage());
+            return null;
+        }
     }
     
     // Create new listing
     public function createListing($data) {
-        // Handle NULL values for latitude/longitude
-        $lat = $data['latitude'];
-        $lng = $data['longitude'];
-        
-        $query = "INSERT INTO sell_pet_listings (
-            user_id, name, species, breed, age, gender, price, listing_type, location, 
-            description, phone, phone2, email, latitude, longitude, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')";
-        
-        $stmt = mysqli_prepare($this->conn, $query);
-        
-        if (!$stmt) {
-            error_log("Prepare failed: " . mysqli_error($this->conn));
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO sell_pet_listings (
+                    user_id, name, species, breed, age, gender, weight, price, listing_type, 
+                    location, description, phone, phone2, email, latitude, longitude, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+            ");
+            
+            $success = $stmt->execute([
+                $data['user_id'],
+                $data['name'],
+                $data['species'],
+                $data['breed'],
+                $data['age'],
+                $data['gender'],
+                $data['weight'] ?? null,
+                $data['price'],
+                $data['listing_type'],
+                $data['location'],
+                $data['description'],
+                $data['phone'],
+                $data['phone2'] ?? '',
+                $data['email'] ?? '',
+                $data['latitude'] ?? null,
+                $data['longitude'] ?? null
+            ]);
+            
+            if ($success) {
+                return $this->pdo->lastInsertId();
+            }
+            return false;
+        } catch (PDOException $e) {
+            error_log("Create listing error: " . $e->getMessage());
             return false;
         }
-        
-        mysqli_stmt_bind_param(
-            $stmt, 
-            "isssssdssssssdd",
-            $data['user_id'],
-            $data['name'],
-            $data['species'],
-            $data['breed'],
-            $data['age'],
-            $data['gender'],
-            $data['price'],
-            $data['listing_type'],
-            $data['location'],
-            $data['description'],
-            $data['phone'],
-            $data['phone2'],
-            $data['email'],
-            $lat,
-            $lng
-        );
-        
-        $success = mysqli_stmt_execute($stmt);
-        
-        if (!$success) {
-            error_log("Execute failed: " . mysqli_stmt_error($stmt));
-            return false;
-        }
-        
-        return mysqli_insert_id($this->conn);
     }
     
     // Update listing
     public function updateListing($id, $data) {
-        $query = "UPDATE sell_pet_listings SET 
-            name = ?, species = ?, breed = ?, age = ?, gender = ?, 
-            price = ?, listing_type = ?, location = ?, description = ?, phone = ?, phone2 = ?, email = ?
-            WHERE id = ?";
-        
-        $stmt = mysqli_prepare($this->conn, $query);
-        mysqli_stmt_bind_param(
-            $stmt,
-            "sssssdssssssi",
-            $data['name'],
-            $data['species'],
-            $data['breed'],
-            $data['age'],
-            $data['gender'],
-            $data['price'],
-            $data['listing_type'],
-            $data['location'],
-            $data['description'],
-            $data['phone'],
-            $data['phone2'],
-            $data['email'],
-            $id
-        );
-        
-        return mysqli_stmt_execute($stmt);
+        try {
+            $stmt = $this->pdo->prepare("
+                UPDATE sell_pet_listings SET 
+                    name = ?, species = ?, breed = ?, age = ?, gender = ?, weight = ?,
+                    price = ?, listing_type = ?, location = ?, description = ?, 
+                    phone = ?, phone2 = ?, email = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ");
+            
+            return $stmt->execute([
+                $data['name'],
+                $data['species'],
+                $data['breed'],
+                $data['age'],
+                $data['gender'],
+                $data['weight'] ?? null,
+                $data['price'],
+                $data['listing_type'],
+                $data['location'],
+                $data['description'],
+                $data['phone'],
+                $data['phone2'] ?? '',
+                $data['email'] ?? '',
+                $id
+            ]);
+        } catch (PDOException $e) {
+            error_log("Update listing error: " . $e->getMessage());
+            return false;
+        }
     }
     
     // Delete listing
     public function deleteListing($id) {
-        $query = "DELETE FROM sell_pet_listings WHERE id = ?";
-        $stmt = mysqli_prepare($this->conn, $query);
-        mysqli_stmt_bind_param($stmt, "i", $id);
-        return mysqli_stmt_execute($stmt);
+        try {
+            $stmt = $this->pdo->prepare("
+                DELETE FROM sell_pet_listings WHERE id = ?
+            ");
+            return $stmt->execute([$id]);
+        } catch (PDOException $e) {
+            error_log("Delete listing error: " . $e->getMessage());
+            return false;
+        }
     }
     
     // Update listing status
     public function updateStatus($id, $status) {
-        $query = "UPDATE sell_pet_listings SET status = ? WHERE id = ?";
-        $stmt = mysqli_prepare($this->conn, $query);
-        mysqli_stmt_bind_param($stmt, "si", $status, $id);
-        return mysqli_stmt_execute($stmt);
+        try {
+            $stmt = $this->pdo->prepare("
+                UPDATE sell_pet_listings 
+                SET status = ?, updated_at = CURRENT_TIMESTAMP 
+                WHERE id = ?
+            ");
+            return $stmt->execute([$status, $id]);
+        } catch (PDOException $e) {
+            error_log("Update status error: " . $e->getMessage());
+            return false;
+        }
     }
     
     // Image management
     public function addImage($listingId, $imageUrl, $displayOrder = 0) {
-        $query = "INSERT INTO sell_pet_listing_images (listing_id, image_url, display_order) VALUES (?, ?, ?)";
-        $stmt = mysqli_prepare($this->conn, $query);
-        mysqli_stmt_bind_param($stmt, "isi", $listingId, $imageUrl, $displayOrder);
-        return mysqli_stmt_execute($stmt);
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO sell_pet_listing_images (listing_id, image_url, display_order) 
+                VALUES (?, ?, ?)
+            ");
+            return $stmt->execute([$listingId, $imageUrl, $displayOrder]);
+        } catch (PDOException $e) {
+            error_log("Add image error: " . $e->getMessage());
+            return false;
+        }
     }
     
     public function getImages($listingId) {
-        $query = "SELECT image_url FROM sell_pet_listing_images WHERE listing_id = ? ORDER BY display_order ASC";
-        $stmt = mysqli_prepare($this->conn, $query);
-        mysqli_stmt_bind_param($stmt, "i", $listingId);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $images = [];
-        while ($row = mysqli_fetch_assoc($result)) {
-            $images[] = $row['image_url'];
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT image_url FROM sell_pet_listing_images 
+                WHERE listing_id = ? 
+                ORDER BY display_order ASC
+            ");
+            $stmt->execute([$listingId]);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return array_map(function($row) { return $row['image_url']; }, $rows);
+        } catch (PDOException $e) {
+            error_log("Get images error: " . $e->getMessage());
+            return [];
         }
-        return $images;
     }
     
     public function deleteImages($listingId) {
-        $query = "DELETE FROM sell_pet_listing_images WHERE listing_id = ?";
-        $stmt = mysqli_prepare($this->conn, $query);
-        mysqli_stmt_bind_param($stmt, "i", $listingId);
-        return mysqli_stmt_execute($stmt);
+        try {
+            $stmt = $this->pdo->prepare("
+                DELETE FROM sell_pet_listing_images WHERE listing_id = ?
+            ");
+            return $stmt->execute([$listingId]);
+        } catch (PDOException $e) {
+            error_log("Delete images error: " . $e->getMessage());
+            return false;
+        }
     }
     
     // Badge management
     public function addBadge($listingId, $badge) {
-        $query = "INSERT INTO sell_pet_listing_badges (listing_id, badge) VALUES (?, ?)";
-        $stmt = mysqli_prepare($this->conn, $query);
-        mysqli_stmt_bind_param($stmt, "is", $listingId, $badge);
-        return mysqli_stmt_execute($stmt);
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO sell_pet_listing_badges (listing_id, badge) 
+                VALUES (?, ?)
+            ");
+            return $stmt->execute([$listingId, $badge]);
+        } catch (PDOException $e) {
+            error_log("Add badge error: " . $e->getMessage());
+            return false;
+        }
     }
     
     public function getBadges($listingId) {
-        $query = "SELECT badge FROM sell_pet_listing_badges WHERE listing_id = ?";
-        $stmt = mysqli_prepare($this->conn, $query);
-        mysqli_stmt_bind_param($stmt, "i", $listingId);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $badges = [];
-        while ($row = mysqli_fetch_assoc($result)) {
-            $badges[] = $row['badge'];
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT badge FROM sell_pet_listing_badges 
+                WHERE listing_id = ? 
+                ORDER BY id ASC
+            ");
+            $stmt->execute([$listingId]);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return array_map(function($row) { return $row['badge']; }, $rows);
+        } catch (PDOException $e) {
+            error_log("Get badges error: " . $e->getMessage());
+            return [];
         }
-        return $badges;
     }
     
     public function deleteBadges($listingId) {
-        $query = "DELETE FROM sell_pet_listing_badges WHERE listing_id = ?";
-        $stmt = mysqli_prepare($this->conn, $query);
-        mysqli_stmt_bind_param($stmt, "i", $listingId);
-        return mysqli_stmt_execute($stmt);
+        try {
+            $stmt = $this->pdo->prepare("
+                DELETE FROM sell_pet_listing_badges WHERE listing_id = ?
+            ");
+            return $stmt->execute([$listingId]);
+        } catch (PDOException $e) {
+            error_log("Delete badges error: " . $e->getMessage());
+            return false;
+        }
     }
 }
 ?>

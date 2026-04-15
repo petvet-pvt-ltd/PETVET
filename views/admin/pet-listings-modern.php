@@ -62,6 +62,7 @@
           <div class="detail-row"><span class="detail-label">Breed:</span><span class="detail-value" id="detailBreed"></span></div>
           <div class="detail-row"><span class="detail-label">Age:</span><span class="detail-value" id="detailAge"></span></div>
           <div class="detail-row"><span class="detail-label">Gender:</span><span class="detail-value" id="detailGender"></span></div>
+          <div class="detail-row"><span class="detail-label">Weight:</span><span class="detail-value" id="detailWeight"></span></div>
           <div class="detail-row"><span class="detail-label">Price:</span><span class="detail-value" id="detailPrice"></span></div>
           <div class="detail-row"><span class="detail-label">Location:</span><span class="detail-value" id="detailLocation"></span></div>
           <div class="detail-row"><span class="detail-label">Description:</span><span class="detail-value" id="detailDescription"></span></div>

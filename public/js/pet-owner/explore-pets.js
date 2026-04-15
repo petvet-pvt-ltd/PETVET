@@ -1069,6 +1069,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		editForm.querySelector('[name="breed"]').value = listing.breed;
 		editForm.querySelector('[name="age"]').value = listing.age;
 		editForm.querySelector('[name="gender"]').value = listing.gender;
+		editForm.querySelector('[name="weight"]').value = listing.weight || '';
 		editForm.querySelector('[name="price"]').value = listing.price;
 		editForm.querySelector('[name="listing_type"]').value = listing.listing_type || 'sale';
 		// Map 'description' to 'desc' field

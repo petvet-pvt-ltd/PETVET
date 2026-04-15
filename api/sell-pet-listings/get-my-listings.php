@@ -30,10 +30,15 @@ try {
     // Get user's listings
     $listings = $model->getUserListings($userId);
     
-    // Attach images and badges to each listing
+    // Attach images and badges to each listing, and convert weight to float
     foreach ($listings as &$listing) {
         $listing['images'] = $model->getImages($listing['id']);
         $listing['badges'] = $model->getBadges($listing['id']);
+        
+        // Convert weight to float for proper JSON serialization
+        if (isset($listing['weight']) && $listing['weight'] !== null) {
+            $listing['weight'] = floatval($listing['weight']);
+        }
     }
     
     ob_clean();

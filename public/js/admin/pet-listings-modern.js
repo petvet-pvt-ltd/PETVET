@@ -20,6 +20,7 @@ const detailSpecies = document.getElementById('detailSpecies');
 const detailBreed = document.getElementById('detailBreed');
 const detailAge = document.getElementById('detailAge');
 const detailGender = document.getElementById('detailGender');
+const detailWeight = document.getElementById('detailWeight');
 const detailPrice = document.getElementById('detailPrice');
 const detailLocation = document.getElementById('detailLocation');
 const detailDescription = document.getElementById('detailDescription');
@@ -294,6 +295,7 @@ function viewDetails(id) {
   detailBreed.textContent = listing.breed;
   detailAge.textContent = `${listing.age} ${listing.age === '1' ? 'year' : 'years'}`;
   detailGender.textContent = listing.gender;
+  detailWeight.textContent = (listing.weight && listing.weight !== '0') ? listing.weight + ' kg' : 'Not specified';
   detailPrice.textContent = `LKR ${parseFloat(listing.price).toLocaleString()}`;
   detailLocation.textContent = listing.location;
   detailDescription.textContent = listing.description || 'No description provided';

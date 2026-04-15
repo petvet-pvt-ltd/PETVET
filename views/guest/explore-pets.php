@@ -257,6 +257,11 @@ foreach($adoptionPetsBySpecies as $speciesList) {
               <option>Female</option>
             </select>
           </label>
+          <label>Weight (kg)
+            <input type="number" name="weight" id="adoptWeight" placeholder="e.g., 25.5" min="0" step="0.5"
+              title="Weight should be a positive number" autocomplete="off">
+            <small class="field-hint">Weight in kilograms</small>
+          </label>
           <label class="full">Location
             <input type="text" name="location" id="adoptLocation" required placeholder="e.g., Colombo 07" autocomplete="off">
           </label>
