@@ -46,13 +46,16 @@ function lf_fmtDate($ymd){
 		</label>
 		<select id="species">
 			<option value="">All species</option>
-			<option>Dog</option><option>Cat</option><option>Bird</option>
+			<option value="Dog">Dog</option>
+			<option value="Cat">Cat</option>
+			<option value="Bird">Bird</option>
+			<option value="Other">Other</option>
 		</select>
 		<select id="sortBy">
-			<option value="nearby">Nearest to me</option>
-			<option value="latest">Latest to Oldest</option>
 			<option value="new">Newest first</option>
 			<option value="old">Oldest first</option>
+			<option value="days_missing">Days Missing (Most)</option>
+			<option value="nearby">Nearest to me</option>
 		</select>
 	</div>
 </section>
@@ -67,7 +70,7 @@ function lf_fmtDate($ymd){
 		</div>
 	<?php else: ?>
 			<?php foreach ($lostReports as $r): ?>
-			<article class="card" data-report-id="<?php echo lf_esc($r['id']); ?>" data-species="<?php echo lf_esc($r['species']); ?>" data-date="<?php echo lf_esc($r['date']); ?>" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-color="<?php echo lf_esc($r['color']); ?>">
+			<article class="card urgency-<?php echo strtolower($r['urgency']); ?>" data-report-id="<?php echo lf_esc($r['id']); ?>" data-species="<?php echo lf_esc($r['species']); ?>" data-date="<?php echo lf_esc($r['date']); ?>" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-color="<?php echo lf_esc($r['color']); ?>">
 				<div class="card-media">
 				<?php 
 				$photos = !empty($r['photo']) ? (is_array($r['photo']) ? $r['photo'] : [$r['photo']]) : [];
@@ -97,11 +100,13 @@ function lf_fmtDate($ymd){
 						<?php echo lf_esc($r['name'] ?: 'Unknown Name'); ?>
 						<span class="muted">• <?php echo lf_esc($r['species']); ?><?php echo $r['breed']? ' · '.lf_esc($r['breed']) : ''; ?><?php echo $r['age']? ' · '.lf_esc($r['age']) : ''; ?></span>
 					</h4>
+					<p >Urgency: <?php echo $r['urgency']; ?></p>
 					<p class="meta"><strong>Last seen:</strong> <?php echo lf_esc($r['last_seen']); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
 					<?php if(!empty($r['reward']) && $r['reward'] > 0): ?>
-						<p>Reward: $<?php echo number_format($r['reward'], 2); ?></p>
+						<p>💰 Reward: $<?php echo number_format($r['reward'], 2); ?></p>
 					<?php endif; ?>
-				<p class="time-ago" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-date="<?php echo lf_esc($r['date']); ?>" style="color: var(--primary); font-weight: 500; font-size: 0.9em; margin-top: 4px;"></p>
+					<p>Missing for <?php echo $r['days_missing'] ?? 0; ?> days</p>
+					<p class="time-ago" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-date="<?php echo lf_esc($r['date']); ?>" style="color: var(--primary); font-weight: 500; font-size: 0.9em; margin-top: 4px;"></p>
 				<p class="report-distance" data-report-id="<?php echo lf_esc($r['id']); ?>">
 					<span class="distance-loader">⏳ Calculating distance...</span>
 				</p>					<?php if(!empty($r['notes'])): ?><p class="notes"><?php echo lf_esc($r['notes']); ?></p><?php endif; ?>
@@ -130,7 +135,7 @@ function lf_fmtDate($ymd){
 		</div>
 	<?php else: ?>
 		<?php foreach ($foundReports as $r): ?>
-			<article class="card" data-report-id="<?php echo lf_esc($r['id']); ?>" data-species="<?php echo lf_esc($r['species']); ?>" data-date="<?php echo lf_esc($r['date']); ?>" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-color="<?php echo lf_esc($r['color']); ?>">
+			<article class="card urgency-<?php echo strtolower($r['urgency']); ?>" data-report-id="<?php echo lf_esc($r['id']); ?>" data-species="<?php echo lf_esc($r['species']); ?>" data-date="<?php echo lf_esc($r['date']); ?>" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-color="<?php echo lf_esc($r['color']); ?>">
 				<div class="card-media">
 				<?php 
 				$photos = !empty($r['photo']) ? (is_array($r['photo']) ? $r['photo'] : [$r['photo']]) : [];
@@ -160,8 +165,10 @@ function lf_fmtDate($ymd){
 						<?php echo lf_esc($r['name'] ?: 'Unknown Name'); ?>
 						<span class="muted">• <?php echo lf_esc($r['species']); ?><?php echo $r['breed']? ' · '.lf_esc($r['breed']) : ''; ?><?php echo $r['age']? ' · '.lf_esc($r['age']) : ''; ?></span>
 					</h4>
-				<p class="meta"><strong>Found at:</strong> <?php echo lf_esc($r['last_seen']); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
-				<p class="time-ago" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-date="<?php echo lf_esc($r['date']); ?>" style="color: var(--primary); font-weight: 500; font-size: 0.9em; margin-top: 4px;"></p>
+			<p class="meta"><strong>Found at:</strong> <?php echo lf_esc($r['last_seen']); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
+			<?php $daysMissing = $r['days_missing'] ?? 0; ?>
+			<p>Missing for <?php echo $daysMissing; ?> days</p>
+					<p class="time-ago" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-date="<?php echo lf_esc($r['date']); ?>" style="color: var(--primary); font-weight: 500; font-size: 0.9em; margin-top: 4px;"></p>
 				<p class="report-distance" data-report-id="<?php echo lf_esc($r['id']); ?>">
 					<span class="distance-loader">⏳ Calculating distance...</span>
 				</p>					<?php if(!empty($r['notes'])): ?><p class="notes"><?php echo lf_esc($r['notes']); ?></p><?php endif; ?>
@@ -202,11 +209,18 @@ function lf_fmtDate($ymd){
 					<input type="text" id="rName" placeholder="Rocky / Unknown">
 				</label>
 				<label class="field">Color
-					<input type="text" id="rColor" placeholder="Golden / Black">
+					<input type="text" id="rColor" placeholder="Golden / Black"  value="Golden" readonly>
 				</label>
 			</div>
 			<div class="row">
-				
+				<label class="field">Urgency
+					<select id="rUrgency" required>
+						<option value="">-- Select Urgency --</option>
+						<option value="Low">Low</option>
+						<option value="Medium" selected>Medium</option>
+						<option value="High">High</option>
+					</select>
+				</label>
 				<label class="field">Reward
 					<input type="number" id="rReward" placeholder="0.00" min="0">
 				</label>
@@ -312,9 +326,16 @@ function lf_fmtDate($ymd){
 				</label>
 			</div>
 				<div class="row">
-				
+				<label class="field">Urgency
+					<select id="editUrgency" required>
+						<option value="">-- Select Urgency --</option>
+						<option value="Low">Low</option>
+						<option value="Medium" selected>Medium</option>
+						<option value="High">High</option>
+					</select>
+				</label>
 				<label class="field">Reward
-					<input type="number" id="editReward" placeholder="0.00">
+					<input type="number" id="editReward" placeholder="0.00" min="0">
 				</label>
 			</div>
 			<label class="field">Select location on map

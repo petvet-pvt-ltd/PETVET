@@ -56,6 +56,7 @@ try {
             'name' => $description['name'] ?? null,
             'color' => $description['color'] ?? '',
             'notes' => $description['notes'] ?? '',
+            'reward' => $description['reward'] ?? null,
             'photos' => $description['photos'] ?? [],
             'latitude' => $description['latitude'] ?? null,
             'longitude' => $description['longitude'] ?? null,

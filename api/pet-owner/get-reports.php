@@ -23,28 +23,60 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 try {
     $db = db();
     
-    // Get optional filter parameter
+    // Get optional filter parameters
     $type = $_GET['type'] ?? null; // 'lost', 'found', or null for all
+    $species = $_GET['species'] ?? null; // species filter
     
     // Build query
     $sql = "SELECT * FROM LostFoundReport";
     $params = [];
+    $where = [];
     
     if ($type && in_array($type, ['lost', 'found'])) {
-        $sql .= " WHERE type = :type";
+        $where[] = "type = :type";
         $params[':type'] = $type;
     }
     
-    $sql .= " ORDER BY date_reported DESC";
+    if ($species) {
+        $where[] = "description LIKE :species";
+        $params[':species'] = '%"species":"' . $species . '"%';
+    }
+    
+    if (!empty($where)) {
+        $sql .= " WHERE " . implode(" AND ", $where);
+    }
+    
+    // Get sort parameter
+    $sort = $_GET['sort'] ?? 'new';
+    
+    // Add sorting based on preference
+    if ($sort === 'old') {
+        $sql .= " ORDER BY date_reported ASC";
+    } elseif ($sort === 'days_missing') {
+        $sql .= " ORDER BY date_reported ASC";
+    } else {
+        // 'new' (default) or 'nearby'
+        $sql .= " ORDER BY date_reported DESC";
+    }
     
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
     $reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Parse JSON description field for each report
+    // Parse JSON description field for each report and add days missing
     $formattedReports = [];
     foreach ($reports as $report) {
         $description = json_decode($report['description'], true);
+        
+        // Calculate days missing
+        try {
+            $today = new DateTime();
+            $reported = new DateTime($report['date_reported']);
+            $interval = $today->diff($reported);
+            $daysMissing = $interval->days;
+        } catch (Exception $e) {
+            $daysMissing = 0;
+        }
         
         $formattedReports[] = [
             'id' => $report['report_id'],
@@ -56,6 +88,7 @@ try {
             'color' => $description['color'] ?? '',
             'notes' => $description['notes'] ?? '',
             'photos' => $description['photos'] ?? [],
+            'days_missing' => $daysMissing,
             'contact' => $description['contact'] ?? [
                 'phone' => '',
                 'phone2' => '',

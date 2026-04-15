@@ -354,6 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					species: report.species,
 					name: report.name || 'Unknown',
 					color: report.color,
+					reward: report.reward || 0,
 					location: report.location,
 					date: report.date,
 					time: report.time || '',
@@ -475,6 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		qs('#editSpecies').value = listing.species;
 		qs('#editName').value = listing.name || '';
 		qs('#editColor').value = listing.color || '';
+		qs('#editReward').value = listing.reward || '0';
 		qs('#editLocation').value = listing.location;
 		qs('#editDate').value = listing.date;
 		qs('#editTime').value = listing.time || '';
@@ -632,7 +634,15 @@ document.addEventListener('DOMContentLoaded', () => {
 			const dateTimeStr = time ? `${date} ${time}` : date;
 			const datetime = new Date(dateTimeStr).getTime() || 0;
 			
-			return { card, visible, date, distance, datetime };
+			// Extract days missing from card text
+			let daysMissing = 0;
+			const text = card.textContent || '';
+			const match = text.match(/Missing for (\d+) days/);
+			if (match) {
+				daysMissing = parseInt(match[1]);
+			}
+			
+			return { card, visible, date, distance, datetime, daysMissing };
 		});
 		list.forEach(({card, visible}) => { card.style.display = visible ? '' : 'none'; });
 		const body = container;
@@ -642,6 +652,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (sort === 'nearby') {
 			// Sort by distance (nearest first)
 			vis.sort((a,b) => a.distance - b.distance);
+		} else if (sort === 'days_missing') {
+			// Sort by days missing (most first)
+			vis.sort((a,b) => b.daysMissing - a.daysMissing);
 		} else if (sort === 'latest') {
 			// Sort by datetime (latest first)
 			vis.sort((a,b) => b.datetime - a.datetime);
@@ -652,6 +665,21 @@ document.addEventListener('DOMContentLoaded', () => {
 				const tb=Date.parse(b.date)||0; 
 				return (sort==='old') ? (ta-tb):(tb-ta); 
 			});
+		}
+		
+		// Display no matches message if needed
+		let noMatchesMsg = container.querySelector('.no-matches');
+		if (vis.length === 0 && list.length > 0) {
+			if (!noMatchesMsg) {
+				noMatchesMsg = document.createElement('div');
+				noMatchesMsg.className = 'no-matches';
+				noMatchesMsg.style.cssText = 'text-align:center;padding:40px;color:var(--gray);';
+				noMatchesMsg.innerHTML = '<p>No matches found. Try changing your filter or search.</p>';
+				container.appendChild(noMatchesMsg);
+			}
+			noMatchesMsg.style.display = '';
+		} else if (noMatchesMsg) {
+			noMatchesMsg.style.display = 'none';
 		}
 		
 		vis.forEach(x=> body.appendChild(x.card));
@@ -741,6 +769,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		formData.append('phone', qs('#rPhone').value || '');
 		formData.append('phone2', qs('#rPhone2').value || '');
 		formData.append('email', qs('#rEmail').value || '');
+	    formData.append('reward', qs('#rReward').value || '0'); 
+		formData.append('urgency', qs('#rUrgency').value);
 		
 		// Append multiple photos
 		if (photoInput.files.length > 0) {
@@ -819,6 +849,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			formData.append('phone', qs('#editPhone').value);
 			formData.append('phone2', qs('#editPhone2').value);
 			formData.append('email', qs('#editEmail').value);
+			formData.append('reward', qs('#editReward').value || '0');
+			formData.append('urgency', qs('#editUrgency').value);
 			
 			// Check if new photos uploaded
 			const photoInput = qs('#editPhoto');

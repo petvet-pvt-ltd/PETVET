@@ -13,6 +13,7 @@ header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
 require_once __DIR__ . '/../../config/connect.php';
+require_once __DIR__ . '/../../models/PetOwner/LostFoundModel.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -44,43 +45,21 @@ try {
     $phone2 = $_POST['phone2'] ?? '';
     $email = $_POST['email'] ?? '';
     $reward = $_POST['reward'] ?? '';
+    $urgency = $_POST['urgency'] ?? 'Medium';
     
-    // Validate required fields
-    if (empty($type) || empty($species) || empty($location) || empty($date)) {
+    // Validate all fields using model
+    $lostFoundModel = new LostFoundModel();
+    $validation = $lostFoundModel->validateReportFields($type, $species, $name, $color, $location, $date, $time, $phone, $phone2, $email, $notes, $reward);
+    
+    if (!$validation['valid']) {
         http_response_code(400);
         echo json_encode([
-            'success' => false, 
-            'message' => 'Required fields: type, species, location, date'
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $validation['errors']
         ]);
         exit;
     }
-    
-    // Validate type
-    if (!in_array($type, ['lost', 'found'])) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Invalid type. Must be "lost" or "found".']);
-        exit;
-    }
-
-    // Validate phone number format (10 digits or +94 with 9 digits)
-if (empty($phone)) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Phone number is required']);
-    exit;
-}
-
-if (!preg_match('/^(\d{10}|\+94\d{9})$/', $phone)) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Phone must be 10 digits or +94 with 9 digits']);
-    exit;
-}
-
-// Validate secondary phone if provided
-if (!empty($phone2) && !preg_match('/^(\d{10}|\+94\d{9})$/', $phone2)) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Secondary phone must be 10 digits or +94 with 9 digits']);
-    exit;
-}
     
     // Handle photo upload
     $photoPath = null;
@@ -139,6 +118,8 @@ if (!empty($phone2) && !preg_match('/^(\d{10}|\+94\d{9})$/', $phone2)) {
         'color' => $color,
         'notes' => $notes,
         'time' => $time,
+        'reward' => $reward,
+        'urgency' => $urgency,
         'contact' => [
             'phone' => $phone,
             'phone2' => $phone2,
@@ -153,21 +134,8 @@ if (!empty($phone2) && !preg_match('/^(\d{10}|\+94\d{9})$/', $phone2)) {
     
     $descriptionJson = json_encode($additionalData, JSON_UNESCAPED_UNICODE);
     
-    // Insert into database
-    $db = db();
-    $stmt = $db->prepare("
-        INSERT INTO LostFoundReport (type, location, date_reported, description) 
-        VALUES (:type, :location, :date_reported, :description)
-    ");
-    
-    $stmt->execute([
-        ':type' => $type,
-        ':location' => $location,
-        ':date_reported' => $date,
-        ':description' => $descriptionJson
-    ]);
-    
-    $reportId = $db->lastInsertId();
+    // Insert into database using model
+    $reportId = $lostFoundModel->insertReport($type, $location, $date, $descriptionJson);
     
     // Return success response
     http_response_code(201);
