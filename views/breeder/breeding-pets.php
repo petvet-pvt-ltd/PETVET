@@ -150,10 +150,17 @@ $pageTitle = "Breeding Pets";
                             <input type="text" id="petName" name="name" class="form-control" required>
                         </div>
 
-                        <div class="form-group">
-                            <label for="petBreed">Breed *</label>
-                            <input type="text" id="petBreed" name="breed" class="form-control" required>
-                        </div>
+                      <div class="form-group">
+                        <label for="petBreed">Breed *</label>
+                        <input 
+                            type="text" 
+                            id="petBreed" 
+                            name="breed" 
+                            class="form-control" 
+                            required
+                            pattern="Golden Retriever"
+                            title="Only 'Golden Retriever' is allowed">
+                    </div>
 
                         <div class="form-group">
                             <label for="petGender">Gender *</label>
