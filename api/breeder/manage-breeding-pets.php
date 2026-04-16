@@ -21,6 +21,10 @@ try {
             getAllBreedingPets($conn, $userId);
             break;
         
+        case 'get_by_breed':
+            getBreedingPetsByBreed($conn);
+            break;
+        
         case 'add':
             addBreedingPet($conn, $userId);
             break;
@@ -69,8 +73,29 @@ function getAllBreedingPets($conn, $userId) {
     echo json_encode(['success' => true, 'pets' => $pets]);
 }
 
+function getBreedingPetsByBreed($conn) {
+    $stmt = $conn->prepare("
+        SELECT id, breeder_id, name, breed, gender, date_of_birth as dob, 
+               photo, description, is_active,
+               TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) as age_years
+        FROM breeder_pets
+        WHERE breed = 'Golden Retriever'
+        ORDER BY created_at DESC
+    ");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $pets = [];
+    while ($row = $result->fetch_assoc()) {
+        $pets[] = $row;
+    }
+    
+    echo json_encode(['success' => true, 'breed' => 'Golden Retriever', 'pets' => $pets, 'count' => count($pets)]);
+}
+
 function addBreedingPet($conn, $userId) {
     $name = $_POST['name'] ?? '';
+    $species = $_POST['species'] ?? 'Dog';
     $breed = $_POST['breed'] ?? '';
     $gender = $_POST['gender'] ?? '';
     $dob = $_POST['dob'] ?? '';
@@ -104,10 +129,10 @@ function addBreedingPet($conn, $userId) {
     }
     
     $stmt = $conn->prepare("
-        INSERT INTO breeder_pets (breeder_id, name, breed, gender, date_of_birth, photo, description, is_active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO breeder_pets (breeder_id, name, species, breed, gender, date_of_birth, photo, description, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
-    $stmt->bind_param("issssssi", $userId, $name, $breed, $gender, $dob, $photoPath, $description, $isActive);
+    $stmt->bind_param("isssssssi", $userId, $name, $species, $breed, $gender, $dob, $photoPath, $description, $isActive);
     
     if ($stmt->execute()) {
         echo json_encode([

@@ -42,10 +42,9 @@ class BreederController extends BaseController {
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
         }
-        $breederId = (int)($_SESSION['user_id'] ?? 0);
         
         $data = [
-            'breedingPets' => $model->getBreedingPets($breederId)
+            'breedingPets' => $model->getBreedingPetsByBreed('Golden Retriever')
         ];
         
         $this->view('breeder', 'breeding-pets', $data);

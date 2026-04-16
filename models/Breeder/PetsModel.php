@@ -57,4 +57,27 @@ class BreederPetsModel extends BaseModel {
         
         return $pets;
     }
+
+    public function getBreedingPetsByBreed($breed = 'Golden Retriever') {
+        $stmt = $this->conn->prepare("
+            SELECT id, breeder_id, name, breed, gender, date_of_birth as dob, 
+                   photo, description, is_active,
+                   TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) as age_years
+            FROM breeder_pets
+            WHERE breed = 'Golden Retriever'
+            ORDER BY created_at DESC
+        ");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $pets = [];
+        while ($row = $result->fetch_assoc()) {
+            $row['is_active'] = (bool)$row['is_active'];
+            $row['age'] = $row['age_years'] . ' ' . ($row['age_years'] == 1 ? 'year' : 'years');
+            unset($row['age_years']);
+            $pets[] = $row;
+        }
+        
+        return $pets;
+    }
 }
