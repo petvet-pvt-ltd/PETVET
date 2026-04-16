@@ -13,6 +13,7 @@ header('Access-Control-Allow-Methods: POST, DELETE');
 header('Access-Control-Allow-Headers: Content-Type');
 
 require_once __DIR__ . '/../../config/connect.php';
+require_once __DIR__ . '/../../models/PetOwner/LostFoundModel.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -29,7 +30,7 @@ if (!in_array($_SERVER['REQUEST_METHOD'], ['POST', 'DELETE'])) {
 }
 
 try {
-    $db = db();
+    $lostFoundModel = new LostFoundModel();
     $userId = $_SESSION['user_id'];
     
     // Get report ID from POST or query string
@@ -41,10 +42,8 @@ try {
         exit;
     }
     
-    // Verify ownership - fetch existing report
-    $stmt = $db->prepare("SELECT * FROM LostFoundReport WHERE report_id = :report_id");
-    $stmt->execute([':report_id' => $reportId]);
-    $existingReport = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Verify ownership - fetch existing report using model
+    $existingReport = $lostFoundModel->getReportById($reportId);
     
     if (!$existingReport) {
         http_response_code(404);
@@ -70,9 +69,8 @@ try {
         }
     }
     
-    // Delete from database
-    $stmt = $db->prepare("DELETE FROM LostFoundReport WHERE report_id = :report_id");
-    $stmt->execute([':report_id' => $reportId]);
+    // Delete from database using model
+    $lostFoundModel->deleteReport($reportId);
     
     // Return success response
     http_response_code(200);

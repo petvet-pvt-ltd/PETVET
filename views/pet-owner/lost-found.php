@@ -12,6 +12,7 @@
 $reports = $reports ?? [];
 $lostReports = $lostReports ?? [];
 $foundReports = $foundReports ?? [];
+$currentUserId = $_SESSION['user_id'] ?? null;
 
 // Helper functions for display formatting
 function lf_esc($s){ 
@@ -102,6 +103,11 @@ function lf_fmtDate($ymd){
 				<p class="report-distance" data-report-id="<?php echo lf_esc($r['id']); ?>">
 					<span class="distance-loader">⏳ Calculating distance...</span>
 				</p>					<?php if(!empty($r['notes'])): ?><p class="notes"><?php echo lf_esc($r['notes']); ?></p><?php endif; ?>
+					<?php $isOwnPetProfileReport = $currentUserId !== null
+						&& isset($r['owner_user_id'])
+						&& (string)$r['owner_user_id'] === (string)$currentUserId
+						&& !empty($r['reported_pet_id']); ?>
+					<?php if (!$isOwnPetProfileReport): ?>
 					<div class="actions">
 						<button class="btn outline contact-owner-btn" 
 							data-name="<?php echo lf_esc($r['name'] ?: 'Pet Owner'); ?>"
@@ -111,6 +117,7 @@ function lf_fmtDate($ymd){
 							Contact Owner
 						</button>
 					</div>
+					<?php endif; ?>
 				</div>
 			</article>
 		<?php endforeach; ?>
@@ -162,6 +169,11 @@ function lf_fmtDate($ymd){
 				<p class="report-distance" data-report-id="<?php echo lf_esc($r['id']); ?>">
 					<span class="distance-loader">⏳ Calculating distance...</span>
 				</p>					<?php if(!empty($r['notes'])): ?><p class="notes"><?php echo lf_esc($r['notes']); ?></p><?php endif; ?>
+					<?php $isOwnPetProfileReport = $currentUserId !== null
+						&& isset($r['owner_user_id'])
+						&& (string)$r['owner_user_id'] === (string)$currentUserId
+						&& !empty($r['reported_pet_id']); ?>
+					<?php if (!$isOwnPetProfileReport): ?>
 					<div class="actions">
 						<button class="btn outline contact-owner-btn" 
 							data-name="<?php echo lf_esc($r['name'] ?: 'Pet Finder'); ?>"
@@ -171,6 +183,7 @@ function lf_fmtDate($ymd){
 							Contact Finder
 						</button>
 					</div>
+					<?php endif; ?>
 				</div>
 			</article>
 		<?php endforeach; ?>

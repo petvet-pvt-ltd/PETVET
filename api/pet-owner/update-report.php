@@ -13,6 +13,7 @@ header('Access-Control-Allow-Methods: POST, PUT');
 header('Access-Control-Allow-Headers: Content-Type');
 
 require_once __DIR__ . '/../../config/connect.php';
+require_once __DIR__ . '/../../models/PetOwner/LostFoundModel.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -29,7 +30,7 @@ if (!in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT'])) {
 }
 
 try {
-    $db = db();
+    $lostFoundModel = new LostFoundModel();
     $userId = $_SESSION['user_id'];
     
     // Get report ID
@@ -41,10 +42,8 @@ try {
         exit;
     }
     
-    // Verify ownership - fetch existing report
-    $stmt = $db->prepare("SELECT * FROM LostFoundReport WHERE report_id = :report_id");
-    $stmt->execute([':report_id' => $reportId]);
-    $existingReport = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Verify ownership - fetch existing report using model
+    $existingReport = $lostFoundModel->getReportById($reportId);
     
     if (!$existingReport) {
         http_response_code(404);
@@ -75,20 +74,16 @@ try {
     $phone2 = $_POST['phone2'] ?? $existingDescription['contact']['phone2'];
     $email = $_POST['email'] ?? $existingDescription['contact']['email'];
     
-    // Validate required fields
-    if (empty($type) || empty($species) || empty($location) || empty($date)) {
+    // Validate all fields using model
+    $validation = $lostFoundModel->validateReportFields($type, $species, $name, $color, $location, $date, $time, $phone, $phone2, $email, $notes);
+    
+    if (!$validation['valid']) {
         http_response_code(400);
         echo json_encode([
-            'success' => false, 
-            'message' => 'Required fields: type, species, location, date'
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $validation['errors']
         ]);
-        exit;
-    }
-    
-    // Validate type
-    if (!in_array($type, ['lost', 'found'])) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Invalid type. Must be "lost" or "found".']);
         exit;
     }
     
@@ -166,23 +161,8 @@ try {
     
     $descriptionJson = json_encode($updatedDescription, JSON_UNESCAPED_UNICODE);
     
-    // Update database
-    $stmt = $db->prepare("
-        UPDATE LostFoundReport 
-        SET type = :type, 
-            location = :location, 
-            date_reported = :date_reported, 
-            description = :description
-        WHERE report_id = :report_id
-    ");
-    
-    $stmt->execute([
-        ':type' => $type,
-        ':location' => $location,
-        ':date_reported' => $date,
-        ':description' => $descriptionJson,
-        ':report_id' => $reportId
-    ]);
+    // Update database using model
+    $lostFoundModel->updateReport($reportId, $type, $location, $date, $descriptionJson);
     
     // Return success response
     http_response_code(200);

@@ -144,23 +144,57 @@ document.addEventListener("DOMContentLoaded", () => {
   const missingDialog = document.getElementById("markMissingDialog");
   const rewardCheckbox = document.getElementById("rewardCheckbox");
   const rewardAmountWrap = document.getElementById("rewardAmountWrap");
-  const datetimeField = missingDialog?.querySelector("input[name='datetime']");
+  const dateField = missingDialog?.querySelector("input[name='date']");
+  const timeField = missingDialog?.querySelector("input[name='time']");
+  const missingLocationInput = missingDialog?.querySelector("input[name='location']");
+  const missingLatInput = missingDialog?.querySelector("input[name='latitude']");
+  const missingLngInput = missingDialog?.querySelector("input[name='longitude']");
+  const missingPhotosInput = document.getElementById("missingPhotos");
+  const missingPhotoPreview = document.getElementById("missingPhotoPreview");
+  const missingPetName = document.getElementById("missingPetName");
+  const missingPetSpecies = document.getElementById("missingPetSpecies");
+  const missingPetBreed = document.getElementById("missingPetBreed");
+  const missingPetColor = document.getElementById("missingPetColor");
   const markMissingForm = document.getElementById("markMissingForm");
+  const missingPetsData = window.petsData || [];
   let currentMissingPetId = null;
+  let missingMap = null;
+  let missingMarker = null;
 
   // Open missing popup
   document.querySelectorAll(".markMissingBtn").forEach(btn => {
     btn.addEventListener("click", e => {
       e.preventDefault();
       currentMissingPetId = btn.getAttribute("data-pet");
+
+      const pet = missingPetsData.find(p => String(p.id) === String(currentMissingPetId));
+      if (pet) {
+        if (missingPetName) missingPetName.value = pet.name || "";
+        if (missingPetSpecies) missingPetSpecies.value = pet.species || "";
+        if (missingPetBreed) missingPetBreed.value = pet.breed || "Unknown";
+        if (missingPetColor) missingPetColor.value = pet.color || "Unknown";
+      }
+
+      if (rewardAmountWrap && rewardCheckbox) {
+        rewardAmountWrap.style.display = rewardCheckbox.checked ? "block" : "none";
+      }
+
       openDialog("markMissingDialog");
+
+      // Initialize map after dialog opens
+      setTimeout(() => {
+        initMissingMap();
+      }, 120);
     });
   });
 
   // Cancel button for missing popup
   if (missingDialog) {
     missingDialog.querySelectorAll("button[value='cancel']").forEach(btn => {
-      btn.addEventListener("click", () => closeDialog("markMissingDialog"));
+      btn.addEventListener("click", () => {
+        closeDialog("markMissingDialog");
+        resetMarkMissingFormUi();
+      });
     });
   }
 
@@ -171,9 +205,131 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Set current datetime
-  if (datetimeField) {
-    datetimeField.value = new Date().toISOString().slice(0, 16);
+  // Set current date and time
+  if (dateField && timeField) {
+    const now = new Date();
+    dateField.value = now.toISOString().slice(0, 10);
+    timeField.value = now.toTimeString().slice(0, 5);
+  }
+
+  if (missingPhotosInput && missingPhotoPreview) {
+    missingPhotosInput.addEventListener("change", () => {
+      missingPhotoPreview.innerHTML = "";
+      let files = Array.from(missingPhotosInput.files || []);
+
+      if (files.length > 3) {
+        files = files.slice(0, 3);
+        showToast("You can upload up to 3 photos.");
+      }
+
+      if (files.length === 0) {
+        missingPhotoPreview.style.display = "none";
+        return;
+      }
+
+      missingPhotoPreview.style.display = "flex";
+      files.forEach((file, idx) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = document.createElement("img");
+          img.src = ev.target.result;
+          img.alt = `Photo preview ${idx + 1}`;
+          img.style.width = "88px";
+          img.style.height = "88px";
+          img.style.objectFit = "cover";
+          img.style.borderRadius = "8px";
+          img.style.border = "2px solid #dbe3f0";
+          missingPhotoPreview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+  }
+
+  function initMissingMap() {
+    if (!missingDialog || missingDialog.open !== true) return;
+
+    if (missingMap) {
+      missingMap.invalidateSize();
+      return;
+    }
+
+    if (typeof L === "undefined") {
+      console.error("Leaflet is not loaded.");
+      return;
+    }
+
+    const defaultLat = 6.9271;
+    const defaultLng = 79.8612;
+
+    missingMap = L.map("missingMapContainer").setView([defaultLat, defaultLng], 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+      maxZoom: 19
+    }).addTo(missingMap);
+
+    missingMap.on("click", (e) => {
+      const { lat, lng } = e.latlng;
+      if (missingLatInput) missingLatInput.value = lat.toFixed(6);
+      if (missingLngInput) missingLngInput.value = lng.toFixed(6);
+
+      if (missingMarker) {
+        missingMarker.setLatLng([lat, lng]);
+      } else {
+        missingMarker = L.marker([lat, lng]).addTo(missingMap);
+      }
+
+      fetchAddress(lat, lng);
+    });
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          missingMap.setView([latitude, longitude], 15);
+        },
+        () => {}
+      );
+    }
+  }
+
+  async function fetchAddress(lat, lng) {
+    if (!missingLocationInput) return;
+    missingLocationInput.value = "Getting location...";
+
+    try {
+      const response = await fetch(`/PETVET/api/pet-owner/reverse-geocode.php?lat=${lat}&lng=${lng}`);
+      const data = await response.json();
+
+      if (data.success && data.location) {
+        missingLocationInput.value = data.location;
+      } else if (data.fallback) {
+        missingLocationInput.value = data.fallback;
+      } else {
+        missingLocationInput.value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      }
+    } catch (err) {
+      missingLocationInput.value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+  }
+
+  function resetMarkMissingFormUi() {
+    if (missingPhotoPreview) {
+      missingPhotoPreview.innerHTML = "";
+      missingPhotoPreview.style.display = "none";
+    }
+    if (missingLocationInput) missingLocationInput.value = "";
+    if (missingLatInput) missingLatInput.value = "";
+    if (missingLngInput) missingLngInput.value = "";
+    if (missingMarker && missingMap) {
+      missingMap.removeLayer(missingMarker);
+      missingMarker = null;
+    }
+    if (dateField && timeField) {
+      const now = new Date();
+      dateField.value = now.toISOString().slice(0, 10);
+      timeField.value = now.toTimeString().slice(0, 5);
+    }
   }
 
   // Submit mark missing report to Lost & Found
@@ -187,14 +343,20 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const locationEl = markMissingForm.querySelector("input[name='location']");
-      const datetimeEl = markMissingForm.querySelector("input[name='datetime']");
+      const dateEl = markMissingForm.querySelector("input[name='date']");
+      const timeEl = markMissingForm.querySelector("input[name='time']");
       const circumstancesEl = markMissingForm.querySelector("textarea[name='circumstances']");
       const featuresEl = markMissingForm.querySelector("input[name='features']");
       const rewardEl = markMissingForm.querySelector("input[name='reward']");
       const submitBtn = markMissingForm.querySelector("button[value='submit']");
 
-      if (!locationEl?.value || !datetimeEl?.value) {
+      if (!locationEl?.value || !dateEl?.value || !timeEl?.value) {
         showToast("Please fill required fields");
+        return;
+      }
+
+      if (!missingLatInput?.value || !missingLngInput?.value) {
+        showToast("Please select the last seen location on the map");
         return;
       }
 
@@ -208,12 +370,21 @@ document.addEventListener("DOMContentLoaded", () => {
         const formData = new FormData();
         formData.append("pet_id", currentMissingPetId);
         formData.append("location", locationEl.value);
-        formData.append("datetime", datetimeEl.value);
+        formData.append("date", dateEl.value);
+        formData.append("time", timeEl.value);
+        formData.append("latitude", missingLatInput.value);
+        formData.append("longitude", missingLngInput.value);
         formData.append("circumstances", circumstancesEl?.value || "");
         formData.append("features", featuresEl?.value || "");
 
         if (rewardCheckbox?.checked && rewardEl?.value) {
           formData.append("reward", rewardEl.value);
+        }
+
+        if (missingPhotosInput?.files?.length) {
+          Array.from(missingPhotosInput.files).slice(0, 3).forEach((file) => {
+            formData.append("photos[]", file);
+          });
         }
 
         const response = await fetch("/PETVET/api/pet-owner/mark-pet-missing.php", {
@@ -227,6 +398,7 @@ document.addEventListener("DOMContentLoaded", () => {
           closeDialog("markMissingDialog");
           markMissingForm.reset();
           rewardAmountWrap.style.display = "none";
+          resetMarkMissingFormUi();
           showToast("Pet marked as missing successfully");
 
           setTimeout(() => {

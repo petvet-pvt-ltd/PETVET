@@ -18,6 +18,9 @@ function calculateAge($dob) {
   <link rel="stylesheet" href="/PETVET/public/css/pet-owner/my-pets.css">
   <link rel="stylesheet" href="/PETVET/public/css/pet-owner/booking-calendar.css">
   <link rel="stylesheet" href="/PETVET/public/css/pet-owner/clinic-selector.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""/>
   <style>
     /* Pet Delete Button - Top Right Corner */
     .pet-hero {
@@ -1189,14 +1192,47 @@ function calculateAge($dob) {
       </header>
       <div class="dialog-body">
         <div class="form-section">
+          <h4 class="section-title">Pet Information</h4>
+          <div class="grid-2">
+            <label class="field">
+              <span>Pet Name</span>
+              <input type="text" class="input" id="missingPetName" readonly>
+            </label>
+            <label class="field">
+              <span>Species</span>
+              <input type="text" class="input" id="missingPetSpecies" readonly>
+            </label>
+            <label class="field">
+              <span>Breed</span>
+              <input type="text" class="input" id="missingPetBreed" readonly>
+            </label>
+            <label class="field">
+              <span>Color/Markings</span>
+              <input type="text" class="input" id="missingPetColor" readonly>
+            </label>
+          </div>
+
+          <h4 class="section-title" style="margin-top:16px;">Last Seen Details</h4>
           <label class="field field-col">
-            <span>Last Seen Location *</span>
-            <input type="text" class="input" name="location" required placeholder="Enter address or location">
+            <span>Select location on map *</span>
+            <div id="missingMapContainer" style="height: 300px; width: 100%; border-radius: 8px; margin-top: 8px; border: 1px solid var(--line, #e0e0e0);"></div>
+            <input type="hidden" name="latitude" id="missingLatitude">
+            <input type="hidden" name="longitude" id="missingLongitude">
+            <input type="text" class="input" name="location" id="missingLocation" readonly placeholder="Click on map to select location" style="margin-top: 8px; cursor: pointer;" required>
+            <small class="muted" style="display:block;margin-top:4px;">Click on the map to set where the pet was last seen.</small>
           </label><br>
-          <label class="field">
-            <span>Last Seen Date & Time *</span>
-            <input type="datetime-local" class="input" name="datetime" required>
-          </label><br>
+
+          <div class="grid-2">
+            <label class="field">
+              <span>Last Seen Date *</span>
+              <input type="date" class="input" name="date" id="missingDate" required>
+            </label>
+            <label class="field">
+              <span>Last Seen Time *</span>
+              <input type="time" class="input" name="time" id="missingTime" required>
+            </label>
+          </div><br>
+
           <label class="field field-col">
             <span>Circumstances</span>
             <textarea class="input" name="circumstances" rows="2" maxlength="250" placeholder="How did your pet go missing?"></textarea>
@@ -1205,6 +1241,14 @@ function calculateAge($dob) {
             <span>Distinguishing Features</span>
             <input type="text" class="input" name="features" placeholder="Special markings, collar, etc.">
           </label><br>
+
+          <label class="field field-col">
+            <span>Photos (Optional, Max 3)</span>
+            <input type="file" class="input" name="photos[]" id="missingPhotos" accept="image/*" multiple>
+            <small class="muted">Upload up to 3 photos to help identify your pet.</small>
+            <div id="missingPhotoPreview" style="margin-top:8px;display:none;gap:8px;flex-wrap:wrap;"></div>
+          </label><br>
+
           <div class="grid-2">
             <label class="field">
               <span><input type="checkbox" id="rewardCheckbox">
@@ -1398,6 +1442,9 @@ function calculateAge($dob) {
   echo '<script>window.petsData = ' . json_encode($pets) . ';</script>';
   echo '<script>window.clinicsData = ' . json_encode($clinics) . ';</script>';
   ?>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""></script>
   <script src="/PETVET/public/js/pet-owner/booking-calendar.js"></script>
   <script src="/PETVET/public/js/pet-owner/clinic-distance.js"></script>
   <script src="/PETVET/public/js/pet-owner/clinic-selector.js"></script>
