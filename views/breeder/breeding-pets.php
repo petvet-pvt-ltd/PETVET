@@ -56,6 +56,15 @@ $pageTitle = "Breeding Pets";
                         <option value="6+">Senior (6+ years)</option>
                     </select>
                 </div>
+               
+            <!--     <div class="filter-group">
+                    <label for="filterSpecies">Species</label>
+                    <select id="filterSpecies" class="form-control" onchange="applyFilters()">
+                        <option value="">All Species</option>
+                        <option value="Dog">Dog</option>
+                        <option value="Cat">Cat</option>
+                    </select>
+                </div> -->
                 <div class="filter-group">
                     <label for="filterStatus">Status</label>
                     <select id="filterStatus" class="form-control" onchange="applyFilters()">
@@ -78,6 +87,7 @@ $pageTitle = "Breeding Pets";
                         <th>Gender</th>
                         <th>Date of Birth</th>
                         <th>Age</th>
+                        <!-- <th>Species</th> -->
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -108,6 +118,11 @@ $pageTitle = "Breeding Pets";
                             </td>
                             <td data-label="Date of Birth"><?php echo date('M d, Y', strtotime($pet['dob'])); ?></td>
                             <td data-label="Age"><?php echo $pet['age']; ?></td>
+                             <!-- <td data-label="Species">
+                                 <span class="species-badge species-<?php echo strtolower($pet['species']); ?>">
+                                    <?php echo htmlspecialchars($pet['species']); ?>
+                                </span>
+                            </td> -->
                             <td data-label="Status">
                                 <label class="toggle-switch">
                                     <input type="checkbox" 
@@ -205,6 +220,16 @@ $pageTitle = "Breeding Pets";
                             <label for="petAge">Age</label>
                             <input type="text" id="petAge" class="form-control" readonly placeholder="Auto-calculated from Date of Birth">
                         </div>
+
+                          <!-- <div class="form-group">
+                            <label for="petSpecies">Species *</label>
+                            <select id="petSpecies" name="species" class="form-control" required>
+                                <option value="">Select Species</option>
+                                <option value="Dog">Dog</option>
+                                <option value="Cat">Cat</option>
+                                <option value="Bird">Bird</option>
+                                                         </select>
+                        </div> -->
 
                         <div class="form-group full-width">
                             <label for="petDescription">Description (Optional)</label>

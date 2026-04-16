@@ -29,6 +29,7 @@ function showEditPetModal(petId) {
     document.getElementById('petName').value = pet.name;
     document.getElementById('petBreed').value = pet.breed;
     document.getElementById('petGender').value = pet.gender;
+    // document.getElementById('petSpecies').value = pet.species;
     document.getElementById('petDob').value = pet.dob;
     document.getElementById('petDescription').value = pet.description || '';
     document.getElementById('petActive').checked = pet.is_active;
@@ -87,6 +88,7 @@ function savePet() {
     
     // Collect form data
     const formData = new FormData(form);
+    // Note: species field is commented out in the UI
     formData.append('action', editingPetId ? 'update' : 'add');
     
     // Make API call to save the pet
@@ -299,6 +301,7 @@ function applyFilters() {
     const breedFilter = document.getElementById('filterBreed')?.value.toLowerCase() || '';
     const ageFilter = document.getElementById('filterAge')?.value || '';
     const statusFilter = document.getElementById('filterStatus')?.value || '';
+    const speciesFilter = document.getElementById('filterSpecies')?.value || '';
     
     const tableRows = document.querySelectorAll('.pets-table tbody tr[data-pet-id]');
     let visibleCount = 0;
@@ -316,8 +319,10 @@ function applyFilters() {
             matches = false;
         }
         
-       
-        
+        // Check species filter
+        if (speciesFilter && pet.species.toLowerCase() !== speciesFilter.toLowerCase()) {
+            matches = false;
+        }
         // Check age filter
         if (ageFilter) {
             const ageMatch = applyAgeFilter(pet.age, ageFilter);
@@ -377,5 +382,6 @@ function resetFilters() {
     document.getElementById('filterBreed').value = '';
     document.getElementById('filterAge').value = '';
     document.getElementById('filterStatus').value = '';
+    document.getElementById('filterSpecies').value = '';
     applyFilters();
 }

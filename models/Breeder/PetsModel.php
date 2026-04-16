@@ -36,7 +36,7 @@ class BreederPetsModel extends BaseModel {
 
     public function getBreedingPets($breederId) {
         $stmt = $this->conn->prepare("
-            SELECT id, name, breed, gender, date_of_birth as dob, 
+            SELECT id, name, breed, gender, date_of_birth as dob,species,
                    photo, description, is_active,
                    TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) as age_years
             FROM breeder_pets
