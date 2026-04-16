@@ -48,11 +48,11 @@ try {
 
 function getAllBreedingPets($conn, $userId) {
     $stmt = $conn->prepare("
-        SELECT id, name, breed, gender, date_of_birth as dob,species,
+        SELECT id, name, breed,  date_of_birth as dob,species,
                photo, description, is_active, age
         FROM breeder_pets
         WHERE breeder_id = ?
-        ORDER BY created_at DESC
+        ORDER BY age DESC
     ");
     $stmt->bind_param("i", $userId);
     $stmt->execute();

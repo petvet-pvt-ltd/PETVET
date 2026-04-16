@@ -84,7 +84,7 @@ $pageTitle = "Breeding Pets";
                         <th>Photo</th>
                         <th>Name</th>
                         <th>Breed</th>
-                        <th>Gender</th>
+                       <!--  <th>Gender</th> -->
                         <th>Date of Birth</th>
                         <th>Age</th>
                         <!-- <th>Species</th> -->
@@ -111,11 +111,11 @@ $pageTitle = "Breeding Pets";
                                 <strong><?php echo htmlspecialchars($pet['name']); ?></strong>
                             </td>
                             <td data-label="Breed"><?php echo htmlspecialchars($pet['breed']); ?></td>
-                            <td data-label="Gender">
+                           <!--  <td data-label="Gender">
                                 <span class="gender-badge gender-<?php echo strtolower($pet['gender']); ?>">
                                     <?php echo htmlspecialchars($pet['gender']); ?>
                                 </span>
-                            </td>
+                            </td> -->
                             <td data-label="Date of Birth"><?php echo date('M d, Y', strtotime($pet['dob'])); ?></td>
                             <td data-label="Age"><?php echo $pet['age']; ?></td>
                              <!-- <td data-label="Species">
