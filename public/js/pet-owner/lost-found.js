@@ -489,13 +489,15 @@ document.addEventListener('DOMContentLoaded', () => {
 			const reportId = card.getAttribute('data-report-id');
 			const matchQ = q === '' || hay.includes(q);
 			const matchS = sp === '' || species === sp;
-			const visible = matchQ && matchS;
 			
-			// Get distance for nearby sorting
+			// Get distance and filter to only show pets within 10 km (only if distance data is available)
 			const view = currentView;
 			const key = `${view}-${reportId}`;
 			const distanceData = reportsWithDistance.get(key);
-			const distance = distanceData ? distanceData.distance_km : 999999;
+			const distance = distanceData ? distanceData.distance_km : null;
+			const withinRange = distance === null ? true : distance <= 10; // Show if no distance data yet
+			
+			const visible = matchQ && matchS && withinRange;
 			
 			// Create datetime for sorting
 			const dateTimeStr = time ? `${date} ${time}` : date;
