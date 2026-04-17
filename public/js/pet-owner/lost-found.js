@@ -85,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	let currentView = 'lost';
 	let currentDeleteId = null;
 	let myListings = []; // Demo data - in production, fetch from server
+	let myListingsFilterType = 'all'; // Filter for my listings: 'all', 'lost', 'found'
 
 	// Initialize Leaflet map for report modal
 	function initReportMap() {
@@ -355,6 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					name: report.name || 'Unknown',
 					color: report.color,
 					reward: report.reward || 0,
+					price: report.price || 0,
 					location: report.location,
 					date: report.date,
 					time: report.time || '',
@@ -391,8 +393,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		myListingsContent.innerHTML = '';
 
-		const myPetMissingListings = myListings.filter(listing => listing.listingSource === 'my-pet-missing');
-		const otherListings = myListings.filter(listing => listing.listingSource !== 'my-pet-missing');
+		// Add filter toggle at the top
+		const filterContainer = document.createElement('div');
+		filterContainer.style.cssText = 'display:flex; gap:12px; margin-bottom:24px; padding:0 16px; justify-content:center;';
+		filterContainer.innerHTML = `
+			<button class="my-listings-filter-btn ${myListingsFilterType === 'all' ? 'active' : ''}" data-filter="all">All</button>
+			<button class="my-listings-filter-btn ${myListingsFilterType === 'lost' ? 'active' : ''}" data-filter="lost">Lost</button>
+			<button class="my-listings-filter-btn ${myListingsFilterType === 'found' ? 'active' : ''}" data-filter="found">Found</button>
+		`;
+		myListingsContent.appendChild(filterContainer);
+
+		// Add styles for filter buttons if not already in CSS
+		if (!document.getElementById('my-listings-filter-styles')) {
+			const style = document.createElement('style');
+			style.id = 'my-listings-filter-styles';
+			style.textContent = `
+				.my-listings-filter-btn {
+					padding: 8px 16px;
+					border: 1px solid var(--line, #e0e0e0);
+					border-radius: 20px;
+					background: transparent;
+					cursor: pointer;
+					font-size: 14px;
+					font-weight: 500;
+					transition: all 0.2s;
+					color: var(--text-secondary, #666);
+				}
+				.my-listings-filter-btn:hover {
+					border-color: var(--primary, #467fdb);
+					color: var(--primary, #467fdb);
+				}
+				.my-listings-filter-btn.active {
+					background: var(--primary, #467fdb);
+					color: white;
+					border-color: var(--primary, #467fdb);
+				}
+			`;
+			document.head.appendChild(style);
+		}
+
+		// Add event listeners for filter buttons
+		filterContainer.querySelectorAll('.my-listings-filter-btn').forEach(btn => {
+			btn.addEventListener('click', () => {
+				myListingsFilterType = btn.getAttribute('data-filter');
+				renderMyListings();
+			});
+		});
+
+		// Filter listings
+		let filteredListings = myListings;
+		if (myListingsFilterType === 'lost') {
+			filteredListings = myListings.filter(listing => listing.type === 'lost');
+		} else if (myListingsFilterType === 'found') {
+			filteredListings = myListings.filter(listing => listing.type === 'found');
+		}
+
+		const myPetMissingListings = filteredListings.filter(listing => listing.listingSource === 'my-pet-missing');
+		const otherListings = filteredListings.filter(listing => listing.listingSource !== 'my-pet-missing');
 
 		const renderSection = (title, subtitle, listings) => {
 			if (!listings.length) return;
@@ -477,6 +534,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		qs('#editName').value = listing.name || '';
 		qs('#editColor').value = listing.color || '';
 		qs('#editReward').value = listing.reward || '0';
+		qs('#editPrice').value = listing.price || '0';
 		qs('#editLocation').value = listing.location;
 		qs('#editDate').value = listing.date;
 		qs('#editTime').value = listing.time || '';
@@ -770,6 +828,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		formData.append('phone2', qs('#rPhone2').value || '');
 		formData.append('email', qs('#rEmail').value || '');
 	    formData.append('reward', qs('#rReward').value || '0'); 
+		formData.append('price', qs('#rPrice').value || '0');
 		formData.append('urgency', qs('#rUrgency').value);
 		
 		// Append multiple photos
@@ -850,6 +909,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			formData.append('phone2', qs('#editPhone2').value);
 			formData.append('email', qs('#editEmail').value);
 			formData.append('reward', qs('#editReward').value || '0');
+			formData.append('price', qs('#editPrice').value || '0');
 			formData.append('urgency', qs('#editUrgency').value);
 			
 			// Check if new photos uploaded

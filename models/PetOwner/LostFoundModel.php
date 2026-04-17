@@ -7,7 +7,7 @@ class LostFoundModel extends BaseModel {
      * Validate all report form fields
      * Returns array with 'valid' boolean and 'errors' array
      */
-    public function validateReportFields($type, $species, $name, $color, $location, $date, $time, $phone, $phone2, $email, $notes, $reward = null) {
+    public function validateReportFields($type, $species, $name, $color, $location, $date, $time, $phone, $phone2, $email, $notes, $reward = null,$price = null) {
         $errors = [];
         
         // Validate type
@@ -121,6 +121,13 @@ class LostFoundModel extends BaseModel {
             }
         }
         
+        if ($price !== null && $price !== '') {
+            if (!is_numeric($price) || $price < 0) {
+                $errors[] = 'Price must be a positive number';
+            } elseif ($price > 9999999) {
+                $errors[] = 'Price amount is too large';
+            }
+        }
         return [
             'valid' => empty($errors),
             'errors' => $errors
@@ -218,6 +225,7 @@ class LostFoundModel extends BaseModel {
                 'age' => $report['age'] ?? 'Unknown',
                 'color' => $report['color'] ?? '',
                 'reward' => $report['reward'] ? (float)$report['reward'] : 0,
+                'price' => $report['price'] ? (float)$report['price'] : 0,
                 'urgency' => $report['urgency'] ?? 'medium',
                 'time' => $report['time'] ?? null,
                 'photo' => $photos, // Array of photo URLs
@@ -305,6 +313,7 @@ class LostFoundModel extends BaseModel {
             $notes = isset($data['notes']) ? $data['notes'] : null;
             $time = isset($data['time']) ? $data['time'] : null;
             $reward = isset($data['reward']) ? (float)$data['reward'] : null;
+            $price = isset($data['price']) ? (float)$data['price'] : null;
             $urgency = isset($data['urgency']) ? $data['urgency'] : 'medium';
             $phone = isset($data['contact']['phone']) ? $data['contact']['phone'] : (isset($data['phone']) ? $data['phone'] : null);
             $phone2 = isset($data['contact']['phone2']) ? $data['contact']['phone2'] : (isset($data['phone2']) ? $data['phone2'] : null);
@@ -318,10 +327,10 @@ class LostFoundModel extends BaseModel {
             $stmt = $this->db->prepare("
                 INSERT INTO LostFoundReport (
                     type, location, date_reported, species, name, color, breed, age, notes, time,
-                    reward, urgency, phone, phone2, email, photos, latitude, longitude, user_id, submitted_at, description
+                    reward, price, urgency, phone, phone2, email, photos, latitude, longitude, user_id, submitted_at, description
                 ) VALUES (
                     :type, :location, :date_reported, :species, :name, :color, :breed, :age, :notes, :time,
-                    :reward, :urgency, :phone, :phone2, :email, :photos, :latitude, :longitude, :user_id, :submitted_at, :description
+                    :reward, :price, :urgency, :phone, :phone2, :email, :photos, :latitude, :longitude, :user_id, :submitted_at, :description
                 )
             ");
             
@@ -337,6 +346,7 @@ class LostFoundModel extends BaseModel {
                 ':notes' => $notes,
                 ':time' => $time,
                 ':reward' => $reward,
+                ':price' => $price,
                 ':urgency' => $urgency,
                 ':phone' => $phone,
                 ':phone2' => $phone2,
@@ -387,6 +397,7 @@ class LostFoundModel extends BaseModel {
             $notes = isset($data['notes']) ? $data['notes'] : null;
             $time = isset($data['time']) ? $data['time'] : null;
             $reward = isset($data['reward']) ? (float)$data['reward'] : null;
+            $price = isset($data['price']) ? (float)$data['price'] : null;
             $urgency = isset($data['urgency']) ? $data['urgency'] : 'medium';
             $phone = isset($data['contact']['phone']) ? $data['contact']['phone'] : (isset($data['phone']) ? $data['phone'] : null);
             $phone2 = isset($data['contact']['phone2']) ? $data['contact']['phone2'] : (isset($data['phone2']) ? $data['phone2'] : null);
@@ -410,6 +421,7 @@ class LostFoundModel extends BaseModel {
                     notes = :notes,
                     time = :time,
                     reward = :reward,
+                    price = :price,
                     urgency = :urgency,
                     phone = :phone,
                     phone2 = :phone2,
@@ -435,6 +447,7 @@ class LostFoundModel extends BaseModel {
                 ':notes' => $notes,
                 ':time' => $time,
                 ':reward' => $reward,
+                ':price' => $price,
                 ':urgency' => $urgency,
                 ':phone' => $phone,
                 ':phone2' => $phone2,
