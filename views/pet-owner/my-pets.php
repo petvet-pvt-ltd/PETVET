@@ -1225,7 +1225,7 @@ function calculateAge($dob) {
           <div class="grid-2">
             <label class="field">
               <span>Last Seen Date *</span>
-              <input type="date" class="input" name="date" id="missingDate" required>
+              <input type="date" class="input" name="date" id="missingDate" required max="<?php echo date('Y-m-d'); ?>">
             </label>
             <label class="field">
               <span>Last Seen Time *</span>
