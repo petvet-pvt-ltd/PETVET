@@ -58,6 +58,7 @@ try {
             'notes' => $description['notes'] ?? '',
             'reward' => $report['reward'] ?? $description['reward'] ?? null,
             'price' => $report['price'] ?? $description['price'] ?? null,
+            'risk' => $report['risk'] ?? $description['risk'] ?? null,
             'price' => $description['price'] ?? null,
             'photos' => $description['photos'] ?? [],
             'latitude' => $description['latitude'] ?? null,

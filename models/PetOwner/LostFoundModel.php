@@ -226,7 +226,7 @@ class LostFoundModel extends BaseModel {
                 'color' => $report['color'] ?? '',
                 'reward' => $report['reward'] ? (float)$report['reward'] : 0,
                 'price' => $report['price'] ? (float)$report['price'] : 0,
-                'urgency' => $report['urgency'] ?? 'medium',
+                'risk' => $report['risk'] ?? 'medium',
                 'time' => $report['time'] ?? null,
                 'photo' => $photos, // Array of photo URLs
                 'last_seen' => $report['location'],
@@ -314,7 +314,7 @@ class LostFoundModel extends BaseModel {
             $time = isset($data['time']) ? $data['time'] : null;
             $reward = isset($data['reward']) ? (float)$data['reward'] : null;
             $price = isset($data['price']) ? (float)$data['price'] : null;
-            $urgency = isset($data['urgency']) ? $data['urgency'] : 'medium';
+            $risk = isset($data['risk']) ? $data['risk'] : 'medium';
             $phone = isset($data['contact']['phone']) ? $data['contact']['phone'] : (isset($data['phone']) ? $data['phone'] : null);
             $phone2 = isset($data['contact']['phone2']) ? $data['contact']['phone2'] : (isset($data['phone2']) ? $data['phone2'] : null);
             $email = isset($data['contact']['email']) ? $data['contact']['email'] : (isset($data['email']) ? $data['email'] : null);
@@ -327,10 +327,10 @@ class LostFoundModel extends BaseModel {
             $stmt = $this->db->prepare("
                 INSERT INTO LostFoundReport (
                     type, location, date_reported, species, name, color, breed, age, notes, time,
-                    reward, price, urgency, phone, phone2, email, photos, latitude, longitude, user_id, submitted_at, description
+                    reward, price, risk, phone, phone2, email, photos, latitude, longitude, user_id, submitted_at, description
                 ) VALUES (
                     :type, :location, :date_reported, :species, :name, :color, :breed, :age, :notes, :time,
-                    :reward, :price, :urgency, :phone, :phone2, :email, :photos, :latitude, :longitude, :user_id, :submitted_at, :description
+                    :reward, :price, :risk, :phone, :phone2, :email, :photos, :latitude, :longitude, :user_id, :submitted_at, :description
                 )
             ");
             
@@ -347,7 +347,7 @@ class LostFoundModel extends BaseModel {
                 ':time' => $time,
                 ':reward' => $reward,
                 ':price' => $price,
-                ':urgency' => $urgency,
+                ':risk' => $risk,
                 ':phone' => $phone,
                 ':phone2' => $phone2,
                 ':email' => $email,
@@ -398,7 +398,7 @@ class LostFoundModel extends BaseModel {
             $time = isset($data['time']) ? $data['time'] : null;
             $reward = isset($data['reward']) ? (float)$data['reward'] : null;
             $price = isset($data['price']) ? (float)$data['price'] : null;
-            $urgency = isset($data['urgency']) ? $data['urgency'] : 'medium';
+            $risk = isset($data['risk']) ? $data['risk'] : 'medium';
             $phone = isset($data['contact']['phone']) ? $data['contact']['phone'] : (isset($data['phone']) ? $data['phone'] : null);
             $phone2 = isset($data['contact']['phone2']) ? $data['contact']['phone2'] : (isset($data['phone2']) ? $data['phone2'] : null);
             $email = isset($data['contact']['email']) ? $data['contact']['email'] : (isset($data['email']) ? $data['email'] : null);
@@ -422,7 +422,7 @@ class LostFoundModel extends BaseModel {
                     time = :time,
                     reward = :reward,
                     price = :price,
-                    urgency = :urgency,
+                    risk = :risk,
                     phone = :phone,
                     phone2 = :phone2,
                     email = :email,
@@ -448,7 +448,7 @@ class LostFoundModel extends BaseModel {
                 ':time' => $time,
                 ':reward' => $reward,
                 ':price' => $price,
-                ':urgency' => $urgency,
+                ':risk' => $risk,
                 ':phone' => $phone,
                 ':phone2' => $phone2,
                 ':email' => $email,

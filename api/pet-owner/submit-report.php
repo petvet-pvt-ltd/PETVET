@@ -46,7 +46,7 @@ try {
     $email = $_POST['email'] ?? '';
     $reward = $_POST['reward'] ?? '';
     $price = $_POST['price'] ?? '';
-    $urgency = $_POST['urgency'] ?? 'Medium';
+    $risk = $_POST['risk'] ?? 'Medium';
     
     // Validate all fields using model
     $lostFoundModel = new LostFoundModel();
@@ -123,7 +123,7 @@ try {
         'time' => $time,
         'reward' => $reward,
         'price' => $price,
-        'urgency' => $urgency,
+        'risk' => $risk,
         'contact' => [
             'phone' => $phone,
             'phone2' => $phone2,

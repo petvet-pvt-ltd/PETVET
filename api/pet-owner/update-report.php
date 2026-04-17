@@ -75,7 +75,7 @@ try {
     $email = $_POST['email'] ?? $existingDescription['contact']['email'];
     $reward = $_POST['reward'] ?? $existingDescription['reward'] ?? null;
     $price = $_POST['price'] ?? $existingDescription['price'] ?? null;
-    $urgency = $_POST['urgency'] ?? $existingDescription['urgency'] ?? 'medium';
+    $risk = $_POST['risk'] ?? $existingDescription['risk'] ?? 'medium';
     
     
 
@@ -163,7 +163,7 @@ try {
         'time' => $time,
         'reward' => $reward,
         'price' => $price,
-        'urgency' => $urgency,
+        'risk' => $risk,
         'contact' => [
             'phone' => $phone,
             'phone2' => $phone2,

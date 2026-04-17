@@ -829,7 +829,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		formData.append('email', qs('#rEmail').value || '');
 	    formData.append('reward', qs('#rReward').value || '0'); 
 		formData.append('price', qs('#rPrice').value || '0');
-		formData.append('urgency', qs('#rUrgency').value);
+		formData.append('risk', qs('#rrisk').value);
 		
 		// Append multiple photos
 		if (photoInput.files.length > 0) {
@@ -910,7 +910,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			formData.append('email', qs('#editEmail').value);
 			formData.append('reward', qs('#editReward').value || '0');
 			formData.append('price', qs('#editPrice').value || '0');
-			formData.append('urgency', qs('#editUrgency').value);
+			formData.append('risk', qs('#editrisk').value);
 			
 			// Check if new photos uploaded
 			const photoInput = qs('#editPhoto');

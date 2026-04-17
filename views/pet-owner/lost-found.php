@@ -70,7 +70,7 @@ function lf_fmtDate($ymd){
 		</div>
 	<?php else: ?>
 			<?php foreach ($lostReports as $r): ?>
-			<article class="card urgency-<?php echo strtolower($r['urgency']); ?>" data-report-id="<?php echo lf_esc($r['id']); ?>" data-species="<?php echo lf_esc($r['species']); ?>" data-date="<?php echo lf_esc($r['date']); ?>" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-color="<?php echo lf_esc($r['color']); ?>">
+			<article class="card risk-<?php echo strtolower($r['risk']); ?>" data-report-id="<?php echo lf_esc($r['id']); ?>" data-species="<?php echo lf_esc($r['species']); ?>" data-date="<?php echo lf_esc($r['date']); ?>" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-color="<?php echo lf_esc($r['color']); ?>">
 				<div class="card-media">
 				<?php 
 				$photos = !empty($r['photo']) ? (is_array($r['photo']) ? $r['photo'] : [$r['photo']]) : [];
@@ -100,13 +100,13 @@ function lf_fmtDate($ymd){
 						<?php echo lf_esc($r['name'] ?: 'Unknown Name'); ?>
 						<span class="muted">• <?php echo lf_esc($r['species']); ?><?php echo $r['breed']? ' · '.lf_esc($r['breed']) : ''; ?><?php echo $r['age']? ' · '.lf_esc($r['age']) : ''; ?></span>
 					</h4>
-					<p >Urgency: <?php echo $r['urgency']; ?></p>
+					<p >Risk: <?php echo $r['risk']; ?></p>
 					<p class="meta"><strong>Last seen:</strong> <?php echo lf_esc($r['last_seen']); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
 					<?php if(!empty($r['reward']) && $r['reward'] > 0): ?>
-						<p>💰 Reward: $<?php echo number_format($r['reward'], 2); ?></p>
+						<p>💰 Reward: <?php echo number_format($r['reward'], 2); ?></p>
 					<?php endif; ?>
 					<?php if(!empty($r['price']) && $r['price'] > 0): ?>
-						<p> Price: $<?php echo number_format($r['price'], 2); ?></p>
+						<p> Price: <?php echo number_format($r['price'], 2); ?></p>
 					<?php endif; ?>
 					<p>Missing for <?php echo $r['days_missing'] ?? 0; ?> days</p>
 					<p class="time-ago" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-date="<?php echo lf_esc($r['date']); ?>" style="color: var(--primary); font-weight: 500; font-size: 0.9em; margin-top: 4px;"></p>
@@ -138,7 +138,7 @@ function lf_fmtDate($ymd){
 		</div>
 	<?php else: ?>
 		<?php foreach ($foundReports as $r): ?>
-			<article class="card urgency-<?php echo strtolower($r['urgency']); ?>" data-report-id="<?php echo lf_esc($r['id']); ?>" data-species="<?php echo lf_esc($r['species']); ?>" data-date="<?php echo lf_esc($r['date']); ?>" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-color="<?php echo lf_esc($r['color']); ?>">
+			<article class="card risk-<?php echo strtolower($r['risk']); ?>" data-report-id="<?php echo lf_esc($r['id']); ?>" data-species="<?php echo lf_esc($r['species']); ?>" data-date="<?php echo lf_esc($r['date']); ?>" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-color="<?php echo lf_esc($r['color']); ?>">
 				<div class="card-media">
 				<?php 
 				$photos = !empty($r['photo']) ? (is_array($r['photo']) ? $r['photo'] : [$r['photo']]) : [];
@@ -169,8 +169,8 @@ function lf_fmtDate($ymd){
 						<span class="muted">• <?php echo lf_esc($r['species']); ?><?php echo $r['breed']? ' · '.lf_esc($r['breed']) : ''; ?><?php echo $r['age']? ' · '.lf_esc($r['age']) : ''; ?></span>
 					</h4>
 			<p class="meta"><strong>Found at:</strong> <?php echo lf_esc($r['last_seen']); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
-			<?php $daysMissing = $r['days_missing'] ?? 0; ?>
-			<p>Missing for <?php echo $daysMissing; ?> days</p>
+			<<!-- ?php $daysMissing = $r['days_missing'] ?? 0; ?>
+			<p>Missing for <?php echo $daysMissing; ?> days</p> -->
 					<p class="time-ago" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-date="<?php echo lf_esc($r['date']); ?>" style="color: var(--primary); font-weight: 500; font-size: 0.9em; margin-top: 4px;"></p>
 				<p class="report-distance" data-report-id="<?php echo lf_esc($r['id']); ?>">
 					<span class="distance-loader">⏳ Calculating distance...</span>
@@ -216,9 +216,9 @@ function lf_fmtDate($ymd){
 				</label>
 			</div>
 			<div class="row">
-				<label class="field">Urgency
-					<select id="rUrgency" required>
-						<option value="">-- Select Urgency --</option>
+				<label class="field">risk
+					<select id="rrisk" required>
+						<option value="">-- Select risk --</option>
 						<option value="Low">Low</option>
 						<option value="Medium" selected>Medium</option>
 						<option value="High">High</option>
@@ -332,9 +332,9 @@ function lf_fmtDate($ymd){
 				</label>
 			</div>
 				<div class="row">
-				<label class="field">Urgency
-					<select id="editUrgency" required>
-						<option value="">-- Select Urgency --</option>
+				<label class="field">risk
+					<select id="editrisk" required>
+						<option value="">-- Select risk --</option>
 						<option value="Low">Low</option>
 						<option value="Medium" selected>Medium</option>
 						<option value="High">High</option>
