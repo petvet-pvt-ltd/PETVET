@@ -51,28 +51,38 @@ try {
         exit;
     }
     
-    // Check ownership
-    $existingDescription = json_decode($existingReport['description'], true);
-    if (($existingDescription['user_id'] ?? null) != $userId) {
+    // Check ownership - read from user_id column if available, fallback to JSON
+    $ownerUserId = $existingReport['user_id'] ?? null;
+    $existingDescription = [];
+    if (!empty($existingReport['description'])) {
+        $existingDescription = json_decode($existingReport['description'], true);
+        if (!is_array($existingDescription)) {
+            $existingDescription = [];
+        }
+    }
+    if (!$ownerUserId && !empty($existingDescription)) {
+        $ownerUserId = $existingDescription['user_id'] ?? null;
+    }
+    if ($ownerUserId != $userId) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'You do not have permission to edit this report']);
         exit;
     }
     
-    // Get updated data
+    // Get updated data - prefer individual columns, fallback to JSON
     $type = $_POST['type'] ?? $existingReport['type'];
-    $species = $_POST['species'] ?? $existingDescription['species'];
-    $name = $_POST['name'] ?? $existingDescription['name'];
-    $color = $_POST['color'] ?? $existingDescription['color'];
+    $species = $_POST['species'] ?? ($existingReport['species'] ?? $existingDescription['species'] ?? '');
+    $name = $_POST['name'] ?? ($existingReport['name'] ?? $existingDescription['name'] ?? '');
+    $color = $_POST['color'] ?? ($existingReport['color'] ?? $existingDescription['color'] ?? '');
     $location = $_POST['location'] ?? $existingReport['location'];
-    $latitude = $_POST['latitude'] ?? $existingDescription['latitude'];
-    $longitude = $_POST['longitude'] ?? $existingDescription['longitude'];
+    $latitude = $_POST['latitude'] ?? ($existingReport['latitude'] ?? $existingDescription['latitude'] ?? null);
+    $longitude = $_POST['longitude'] ?? ($existingReport['longitude'] ?? $existingDescription['longitude'] ?? null);
     $date = $_POST['date'] ?? $existingReport['date_reported'];
-    $time = $_POST['time'] ?? $existingDescription['time'];
-    $notes = $_POST['notes'] ?? $existingDescription['notes'];
-    $phone = $_POST['phone'] ?? $existingDescription['contact']['phone'];
-    $phone2 = $_POST['phone2'] ?? $existingDescription['contact']['phone2'];
-    $email = $_POST['email'] ?? $existingDescription['contact']['email'];
+    $time = $_POST['time'] ?? ($existingReport['time'] ?? $existingDescription['time'] ?? '');
+    $notes = $_POST['notes'] ?? ($existingReport['notes'] ?? $existingDescription['notes'] ?? '');
+    $phone = $_POST['phone'] ?? ($existingReport['phone'] ?? (isset($existingDescription['contact']['phone']) ? $existingDescription['contact']['phone'] : ''));
+    $phone2 = $_POST['phone2'] ?? ($existingReport['phone2'] ?? (isset($existingDescription['contact']['phone2']) ? $existingDescription['contact']['phone2'] : ''));
+    $email = $_POST['email'] ?? ($existingReport['email'] ?? (isset($existingDescription['contact']['email']) ? $existingDescription['contact']['email'] : ''));
     
     // Validate all fields using model
     $validation = $lostFoundModel->validateReportFields($type, $species, $name, $color, $location, $date, $time, $phone, $phone2, $email, $notes);
@@ -85,6 +95,11 @@ try {
             'errors' => $validation['errors']
         ]);
         exit;
+    }
+    
+    // Sanitize time - ensure it's in valid HH:MM format or empty
+    if (!empty($time) && !preg_match('/^([0-1][0-9]|2[0-3]):([0-5][0-9])(?::([0-5][0-9]))?$/', $time)) {
+        $time = null;
     }
     
     // Handle photo upload if new photos provided
@@ -139,13 +154,17 @@ try {
         }
     }
     
-    // Prepare updated description as JSON
-    $updatedDescription = [
+    // Prepare updated data array for individual column storage
+    $updatedData = [
         'species' => $species,
         'name' => $name,
         'color' => $color,
+        'breed' => null,
+        'age' => null,
         'notes' => $notes,
         'time' => $time,
+        'reward' => null,
+        'urgency' => 'medium',
         'contact' => [
             'phone' => $phone,
             'phone2' => $phone2,
@@ -155,14 +174,12 @@ try {
         'latitude' => $latitude,
         'longitude' => $longitude,
         'user_id' => $userId,
-        'submitted_at' => $existingDescription['submitted_at'] ?? date('Y-m-d H:i:s'),
+        'submitted_at' => $existingReport['submitted_at'] ?? date('Y-m-d H:i:s'),
         'updated_at' => date('Y-m-d H:i:s')
     ];
     
-    $descriptionJson = json_encode($updatedDescription, JSON_UNESCAPED_UNICODE);
-    
     // Update database using model
-    $lostFoundModel->updateReport($reportId, $type, $location, $date, $descriptionJson);
+    $lostFoundModel->updateReport($reportId, $type, $location, $date, $updatedData);
     
     // Return success response
     http_response_code(200);
@@ -183,15 +200,13 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Database error occurred',
-        'error' => $e->getMessage()
+        'message' => 'Database error occurred'
     ]);
 } catch (Exception $e) {
     error_log("Error in update-report.php: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'An error occurred',
-        'error' => $e->getMessage()
+        'message' => 'An error occurred'
     ]);
 }

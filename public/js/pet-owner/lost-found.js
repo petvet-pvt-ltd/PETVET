@@ -644,7 +644,13 @@ document.addEventListener('DOMContentLoaded', () => {
 				// Reload page to show new report
 				window.location.reload();
 			} else {
-				alert('Error: ' + (result.message || 'Failed to submit report'));
+				// Show detailed error message with validation errors
+				let errorMsg = result.message || 'Failed to submit report';
+				if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
+					errorMsg += ':\n\n' + result.errors.join('\n');
+				}
+				console.error('API Error:', result);
+				alert('Error: ' + errorMsg);
 			}
 		} catch (error) {
 			console.error('Error submitting report:', error);
@@ -725,7 +731,13 @@ document.addEventListener('DOMContentLoaded', () => {
 				renderMyListings();
 				setTimeout(() => window.location.reload(), 1000);
 			} else {
-				alert('Error: ' + (result.message || 'Failed to update report'));
+				// Show detailed error message with validation errors
+				let errorMsg = result.message || 'Failed to update report';
+				if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
+					errorMsg += ':\n\n' + result.errors.join('\n');
+				}
+				console.error('API Error:', result);
+				alert('Error: ' + errorMsg);
 			}
 		} catch (error) {
 			console.error('Error updating report:', error);

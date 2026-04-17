@@ -26,13 +26,13 @@ class LostFoundModel extends BaseModel {
             $errors[] = 'Pet species must contain only letters and spaces';
         }
         
-        // Validate name (required)
-        if (empty($name)) {
-            $errors[] = 'Pet name is required';
-        } elseif (strlen($name) > 50) {
-            $errors[] = 'Pet name must not exceed 50 characters';
-        } elseif (!preg_match('/^[a-zA-Z0-9\s\-\.]+$/', $name)) {
-            $errors[] = 'Pet name contains invalid characters';
+        // Validate name (optional)
+        if (!empty($name)) {
+            if (strlen($name) > 50) {
+                $errors[] = 'Pet name must not exceed 50 characters';
+            } elseif (!preg_match('/^[a-zA-Z0-9\s\-\.,]+$/', $name)) {
+                $errors[] = 'Pet name contains invalid characters';
+            }
         }
         
         // Validate color (required)
@@ -72,8 +72,8 @@ class LostFoundModel extends BaseModel {
         }
         
         // Validate time (optional but validate if provided)
-        if (!empty($time)) {
-            if (!preg_match('/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/', $time)) {
+        if (!empty($time) && $time !== '?') {
+            if (!preg_match('/^([0-1][0-9]|2[0-3]):[0-5][0-9](?::([0-5][0-9]))?$/', $time)) {
                 $errors[] = 'Time must be in HH:MM format (24-hour)';
             }
         }
@@ -115,11 +115,19 @@ class LostFoundModel extends BaseModel {
     }
     
     /**
-     * Validate phone number format: +94 followed by exactly 9 digits
+     * Validate phone number format: accepts +94XXXXXXXXX or local formats
+     * Minimum 7 digits, maximum 15 digits, may include +, -, spaces
      */
     private function isValidPhoneNumber($phone) {
-        // Check format: +94 followed by exactly 9 digits
-        return preg_match('/^\+94\d{9}$/', $phone);
+        // Remove common formatting characters
+        $cleaned = preg_replace('/[\s\-\+\(\)]/i', '', $phone);
+        
+        // Check if it's all digits and has reasonable length (7-15 digits)
+        if (!preg_match('/^\d{7,15}$/', $cleaned)) {
+            return false;
+        }
+        
+        return true;
     }
     
     /**
@@ -143,40 +151,57 @@ class LostFoundModel extends BaseModel {
     
     /**
      * Format database reports to match view expectations
+     * Reads from individual columns (new schema) with fallback to JSON parsing (old schema)
      */
     private function formatReports($dbReports) {
         $formatted = [];
         
         foreach ($dbReports as $report) {
-            // Parse JSON description field
-            $description = json_decode($report['description'], true);
+            // Try to use individual columns first, fallback to JSON parsing
+            $photos = [];
+            if (!empty($report['photos'])) {
+                $decoded = json_decode($report['photos'], true);
+                $photos = is_array($decoded) ? $decoded : [$report['photos']];
+            }
             
-            // Build photo array - handle both string and array
-            $photos = $description['photos'] ?? [];
+            // Fallback to description JSON if columns are empty
+            if (empty($photos) && !empty($report['description'])) {
+                $description = json_decode($report['description'], true);
+                $photos = $description['photos'] ?? [];
+            }
+            
             if (empty($photos)) {
                 $photos = ['/PETVET/public/img/default-pet.jpg']; // Fallback image
+            }
+            
+            // Get contact info from individual columns
+            $contact = [
+                'phone' => $report['phone'] ?? '',
+                'phone2' => $report['phone2'] ?? '',
+                'email' => $report['email'] ?? ''
+            ];
+            
+            // Fallback to description JSON if columns are empty
+            if (empty($contact['phone']) && empty($contact['email']) && !empty($report['description'])) {
+                $description = json_decode($report['description'], true);
+                $contact = $description['contact'] ?? $contact;
             }
             
             $formatted[] = [
                 'id' => $report['report_id'],
                 'type' => $report['type'],
-                'name' => $description['name'] ?? null,
-                'species' => $description['species'] ?? 'Unknown',
-                'breed' => $description['breed'] ?? 'Unknown',
-                'age' => $description['age'] ?? 'Unknown',
-                'color' => $description['color'] ?? '',
+                'name' => $report['name'] ?? null,
+                'species' => $report['species'] ?? 'Unknown',
+                'breed' => $report['breed'] ?? 'Unknown',
+                'age' => $report['age'] ?? 'Unknown',
+                'color' => $report['color'] ?? '',
                 'photo' => $photos, // Array of photo URLs
                 'last_seen' => $report['location'],
                 'date' => $report['date_reported'],
-                'notes' => $description['notes'] ?? '',
-                'owner_user_id' => $description['user_id'] ?? null,
-                'reported_pet_id' => $description['pet_id'] ?? null,
-                'contact' => $description['contact'] ?? [
-                    'name' => 'Anonymous',
-                    'email' => '',
-                    'phone' => '',
-                    'phone2' => ''
-                ]
+                'notes' => $report['notes'] ?? '',
+                'owner_user_id' => $report['user_id'] ?? null,
+                'reported_pet_id' => $report['pet_id'] ?? null,
+                'contact' => $contact
             ];
         }
         
@@ -237,19 +262,98 @@ class LostFoundModel extends BaseModel {
     }
     
     /**
-     * Insert a new lost/found report
+     * Insert a new lost/found report - accepts data array with individual columns
      */
-    public function insertReport($type, $location, $date, $description) {
+    public function insertReport($type, $location, $date, $data) {
         try {
+            // Support both old JSON format (for backward compatibility) and new array format
+            $description = is_array($data) ? json_encode($data) : $data;
+            
+            // Ensure $data is an array for extraction
+            if (!is_array($data)) {
+                $data = json_decode($data, true);
+                if (!is_array($data)) {
+                    $data = [];
+                }
+            }
+            
+            // Extract individual fields from array if provided
+            $species = isset($data['species']) ? $data['species'] : null;
+            $name = isset($data['name']) ? $data['name'] : null;
+            $color = isset($data['color']) ? $data['color'] : null;
+            $breed = isset($data['breed']) ? $data['breed'] : null;
+            $age = isset($data['age']) ? $data['age'] : null;
+            $notes = isset($data['notes']) ? $data['notes'] : null;
+            // Handle time field - validate HH:MM format
+            $time = null;
+            if (isset($data['time']) && !empty($data['time']) && $data['time'] !== '?') {
+                $timeStr = $data['time'];
+                if (preg_match('/^([0-1][0-9]|2[0-3]):([0-5][0-9])(?::([0-5][0-9]))?$/', $timeStr)) {
+                    $time = $timeStr;
+                }
+            }
+            $reward = isset($data['reward']) && !empty($data['reward']) ? (float)$data['reward'] : null;
+            $urgency = isset($data['urgency']) ? $data['urgency'] : 'medium';
+            
+            // Handle contact info safely
+            $phone = null;
+            if (isset($data['contact']['phone']) && !empty($data['contact']['phone'])) {
+                $phone = $data['contact']['phone'];
+            } elseif (isset($data['phone']) && !empty($data['phone'])) {
+                $phone = $data['phone'];
+            }
+            
+            $phone2 = null;
+            if (isset($data['contact']['phone2']) && !empty($data['contact']['phone2'])) {
+                $phone2 = $data['contact']['phone2'];
+            } elseif (isset($data['phone2']) && !empty($data['phone2'])) {
+                $phone2 = $data['phone2'];
+            }
+            
+            $email = null;
+            if (isset($data['contact']['email']) && !empty($data['contact']['email'])) {
+                $email = $data['contact']['email'];
+            } elseif (isset($data['email']) && !empty($data['email'])) {
+                $email = $data['email'];
+            }
+            
+            $photos = isset($data['photos']) && !empty($data['photos']) ? json_encode($data['photos']) : null;
+            $latitude = isset($data['latitude']) && !empty($data['latitude']) ? (float)$data['latitude'] : null;
+            $longitude = isset($data['longitude']) && !empty($data['longitude']) ? (float)$data['longitude'] : null;
+            $user_id = isset($data['user_id']) ? (int)$data['user_id'] : null;
+            $submitted_at = isset($data['submitted_at']) && !empty($data['submitted_at']) ? $data['submitted_at'] : date('Y-m-d H:i:s');
+            
             $stmt = $this->db->prepare("
-                INSERT INTO LostFoundReport (type, location, date_reported, description) 
-                VALUES (:type, :location, :date_reported, :description)
+                INSERT INTO LostFoundReport (
+                    type, location, date_reported, species, name, color, breed, age, notes, time,
+                    reward, urgency, phone, phone2, email, photos, latitude, longitude, user_id, submitted_at, description
+                ) VALUES (
+                    :type, :location, :date_reported, :species, :name, :color, :breed, :age, :notes, :time,
+                    :reward, :urgency, :phone, :phone2, :email, :photos, :latitude, :longitude, :user_id, :submitted_at, :description
+                )
             ");
             
             $stmt->execute([
                 ':type' => $type,
                 ':location' => $location,
                 ':date_reported' => $date,
+                ':species' => $species,
+                ':name' => $name,
+                ':color' => $color,
+                ':breed' => $breed,
+                ':age' => $age,
+                ':notes' => $notes,
+                ':time' => $time,
+                ':reward' => $reward,
+                ':urgency' => $urgency,
+                ':phone' => $phone,
+                ':phone2' => $phone2,
+                ':email' => $email,
+                ':photos' => $photos,
+                ':latitude' => $latitude,
+                ':longitude' => $longitude,
+                ':user_id' => $user_id,
+                ':submitted_at' => $submitted_at,
                 ':description' => $description
             ]);
             
@@ -275,16 +379,92 @@ class LostFoundModel extends BaseModel {
     }
     
     /**
-     * Update a lost/found report
+     * Update a lost/found report - accepts data array with individual columns
      */
-    public function updateReport($reportId, $type, $location, $date, $description) {
+    public function updateReport($reportId, $type, $location, $date, $data) {
         try {
+            // Ensure $data is an array
+            if (!is_array($data)) {
+                $data = json_decode($data, true);
+                if (!is_array($data)) {
+                    $data = [];
+                }
+            }
+            
+            // Support both old JSON format (for backward compatibility) and new array format
+            $description = is_array($data) ? json_encode($data) : $data;
+            
+            // Extract individual fields from array if provided
+            $species = isset($data['species']) ? $data['species'] : null;
+            $name = isset($data['name']) ? $data['name'] : null;
+            $color = isset($data['color']) ? $data['color'] : null;
+            $breed = isset($data['breed']) ? $data['breed'] : null;
+            $age = isset($data['age']) ? $data['age'] : null;
+            $notes = isset($data['notes']) ? $data['notes'] : null;
+            
+            // Handle time field - validate HH:MM format
+            $time = null;
+            if (isset($data['time']) && !empty($data['time']) && $data['time'] !== '?') {
+                $timeStr = $data['time'];
+                if (preg_match('/^([0-1][0-9]|2[0-3]):([0-5][0-9])(?::([0-5][0-9]))?$/', $timeStr)) {
+                    $time = $timeStr;
+                }
+            }
+            
+            $reward = isset($data['reward']) && !empty($data['reward']) ? (float)$data['reward'] : null;
+            $urgency = isset($data['urgency']) ? $data['urgency'] : 'medium';
+            
+            // Handle contact info safely
+            $phone = null;
+            if (isset($data['contact']['phone']) && !empty($data['contact']['phone'])) {
+                $phone = $data['contact']['phone'];
+            } elseif (isset($data['phone']) && !empty($data['phone'])) {
+                $phone = $data['phone'];
+            }
+            
+            $phone2 = null;
+            if (isset($data['contact']['phone2']) && !empty($data['contact']['phone2'])) {
+                $phone2 = $data['contact']['phone2'];
+            } elseif (isset($data['phone2']) && !empty($data['phone2'])) {
+                $phone2 = $data['phone2'];
+            }
+            
+            $email = null;
+            if (isset($data['contact']['email']) && !empty($data['contact']['email'])) {
+                $email = $data['contact']['email'];
+            } elseif (isset($data['email']) && !empty($data['email'])) {
+                $email = $data['email'];
+            }
+            
+            $photos = isset($data['photos']) && !empty($data['photos']) ? json_encode($data['photos']) : null;
+            $latitude = isset($data['latitude']) && !empty($data['latitude']) ? (float)$data['latitude'] : null;
+            $longitude = isset($data['longitude']) && !empty($data['longitude']) ? (float)$data['longitude'] : null;
+            $user_id = isset($data['user_id']) ? (int)$data['user_id'] : null;
+            $updated_at = date('Y-m-d H:i:s');
+            
             $stmt = $this->db->prepare("
                 UPDATE LostFoundReport 
                 SET type = :type, 
                     location = :location, 
-                    date_reported = :date_reported, 
-                    description = :description
+                    date_reported = :date_reported,
+                    species = :species,
+                    name = :name,
+                    color = :color,
+                    breed = :breed,
+                    age = :age,
+                    notes = :notes,
+                    time = :time,
+                    reward = :reward,
+                    urgency = :urgency,
+                    phone = :phone,
+                    phone2 = :phone2,
+                    email = :email,
+                    photos = :photos,
+                    latitude = :latitude,
+                    longitude = :longitude,
+                    user_id = :user_id,
+                    description = :description,
+                    updated_at = :updated_at
                 WHERE report_id = :report_id
             ");
             
@@ -292,7 +472,24 @@ class LostFoundModel extends BaseModel {
                 ':type' => $type,
                 ':location' => $location,
                 ':date_reported' => $date,
+                ':species' => $species,
+                ':name' => $name,
+                ':color' => $color,
+                ':breed' => $breed,
+                ':age' => $age,
+                ':notes' => $notes,
+                ':time' => $time,
+                ':reward' => $reward,
+                ':urgency' => $urgency,
+                ':phone' => $phone,
+                ':phone2' => $phone2,
+                ':email' => $email,
+                ':photos' => $photos,
+                ':latitude' => $latitude,
+                ':longitude' => $longitude,
+                ':user_id' => $user_id,
                 ':description' => $description,
+                ':updated_at' => $updated_at,
                 ':report_id' => $reportId
             ]);
             

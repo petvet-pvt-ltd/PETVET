@@ -59,6 +59,11 @@ try {
         exit;
     }
     
+    // Sanitize time - ensure it's in valid HH:MM format or empty/null
+    if (!empty($time) && !preg_match('/^([0-1][0-9]|2[0-3]):([0-5][0-9])(?::([0-5][0-9]))?$/', $time)) {
+        $time = null;
+    }
+    
     // Handle photo upload
     $photoPath = null;
     $photoPaths = [];
@@ -109,13 +114,17 @@ try {
         $photoPath = !empty($photoPaths) ? $photoPaths[0] : null;
     }
     
-    // Prepare additional data as JSON for description field
-    $additionalData = [
+    // Prepare data array for individual column storage
+    $reportData = [
         'species' => $species,
         'name' => $name,
         'color' => $color,
+        'breed' => null,
+        'age' => null,
         'notes' => $notes,
         'time' => $time,
+        'reward' => null,
+        'urgency' => 'medium',
         'contact' => [
             'phone' => $phone,
             'phone2' => $phone2,
@@ -128,11 +137,8 @@ try {
         'submitted_at' => date('Y-m-d H:i:s')
     ];
     
-    $descriptionJson = json_encode($additionalData, JSON_UNESCAPED_UNICODE);
-    
-    // Insert into database using model
     $lostFoundModel = new LostFoundModel();
-    $reportId = $lostFoundModel->insertReport($type, $location, $date, $descriptionJson);
+    $reportId = $lostFoundModel->insertReport($type, $location, $date, $reportData);
     
     // Return success response
     http_response_code(201);
@@ -153,15 +159,13 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Database error occurred',
-        'error' => $e->getMessage()
+        'message' => 'Database error occurred'
     ]);
 } catch (Exception $e) {
     error_log("Error in submit-report.php: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'An error occurred',
-        'error' => $e->getMessage()
+        'message' => 'An error occurred'
     ]);
 }
