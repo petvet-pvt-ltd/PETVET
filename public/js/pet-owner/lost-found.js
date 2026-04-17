@@ -2,6 +2,7 @@
 // Global distance tracking variables
 let userLocation = null;
 let reportsWithDistance = new Map(); // Map of report_id => distance data
+let distanceDataLoaded = false; // Track if distance data has been loaded
 
 // Global location map variables
 let reportMap = null;
@@ -490,12 +491,16 @@ document.addEventListener('DOMContentLoaded', () => {
 			const matchQ = q === '' || hay.includes(q);
 			const matchS = sp === '' || species === sp;
 			
-			// Get distance and filter to only show pets within 10 km (only if distance data is available)
+			// Get distance and filter to only show pets within 10 km
 			const view = currentView;
 			const key = `${view}-${reportId}`;
 			const distanceData = reportsWithDistance.get(key);
 			const distance = distanceData ? distanceData.distance_km : null;
-			const withinRange = distance === null ? true : distance <= 10; // Show if no distance data yet
+			
+			// Filter logic: 
+			// - If distance data hasn't loaded yet, show all items
+			// - If distance data has loaded, only show items within 10 km
+			const withinRange = distanceDataLoaded ? (distance !== null && distance <= 10) : true;
 			
 			const visible = matchQ && matchS && withinRange;
 			
@@ -511,8 +516,12 @@ document.addEventListener('DOMContentLoaded', () => {
 		
 		// Sort based on selection
 		if (sort === 'nearby') {
-			// Sort by distance (nearest first)
-			vis.sort((a,b) => a.distance - b.distance);
+			// Sort by distance (nearest first), handle null distances
+			vis.sort((a,b) => {
+				const distA = a.distance !== null ? a.distance : 999999;
+				const distB = b.distance !== null ? b.distance : 999999;
+				return distA - distB;
+			});
 		} else if (sort === 'latest') {
 			// Sort by datetime (latest first)
 			vis.sort((a,b) => b.datetime - a.datetime);
@@ -874,6 +883,9 @@ async function loadReportsWithDistance() {
 
 		// Update distance badges
 		updateDistanceBadges();
+		
+		// Mark distance data as loaded
+		distanceDataLoaded = true;
 		
 		// Re-apply filters with distance data
 		applyFilters();

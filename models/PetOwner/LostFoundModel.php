@@ -192,8 +192,8 @@ class LostFoundModel extends BaseModel {
                 'type' => $report['type'],
                 'name' => $report['name'] ?? null,
                 'species' => $report['species'] ?? 'Unknown',
-                'breed' => $report['breed'] ?? 'Unknown',
-                'age' => $report['age'] ?? 'Unknown',
+                'breed' => $report['breed'] ?? '',
+                'age' => $report['age'] ?? '',
                 'color' => $report['color'] ?? '',
                 'photo' => $photos, // Array of photo URLs
                 'last_seen' => $report['location'],
