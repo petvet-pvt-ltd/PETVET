@@ -46,6 +46,7 @@ $pageTitle = "Breeding Pets";
                         <th>Gender</th>
                         <th>Date of Birth</th>
                         <th>Age</th>
+                        <th>Price</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -76,6 +77,7 @@ $pageTitle = "Breeding Pets";
                             </td>
                             <td data-label="Date of Birth"><?php echo date('M d, Y', strtotime($pet['dob'])); ?></td>
                             <td data-label="Age"><?php echo $pet['age']; ?></td>
+                            <td data-label="Price"><?php echo number_format($pet['price'], 2); ?></td>
                             <td data-label="Status">
                                 <label class="toggle-switch">
                                     <input type="checkbox" 
@@ -179,6 +181,11 @@ $pageTitle = "Breeding Pets";
                         <div class="form-group full-width">
                             <label for="petDescription">Description (Optional)</label>
                             <textarea id="petDescription" name="description" class="form-control" rows="3" placeholder="Add any additional information about the pet..."></textarea>
+                        </div>
+
+                         <div class="form-group">
+                            <label for="petPrice">Breeding Price *</label>
+                            <input type="number" id="petPrice" name="price" class="form-control" required min="0" step="0.01">
                         </div>
 
                         <div class="form-group full-width">

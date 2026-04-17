@@ -30,6 +30,7 @@ function showEditPetModal(petId) {
     document.getElementById('petGender').value = pet.gender;
     document.getElementById('petDob').value = pet.dob;
     document.getElementById('petDescription').value = pet.description || '';
+    document.getElementById('petPrice').value = pet.price || '';
     document.getElementById('petActive').checked = pet.is_active;
     
     // Show photo if exists
