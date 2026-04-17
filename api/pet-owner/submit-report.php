@@ -111,11 +111,13 @@ try {
         $photoPath = !empty($photoPaths) ? $photoPaths[0] : null;
     }
     
-    // Prepare additional data as JSON for description field
-    $additionalData = [
+    // Prepare data array for individual column storage
+    $reportData = [
         'species' => $species,
         'name' => $name,
         'color' => $color,
+        'breed' => null,
+        'age' => null,
         'notes' => $notes,
         'time' => $time,
         'reward' => $reward,
@@ -132,10 +134,8 @@ try {
         'submitted_at' => date('Y-m-d H:i:s')
     ];
     
-    $descriptionJson = json_encode($additionalData, JSON_UNESCAPED_UNICODE);
-    
-    // Insert into database using model
-    $reportId = $lostFoundModel->insertReport($type, $location, $date, $descriptionJson);
+    // Insert into database using model (passes array for individual column storage)
+    $reportId = $lostFoundModel->insertReport($type, $location, $date, $reportData);
     
     // Return success response
     http_response_code(201);

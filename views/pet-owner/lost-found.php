@@ -224,6 +224,9 @@ function lf_fmtDate($ymd){
 				<label class="field">Reward
 					<input type="number" id="rReward" placeholder="0.00" min="0">
 				</label>
+					<label class="field">Price
+					<input type="number" id="rPrice" placeholder="0.00" min="0">
+				</label>
 			</div>
 			<label class="field">Select location on map
 				<div id="mapContainer" style="height: 450px; width: 100%; border-radius: 8px; margin-top: 8px; border: 1px solid var(--line, #e0e0e0);"></div>
@@ -234,7 +237,7 @@ function lf_fmtDate($ymd){
 			</label>
 			<div class="row">
 				<label class="field">Date Last Seen
-					<input type="date" id="rDate" required>
+					<input type="date" id="rDate" required max="<?php echo date('Y-m-d'); ?>">
 				</label>
 				<label class="field">Time Last Seen (Optional)
 					<input type="time" id="rTime" placeholder="e.g., 14:30">
@@ -347,7 +350,7 @@ function lf_fmtDate($ymd){
 			</label>
 			<div class="row">
 				<label class="field">Date Last Seen
-					<input type="date" id="editDate" required>
+					<input type="date" id="editDate" required max="<?php echo date('Y-m-d'); ?>">
 				</label>
 				<label class="field">Time Last Seen (Optional)
 					<input type="time" id="editTime" placeholder="e.g., 14:30">

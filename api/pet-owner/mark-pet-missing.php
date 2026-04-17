@@ -74,14 +74,15 @@ try {
     $userStmt->execute([(int)$userId]);
     $userContact = $userStmt->fetch(PDO::FETCH_ASSOC) ?: ['email' => '', 'phone' => ''];
 
-    $description = [
+    $reportData = [
         'species' => $pet['species'] ?? '',
         'name' => $pet['name'] ?? null,
         'breed' => $pet['breed'] ?? '',
         'color' => $pet['color'] ?? '',
+        'age' => null,
         'notes' => $circumstances,
-        'features' => $features,
         'reward' => ($reward !== null && $reward !== '') ? (float)$reward : null,
+        'urgency' => 'medium',
         'time' => $time,
         'photos' => !empty($pet['photo_url']) ? [$pet['photo_url']] : [],
         'contact' => [
@@ -96,19 +97,15 @@ try {
         'submitted_at' => date('Y-m-d H:i:s')
     ];
 
-    $stmt = $db->prepare("\n        INSERT INTO LostFoundReport (type, location, date_reported, description)\n        VALUES (:type, :location, :date_reported, :description)\n    ");
-
-    $stmt->execute([
-        ':type' => 'lost',
-        ':location' => $location,
-        ':date_reported' => $date,
-        ':description' => json_encode($description, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-    ]);
+    // Use model to insert (saves to individual columns)
+    require_once __DIR__ . '/../../models/PetOwner/LostFoundModel.php';
+    $lostFoundModel = new LostFoundModel($db);
+    $reportId = $lostFoundModel->insertReport('lost', $location, $date, $reportData);
 
     echo json_encode([
         'success' => true,
         'message' => 'Pet successfully marked as missing',
-        'report_id' => $db->lastInsertId()
+        'report_id' => $reportId
     ]);
 } catch (PDOException $e) {
     error_log('Database error in mark-pet-missing.php: ' . $e->getMessage());

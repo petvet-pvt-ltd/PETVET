@@ -205,7 +205,7 @@ function lf_fmtDate($ymd){
 					<input type="text" id="rLocation" required placeholder="Street, Area">
 				</label>
 				<label class="field">Date
-					<input type="date" id="rDate" required>
+					<input type="date" id="rDate" required max="<?php echo date('Y-m-d'); ?>">
 				</label>
 			</div>
 			<label class="field">Notes

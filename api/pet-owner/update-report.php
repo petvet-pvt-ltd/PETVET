@@ -151,11 +151,13 @@ try {
         $daysMissing = max(0, (int)$lastSeenDate->diff($today)->format('%r%a'));
     }
     
-    // Prepare updated description as JSON
-    $updatedDescription = [
+    // Prepare updated data array for individual column storage
+    $updatedData = [
         'species' => $species,
         'name' => $name,
         'color' => $color,
+        'breed' => null,
+        'age' => null,
         'notes' => $notes,
         'time' => $time,
         'reward' => $reward,
@@ -174,10 +176,8 @@ try {
         'updated_at' => date('Y-m-d H:i:s')
     ];
     
-    $descriptionJson = json_encode($updatedDescription, JSON_UNESCAPED_UNICODE);
-    
-    // Update database using model
-    $lostFoundModel->updateReport($reportId, $type, $location, $date, $descriptionJson);
+    // Update database using model (passes array for individual column storage)
+    $lostFoundModel->updateReport($reportId, $type, $location, $date, $updatedData);
     
     // Return success response
     http_response_code(200);

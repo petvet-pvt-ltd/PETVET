@@ -170,16 +170,25 @@ class LostFoundModel extends BaseModel {
 
     /**
      * Format database reports to match view expectations
+     * Reads from individual columns (new schema) with fallback to JSON parsing (old schema)
      */
     private function formatReports($dbReports) {
         $formatted = [];
         
         foreach ($dbReports as $report) {
-            // Parse JSON description field
-            $description = json_decode($report['description'], true);
+            // Try to use individual columns first, fallback to JSON parsing
+            $photos = [];
+            if (!empty($report['photos'])) {
+                $decoded = json_decode($report['photos'], true);
+                $photos = is_array($decoded) ? $decoded : [$report['photos']];
+            }
             
-            // Build photo array - handle both string and array
-            $photos = $description['photos'] ?? [];
+            // Fallback to description JSON if columns are empty
+            if (empty($photos) && !empty($report['description'])) {
+                $description = json_decode($report['description'], true);
+                $photos = $description['photos'] ?? [];
+            }
+            
             if (empty($photos)) {
                 $photos = ['/PETVET/public/img/default-pet.jpg']; // Fallback image
             }
@@ -187,28 +196,39 @@ class LostFoundModel extends BaseModel {
             // Calculate days missing
             $daysMissing = $this->calculateDaysMissing($report['date_reported']);
             
+            // Get contact info from individual columns
+            $contact = [
+                'phone' => $report['phone'] ?? '',
+                'phone2' => $report['phone2'] ?? '',
+                'email' => $report['email'] ?? ''
+            ];
+            
+            // Fallback to description JSON if columns are empty
+            if (empty($contact['phone']) && empty($contact['email']) && !empty($report['description'])) {
+                $description = json_decode($report['description'], true);
+                $contact = $description['contact'] ?? $contact;
+            }
+            
             $formatted[] = [
                 'id' => $report['report_id'],
                 'type' => $report['type'],
-                'name' => $description['name'] ?? null,
-                'species' => $description['species'] ?? 'Unknown',
-                'breed' => $description['breed'] ?? 'Unknown',
-                'age' => $description['age'] ?? 'Unknown',
-                'color' => $description['color'] ?? '',
-               'reward' => !empty($description['reward']) ? (float)$description['reward'] : 0,
-               'urgency' => $description['urgency'] ?? 'Medium',
+                'name' => $report['name'] ?? null,
+                'species' => $report['species'] ?? 'Unknown',
+                'breed' => $report['breed'] ?? 'Unknown',
+                'age' => $report['age'] ?? 'Unknown',
+                'color' => $report['color'] ?? '',
+                'reward' => $report['reward'] ? (float)$report['reward'] : 0,
+                'urgency' => $report['urgency'] ?? 'medium',
+                'time' => $report['time'] ?? null,
                 'photo' => $photos, // Array of photo URLs
                 'last_seen' => $report['location'],
                 'date' => $report['date_reported'],
                 'days_missing' => $daysMissing,
-                'notes' => $description['notes'] ?? '',
-               
-                'contact' => $description['contact'] ?? [
-                    'name' => 'Anonymous',
-                    'email' => '',
-                    'phone' => '',
-                    'phone2' => ''
-                ]
+                'notes' => $report['notes'] ?? '',
+                'contact' => $contact,
+                'latitude' => $report['latitude'] ?? null,
+                'longitude' => $report['longitude'] ?? null,
+                'user_id' => $report['user_id'] ?? null
             ];
         }
         
@@ -269,19 +289,63 @@ class LostFoundModel extends BaseModel {
     }
     
     /**
-     * Insert a new lost/found report
+     * Insert a new lost/found report - accepts data array with individual columns
      */
-    public function insertReport($type, $location, $date, $description) {
+    public function insertReport($type, $location, $date, $data) {
         try {
+            // Support both old JSON format (for backward compatibility) and new array format
+            $description = is_array($data) ? json_encode($data) : $data;
+            
+            // Extract individual fields from array if provided
+            $species = isset($data['species']) ? $data['species'] : null;
+            $name = isset($data['name']) ? $data['name'] : null;
+            $color = isset($data['color']) ? $data['color'] : null;
+            $breed = isset($data['breed']) ? $data['breed'] : null;
+            $age = isset($data['age']) ? $data['age'] : null;
+            $notes = isset($data['notes']) ? $data['notes'] : null;
+            $time = isset($data['time']) ? $data['time'] : null;
+            $reward = isset($data['reward']) ? (float)$data['reward'] : null;
+            $urgency = isset($data['urgency']) ? $data['urgency'] : 'medium';
+            $phone = isset($data['contact']['phone']) ? $data['contact']['phone'] : (isset($data['phone']) ? $data['phone'] : null);
+            $phone2 = isset($data['contact']['phone2']) ? $data['contact']['phone2'] : (isset($data['phone2']) ? $data['phone2'] : null);
+            $email = isset($data['contact']['email']) ? $data['contact']['email'] : (isset($data['email']) ? $data['email'] : null);
+            $photos = isset($data['photos']) ? json_encode($data['photos']) : null;
+            $latitude = isset($data['latitude']) ? $data['latitude'] : null;
+            $longitude = isset($data['longitude']) ? $data['longitude'] : null;
+            $user_id = isset($data['user_id']) ? $data['user_id'] : null;
+            $submitted_at = isset($data['submitted_at']) ? $data['submitted_at'] : date('Y-m-d H:i:s');
+            
             $stmt = $this->db->prepare("
-                INSERT INTO LostFoundReport (type, location, date_reported, description) 
-                VALUES (:type, :location, :date_reported, :description)
+                INSERT INTO LostFoundReport (
+                    type, location, date_reported, species, name, color, breed, age, notes, time,
+                    reward, urgency, phone, phone2, email, photos, latitude, longitude, user_id, submitted_at, description
+                ) VALUES (
+                    :type, :location, :date_reported, :species, :name, :color, :breed, :age, :notes, :time,
+                    :reward, :urgency, :phone, :phone2, :email, :photos, :latitude, :longitude, :user_id, :submitted_at, :description
+                )
             ");
             
             $stmt->execute([
                 ':type' => $type,
                 ':location' => $location,
                 ':date_reported' => $date,
+                ':species' => $species,
+                ':name' => $name,
+                ':color' => $color,
+                ':breed' => $breed,
+                ':age' => $age,
+                ':notes' => $notes,
+                ':time' => $time,
+                ':reward' => $reward,
+                ':urgency' => $urgency,
+                ':phone' => $phone,
+                ':phone2' => $phone2,
+                ':email' => $email,
+                ':photos' => $photos,
+                ':latitude' => $latitude,
+                ':longitude' => $longitude,
+                ':user_id' => $user_id,
+                ':submitted_at' => $submitted_at,
                 ':description' => $description
             ]);
             
@@ -307,16 +371,55 @@ class LostFoundModel extends BaseModel {
     }
     
     /**
-     * Update a lost/found report
+     * Update a lost/found report - accepts data array with individual columns
      */
-    public function updateReport($reportId, $type, $location, $date, $description) {
+    public function updateReport($reportId, $type, $location, $date, $data) {
         try {
+            // Support both old JSON format (for backward compatibility) and new array format
+            $description = is_array($data) ? json_encode($data) : $data;
+            
+            // Extract individual fields from array if provided
+            $species = isset($data['species']) ? $data['species'] : null;
+            $name = isset($data['name']) ? $data['name'] : null;
+            $color = isset($data['color']) ? $data['color'] : null;
+            $breed = isset($data['breed']) ? $data['breed'] : null;
+            $age = isset($data['age']) ? $data['age'] : null;
+            $notes = isset($data['notes']) ? $data['notes'] : null;
+            $time = isset($data['time']) ? $data['time'] : null;
+            $reward = isset($data['reward']) ? (float)$data['reward'] : null;
+            $urgency = isset($data['urgency']) ? $data['urgency'] : 'medium';
+            $phone = isset($data['contact']['phone']) ? $data['contact']['phone'] : (isset($data['phone']) ? $data['phone'] : null);
+            $phone2 = isset($data['contact']['phone2']) ? $data['contact']['phone2'] : (isset($data['phone2']) ? $data['phone2'] : null);
+            $email = isset($data['contact']['email']) ? $data['contact']['email'] : (isset($data['email']) ? $data['email'] : null);
+            $photos = isset($data['photos']) ? json_encode($data['photos']) : null;
+            $latitude = isset($data['latitude']) ? $data['latitude'] : null;
+            $longitude = isset($data['longitude']) ? $data['longitude'] : null;
+            $user_id = isset($data['user_id']) ? $data['user_id'] : null;
+            $updated_at = date('Y-m-d H:i:s');
+            
             $stmt = $this->db->prepare("
                 UPDATE LostFoundReport 
                 SET type = :type, 
                     location = :location, 
-                    date_reported = :date_reported, 
-                    description = :description
+                    date_reported = :date_reported,
+                    species = :species,
+                    name = :name,
+                    color = :color,
+                    breed = :breed,
+                    age = :age,
+                    notes = :notes,
+                    time = :time,
+                    reward = :reward,
+                    urgency = :urgency,
+                    phone = :phone,
+                    phone2 = :phone2,
+                    email = :email,
+                    photos = :photos,
+                    latitude = :latitude,
+                    longitude = :longitude,
+                    user_id = :user_id,
+                    description = :description,
+                    updated_at = :updated_at
                 WHERE report_id = :report_id
             ");
             
@@ -324,7 +427,24 @@ class LostFoundModel extends BaseModel {
                 ':type' => $type,
                 ':location' => $location,
                 ':date_reported' => $date,
+                ':species' => $species,
+                ':name' => $name,
+                ':color' => $color,
+                ':breed' => $breed,
+                ':age' => $age,
+                ':notes' => $notes,
+                ':time' => $time,
+                ':reward' => $reward,
+                ':urgency' => $urgency,
+                ':phone' => $phone,
+                ':phone2' => $phone2,
+                ':email' => $email,
+                ':photos' => $photos,
+                ':latitude' => $latitude,
+                ':longitude' => $longitude,
+                ':user_id' => $user_id,
                 ':description' => $description,
+                ':updated_at' => $updated_at,
                 ':report_id' => $reportId
             ]);
             
