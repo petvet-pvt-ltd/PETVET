@@ -52,6 +52,11 @@ try {
     if (!empty($_POST['weight'])) {
         $weight = floatval($_POST['weight']);
     }
+
+    $height = null;
+    if (!empty($_POST['height'])) {
+        $height = floatval($_POST['height']);
+    }
     
     $data = [
         'user_id' => $_SESSION['user_id'],
@@ -69,7 +74,8 @@ try {
         'email' => trim($_POST['email'] ?? ''),
         'weight' => $weight,
         'latitude' => $latitude,
-        'longitude' => $longitude
+        'longitude' => $longitude,
+        'height' => $height
     ];
     
     // Create listing

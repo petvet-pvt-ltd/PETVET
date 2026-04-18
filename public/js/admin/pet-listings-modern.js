@@ -21,6 +21,7 @@ const detailBreed = document.getElementById('detailBreed');
 const detailAge = document.getElementById('detailAge');
 const detailGender = document.getElementById('detailGender');
 const detailWeight = document.getElementById('detailWeight');
+const detailHeight = document.getElementById('detailHeight');
 const detailPrice = document.getElementById('detailPrice');
 const detailLocation = document.getElementById('detailLocation');
 const detailDescription = document.getElementById('detailDescription');
@@ -296,6 +297,7 @@ function viewDetails(id) {
   detailAge.textContent = `${listing.age} ${listing.age === '1' ? 'year' : 'years'}`;
   detailGender.textContent = listing.gender;
   detailWeight.textContent = (listing.weight && listing.weight !== '0') ? listing.weight + ' kg' : 'Not specified';
+  detailHeight.textContent = (listing.height && listing.height !== '0') ? listing.height + ' cm' : 'Not specified';
   detailPrice.textContent = `LKR ${parseFloat(listing.price).toLocaleString()}`;
   detailLocation.textContent = listing.location;
   detailDescription.textContent = listing.description || 'No description provided';
@@ -447,4 +449,28 @@ function showSuccess(message) {
 // Show error message
 function showError(message) {
   alert('❌ ' + message); // Replace with your preferred notification system
+}
+
+// Get max weight pet from database
+async function getMaxWeightPet() {
+  const response = await fetch('/PETVET/views/admin/pet-listings-modern.php?action=get_max_weight');
+  const data = await response.json();
+  
+  if (data.success) {
+    alert('Max weight pet: ' + data.pet.name + ' (' + data.pet.weight + ' kg)');
+  } else {
+    alert('Error: ' + data.message);
+  }
+}
+
+// Get sum of all weights
+async function getSumWeight() {
+  const response = await fetch('/PETVET/views/admin/pet-listings-modern.php?action=get_sum_weight');
+  const data = await response.json();
+  
+  if (data.success) {
+    alert('Total weight: ' + data.total_weight + ' kg (' + data.pet_count + ' pets)');
+  } else {
+    alert('Error: ' + data.message);
+  }
 }

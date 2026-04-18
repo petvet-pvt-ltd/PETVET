@@ -1,4 +1,40 @@
-<?php /* Admin Pet Listings Management */ ?>
+<?php 
+/* Admin Pet Listings Management */
+
+// Handle AJAX request for max weight pet
+if (isset($_GET['action']) && $_GET['action'] === 'get_max_weight') {
+    header('Content-Type: application/json');
+    require_once dirname(__DIR__, 2) . '/config/connect.php';
+    
+    $query = "SELECT name, weight FROM sell_pet_listings WHERE weight > 0 ORDER BY weight DESC LIMIT 1";
+    $result = $conn->query($query);
+    
+    if ($result && $result->num_rows > 0) {
+        $pet = $result->fetch_assoc();
+        echo json_encode(['success' => true, 'pet' => $pet]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'No pet found']);
+    }
+    exit;
+}
+
+// Handle AJAX request for sum of weights
+if (isset($_GET['action']) && $_GET['action'] === 'get_sum_weight') {
+    header('Content-Type: application/json');
+    require_once dirname(__DIR__, 2) . '/config/connect.php';
+    
+    $query = "SELECT SUM(weight) as total_weight, COUNT(*) as pet_count FROM sell_pet_listings WHERE weight > 0";
+    $result = $conn->query($query);
+    
+    if ($result) {
+        $row = $result->fetch_assoc();
+        echo json_encode(['success' => true, 'total_weight' => $row['total_weight'], 'pet_count' => $row['pet_count']]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Error fetching data']);
+    }
+    exit;
+}
+?>
 <link rel="stylesheet" href="/PETVET/public/css/admin/pet-listings-modern.css">
 <div class="main-content">
   <header class="page-header">
@@ -34,6 +70,8 @@
         <option value="Other">Other</option>
       </select>
     </div>
+    <button onclick="getMaxWeightPet()">Max Weight Pet</button>
+    <button onclick="getSumWeight()">Sum of Weights</button>
   </section>
 
   <section id="listingsGrid" class="listings-grid">
@@ -63,6 +101,7 @@
           <div class="detail-row"><span class="detail-label">Age:</span><span class="detail-value" id="detailAge"></span></div>
           <div class="detail-row"><span class="detail-label">Gender:</span><span class="detail-value" id="detailGender"></span></div>
           <div class="detail-row"><span class="detail-label">Weight:</span><span class="detail-value" id="detailWeight"></span></div>
+          <div class="detail-row"><span class="detail-label">Height:</span><span class="detail-value" id="detailHeight"></span></div>
           <div class="detail-row"><span class="detail-label">Price:</span><span class="detail-value" id="detailPrice"></span></div>
           <div class="detail-row"><span class="detail-label">Location:</span><span class="detail-value" id="detailLocation"></span></div>
           <div class="detail-row"><span class="detail-label">Description:</span><span class="detail-value" id="detailDescription"></span></div>

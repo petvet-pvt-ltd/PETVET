@@ -150,6 +150,14 @@
           <small class="field-hint">Enter weight in kilograms</small>
         </label>
 
+          <!-- Height -->
+        <label>Height (cm)
+          <input type="number" name="height" id="height" min="0" step="0.5" placeholder="e.g., 50.0" 
+            title="Height should be a positive number."
+            autocomplete="off">
+          <small class="field-hint">Enter height in centimeters</small>
+        </label>
+
         <!-- Price -->
         <label>Price (Rs)
           <input type="number" name="price" id="price" min="0" step="500" required

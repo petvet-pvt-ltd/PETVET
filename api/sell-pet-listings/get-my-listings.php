@@ -39,6 +39,13 @@ try {
         if (isset($listing['weight']) && $listing['weight'] !== null) {
             $listing['weight'] = floatval($listing['weight']);
         }
+
+
+        // Convert height to float for proper JSON serialization
+        if (isset($listing['height']) && $listing['height'] !== null) {
+            $listing['height'] = floatval($listing['height']);
+        }
+
     }
     
     ob_clean();

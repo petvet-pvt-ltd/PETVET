@@ -55,9 +55,9 @@ class SellPetListingModel extends BaseModel {
         try {
             $stmt = $this->pdo->prepare("
                 INSERT INTO sell_pet_listings (
-                    user_id, name, species, breed, age, gender, weight, price, listing_type, 
+                    user_id, name, species, breed, age, gender, weight,height, price, listing_type, 
                     location, description, phone, phone2, email, latitude, longitude, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
             ");
             
             $success = $stmt->execute([
@@ -68,6 +68,7 @@ class SellPetListingModel extends BaseModel {
                 $data['age'],
                 $data['gender'],
                 $data['weight'] ?? null,
+                $data['height'] ?? null,
                 $data['price'],
                 $data['listing_type'],
                 $data['location'],
@@ -94,7 +95,7 @@ class SellPetListingModel extends BaseModel {
         try {
             $stmt = $this->pdo->prepare("
                 UPDATE sell_pet_listings SET 
-                    name = ?, species = ?, breed = ?, age = ?, gender = ?, weight = ?,
+                    name = ?, species = ?, breed = ?, age = ?, gender = ?, weight = ?, height = ?,
                     price = ?, listing_type = ?, location = ?, description = ?, 
                     phone = ?, phone2 = ?, email = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
@@ -107,6 +108,7 @@ class SellPetListingModel extends BaseModel {
                 $data['age'],
                 $data['gender'],
                 $data['weight'] ?? null,
+                $data['height'] ?? null,
                 $data['price'],
                 $data['listing_type'],
                 $data['location'],

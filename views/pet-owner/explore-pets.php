@@ -268,6 +268,11 @@ foreach($pets as $pet) {
               title="Weight should be a positive number" autocomplete="off">
             <small class="field-hint">Weight in kilograms</small>
           </label>
+          <label>Height (cm)
+            <input type="number" name="height" id="sellHeight" placeholder="e.g., 50.0" min="0" step="0.5"
+              title="Height should be a positive number" autocomplete="off">
+            <small class="field-hint">Height in centimeters</small>
+          </label>
           <label>Listing Type
             <select name="listing_type" id="sellListingType" required>
               <option value="sale">For Sale</option>
@@ -382,6 +387,12 @@ foreach($pets as $pet) {
                 title="Weight should be a positive number" autocomplete="off">
               <small class="field-hint">Weight in kilograms</small>
             </label>
+            <label>Height (cm)
+              <input type="number" name="height" id="editHeight" placeholder="e.g., 50.0" min="0" step="0.5"
+                title="Height should be a positive number" autocomplete="off">
+              <small class="field-hint">Height in centimeters</small>
+            </label>
+
             <label>Price (Rs)
               <input type="number" name="price" id="editPrice" min="0" step="500" required autocomplete="off">
               <small class="field-hint">Enter price in Sri Lankan Rupees</small>
