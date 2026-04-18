@@ -37,7 +37,7 @@ try {
         )";
     }
     
-    $query .= " GROUP BY u.id ORDER BY u.created_at DESC";
+    $query .= " GROUP BY u.id ORDER BY u.last_login DESC, u.created_at DESC";
     
     $result = mysqli_query($conn, $query);
     
