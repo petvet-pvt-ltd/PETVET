@@ -29,7 +29,7 @@ function showEditPetModal(petId) {
     document.getElementById('petName').value = pet.name;
     document.getElementById('petBreed').value = pet.breed;
     document.getElementById('petGender').value = pet.gender;
-    // document.getElementById('petSpecies').value = pet.species;
+    document.getElementById('petSpecies').value = pet.species;
     document.getElementById('petDob').value = pet.dob;
     document.getElementById('petDescription').value = pet.description || '';
     document.getElementById('petActive').checked = pet.is_active;
@@ -74,14 +74,24 @@ function savePet() {
         return;
     }
     
-    // Validate date of birth is not in the future
+    // Validate date of birth is not in the future and is at least 1 year old
     const dob = document.getElementById('petDob').value;
     if (dob) {
         const dobDate = new Date(dob);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        
+        // Check if date is in the future
         if (dobDate > today) {
             alert('Date of birth cannot be in the future');
+            return;
+        }
+        
+        // Check if pet is at least 1 year old
+        const oneYearAgo = new Date(today);
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+        if (dobDate > oneYearAgo) {
+            alert('Breeding pet must be at least 1 year old');
             return;
         }
     }
