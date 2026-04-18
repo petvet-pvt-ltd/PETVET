@@ -2,6 +2,7 @@
 // Global distance tracking variables
 let userLocation = null;
 let reportsWithDistance = new Map(); // Map of report_id => distance data
+let distanceDataLoaded = false; // Track if distance data has been loaded
 
 // Global location map variables
 let reportMap = null;
@@ -489,13 +490,19 @@ document.addEventListener('DOMContentLoaded', () => {
 			const reportId = card.getAttribute('data-report-id');
 			const matchQ = q === '' || hay.includes(q);
 			const matchS = sp === '' || species === sp;
-			const visible = matchQ && matchS;
 			
-			// Get distance for nearby sorting
+			// Get distance and filter to only show pets within 10 km
 			const view = currentView;
 			const key = `${view}-${reportId}`;
 			const distanceData = reportsWithDistance.get(key);
-			const distance = distanceData ? distanceData.distance_km : 999999;
+			const distance = distanceData ? distanceData.distance_km : null;
+			
+			// Filter logic: 
+			// - If distance data hasn't loaded yet, show all items
+			// - If distance data has loaded, only show items within 10 km
+			const withinRange = distanceDataLoaded ? (distance !== null && distance <= 10) : true;
+			
+			const visible = matchQ && matchS && withinRange;
 			
 			// Create datetime for sorting
 			const dateTimeStr = time ? `${date} ${time}` : date;
@@ -509,8 +516,12 @@ document.addEventListener('DOMContentLoaded', () => {
 		
 		// Sort based on selection
 		if (sort === 'nearby') {
-			// Sort by distance (nearest first)
-			vis.sort((a,b) => a.distance - b.distance);
+			// Sort by distance (nearest first), handle null distances
+			vis.sort((a,b) => {
+				const distA = a.distance !== null ? a.distance : 999999;
+				const distB = b.distance !== null ? b.distance : 999999;
+				return distA - distB;
+			});
 		} else if (sort === 'latest') {
 			// Sort by datetime (latest first)
 			vis.sort((a,b) => b.datetime - a.datetime);
@@ -530,6 +541,56 @@ document.addEventListener('DOMContentLoaded', () => {
 		ctrl && ctrl.addEventListener('input', applyFilters);
 		ctrl && ctrl.addEventListener('change', applyFilters);
 	});
+
+	// Phone validation function
+	function validatePhoneNumber(phone) {
+		const pattern = /^0[0-9]{9}$/;
+		return pattern.test(phone.trim());
+	}
+
+	// Setup phone field validation
+	const phoneInput = qs('#rPhone');
+	const phone2Input = qs('#rPhone2');
+
+	if (phoneInput) {
+		phoneInput.addEventListener('input', (e) => {
+			const value = e.target.value.trim();
+			if (value && !validatePhoneNumber(value)) {
+				phoneInput.classList.add('error');
+			} else {
+				phoneInput.classList.remove('error');
+			}
+		});
+
+		phoneInput.addEventListener('blur', (e) => {
+			const value = e.target.value.trim();
+			if (value && !validatePhoneNumber(value)) {
+				phoneInput.classList.add('error');
+			} else {
+				phoneInput.classList.remove('error');
+			}
+		});
+	}
+
+	if (phone2Input) {
+		phone2Input.addEventListener('input', (e) => {
+			const value = e.target.value.trim();
+			if (value && !validatePhoneNumber(value)) {
+				phone2Input.classList.add('error');
+			} else {
+				phone2Input.classList.remove('error');
+			}
+		});
+
+		phone2Input.addEventListener('blur', (e) => {
+			const value = e.target.value.trim();
+			if (value && !validatePhoneNumber(value)) {
+				phone2Input.classList.add('error');
+			} else {
+				phone2Input.classList.remove('error');
+			}
+		});
+	}
 
 	// Modal events
 	openReportBtns.forEach(btn => btn.addEventListener('click', () => { 
@@ -595,6 +656,27 @@ document.addEventListener('DOMContentLoaded', () => {
 			return;
 		}
 		
+		// Validate phone numbers
+		const phoneValue = qs('#rPhone').value.trim();
+		const phone2Value = qs('#rPhone2').value.trim();
+		
+		if (!phoneValue) {
+			alert('Primary phone number is required');
+			return;
+		}
+		
+		if (!validatePhoneNumber(phoneValue)) {
+			alert('Primary phone number must be 10 digits starting with 0 (e.g., 0717324341)');
+			qs('#rPhone').classList.add('error');
+			return;
+		}
+		
+		if (phone2Value && !validatePhoneNumber(phone2Value)) {
+			alert('Secondary phone number must be 10 digits starting with 0 (e.g., 0717324341)');
+			qs('#rPhone2').classList.add('error');
+			return;
+		}
+		
 		// Create FormData from form
 		const formData = new FormData();
 		formData.append('type', qs('#rType').value);
@@ -607,8 +689,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		formData.append('date', qs('#rDate').value);
 		formData.append('time', qs('#rTime').value || '');
 		formData.append('notes', qs('#rNotes').value || '');
-		formData.append('phone', qs('#rPhone').value || '');
-		formData.append('phone2', qs('#rPhone2').value || '');
+		formData.append('phone', phoneValue);
+		formData.append('phone2', phone2Value);
 		formData.append('email', qs('#rEmail').value || '');
 		
 		// Append multiple photos
@@ -644,7 +726,13 @@ document.addEventListener('DOMContentLoaded', () => {
 				// Reload page to show new report
 				window.location.reload();
 			} else {
-				alert('Error: ' + (result.message || 'Failed to submit report'));
+				// Show detailed error message with validation errors
+				let errorMsg = result.message || 'Failed to submit report';
+				if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
+					errorMsg += ':\n\n' + result.errors.join('\n');
+				}
+				console.error('API Error:', result);
+				alert('Error: ' + errorMsg);
 			}
 		} catch (error) {
 			console.error('Error submitting report:', error);
@@ -669,6 +757,27 @@ document.addEventListener('DOMContentLoaded', () => {
 			return;
 		}
 		
+		// Validate phone numbers
+		const editPhoneValue = qs('#editPhone').value.trim();
+		const editPhone2Value = qs('#editPhone2').value.trim();
+		
+		if (!editPhoneValue) {
+			alert('Primary phone number is required');
+			return;
+		}
+		
+		if (!validatePhoneNumber(editPhoneValue)) {
+			alert('Primary phone number must be 10 digits starting with 0 (e.g., 0717324341)');
+			qs('#editPhone').classList.add('error');
+			return;
+		}
+		
+		if (editPhone2Value && !validatePhoneNumber(editPhone2Value)) {
+			alert('Secondary phone number must be 10 digits starting with 0 (e.g., 0717324341)');
+			qs('#editPhone2').classList.add('error');
+			return;
+		}
+
 		try {
 			const reportId = qs('#editId').value;
 			
@@ -685,8 +794,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			formData.append('date', qs('#editDate').value);
 			formData.append('time', qs('#editTime').value || '');
 			formData.append('notes', qs('#editNotes').value);
-			formData.append('phone', qs('#editPhone').value);
-			formData.append('phone2', qs('#editPhone2').value);
+			formData.append('phone', editPhoneValue);
+			formData.append('phone2', editPhone2Value);
 			formData.append('email', qs('#editEmail').value);
 			
 			// Check if new photos uploaded
@@ -725,7 +834,13 @@ document.addEventListener('DOMContentLoaded', () => {
 				renderMyListings();
 				setTimeout(() => window.location.reload(), 1000);
 			} else {
-				alert('Error: ' + (result.message || 'Failed to update report'));
+				// Show detailed error message with validation errors
+				let errorMsg = result.message || 'Failed to update report';
+				if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
+					errorMsg += ':\n\n' + result.errors.join('\n');
+				}
+				console.error('API Error:', result);
+				alert('Error: ' + errorMsg);
 			}
 		} catch (error) {
 			console.error('Error updating report:', error);
@@ -860,6 +975,9 @@ async function loadReportsWithDistance() {
 
 		// Update distance badges
 		updateDistanceBadges();
+		
+		// Mark distance data as loaded
+		distanceDataLoaded = true;
 		
 		// Re-apply filters with distance data
 		applyFilters();

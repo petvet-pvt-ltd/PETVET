@@ -79,6 +79,14 @@ function savePet() {
             alert('Date of birth cannot be in the future');
             return;
         }
+        
+        // Validate pet is at least 1 year old
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+        if (dobDate > oneYearAgo) {
+            alert('Pet must be at least 1 year old');
+            return;
+        }
     }
     
     // Collect form data

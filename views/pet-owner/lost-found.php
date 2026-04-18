@@ -224,7 +224,7 @@ function lf_fmtDate($ymd){
 			</label>
 			<div class="row">
 				<label class="field">Date Last Seen
-					<input type="date" id="rDate" required>
+					<input type="date" id="rDate" required max="<?php echo date('Y-m-d'); ?>">
 				</label>
 				<label class="field">Time Last Seen (Optional)
 					<input type="time" id="rTime" placeholder="e.g., 14:30">
@@ -324,7 +324,7 @@ function lf_fmtDate($ymd){
 			</label>
 			<div class="row">
 				<label class="field">Date Last Seen
-					<input type="date" id="editDate" required>
+					<input type="date" id="editDate" required max="<?php echo date('Y-m-d'); ?>">
 				</label>
 				<label class="field">Time Last Seen (Optional)
 					<input type="time" id="editTime" placeholder="e.g., 14:30">
