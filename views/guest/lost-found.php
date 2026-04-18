@@ -99,9 +99,9 @@ function lf_fmtDate($ymd){
 				<div class="card-body">
 					<h4 class="title">
 						<?php echo lf_esc($r['name'] ?: 'Unknown Name'); ?>
-						<span class="muted">• <?php echo lf_esc($r['species']); ?><?php echo $r['breed']? ' · '.lf_esc($r['breed']) : ''; ?><?php echo $r['age']? ' · '.lf_esc($r['age']) : ''; ?></span>
+						<span class="muted">• <?php echo lf_esc($r['species']); ?><?php echo ($r['breed'] && $r['breed'] !== 'Unknown')? ' · '.lf_esc($r['breed']) : ''; ?><?php echo ($r['age'] && $r['age'] !== 'Unknown')? ' · '.lf_esc($r['age']) : ''; ?></span>
 					</h4>
-					<p class="meta"><strong>Last seen:</strong> <?php echo lf_esc($r['last_seen']); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
+					<p class="meta"><strong>Last seen:</strong> <?php echo lf_esc($r['last_seen'] && $r['last_seen'] !== 'Unknown' ? $r['last_seen'] : 'Location not specified'); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
 					<?php if(!empty($r['notes'])): ?><p class="notes"><?php echo lf_esc($r['notes']); ?></p><?php endif; ?>
 					<div class="actions">
 						<button class="btn outline contact-owner-btn" 
@@ -156,9 +156,9 @@ function lf_fmtDate($ymd){
 				<div class="card-body">
 					<h4 class="title">
 						<?php echo lf_esc($r['name'] ?: 'Unknown Name'); ?>
-						<span class="muted">• <?php echo lf_esc($r['species']); ?><?php echo $r['breed']? ' · '.lf_esc($r['breed']) : ''; ?><?php echo $r['age']? ' · '.lf_esc($r['age']) : ''; ?></span>
+						<span class="muted">• <?php echo lf_esc($r['species']); ?><?php echo ($r['breed'] && $r['breed'] !== 'Unknown')? ' · '.lf_esc($r['breed']) : ''; ?><?php echo ($r['age'] && $r['age'] !== 'Unknown')? ' · '.lf_esc($r['age']) : ''; ?></span>
 					</h4>
-					<p class="meta"><strong>Found at:</strong> <?php echo lf_esc($r['last_seen']); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
+					<p class="meta"><strong>Found at:</strong> <?php echo lf_esc($r['last_seen'] && $r['last_seen'] !== 'Unknown' ? $r['last_seen'] : 'Location not specified'); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
 					<?php if(!empty($r['notes'])): ?><p class="notes"><?php echo lf_esc($r['notes']); ?></p><?php endif; ?>
 					<div class="actions">
 						<button class="btn outline contact-owner-btn" 

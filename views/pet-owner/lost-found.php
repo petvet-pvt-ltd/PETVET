@@ -98,10 +98,10 @@ function lf_fmtDate($ymd){
 				<div class="card-body">
 					<h4 class="title">
 						<?php echo lf_esc($r['name'] ?: 'Unknown Name'); ?>
-						<span class="muted">• <?php echo lf_esc($r['species']); ?><?php echo $r['breed']? ' · '.lf_esc($r['breed']) : ''; ?><?php echo $r['age']? ' · '.lf_esc($r['age']) : ''; ?></span>
+						<span class="muted">• <?php echo lf_esc($r['species']); ?><?php echo ($r['breed'] && $r['breed'] !== 'Unknown')? ' · '.lf_esc($r['breed']) : ''; ?><?php echo ($r['age'] && $r['age'] !== 'Unknown')? ' · '.lf_esc($r['age']) : ''; ?></span>
 					</h4>
 					<p >Risk: <?php echo $r['risk']; ?></p>
-					<p class="meta"><strong>Last seen:</strong> <?php echo lf_esc($r['last_seen']); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
+					<p class="meta"><strong>Last seen:</strong> <?php echo lf_esc($r['last_seen'] && $r['last_seen'] !== 'Unknown' ? $r['last_seen'] : 'Location not specified'); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
 					<?php if(!empty($r['reward']) && $r['reward'] > 0): ?>
 						<p>💰 Reward: <?php echo number_format($r['reward'], 2); ?></p>
 					<?php endif; ?>
@@ -166,9 +166,9 @@ function lf_fmtDate($ymd){
 				<div class="card-body">
 					<h4 class="title">
 						<?php echo lf_esc($r['name'] ?: 'Unknown Name'); ?>
-						<span class="muted">• <?php echo lf_esc($r['species']); ?><?php echo $r['breed']? ' · '.lf_esc($r['breed']) : ''; ?><?php echo $r['age']? ' · '.lf_esc($r['age']) : ''; ?></span>
+						<span class="muted">• <?php echo lf_esc($r['species']); ?><?php echo ($r['breed'] && $r['breed'] !== 'Unknown')? ' · '.lf_esc($r['breed']) : ''; ?><?php echo ($r['age'] && $r['age'] !== 'Unknown')? ' · '.lf_esc($r['age']) : ''; ?></span>
 					</h4>
-			<p class="meta"><strong>Found at:</strong> <?php echo lf_esc($r['last_seen']); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
+			<p class="meta"><strong>Found at:</strong> <?php echo lf_esc($r['last_seen'] && $r['last_seen'] !== 'Unknown' ? $r['last_seen'] : 'Location not specified'); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
 			<<!-- ?php $daysMissing = $r['days_missing'] ?? 0; ?>
 			<p>Missing for <?php echo $daysMissing; ?> days</p> -->
 					<p class="time-ago" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-date="<?php echo lf_esc($r['date']); ?>" style="color: var(--primary); font-weight: 500; font-size: 0.9em; margin-top: 4px;"></p>
@@ -214,6 +214,7 @@ function lf_fmtDate($ymd){
 				<label class="field">Color
 					<input type="text" id="rColor" placeholder="Golden / Black"  value="Golden" readonly>
 				</label>
+				
 			</div>
 			<div class="row">
 				<label class="field">risk
