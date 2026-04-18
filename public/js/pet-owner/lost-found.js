@@ -542,6 +542,56 @@ document.addEventListener('DOMContentLoaded', () => {
 		ctrl && ctrl.addEventListener('change', applyFilters);
 	});
 
+	// Phone validation function
+	function validatePhoneNumber(phone) {
+		const pattern = /^0[0-9]{9}$/;
+		return pattern.test(phone.trim());
+	}
+
+	// Setup phone field validation
+	const phoneInput = qs('#rPhone');
+	const phone2Input = qs('#rPhone2');
+
+	if (phoneInput) {
+		phoneInput.addEventListener('input', (e) => {
+			const value = e.target.value.trim();
+			if (value && !validatePhoneNumber(value)) {
+				phoneInput.classList.add('error');
+			} else {
+				phoneInput.classList.remove('error');
+			}
+		});
+
+		phoneInput.addEventListener('blur', (e) => {
+			const value = e.target.value.trim();
+			if (value && !validatePhoneNumber(value)) {
+				phoneInput.classList.add('error');
+			} else {
+				phoneInput.classList.remove('error');
+			}
+		});
+	}
+
+	if (phone2Input) {
+		phone2Input.addEventListener('input', (e) => {
+			const value = e.target.value.trim();
+			if (value && !validatePhoneNumber(value)) {
+				phone2Input.classList.add('error');
+			} else {
+				phone2Input.classList.remove('error');
+			}
+		});
+
+		phone2Input.addEventListener('blur', (e) => {
+			const value = e.target.value.trim();
+			if (value && !validatePhoneNumber(value)) {
+				phone2Input.classList.add('error');
+			} else {
+				phone2Input.classList.remove('error');
+			}
+		});
+	}
+
 	// Modal events
 	openReportBtns.forEach(btn => btn.addEventListener('click', () => { 
 		reportModal.hidden=false; 
@@ -606,6 +656,27 @@ document.addEventListener('DOMContentLoaded', () => {
 			return;
 		}
 		
+		// Validate phone numbers
+		const phoneValue = qs('#rPhone').value.trim();
+		const phone2Value = qs('#rPhone2').value.trim();
+		
+		if (!phoneValue) {
+			alert('Primary phone number is required');
+			return;
+		}
+		
+		if (!validatePhoneNumber(phoneValue)) {
+			alert('Primary phone number must be 10 digits starting with 0 (e.g., 0717324341)');
+			qs('#rPhone').classList.add('error');
+			return;
+		}
+		
+		if (phone2Value && !validatePhoneNumber(phone2Value)) {
+			alert('Secondary phone number must be 10 digits starting with 0 (e.g., 0717324341)');
+			qs('#rPhone2').classList.add('error');
+			return;
+		}
+		
 		// Create FormData from form
 		const formData = new FormData();
 		formData.append('type', qs('#rType').value);
@@ -618,8 +689,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		formData.append('date', qs('#rDate').value);
 		formData.append('time', qs('#rTime').value || '');
 		formData.append('notes', qs('#rNotes').value || '');
-		formData.append('phone', qs('#rPhone').value || '');
-		formData.append('phone2', qs('#rPhone2').value || '');
+		formData.append('phone', phoneValue);
+		formData.append('phone2', phone2Value);
 		formData.append('email', qs('#rEmail').value || '');
 		
 		// Append multiple photos
@@ -686,6 +757,27 @@ document.addEventListener('DOMContentLoaded', () => {
 			return;
 		}
 		
+		// Validate phone numbers
+		const editPhoneValue = qs('#editPhone').value.trim();
+		const editPhone2Value = qs('#editPhone2').value.trim();
+		
+		if (!editPhoneValue) {
+			alert('Primary phone number is required');
+			return;
+		}
+		
+		if (!validatePhoneNumber(editPhoneValue)) {
+			alert('Primary phone number must be 10 digits starting with 0 (e.g., 0717324341)');
+			qs('#editPhone').classList.add('error');
+			return;
+		}
+		
+		if (editPhone2Value && !validatePhoneNumber(editPhone2Value)) {
+			alert('Secondary phone number must be 10 digits starting with 0 (e.g., 0717324341)');
+			qs('#editPhone2').classList.add('error');
+			return;
+		}
+
 		try {
 			const reportId = qs('#editId').value;
 			
@@ -702,8 +794,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			formData.append('date', qs('#editDate').value);
 			formData.append('time', qs('#editTime').value || '');
 			formData.append('notes', qs('#editNotes').value);
-			formData.append('phone', qs('#editPhone').value);
-			formData.append('phone2', qs('#editPhone2').value);
+			formData.append('phone', editPhoneValue);
+			formData.append('phone2', editPhone2Value);
 			formData.append('email', qs('#editEmail').value);
 			
 			// Check if new photos uploaded

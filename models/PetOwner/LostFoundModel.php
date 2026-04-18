@@ -78,17 +78,17 @@ class LostFoundModel extends BaseModel {
             }
         }
         
-        // Validate phone (optional but if provided must follow +94 format)
+        // Validate phone (optional but if provided must be 10 digits starting with 0)
         if (!empty($phone)) {
             if (!$this->isValidPhoneNumber($phone)) {
-                $errors[] = 'Phone number must be in format +94XXXXXXXXX (9 digits after +94)';
+                $errors[] = 'Phone number must be 10 digits starting with 0 (e.g., 0717324341)';
             }
         }
         
-        // Validate phone2 (optional but if provided must follow +94 format)
+        // Validate phone2 (optional but if provided must be 10 digits starting with 0)
         if (!empty($phone2)) {
             if (!$this->isValidPhoneNumber($phone2)) {
-                $errors[] = 'Alternate phone number must be in format +94XXXXXXXXX (9 digits after +94)';
+                $errors[] = 'Alternate phone number must be 10 digits starting with 0 (e.g., 0717324341)';
             }
         }
         
@@ -115,15 +115,14 @@ class LostFoundModel extends BaseModel {
     }
     
     /**
-     * Validate phone number format: accepts +94XXXXXXXXX or local formats
-     * Minimum 7 digits, maximum 15 digits, may include +, -, spaces
+     * Validate phone number format: must be exactly 10 digits starting with 0
+     * Example: 0717324341
      */
     private function isValidPhoneNumber($phone) {
-        // Remove common formatting characters
-        $cleaned = preg_replace('/[\s\-\+\(\)]/i', '', $phone);
+        $phone = trim($phone);
         
-        // Check if it's all digits and has reasonable length (7-15 digits)
-        if (!preg_match('/^\d{7,15}$/', $cleaned)) {
+        // Must be exactly 10 digits starting with 0
+        if (!preg_match('/^0[0-9]{9}$/', $phone)) {
             return false;
         }
         
