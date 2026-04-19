@@ -94,6 +94,8 @@ foreach($pets as $pet) {
           <option value="priceLow">Price: Low → High</option>
           <option value="priceHigh">Price: High → Low</option>
           <option value="age">Age</option>
+          <option value="weightHigh">Weight: Heaviest</option>
+          <option value="weightLow">Weight: Lightest</option>
         </select>
       </div>
     </div>
@@ -105,7 +107,7 @@ foreach($pets as $pet) {
     $images = $pet['images'] ?? [];
     $isOwner = $pet['seller_id'] == $currentUser['id'];
   ?>
-    <article class="card" data-species="<?= htmlspecialchars($pet['species']) ?>" data-price="<?= (int)$pet['price'] ?>" data-pet-id="<?= $pet['id'] ?>" data-latitude="<?= $pet['latitude'] ?? '' ?>" data-longitude="<?= $pet['longitude'] ?? '' ?>" data-listing-type="<?= htmlspecialchars($pet['listing_type'] ?? 'sale') ?>">
+    <article class="card" data-species="<?= htmlspecialchars($pet['species']) ?>" data-price="<?= (int)$pet['price'] ?>" data-weight="<?= (float)($pet['weight'] ?? 0) ?>" data-pet-id="<?= $pet['id'] ?>" data-latitude="<?= $pet['latitude'] ?? '' ?>" data-longitude="<?= $pet['longitude'] ?? '' ?>" data-listing-type="<?= htmlspecialchars($pet['listing_type'] ?? 'sale') ?>">
       <?php if($isOwner): ?>
         <button class="delete-card-btn" data-id="<?= $pet['id'] ?>" title="Delete listing">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -134,7 +136,7 @@ foreach($pets as $pet) {
       <div class="body">
         <div class="line1">
           <h3><?= htmlspecialchars($pet['name']) ?></h3>
-          <span class="meta"><?= htmlspecialchars($pet['species']) ?> • <?= htmlspecialchars($pet['breed']) ?> • <?= htmlspecialchars($pet['age']) ?></span>
+          <span class="meta"><?= htmlspecialchars($pet['species']) ?> • <?= htmlspecialchars($pet['breed']) ?> • <?= htmlspecialchars($pet['age']) ?><?= ($pet['weight'] ? ' • ' . htmlspecialchars($pet['weight']) . ' kg' : '') ?></span>
         </div>
         <p class="desc"><?= htmlspecialchars($pet['desc']) ?></p>
         <div class="badges">
@@ -149,7 +151,6 @@ foreach($pets as $pet) {
         </p>
       </div>
       <div class="actions-row">
-        <button class="btn ghost view" data-id="<?= $pet['id'] ?>">View Details</button>
         <button class="btn buy contact-seller-btn" 
           data-id="<?= $pet['id'] ?>"
           data-name="<?= htmlspecialchars($seller['name']) ?>"
@@ -169,7 +170,7 @@ foreach($pets as $pet) {
     $images = $pet['images'] ?? [];
     $isOwner = $pet['seller_id'] == $currentUser['id'];
   ?>
-    <article class="card" data-species="<?= htmlspecialchars($pet['species']) ?>" data-price="<?= (int)$pet['price'] ?>" data-pet-id="<?= $pet['id'] ?>" data-latitude="<?= $pet['latitude'] ?? '' ?>" data-longitude="<?= $pet['longitude'] ?? '' ?>" data-listing-type="<?= htmlspecialchars($pet['listing_type'] ?? 'adoption') ?>">
+    <article class="card" data-species="<?= htmlspecialchars($pet['species']) ?>" data-price="<?= (int)$pet['price'] ?>" data-weight="<?= (float)($pet['weight'] ?? 0) ?>" data-pet-id="<?= $pet['id'] ?>" data-latitude="<?= $pet['latitude'] ?? '' ?>" data-longitude="<?= $pet['longitude'] ?? '' ?>" data-listing-type="<?= htmlspecialchars($pet['listing_type'] ?? 'adoption') ?>">
       <?php if($isOwner): ?>
         <button class="delete-card-btn" data-id="<?= $pet['id'] ?>" title="Delete listing">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -197,7 +198,7 @@ foreach($pets as $pet) {
       <div class="body">
         <div class="line1">
           <h3><?= htmlspecialchars($pet['name']) ?></h3>
-          <span class="meta"><?= htmlspecialchars($pet['species']) ?> • <?= htmlspecialchars($pet['breed']) ?> • <?= htmlspecialchars($pet['age']) ?></span>
+          <span class="meta"><?= htmlspecialchars($pet['species']) ?> • <?= htmlspecialchars($pet['breed']) ?> • <?= htmlspecialchars($pet['age']) ?><?= ($pet['weight'] ? ' • ' . htmlspecialchars($pet['weight']) . ' kg' : '') ?></span>
         </div>
         <p class="desc"><?= htmlspecialchars($pet['desc']) ?></p>
         <div class="badges">
@@ -212,7 +213,6 @@ foreach($pets as $pet) {
         </p>
       </div>
       <div class="actions-row">
-        <button class="btn ghost view" data-id="<?= $pet['id'] ?>">View Details</button>
         <button class="btn buy contact-seller-btn" 
           data-id="<?= $pet['id'] ?>"
           data-name="<?= htmlspecialchars($seller['name']) ?>"
@@ -253,8 +253,8 @@ foreach($pets as $pet) {
           </label>
           <label>Age
             <input type="number" name="age" id="sellAge" placeholder="e.g., 2" required 
-              min="0" max="99" title="Age must be between 0 and 99" autocomplete="off">
-            <small class="field-hint">Age must be less than 100</small>
+              min="0" max="30" title="Age must be between 0 and 30" autocomplete="off">
+            <small class="field-hint">Age must be between 0 and 30</small>
           </label>
           <label>Gender
             <select name="gender" required>
@@ -264,12 +264,12 @@ foreach($pets as $pet) {
             </select>
           </label>
           <label>Weight (kg)
-            <input type="number" name="weight" id="sellWeight" placeholder="e.g., 25.5" min="0" step="0.5"
+            <input type="number" name="weight" id="sellWeight" placeholder="e.g., 25.5" min="0" max="155" step="0.5"
               title="Weight should be a positive number" autocomplete="off">
             <small class="field-hint">Weight in kilograms</small>
           </label>
           <label>Height (cm)
-            <input type="number" name="height" id="sellHeight" placeholder="e.g., 50.0" min="0" step="0.5"
+            <input type="number" name="height" id="sellHeight" placeholder="e.g., 50.0" min="0" max="100" step="0.5"
               title="Height should be a positive number" autocomplete="off">
             <small class="field-hint">Height in centimeters</small>
           </label>
@@ -316,7 +316,11 @@ foreach($pets as $pet) {
               pattern="^[0-9]{10}$" title="Phone must be 10 digits" maxlength="10" autocomplete="off">
             <small class="field-hint">Must be 10 digits, numbers only</small>
           </label>
-          <label>Secondary Phone (Optional)<input type="tel" name="phone2" placeholder="+94 76 555 1212"></label>
+             <label>Secondary Phone
+            <input type="tel" name="phone2" id="sellPhone2" placeholder="0771234567" 
+              pattern="^[0-9]{10}$" title="Phone must be 10 digits" maxlength="10" autocomplete="off">
+            <small class="field-hint">Must be 10 digits, numbers only</small>
+          </label>
           <label class="full">Email (Optional)<input type="email" name="email" placeholder="your.email@example.com"></label>
           <label class="full">Photos (Max 3)
             <input type="file" name="images[]" id="sellImages" accept="image/*" multiple data-max-files="3">
@@ -376,19 +380,19 @@ foreach($pets as $pet) {
             </label>
             <label>Age
               <input type="number" name="age" id="editAge" required 
-                min="0" max="99" title="Age must be between 0 and 99" autocomplete="off">
-              <small class="field-hint">Age must be less than 100</small>
+                min="0" max="30" title="Age must be between 0 and 30" autocomplete="off">
+              <small class="field-hint">Age must be between 0 and 30</small>
             </label>
             <label>Gender
               <select name="gender"><option>Male</option><option>Female</option></select>
             </label>
             <label>Weight (kg)
-              <input type="number" name="weight" id="editWeight" placeholder="e.g., 25.5" min="0" step="0.5"
+              <input type="number" name="weight" id="editWeight" placeholder="e.g., 25.5" min="0" max="155" step="0.5"
                 title="Weight should be a positive number" autocomplete="off">
               <small class="field-hint">Weight in kilograms</small>
             </label>
             <label>Height (cm)
-              <input type="number" name="height" id="editHeight" placeholder="e.g., 50.0" min="0" step="0.5"
+              <input type="number" name="height" id="editHeight" placeholder="e.g., 50.0" min="0" max="100" step="0.5"
                 title="Height should be a positive number" autocomplete="off">
               <small class="field-hint">Height in centimeters</small>
             </label>
@@ -424,7 +428,11 @@ foreach($pets as $pet) {
                 pattern="^[0-9]{10}$" title="Phone must be 10 digits" maxlength="10" autocomplete="off">
               <small class="field-hint">Must be 10 digits, numbers only</small>
             </label>
-            <label>Secondary Phone (Optional)<input type="tel" name="phone2" placeholder="+94 76 555 1212"></label>
+              <label>Secondary Phone
+            <input type="tel" name="phone2" id="sellPhone2" placeholder="0771234567" 
+              pattern="^[0-9]{10}$" title="Phone must be 10 digits" maxlength="10" autocomplete="off">
+            <small class="field-hint">Must be 10 digits, numbers only</small>
+          </label>
             <label class="full">Email (Optional)<input type="email" name="email" placeholder="your.email@example.com"></label>
             
             <!-- Existing Photos Preview -->

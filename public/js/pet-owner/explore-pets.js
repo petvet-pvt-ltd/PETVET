@@ -551,6 +551,9 @@ document.addEventListener('DOMContentLoaded', () => {
 			const pa = +a.dataset.price, pb = +b.dataset.price;
 			if(mode==='priceLow') return pa - pb;
 			if(mode==='priceHigh') return pb - pa;
+			const wa = +a.dataset.weight, wb = +b.dataset.weight;
+			if(mode==='weightHigh') return wb - wa;
+			if(mode==='weightLow') return wa - wb;
 			if(mode==='age') return a.innerText.indexOf('1y')>-1 ? -1 : 1;
 			return 0;
 		});

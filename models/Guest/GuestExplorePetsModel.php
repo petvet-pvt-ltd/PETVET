@@ -66,7 +66,7 @@ class GuestExplorePetsModel extends BaseModel {
                 LEFT JOIN users u ON l.user_id = u.id
                 WHERE l.status = 'approved'
                 AND l.listing_type = 'sale'
-                ORDER BY l.created_at DESC";
+                ORDER BY l.weight DESC";
         
         $result = mysqli_query($conn, $sql);
         

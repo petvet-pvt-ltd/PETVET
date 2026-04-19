@@ -33,7 +33,7 @@ try {
     
     $model = new SellPetListingModel();
     
-    // Get all listings (not just approved ones)
+    // Get all listings with price between 500 and 5000
     $query = "SELECT l.id, l.user_id, l.name, l.species, l.breed, l.age, l.gender, CAST(l.weight AS DECIMAL(10,2)) as weight, 
               CAST(l.height AS DECIMAL(10,2)) as height,
               l.price, l.listing_type, l.location, l.description, l.phone, l.phone2, l.email,
@@ -42,6 +42,7 @@ try {
               u.email as user_email 
               FROM sell_pet_listings l 
               LEFT JOIN users u ON l.user_id = u.id 
+              WHERE l.price BETWEEN 500 AND 500000
               ORDER BY l.created_at DESC";
     
     $result = mysqli_query($conn, $query);

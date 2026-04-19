@@ -8,7 +8,6 @@ require_once __DIR__ . '/../models/PetOwner/MedicalRecordsModel.php';
 require_once __DIR__ . '/../models/PetOwner/AppointmentsModel.php';
 require_once __DIR__ . '/../models/PetOwner/LostFoundModel.php';
 require_once __DIR__ . '/../models/PetOwner/ExplorePetsModel.php';
-require_once __DIR__ . '/../models/PetOwner/SellPetsModel.php';
 require_once __DIR__ . '/../models/PetOwner/SettingsModel.php';
 require_once __DIR__ . '/../models/PetOwner/ServicesModel.php';
 require_once __DIR__ . '/../models/PetOwner/ShopModel.php';
@@ -99,21 +98,6 @@ class PetOwnerController extends BaseController {
         ];
         
         $this->view('pet-owner', 'explore-pets', $data);
-    }
-
-    public function sellPets() {
-        $sellPetsModel = new SellPetsModel();
-        
-        // Get current user ID (mock for now)
-        $currentUserId = 1;
-        
-        $data = [
-            'formData' => $sellPetsModel->getFormData(),
-            'userListings' => $sellPetsModel->getUserListings($currentUserId),
-            'listingStats' => $sellPetsModel->getListingStats($currentUserId)
-        ];
-        
-        $this->view('pet-owner', 'sell-pets', $data);
     }
 
     public function settings() {

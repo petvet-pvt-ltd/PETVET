@@ -284,7 +284,11 @@ foreach($adoptionPetsBySpecies as $speciesList) {
               pattern="^[0-9]{10}$" title="Phone must be 10 digits" maxlength="10" autocomplete="off">
             <small class="field-hint">Must be 10 digits, numbers only</small>
           </label>
-          <label>Secondary Phone (Optional)<input type="tel" name="phone2" placeholder="+94 76 555 1212"></label>
+          <label>Secondary Phone
+            <input type="tel" name="phone2" id="adoptPhone2" placeholder="0771234567" 
+              pattern="^[0-9]{10}$" title="Phone must be 10 digits" maxlength="10" autocomplete="off">
+            <small class="field-hint">Must be 10 digits, numbers only</small>
+          </label>
           <label class="full">Email
             <input type="email" name="email" required placeholder="your.email@example.com">
             <small class="field-hint">Required so people can contact you about this pet</small>

@@ -151,7 +151,6 @@ switch ($module) {
             case 'services': $c->services(); break;
             case 'lost-found': $c->lostFound(); break;
             case 'explore-pets': $c->explorePets(); break;
-            case 'sell-pets': $c->sellPets(); break;
             case 'settings': $c->settings(); break;
             case 'shop': $c->shop(); break;
             case 'shop-clinic': $c->shopClinic(); break;

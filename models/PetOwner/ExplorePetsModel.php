@@ -43,14 +43,15 @@ class ExplorePetsModel extends BaseModel {
     public function getAllPets() {
         global $conn;
         
-        // Fetch only approved listings from database
+        // Fetch only approved listings from database with price filter
         $sql = "SELECT 
                     l.id, 
                     l.name, 
                     l.species, 
                     l.breed, 
                     l.age, 
-                    l.gender, 
+                    l.gender,
+                    l.weight,
                     l.price, 
                     l.listing_type,
                     l.description as `desc`, 
@@ -63,8 +64,8 @@ class ExplorePetsModel extends BaseModel {
                     u.email as seller_email
                 FROM sell_pet_listings l
                 LEFT JOIN users u ON l.user_id = u.id
-                WHERE l.status = 'approved'
-                ORDER BY l.created_at DESC";
+                WHERE l.status = 'approved' AND l.price BETWEEN 500 AND 5000000
+                ORDER BY l.weight DESC";
         
         $result = mysqli_query($conn, $sql);
         
@@ -118,7 +119,8 @@ class ExplorePetsModel extends BaseModel {
                 'longitude' => $row['longitude'] ?? null,
                 'images' => $images,
                 'seller_id' => $row['seller_id'],
-                'date_posted' => $row['date_posted']
+                'date_posted' => $row['date_posted'],
+                'weight' => $row['weight'] ?? null
             ];
         }
         
