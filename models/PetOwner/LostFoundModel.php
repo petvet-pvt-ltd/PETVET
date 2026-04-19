@@ -76,6 +76,7 @@ class LostFoundModel extends BaseModel {
         
         
         // Validate time (optional but validate if provided)
+        $time = trim($time ?? '');
         if (!empty($time)) {
             if (!preg_match('/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/', $time)) {
                 $errors[] = 'Time must be in HH:MM format (24-hour)';
@@ -244,13 +245,33 @@ class LostFoundModel extends BaseModel {
     }
     
     /**
+     * Get reports by current user ID
+     */
+    public function getUserReports($userId) {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT * FROM LostFoundReport 
+                WHERE user_id = :user_id
+                ORDER BY date_reported DESC
+            ");
+            $stmt->execute([':user_id' => (int)$userId]);
+            $reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            return $this->formatReports($reports);
+        } catch (PDOException $e) {
+            error_log("Error fetching user reports: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
      * Get only lost pet reports
      */
     public function getLostReports() {
         try {
             $stmt = $this->db->prepare("
                 SELECT * FROM LostFoundReport 
-                WHERE type = 'lost'
+                WHERE type = 'lost' AND reward BETWEEN 8 AND 80000
                 ORDER BY date_reported DESC
             ");
             $stmt->execute();

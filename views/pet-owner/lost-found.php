@@ -251,12 +251,16 @@ function lf_fmtDate($ymd){
 				<textarea id="rNotes" rows="3" placeholder="Collar info, temperament, special needs..."></textarea>
 			</label>
 			<div class="row">
-				<label class="field flex-2">Primary Phone
-					<input type="tel" id="rPhone" required placeholder="+94 77 123 4567">
-				</label>
-				<label class="field">Secondary Phone (Optional)
-					<input type="tel" id="rPhone2" placeholder="+94 76 555 1212">
-				</label>
+			<label class="field">Primary Phone
+            <input type="tel" id="rPhone" placeholder="0771234567" required 
+              pattern="^[0-9]{10}$|^\+94\d{9}$" title="Phone must be 10 digits or +94 format" maxlength="13" autocomplete="off">
+            <small class="field-hint">10 digits or +94 format</small>
+          </label>
+				<label class="field">Secondary Phone
+            <input type="tel" id="rPhone2" placeholder="0771234567"
+              pattern="^[0-9]{10}$|^\+94\d{9}$" title="Phone must be 10 digits or +94 format" maxlength="13" autocomplete="off">
+            <small class="field-hint">10 digits or +94 format (optional)</small>
+          </label>
 			</div>
 			<label class="field">Email (Optional)
 				<input type="email" id="rEmail" placeholder="your.email@example.com">
@@ -367,12 +371,16 @@ function lf_fmtDate($ymd){
 				<textarea id="editNotes" rows="3" placeholder="Collar info, temperament, special needs..."></textarea>
 			</label>
 			<div class="row">
-				<label class="field flex-2">Primary Phone
-					<input type="tel" id="editPhone" required placeholder="+94 77 123 4567">
-				</label>
-				<label class="field">Secondary Phone (Optional)
-					<input type="tel" id="editPhone2" placeholder="+94 76 555 1212">
-				</label>
+				<label class="field">Primary Phone
+            <input type="tel" id="editPhone" placeholder="0771234567" required 
+              pattern="^[0-9]{10}$|^\+94\d{9}$" title="Phone must be 10 digits or +94 format" maxlength="13" autocomplete="off">
+            <small class="field-hint">10 digits or +94 format</small>
+          </label>
+				<label class="field">Secondary Phone
+            <input type="tel" id="editPhone2" placeholder="0771234567"
+              pattern="^[0-9]{10}$|^\+94\d{9}$" title="Phone must be 10 digits or +94 format" maxlength="13" autocomplete="off">
+            <small class="field-hint">10 digits or +94 format (optional)</small>
+          </label>
 			</div>
 			<label class="field">Email (Optional)
 				<input type="email" id="editEmail" placeholder="your.email@example.com">

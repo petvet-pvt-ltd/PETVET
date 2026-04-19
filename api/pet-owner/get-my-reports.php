@@ -13,6 +13,7 @@ header('Access-Control-Allow-Methods: GET');
 header('Access-Control-Allow-Headers: Content-Type');
 
 require_once __DIR__ . '/../../config/connect.php';
+require_once __DIR__ . '/../../models/PetOwner/LostFoundModel.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -29,59 +30,18 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 try {
-    $db = db();
+    $model = new LostFoundModel();
     $userId = $_SESSION['user_id'];
     
-    // Fetch reports for current user
-    // Note: JSON_UNQUOTE removes quotes from JSON_EXTRACT result for proper comparison
-        $stmt = $db->prepare("
-            SELECT * FROM LostFoundReport 
-            WHERE CAST(JSON_UNQUOTE(JSON_EXTRACT(description, '$.user_id')) AS UNSIGNED) = :user_id
-        ORDER BY date_reported DESC
-    ");
-        $stmt->execute([':user_id' => (int)$userId]);
-    $reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Parse JSON description field for each report
-    $formattedReports = [];
-    foreach ($reports as $report) {
-        $description = json_decode($report['description'], true);
-        
-        $formattedReports[] = [
-            'id' => $report['report_id'],
-            'type' => $report['type'],
-            'location' => $report['location'],
-            'date' => $report['date_reported'],
-            'species' => $description['species'] ?? '',
-            'name' => $description['name'] ?? null,
-            'color' => $description['color'] ?? '',
-            'notes' => $description['notes'] ?? '',
-            'reward' => $report['reward'] ?? $description['reward'] ?? null,
-            'price' => $report['price'] ?? $description['price'] ?? null,
-            'risk' => $report['risk'] ?? $description['risk'] ?? null,
-            'price' => $description['price'] ?? null,
-            'photos' => $description['photos'] ?? [],
-            'latitude' => $description['latitude'] ?? null,
-            'longitude' => $description['longitude'] ?? null,
-            'time' => $description['time'] ?? null,
-            'contact' => $description['contact'] ?? [
-                'phone' => '',
-                'phone2' => '',
-                'email' => ''
-            ],
-                'pet_id' => $description['pet_id'] ?? null,
-                'listing_source' => !empty($description['pet_id']) ? 'my-pet-missing' : 'manual-report',
-            'user_id' => $description['user_id'] ?? null,
-            'submitted_at' => $description['submitted_at'] ?? null
-        ];
-    }
+    // Fetch reports for current user using MODEL
+    $reports = $model->getUserReports($userId);
     
     // Return success response
     echo json_encode([
         'success' => true,
-        'count' => count($formattedReports),
+        'count' => count($reports),
         'user_id' => (int)$userId,
-        'reports' => $formattedReports
+        'reports' => $reports
     ]);
     
 } catch (PDOException $e) {
@@ -90,8 +50,7 @@ try {
     echo json_encode([
         'success' => false,
         'message' => 'Database error occurred',
-        'error' => $e->getMessage(),
-        'query_user_id' => $userId ?? null
+        'error' => $e->getMessage()
     ]);
 } catch (Exception $e) {
     error_log("Error in get-my-reports.php: " . $e->getMessage());
@@ -99,7 +58,6 @@ try {
     echo json_encode([
         'success' => false,
         'message' => 'An error occurred',
-        'error' => $e->getMessage(),
-        'query_user_id' => $userId ?? null
+        'error' => $e->getMessage()
     ]);
 }

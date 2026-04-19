@@ -357,14 +357,15 @@ document.addEventListener('DOMContentLoaded', () => {
 					color: report.color,
 					reward: report.reward || 0,
 					price: report.price || 0,
-					location: report.location,
+					location: report.last_seen,
 					date: report.date,
 					time: report.time || '',
 					notes: report.notes,
 					phone: report.contact.phone,
 					phone2: report.contact.phone2,
 					email: report.contact.email,
-					photos: report.photos || [],
+					risk: report.risk || 'Medium',
+					photos: report.photo || [],
 					latitude: report.latitude,
 					longitude: report.longitude,
 					petId: report.pet_id || null,
@@ -535,7 +536,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		qs('#editColor').value = listing.color || '';
 		qs('#editReward').value = listing.reward || '0';
 		qs('#editPrice').value = listing.price || '0';
-		qs('#editLocation').value = listing.location;
+		qs('#editrisk').value = listing.risk || 'Medium';
+		qs('#editLocation').value = listing.location || '';
 		qs('#editDate').value = listing.date;
 		qs('#editTime').value = listing.time || '';
 		qs('#editNotes').value = listing.notes || '';
@@ -891,6 +893,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		
 		try {
 			const reportId = qs('#editId').value;
+			const timeValue = (qs('#editTime').value || '').trim();
 			
 			// Create FormData
 			const formData = new FormData();
@@ -903,7 +906,10 @@ document.addEventListener('DOMContentLoaded', () => {
 			formData.append('latitude', latitude);
 			formData.append('longitude', longitude);
 			formData.append('date', qs('#editDate').value);
-			formData.append('time', qs('#editTime').value || '');
+			// Only append time if it has a value
+			if (timeValue) {
+				formData.append('time', timeValue);
+			}
 			formData.append('notes', qs('#editNotes').value);
 			formData.append('phone', qs('#editPhone').value);
 			formData.append('phone2', qs('#editPhone2').value);
@@ -911,6 +917,19 @@ document.addEventListener('DOMContentLoaded', () => {
 			formData.append('reward', qs('#editReward').value || '0');
 			formData.append('price', qs('#editPrice').value || '0');
 			formData.append('risk', qs('#editrisk').value);
+			
+			// Log form data for debugging
+			console.log('Sending update with values:', {
+				location: qs('#editLocation').value,
+				type: qs('#editType').value,
+				species: qs('#editSpecies').value,
+				name: qs('#editName').value,
+				phone: qs('#editPhone').value,
+				date: qs('#editDate').value,
+				time: `[${timeValue}]`,  // Show exact value including spaces
+				timeLength: timeValue.length,
+				timeSent: timeValue ? 'YES' : 'NO'
+			});
 			
 			// Check if new photos uploaded
 			const photoInput = qs('#editPhoto');
@@ -948,7 +967,12 @@ document.addEventListener('DOMContentLoaded', () => {
 				renderMyListings();
 				setTimeout(() => window.location.reload(), 1000);
 			} else {
-				alert('Error: ' + (result.message || 'Failed to update report'));
+				// Show detailed validation errors
+				const errorMsg = result.errors && result.errors.length > 0 
+					? 'Validation errors:\n' + result.errors.join('\n')
+					: (result.message || 'Failed to update report');
+				console.error('Validation errors:', result.errors);
+				alert('Error: ' + errorMsg);
 			}
 		} catch (error) {
 			console.error('Error updating report:', error);

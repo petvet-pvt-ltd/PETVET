@@ -68,7 +68,8 @@ try {
     $latitude = $_POST['latitude'] ?? $existingDescription['latitude'];
     $longitude = $_POST['longitude'] ?? $existingDescription['longitude'];
     $date = $_POST['date'] ?? $existingReport['date_reported'];
-    $time = $_POST['time'] ?? $existingDescription['time'];
+    // Only use provided time, don't validate existing time
+    $time = isset($_POST['time']) ? $_POST['time'] : '';
     $notes = $_POST['notes'] ?? $existingDescription['notes'];
     $phone = $_POST['phone'] ?? $existingDescription['contact']['phone'];
     $phone2 = $_POST['phone2'] ?? $existingDescription['contact']['phone2'];
@@ -152,6 +153,9 @@ try {
         $daysMissing = max(0, (int)$lastSeenDate->diff($today)->format('%r%a'));
     }
     
+    // Use existing time if no new time was provided
+    $finalTime = empty($time) ? ($existingDescription['time'] ?? '') : $time;
+    
     // Prepare updated data array for individual column storage
     $updatedData = [
         'species' => $species,
@@ -160,7 +164,7 @@ try {
         'breed' => null,
         'age' => null,
         'notes' => $notes,
-        'time' => $time,
+        'time' => $finalTime,
         'reward' => $reward,
         'price' => $price,
         'risk' => $risk,
