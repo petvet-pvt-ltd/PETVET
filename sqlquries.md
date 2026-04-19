@@ -279,5 +279,208 @@ RENAME TO new_table_name;
 * Some operations may fail if constraints (primary key, foreign key, indexes) are involved.
 * Always backup important data before altering tables.
 
+`
+
+## 1. Basic SELECT
+
+```sql
+SELECT * FROM table_name;
+````
+
+**Example:**
+
+```sql
+SELECT * FROM lostfoundreport;
 ```
 
+---
+
+## 2. SELECT with WHERE (Single Condition)
+
+```sql
+SELECT * FROM table_name
+WHERE column_name = value;
+```
+
+**Example:**
+
+```sql
+SELECT * FROM lostfoundreport
+WHERE status = 'lost';
+```
+
+---
+
+## 3. Multiple Conditions (AND)
+
+```sql
+SELECT * FROM table_name
+WHERE condition1 AND condition2;
+```
+
+**Example:**
+
+```sql
+SELECT * FROM lostfoundreport
+WHERE status = 'lost' AND reward > 1000;
+```
+
+---
+
+## 4. Multiple Conditions (OR)
+
+```sql
+SELECT * FROM table_name
+WHERE condition1 OR condition2;
+```
+
+**Example:**
+
+```sql
+SELECT * FROM lostfoundreport
+WHERE status = 'lost' OR status = 'found';
+```
+
+---
+
+## 5. Using Comparison Operators
+
+```sql
+SELECT * FROM table_name
+WHERE column_name > value;
+```
+
+**Example:**
+
+```sql
+SELECT * FROM lostfoundreport
+WHERE reward > 500;
+```
+
+Operators:
+
+* `=` equal
+* `!=` or `<>` not equal
+* `>` greater than
+* `<` less than
+* `>=`, `<=`
+
+---
+
+## 6. BETWEEN (Range)
+
+```sql
+SELECT * FROM table_name
+WHERE column_name BETWEEN value1 AND value2;
+```
+
+**Example:**
+
+```sql
+SELECT * FROM lostfoundreport
+WHERE reward BETWEEN 500 AND 2000;
+```
+
+---
+
+## 7. LIKE (Search pattern)
+
+```sql
+SELECT * FROM table_name
+WHERE column_name LIKE 'pattern';
+```
+
+**Example:**
+
+```sql
+SELECT * FROM lostfoundreport
+WHERE description LIKE '%dog%';
+```
+
+---
+
+## 8. IN (Multiple values)
+
+```sql
+SELECT * FROM table_name
+WHERE column_name IN (value1, value2);
+```
+
+**Example:**
+
+```sql
+SELECT * FROM lostfoundreport
+WHERE status IN ('lost', 'pending');
+```
+
+---
+
+## 9. IS NULL / IS NOT NULL
+
+```sql
+SELECT * FROM table_name
+WHERE column_name IS NULL;
+```
+
+**Example:**
+
+```sql
+SELECT * FROM lostfoundreport
+WHERE price IS NULL;
+```
+
+---
+
+## 10. ORDER BY (Sorting)
+
+```sql
+SELECT * FROM table_name
+ORDER BY column_name ASC;
+```
+
+**Example:**
+
+```sql
+SELECT * FROM lostfoundreport
+ORDER BY reward DESC;
+```
+
+---
+
+## 11. LIMIT (Restrict results)
+
+```sql
+SELECT * FROM table_name
+LIMIT number;
+```
+
+**Example:**
+
+```sql
+SELECT * FROM lostfoundreport
+LIMIT 5;
+```
+
+---
+
+## 12. Combining Everything
+
+```sql
+SELECT * FROM lostfoundreport
+WHERE status = 'lost'
+AND reward > 500
+ORDER BY reward DESC
+LIMIT 10;
+```
+
+---
+
+## Notes
+
+* `WHERE` is used to filter data.
+* `AND` = all conditions must be true.
+* `OR` = any condition can be true.
+* `LIKE` is useful for searching text.
+* `LIMIT` is used in MySQL to restrict rows.
+
+`
