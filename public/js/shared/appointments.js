@@ -814,6 +814,22 @@
     };
     
     // Add appointment with validation
+    /**
+     * Display appointment summary box
+     */
+    function displayAppointmentSummary(data) {
+        const box = document.createElement('div');
+        box.style.cssText = 'position:fixed; bottom:20px; right:20px; width:350px; padding:15px; border:2px solid #10b981; border-radius:8px; background:#f0fdf4; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:10000;';
+        box.innerHTML = `<h4 style="margin:0 0 10px 0;">✓ Appointment Confirmed</h4><div style="font-size:13px; color:#374151;">
+        <div><strong>Client:</strong> ${data.guest_client_name}</div>
+        <div><strong>Phone:</strong> ${data.guest_phone}</div>
+        <div><strong>Pet:</strong> ${data.guest_pet_name}</div>
+        <div><strong>Date:</strong> ${data.appointment_date}</div>
+        <div><strong>Time:</strong> ${data.appointment_time}</div></div>`;
+        document.body.appendChild(box);
+        setTimeout(() => { box.style.opacity = '0'; box.style.transition = 'opacity 0.3s'; setTimeout(() => box.remove(), 300); }, 8000);
+    }
+    
     window.saveAppointment = function() {
         const phoneInput = document.getElementById('newCustomerPhone');
         const vetInput = document.getElementById('newVetName');
@@ -1034,6 +1050,19 @@
                 
                 if (data.success) {
                     showNotification(`Appointment successfully created for ${petName} on ${dateFormatted} at ${timeFormatted}`, 'Appointment Created', 'success');
+                    
+                    // Display appointment summary with notes
+                    if (!isRegisteredUser) {
+                        displayAppointmentSummary({
+                            guest_client_name: guestClientName,
+                            guest_phone: guestPhone,
+                            guest_pet_name: petName,
+                            guest_pet_type: displayPetType,
+                            appointment_date: dateFormatted,
+                            appointment_time: timeFormatted,
+                        });
+                    }
+                    
                     closeModal('addModal');
                     
                     // Reset form using receptionist booking reset function
