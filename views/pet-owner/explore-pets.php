@@ -149,7 +149,6 @@ foreach($pets as $pet) {
         </p>
       </div>
       <div class="actions-row">
-        <button class="btn ghost view" data-id="<?= $pet['id'] ?>">View Details</button>
         <button class="btn buy contact-seller-btn" 
           data-id="<?= $pet['id'] ?>"
           data-name="<?= htmlspecialchars($seller['name']) ?>"
@@ -212,7 +211,6 @@ foreach($pets as $pet) {
         </p>
       </div>
       <div class="actions-row">
-        <button class="btn ghost view" data-id="<?= $pet['id'] ?>">View Details</button>
         <button class="btn buy contact-seller-btn" 
           data-id="<?= $pet['id'] ?>"
           data-name="<?= htmlspecialchars($seller['name']) ?>"
@@ -253,8 +251,8 @@ foreach($pets as $pet) {
           </label>
           <label>Age
             <input type="number" name="age" id="sellAge" placeholder="e.g., 2" required 
-              min="0" max="99" title="Age must be between 0 and 99" autocomplete="off">
-            <small class="field-hint">Age must be less than 100</small>
+              min="0" max="30" title="Age must be between 0 and 30" autocomplete="off">
+            <small class="field-hint">Age must be between 0 and 30</small>
           </label>
           <label>Gender
             <select name="gender" required>
@@ -306,7 +304,11 @@ foreach($pets as $pet) {
               pattern="^[0-9]{10}$" title="Phone must be 10 digits" maxlength="10" autocomplete="off">
             <small class="field-hint">Must be 10 digits, numbers only</small>
           </label>
-          <label>Secondary Phone (Optional)<input type="tel" name="phone2" placeholder="+94 76 555 1212"></label>
+          <label>Secondary Phone (Optional)
+            <input type="tel" name="phone2" placeholder="0771234567" 
+              pattern="^[0-9]{10}$" title="Phone must be 10 digits" maxlength="10" autocomplete="off">
+            <small class="field-hint">Must be 10 digits, numbers only</small>
+          </label>
           <label class="full">Email (Optional)<input type="email" name="email" placeholder="your.email@example.com"></label>
           <label class="full">Photos (Max 3)
             <input type="file" name="images[]" id="sellImages" accept="image/*" multiple data-max-files="3">
@@ -366,8 +368,8 @@ foreach($pets as $pet) {
             </label>
             <label>Age
               <input type="number" name="age" id="editAge" required 
-                min="0" max="99" title="Age must be between 0 and 99" autocomplete="off">
-              <small class="field-hint">Age must be less than 100</small>
+                min="0" max="30" title="Age must be between 0 and 30" autocomplete="off">
+              <small class="field-hint">Age must be between 0 and 30</small>
             </label>
             <label>Gender
               <select name="gender"><option>Male</option><option>Female</option></select>

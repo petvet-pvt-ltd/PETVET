@@ -165,8 +165,8 @@ $pageTitle = "Breeding Pets";
                         </div>
 
                         <div class="form-group">
-                            <label for="petDob">Date of Birth *</label>
-                            <input type="date" id="petDob" name="dob" class="form-control" required min="<?php echo date('Y-m-d', strtotime('-1 year')); ?>" max="<?php echo date('Y-m-d'); ?>">
+                            <label for="petDob">Date of Birth * (Must be older than 1 year)</label>
+                            <input type="date" id="petDob" name="dob" class="form-control" required max="<?php echo date('Y-m-d', strtotime('-1 year')); ?>">
                         </div>
 
                         <div class="form-group full-width">

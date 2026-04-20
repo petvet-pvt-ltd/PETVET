@@ -154,7 +154,6 @@ foreach($adoptionPetsBySpecies as $speciesList) {
         </div>
       </div>
       <div class="actions-row">
-        <button class="btn ghost view" data-id="<?= $pet['id'] ?>">View Details</button>
         <button class="btn buy contact-seller-btn" 
           data-id="<?= $pet['id'] ?>"
           data-name="<?= htmlspecialchars($seller['name']) ?>"
@@ -206,7 +205,6 @@ foreach($adoptionPetsBySpecies as $speciesList) {
         </div>
       </div>
       <div class="actions-row">
-        <button class="btn ghost view" data-id="<?= $pet['id'] ?>">View Details</button>
         <button class="btn buy contact-seller-btn" 
           data-id="<?= $pet['id'] ?>"
           data-name="<?= htmlspecialchars($seller['name']) ?>"
@@ -247,8 +245,8 @@ foreach($adoptionPetsBySpecies as $speciesList) {
           </label>
           <label>Age
             <input type="number" name="age" id="adoptAge" placeholder="e.g., 2" required 
-              min="0" max="99" title="Age must be between 0 and 99" autocomplete="off">
-            <small class="field-hint">Age must be less than 100</small>
+              min="0" max="30" title="Age must be between 0 and 30" autocomplete="off">
+            <small class="field-hint">Age must be between 0 and 30</small>
           </label>
           <label>Gender
             <select name="gender" required>
@@ -279,7 +277,11 @@ foreach($adoptionPetsBySpecies as $speciesList) {
               pattern="^[0-9]{10}$" title="Phone must be 10 digits" maxlength="10" autocomplete="off">
             <small class="field-hint">Must be 10 digits, numbers only</small>
           </label>
-          <label>Secondary Phone (Optional)<input type="tel" name="phone2" placeholder="+94 76 555 1212"></label>
+          <label>Secondary Phone (Optional)
+            <input type="tel" name="phone2" placeholder="0771234567" 
+              pattern="^[0-9]{10}$" title="Phone must be 10 digits" maxlength="10" autocomplete="off">
+            <small class="field-hint">Must be 10 digits, numbers only</small>
+          </label>
           <label class="full">Email
             <input type="email" name="email" required placeholder="your.email@example.com">
             <small class="field-hint">Required so people can contact you about this pet</small>
