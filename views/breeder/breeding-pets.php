@@ -222,8 +222,8 @@ $pageTitle = "Breeding Pets";
                         </div>
 
                         <div class="form-group">
-                            <label for="petPrice">Price (Rs) *</label>
-                            <input type="number" id="petPrice" name="price" class="form-control" required min="0" step="0.01" placeholder="0.00">
+                            <label for="petreward">reward (Rs) *</label>
+                            <input type="number" id="petreward" name="reward" class="form-control" required min="0" step="0.01" placeholder="0.00">
                         </div>
 
                           <div class="form-group">

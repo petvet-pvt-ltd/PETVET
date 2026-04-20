@@ -74,13 +74,13 @@ function addBreedingPet($conn, $userId) {
     $gender = $_POST['gender'] ?? '';
     $species = $_POST['species'] ?? '';
     $dob = $_POST['dob'] ?? '';
-    $price = $_POST['price'] ?? 0;
+    $reward = $_POST['reward'] ?? 0;
     $description = $_POST['description'] ?? '';
     // Handle checkbox - it's checked if the field exists in POST
     $isActive = isset($_POST['is_active']) ? 1 : 0;
     
     // Validate required fields
-    if (empty($name) || empty($breed) || empty($gender) || empty($dob) || $price === '') {
+    if (empty($name) || empty($breed) || empty($gender) || empty($dob) || $reward === '') {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Missing required fields']);
         return;
@@ -124,10 +124,10 @@ function addBreedingPet($conn, $userId) {
     }
     
     $stmt = $conn->prepare("
-        INSERT INTO breeder_pets (breeder_id, name, breed, gender, date_of_birth, age, species, photo, description, price, is_active)
+        INSERT INTO breeder_pets (breeder_id, name, breed, gender, date_of_birth, age, species, photo, description, reward, is_active)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
-    $stmt->bind_param("issssissdii", $userId, $name, $breed, $gender, $dob, $age, $species, $photoPath, $description, $price, $isActive);
+    $stmt->bind_param("issssisssdi", $userId, $name, $breed, $gender, $dob, $age, $species, $photoPath, $description, $reward, $isActive);
     
     if ($stmt->execute()) {
         echo json_encode([
@@ -148,7 +148,7 @@ function updateBreedingPet($conn, $userId) {
     $gender = $_POST['gender'] ?? '';
     $species = $_POST['species'] ?? '';
     $dob = $_POST['dob'] ?? '';
-    $price = $_POST['price'] ?? 0;
+    $reward = $_POST['reward'] ?? 0;
     $description = $_POST['description'] ?? '';
     // Handle checkbox - it's checked if the field exists in POST
     $isActive = isset($_POST['is_active']) ? 1 : 0;
@@ -173,7 +173,7 @@ function updateBreedingPet($conn, $userId) {
     }
     
     // Validate required fields
-    if (empty($petId) || empty($name) || empty($breed) || empty($gender) || empty($dob) || $price === '') {
+    if (empty($petId) || empty($name) || empty($breed) || empty($gender) || empty($dob) || $reward === '') {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Missing required fields']);
         return;
@@ -213,17 +213,17 @@ function updateBreedingPet($conn, $userId) {
     if ($updatePhoto) {
         $stmt = $conn->prepare("
             UPDATE breeder_pets 
-            SET name = ?, breed = ?, gender = ?, date_of_birth = ?, age = ?, species = ?, photo = ?, description = ?, price = ?, is_active = ?
+            SET name = ?, breed = ?, gender = ?, date_of_birth = ?, age = ?, species = ?, photo = ?, description = ?, reward = ?, is_active = ?
             WHERE id = ? AND breeder_id = ?
         ");
-        $stmt->bind_param("ssssissdiii", $name, $breed, $gender, $dob, $age, $species, $photoPath, $description, $price, $isActive, $petId, $userId);
+        $stmt->bind_param("sssssissdiii", $name, $breed, $gender, $dob, $age, $species, $photoPath, $description, $reward, $isActive, $petId, $userId);
     } else {
         $stmt = $conn->prepare("
             UPDATE breeder_pets 
-            SET name = ?, breed = ?, gender = ?, date_of_birth = ?, age = ?, species = ?, description = ?, price = ?, is_active = ?
+            SET name = ?, breed = ?, gender = ?, date_of_birth = ?, age = ?, species = ?, description = ?, reward = ?, is_active = ?
             WHERE id = ? AND breeder_id = ?
         ");
-        $stmt->bind_param("ssssissdiii", $name, $breed, $gender, $dob, $age, $species, $description, $price, $isActive, $petId, $userId);
+        $stmt->bind_param("ssssissdiii", $name, $breed, $gender, $dob, $age, $species, $description, $reward, $isActive, $petId, $userId);
     }
     
     if ($stmt->execute()) {
