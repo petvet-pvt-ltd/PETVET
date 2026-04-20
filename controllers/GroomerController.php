@@ -6,9 +6,7 @@ require_once __DIR__ . '/../models/Groomer/SettingsModel.php';
 
 class GroomerController extends BaseController {
 
-    /**
-     * Get the current logged-in user's ID
-     */
+    // Extract and validate user ID from session
     private function getUserId() {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -21,6 +19,7 @@ class GroomerController extends BaseController {
         return $_SESSION['user_id'];
     }
 
+    // Display groomer services page with all services for current user
     public function services() {
         $model = new GroomerServicesModel();
         $userId = $this->getUserId();
@@ -32,6 +31,7 @@ class GroomerController extends BaseController {
         $this->view('groomer', 'services', $data);
     }
 
+    // Handle service CRUD operations (add, update, delete, toggle availability)
     public function handleServiceAction() {
         header('Content-Type: application/json');
         
@@ -89,6 +89,7 @@ class GroomerController extends BaseController {
         }
     }
 
+    // Display groomer packages page with all packages for current user
     public function packages() {
         $model = new GroomerPackagesModel();
         $userId = $this->getUserId();
@@ -100,6 +101,7 @@ class GroomerController extends BaseController {
         $this->view('groomer', 'packages', $data);
     }
 
+    // Handle package CRUD operations (add, update, delete, toggle availability)
     public function handlePackageAction() {
         header('Content-Type: application/json');
         
@@ -168,9 +170,7 @@ class GroomerController extends BaseController {
         }
     }
     
-    /**
-     * Parse service IDs from various formats
-     */
+    // Convert service IDs from string or array format to integer array
     private function parseServiceIds($input) {
         if (is_array($input)) {
             return array_map('intval', $input);
@@ -183,10 +183,12 @@ class GroomerController extends BaseController {
         return [];
     }
 
+    // Display groomer availability page for scheduling
     public function availability() {
         $this->view('groomer', 'availability');
     }
 
+    // Display groomer settings page with profile and preferences
     public function settings() {
         $model = new GroomerSettingsModel();
         $groomerId = 1; // Mock groomer ID

@@ -38,6 +38,7 @@ class PrescriptionsModel extends BaseModel
         return $prescriptions;
     }
 
+    // Fetch prescriptions for specific appointment by appointment ID
     public function getByAppointment(int $appointmentId, int $vetId, int $clinicId): array
     {
         $sql = "
@@ -68,6 +69,7 @@ class PrescriptionsModel extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Create new prescription for appointment with medication, dosage, and optional notes
     public function addPrescription(
         int $appointmentId,
         int $vetId,
@@ -110,6 +112,7 @@ class PrescriptionsModel extends BaseModel
         ]);
     }
 
+    // Fetch all prescriptions for a pet from all veterinarians with medications
     public function getPrescriptionsByPetAcrossVets(int $petId): array
     {
         $sql = "
@@ -144,6 +147,7 @@ class PrescriptionsModel extends BaseModel
         return $prescriptions;
     }
 
+    // Fetch all prescriptions for guest pet by name and optional owner name
     public function getPrescriptionsByGuestPetAcrossVets(string $guestPetName, ?string $guestClientName = null): array
     {
         $sql = "

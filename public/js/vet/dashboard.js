@@ -1,3 +1,4 @@
+// Calculate and display appointment KPIs for today and this week
 function renderKPIs(data){
   const today = window.PETVET_TODAY;
   
@@ -24,6 +25,7 @@ function renderKPIs(data){
   document.getElementById('kpi-total').textContent = weekCount;
 }
 
+// Display ongoing appointment details with action buttons
 function renderOngoing(data){
   const container = document.getElementById('ongoing-container');
   if(!container) return;
@@ -47,6 +49,7 @@ function renderOngoing(data){
   `;
 }
 
+// Build and display table of approved appointments for today sorted by time
 function renderUpcoming(data){
   const tbody = document.querySelector('#upcomingTable tbody');
   tbody.innerHTML = '';
@@ -73,10 +76,12 @@ function renderUpcoming(data){
   if(rows.length===0) tbody.innerHTML = '<tr><td colspan="5">No upcoming appointments for today.</td></tr>';
 }
 
+// Navigate to form page with ongoing appointment context
 function goToForm(page, apptId){
   location.href = `/PETVET/?module=vet&page=${page}&from=ongoing&appointment=${apptId}`;
 }
 
+// Update appointment status and refresh dashboard
 function updateStatus(id, status){
   if(status==='cancelled' && !confirm('Cancel this appointment?')) return;
 
@@ -89,6 +94,7 @@ function updateStatus(id, status){
   });
 }
 
+// Start appointment with validation for single ongoing limit
 function startAppointment(id){
   const ongoing = window.PETVET_INITIAL_DATA.appointments.find(a=>a.status==='ongoing');
   if (ongoing && String(ongoing.id) === String(id)) {
@@ -103,6 +109,7 @@ function startAppointment(id){
   updateStatus(id,'ongoing');
 }
 
+// Attach search filter to upcoming appointments table
 function bindSearch(){
   const input = document.getElementById('searchBar');
   input?.addEventListener('input',()=>{
@@ -113,6 +120,7 @@ function bindSearch(){
   });
 }
 
+// Render all dashboard sections
 function renderAll(){
   const d = window.PETVET_INITIAL_DATA;
   renderKPIs(d);
@@ -120,6 +128,7 @@ function renderAll(){
   renderUpcoming(d);
 }
 
+// Fetch fresh dashboard data from API and re-render
 function fetchDashboardData(){
   fetch('/PETVET/api/vet/dashboard-data.php')
   .then(res=>res.json())
@@ -129,6 +138,7 @@ function fetchDashboardData(){
   });
 }
 
+// Initialize dashboard and setup auto-refresh
 document.addEventListener('DOMContentLoaded',()=>{
   renderAll();
   bindSearch();

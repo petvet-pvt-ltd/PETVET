@@ -3,9 +3,7 @@ require_once __DIR__ . '/../BaseModel.php';
 
 class GroomerPackagesModel extends BaseModel {
     
-    /**
-     * Get the groomer's profile ID for a given user
-     */
+    // Retrieve groomer profile ID from database for given user
     private function getGroomerProfileId($userId) {
         try {
             $stmt = $this->pdo->prepare("
@@ -23,9 +21,7 @@ class GroomerPackagesModel extends BaseModel {
         }
     }
     
-    /**
-     * Get all packages for a groomer with their included services
-     */
+    // Fetch all packages for groomer with included services list
     public function getAllPackages($userId) {
         try {
             $stmt = $this->pdo->prepare("
@@ -49,7 +45,7 @@ class GroomerPackagesModel extends BaseModel {
             $stmt->execute([$userId]);
             $packages = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // For each package, get the included services
+            // Cast boolean and numeric fields to correct types
             foreach ($packages as &$package) {
                 $package['for_dogs'] = (bool)$package['for_dogs'];
                 $package['for_cats'] = (bool)$package['for_cats'];
@@ -58,7 +54,7 @@ class GroomerPackagesModel extends BaseModel {
                 $package['discounted_price'] = (float)$package['discounted_price'];
                 $package['discount_percent'] = (float)$package['discount_percent'];
                 
-                // Get included services
+                // Load included services for each package
                 $package['included_services'] = $this->getPackageServices($package['id']);
             }
             
@@ -69,9 +65,7 @@ class GroomerPackagesModel extends BaseModel {
         }
     }
     
-    /**
-     * Get included services for a package (comma-separated names)
-     */
+    // Get comma-separated service names for a specific package
     private function getPackageServices($packageId) {
         try {
             $stmt = $this->pdo->prepare("
@@ -91,9 +85,7 @@ class GroomerPackagesModel extends BaseModel {
         }
     }
     
-    /**
-     * Get service IDs for a package
-     */
+    // Get service IDs linked to a specific package
     private function getPackageServiceIds($packageId) {
         try {
             $stmt = $this->pdo->prepare("
@@ -109,19 +101,17 @@ class GroomerPackagesModel extends BaseModel {
         }
     }
     
-    /**
-     * Add a new package
-     */
+    // Create new package with services in transaction
     public function addPackage($data) {
         try {
             // Start transaction
             $this->pdo->beginTransaction();
             
-            // Get or create groomer profile
+            // Get or create groomer profile if needed
             $profileId = $this->getGroomerProfileId($data['user_id']);
             
             if (!$profileId) {
-                // Create groomer profile if doesn't exist
+                // Create profile if it doesn't exist
                 $stmt = $this->pdo->prepare("
                     INSERT INTO service_provider_profiles 
                     (user_id, role_type, business_name, available) 
@@ -131,7 +121,7 @@ class GroomerPackagesModel extends BaseModel {
                 $profileId = $this->pdo->lastInsertId();
             }
             
-            // Insert package
+            // Insert package record
             $stmt = $this->pdo->prepare("
                 INSERT INTO groomer_packages 
                 (provider_profile_id, user_id, name, description, original_price, discounted_price, duration, for_dogs, for_cats, available) 
@@ -152,7 +142,7 @@ class GroomerPackagesModel extends BaseModel {
             
             $packageId = $this->pdo->lastInsertId();
             
-            // Insert package-service relationships
+            // Link services to package
             if (!empty($data['service_ids'])) {
                 $this->updatePackageServices($packageId, $data['service_ids']);
             }
@@ -174,14 +164,12 @@ class GroomerPackagesModel extends BaseModel {
         }
     }
     
-    /**
-     * Update an existing package
-     */
+    // Update existing package and its linked services
     public function updatePackage($packageId, $data) {
         try {
-            // Start transaction
             $this->pdo->beginTransaction();
             
+            // Update package record
             $stmt = $this->pdo->prepare("
                 UPDATE groomer_packages 
                 SET name = ?, 
@@ -208,7 +196,7 @@ class GroomerPackagesModel extends BaseModel {
             ]);
             
             if ($result && $stmt->rowCount() > 0) {
-                // Update package-service relationships
+                // Update service associations if provided
                 if (isset($data['service_ids'])) {
                     $this->updatePackageServices($packageId, $data['service_ids']);
                 }
@@ -236,16 +224,14 @@ class GroomerPackagesModel extends BaseModel {
         }
     }
     
-    /**
-     * Update package-service relationships
-     */
+    // Replace package service associations
     private function updatePackageServices($packageId, $serviceIds) {
         try {
-            // Delete existing relationships
+            // Remove old service relationships
             $stmt = $this->pdo->prepare("DELETE FROM groomer_package_services WHERE package_id = ?");
             $stmt->execute([$packageId]);
             
-            // Insert new relationships
+            // Add new service relationships
             if (!empty($serviceIds)) {
                 $stmt = $this->pdo->prepare("
                     INSERT INTO groomer_package_services (package_id, service_id) 
@@ -262,12 +248,10 @@ class GroomerPackagesModel extends BaseModel {
         }
     }
     
-    /**
-     * Delete a package
-     */
+    // Remove package permanently with cascade delete on services
     public function deletePackage($packageId, $userId) {
         try {
-            // The cascade delete will automatically remove package_services entries
+            // Delete package (cascade delete handles package_services)
             $stmt = $this->pdo->prepare("
                 DELETE FROM groomer_packages 
                 WHERE id = ? AND user_id = ?
@@ -295,12 +279,10 @@ class GroomerPackagesModel extends BaseModel {
         }
     }
     
-    /**
-     * Toggle package availability
-     */
+    // Switch package availability status between available and unavailable
     public function toggleAvailability($packageId, $userId) {
         try {
-            // First get current availability
+            // Fetch current availability state
             $stmt = $this->pdo->prepare("
                 SELECT available 
                 FROM groomer_packages 
@@ -316,7 +298,7 @@ class GroomerPackagesModel extends BaseModel {
                 ];
             }
             
-            // Toggle availability
+            // Switch availability status
             $newAvailability = !$package['available'];
             $stmt = $this->pdo->prepare("
                 UPDATE groomer_packages 
@@ -348,9 +330,7 @@ class GroomerPackagesModel extends BaseModel {
         }
     }
     
-    /**
-     * Get a single package by ID
-     */
+    // Retrieve single package with all details and service IDs
     public function getPackageById($packageId, $userId) {
         try {
             $stmt = $this->pdo->prepare("
@@ -362,12 +342,14 @@ class GroomerPackagesModel extends BaseModel {
             $package = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($package) {
+                // Cast fields to proper types
                 $package['for_dogs'] = (bool)$package['for_dogs'];
                 $package['for_cats'] = (bool)$package['for_cats'];
                 $package['available'] = (bool)$package['available'];
                 $package['original_price'] = (float)$package['original_price'];
                 $package['discounted_price'] = (float)$package['discounted_price'];
                 $package['discount_percent'] = (float)$package['discount_percent'];
+                // Load service names and IDs
                 $package['included_services'] = $this->getPackageServices($packageId);
                 $package['service_ids'] = $this->getPackageServiceIds($packageId);
             }

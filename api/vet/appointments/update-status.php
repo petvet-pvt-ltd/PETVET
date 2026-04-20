@@ -1,26 +1,32 @@
 <?php
+// API endpoint to update appointment status with validation and transition rules
 require_once __DIR__ . '/../../../config/connect.php';
 require_once __DIR__ . '/../../../config/auth_helper.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
+// Enforce authentication and vet role
 requireLogin('/PETVET/index.php?module=guest&page=login');
 requireRole('vet', '/PETVET/index.php');
 
-// Suspended vets cannot perform appointment actions
+// Prevent suspended vets from updating appointments
 enforceVetNotSuspendedApi();
 
+// Validate clinic and user context from session
 if (empty($_SESSION['clinic_id']) || empty($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'error' => 'Clinic or user not set']);
     exit;
 }
 
+// Parse and extract appointment ID and new status from JSON request
 $raw = file_get_contents('php://input');
 $data = json_decode($raw, true);
 
+// Extract and validate request parameters
 $appointmentId = isset($data['appointmentId']) ? (int)$data['appointmentId'] : 0;
 $newStatus = $data['status'] ?? '';
 
+// Validate appointment ID and status are in allowed list
 $allowed = ['ongoing','completed','cancelled'];
 if ($appointmentId <= 0 || !in_array($newStatus, $allowed, true)) {
     echo json_encode(['success' => false, 'error' => 'Invalid request']);
@@ -33,7 +39,7 @@ $clinicId = (int)$_SESSION['clinic_id'];
 try {
     $pdo = db();
 
-    // Load current status and verify ownership
+    // Fetch current appointment and verify vet ownership
     $stmt = $pdo->prepare("
         SELECT id, status
         FROM appointments
@@ -43,6 +49,7 @@ try {
     $stmt->execute(['id' => $appointmentId, 'vet_id' => $vetId, 'clinic_id' => $clinicId]);
     $appt = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    // Verify appointment exists and belongs to this vet
     if (!$appt) {
         echo json_encode(['success' => false, 'error' => 'Appointment not found']);
         exit;
@@ -50,18 +57,20 @@ try {
 
     $current = $appt['status'];
 
-    // Transition rules (simple + safe)
+    // Validate status transition rules (approved→ongoing, ongoing→completed, etc)
     $validTransition = false;
 
     if ($newStatus === 'ongoing' && $current === 'approved') $validTransition = true;
     if ($newStatus === 'completed' && $current === 'ongoing') $validTransition = true;
     if ($newStatus === 'cancelled' && in_array($current, ['approved','ongoing'], true)) $validTransition = true;
 
+    // Reject invalid status transitions
     if (!$validTransition) {
         echo json_encode(['success' => false, 'error' => "Invalid status change ($current → $newStatus)"]);
         exit;
     }
 
+    // Update appointment status in database
     $stmt = $pdo->prepare("
         UPDATE appointments
         SET status = :status, updated_at = NOW()

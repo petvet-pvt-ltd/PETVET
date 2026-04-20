@@ -1,42 +1,32 @@
 <?php
 /**
- * Groomer Packages API Endpoint
- * Handles CRUD operations for groomer packages
+ * Groomer Packages API Endpoint - Handles CRUD operations for groomer packages
  */
 
-// Start session
 session_start();
-
-// Set content type
 header('Content-Type: application/json');
 
-// Check if user is authenticated
+// Verify user is logged in
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'User not authenticated']);
     exit;
 }
 
-// Include required files
-require_once __DIR__ . '/../../models/Groomer/PackagesModel.php';
-
-// Check request method
+// Verify POST request method is used
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed']);
     exit;
 }
 
-// Get user ID from session
+require_once __DIR__ . '/../../models/Groomer/PackagesModel.php';
+
 $userId = $_SESSION['user_id'];
-
-// Get action from POST
 $action = $_POST['action'] ?? '';
-
-// Initialize model
 $model = new GroomerPackagesModel();
 
-// Helper function to parse service IDs
+// Helper function to convert comma-separated or array service IDs to integers
 function parseServiceIds($input) {
     if (is_array($input)) {
         return array_map('intval', array_filter($input));
@@ -50,7 +40,7 @@ function parseServiceIds($input) {
     return [];
 }
 
-// Handle different actions
+// Route to create new package with validation
 switch ($action) {
     case 'add':
         // Validate required fields
@@ -81,7 +71,7 @@ switch ($action) {
             'name' => trim($_POST['name']),
             'original_price' => floatval($_POST['original_price']),
             'discounted_price' => floatval($_POST['discounted_price']),
-            'duration' => trim($_POST['duration'] ?? ''),
+            'duration' => trim($_POST['duration'] ?? ''), // '?? Medium'
             'for_cats' => $forCats,
             'for_dogs' => $forDogs,
             'description' => trim($_POST['description'] ?? ''),
@@ -93,7 +83,7 @@ switch ($action) {
         break;
 
     case 'update':
-        // Validate required fields
+        // Route to update existing package with validation
         if (empty($_POST['package_id']) || empty($_POST['name']) || empty($_POST['discounted_price'])) {
             echo json_encode(['success' => false, 'message' => 'Package ID, name and discounted price are required']);
             exit;
@@ -123,7 +113,7 @@ switch ($action) {
             'name' => trim($_POST['name']),
             'original_price' => floatval($_POST['original_price']),
             'discounted_price' => floatval($_POST['discounted_price']),
-            'duration' => trim($_POST['duration'] ?? ''),
+            'duration' => trim($_POST['duration'] ?? ''), // '?? Medium'
             'for_cats' => $forCats,
             'for_dogs' => $forDogs,
             'description' => trim($_POST['description'] ?? ''),
@@ -135,7 +125,7 @@ switch ($action) {
         break;
 
     case 'delete':
-        // Validate required fields
+        // Route to delete package permanently
         if (empty($_POST['package_id'])) {
             echo json_encode(['success' => false, 'message' => 'Package ID is required']);
             exit;
@@ -148,7 +138,7 @@ switch ($action) {
         break;
 
     case 'toggle_availability':
-        // Validate required fields
+        // Route to toggle package availability status
         if (empty($_POST['package_id'])) {
             echo json_encode(['success' => false, 'message' => 'Package ID is required']);
             exit;
@@ -161,7 +151,7 @@ switch ($action) {
         break;
 
     case 'get':
-        // Get single package
+        // Route to retrieve single package by ID
         if (empty($_POST['package_id'])) {
             echo json_encode(['success' => false, 'message' => 'Package ID is required']);
             exit;
@@ -178,7 +168,7 @@ switch ($action) {
         break;
 
     case 'list':
-        // Get all packages for the groomer
+        // Route to retrieve all packages for logged-in groomer
         $packages = $model->getAllPackages($userId);
         echo json_encode(['success' => true, 'packages' => $packages]);
         break;

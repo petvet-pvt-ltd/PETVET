@@ -38,6 +38,7 @@ class VaccinationsModel extends BaseModel
         return $vaccinations;
     }
 
+    // Fetch vaccinations for specific appointment by appointment ID
     public function getByAppointment(int $appointmentId, int $vetId, int $clinicId): array
     {
         $sql = "
@@ -68,6 +69,7 @@ class VaccinationsModel extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Create new vaccination for appointment with vaccine name and optional next-due date
     public function addVaccination(
         int $appointmentId,
         int $vetId,
@@ -111,6 +113,7 @@ class VaccinationsModel extends BaseModel
         ]);
     }
 
+    // Fetch all vaccinations for a pet from all veterinarians with vaccines
     public function getVaccinationsByPetAcrossVets(int $petId): array
     {
         $sql = "
@@ -145,6 +148,7 @@ class VaccinationsModel extends BaseModel
         return $vaccinations;
     }
 
+    // Fetch all vaccinations for guest pet by name and optional owner name
     public function getVaccinationsByGuestPetAcrossVets(string $guestPetName, ?string $guestClientName = null): array
     {
         $sql = "

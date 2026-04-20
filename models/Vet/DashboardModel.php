@@ -10,6 +10,7 @@ class DashboardModel extends BaseModel
     private int $vetId;
     private int $clinicId;
 
+    // Initialize dashboard model with vet and clinic context
     public function __construct(int $vetId, int $clinicId)
     {
         parent::__construct();
@@ -17,6 +18,7 @@ class DashboardModel extends BaseModel
         $this->clinicId = $clinicId;
     }
 
+    // Load and organize dashboard data with ongoing appointment first if exists
     public function getDashboardData(): array
     {
         $appointmentsModel   = new AppointmentsModel();

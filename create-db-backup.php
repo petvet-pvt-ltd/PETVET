@@ -1,16 +1,4 @@
 <?php
-/**
- * Universal Database Backup Script
- * PETVET System
- * 
- * Usage:
- *   php create-db-backup.php
- *   php create-db-backup.php "before migration"
- *   php create-db-backup.php "after user table update"
- * 
- * This script automatically exports the entire database structure and data as SQL
- * Works with any database changes - completely universal
- */
 
 // Load database configuration
 require_once __DIR__ . '/config/connect.php';
@@ -165,3 +153,80 @@ try {
     echo "\n❌ ERROR: " . $e->getMessage() . "\n";
     exit(1);
 }
+
+// groomer
+ALTER TABLE groomer_packages 
+ADD COLUMN pet_size ENUM('Small', 'Medium', 'Large') 
+DEFAULT 'Medium';
+
+packages.php 
+167, 82
+<div class="form-group">
+    <label for="pet_size">Pet Size *</label>
+    <select id="petSize" name="pet_size" required>
+        <option value="">Select Pet Size</option>
+        <option value="Small">Small</option>
+        <option value="Medium">Medium</option>
+        <option value="Large">Large</option>
+    </select>
+</div>
+<div class="meta-item">
+<span class="meta-icon">📏</span>
+<span class="meta-value"><?php echo htmlspecialchars($package['pet_size'] ?? 'Medium'); ?> </span>
+</div>
+
+packages.js - 61,
+292 - let packagePetSize = 'Medium';
+296 - if (icon.includes('📏')) packagePetSize = value;
+315, 477 -   
+const petSizeSelect = document.getElementById('petSize');
+        if (petSizeSelect) {
+            formData.append('pet_size', petSizeSelect.value || 'Medium');
+        }
+
+Api/packages.php - 74,116
+packagesModel.php - insert , 35, 127, 128,138,179, 191
+
+
+
+//vet dashboard
+ALTER TABLE medical_records 
+ADD COLUMN treatment_status ENUM('Pending', 'In Progress', 'Completed', 'Urgent') DEFAULT 'Pending';
+//ALTER TABLE medical_records ADD COLUMN medication_name VARCHAR(255);
+
+medical-records.php - 83
+<div class="form-row">
+    <label>
+        Treatment Status *
+        <select name="treatment_status" required>
+            <option value="">Select Status</option>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Urgent">Urgent</option>
+        </select>
+    </label>
+</div>
+
+//text field
+<div class="form-row">
+  <label>
+    Medication Name
+    <input type="text" name="medication_name" placeholder="e.g., Amoxicillin, Ibuprofen...">
+  </label>
+</div>
+
+medical-records.js - 50,82
+        <td>${r.treatment_status || 'Pending'}</td>
+        //<td>${r.medication_name || '-'}</td>
+241
+
+api/add.php - 23
+$treatmentStatus = trim($_POST['treatment_status'] ?? 'Pending');
+85,86,93
+
+
+
+//
+
+

@@ -1,6 +1,5 @@
-// ===========================
 // File Viewer Modal
-// ===========================
+
 
 (function() {
   // Create modal HTML
@@ -50,7 +49,7 @@
   let currentFileIndex = 0;
   let isGalleryMode = false;
 
-  // Global function to open files gallery (multiple files)
+  // Display gallery of multiple files for browsing
   window.openFilesGallery = function(filesArray) {
     currentFiles = filesArray;
     isGalleryMode = true;
@@ -114,7 +113,7 @@
     document.body.style.overflow = 'hidden';
   };
 
-  // Open specific file from gallery
+  // Open individual file from gallery with navigation
   window.openFileFromGallery = function(index) {
     currentFileIndex = index;
     const file = currentFiles[index];
@@ -127,12 +126,12 @@
     backBtn.style.display = 'inline-block';
   };
 
-  // Back to gallery view
+  // Return to gallery view from file viewer
   window.backToGallery = function() {
     openFilesGallery(currentFiles);
   };
 
-  // Navigate between images (prev/next)
+  // Cycle through images in gallery mode with wrap-around
   window.navigateImage = function(direction) {
     if (!isGalleryMode) return;
     
@@ -143,7 +142,7 @@
     openFileFromGallery(currentFileIndex);
   };
 
-  // Global function to open file viewer
+  // Open file viewer for single file with image or document display
   window.openFileViewer = function(filePath, filename) {
     const modal = document.getElementById('fileViewerModal');
     const galleryContainer = document.getElementById('filesGalleryContainer');
@@ -206,7 +205,7 @@
     document.body.style.overflow = 'hidden';
   };
 
-  // Global function to close file viewer
+  // Hide modal and reset state
   window.closeFileViewer = function() {
     const modal = document.getElementById('fileViewerModal');
     const modalImage = document.getElementById('modalImage');
@@ -226,14 +225,14 @@
     isGalleryMode = false;
   };
 
-  // Close on overlay click
+  // Close modal when clicking overlay backdrop
   document.addEventListener('click', (e) => {
     if (e.target.classList.contains('file-modal-overlay')) {
       closeFileViewer();
     }
   });
 
-  // Close on Escape key
+  // Close modal when Escape key is pressed
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       const modal = document.getElementById('fileViewerModal');

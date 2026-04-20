@@ -1,3 +1,4 @@
+// Show or hide medical record form and prefill with appointment data if provided
 function showForm(prefill=false, apptId=null){
   const fs = document.getElementById('formSection');
   if(!fs) return;
@@ -24,6 +25,7 @@ function showForm(prefill=false, apptId=null){
   }
 }
 
+// Build and render HTML table of medical records with file viewer links
 function renderRecords(list){
   const container = document.getElementById('recordsContainer');
   if(!container) return;
@@ -33,6 +35,7 @@ function renderRecords(list){
     return;
   }
 
+  // Build table HTML with dynamic record rows
   let html = `
     <div class="simple-mobile-table">
     <table>
@@ -52,6 +55,7 @@ function renderRecords(list){
   `;
 
   list.forEach(r => {
+    // Parse and create file gallery button if reports exist
     let reportsHtml = '';
     if (r.reports) {
       try {
@@ -85,6 +89,7 @@ function renderRecords(list){
   container.innerHTML = html;
 }
 
+// Initialize page, load data, setup filters, and event listeners
 document.addEventListener('DOMContentLoaded', () => {
   const d = window.PETVET_INITIAL_DATA;
   if(!d) return;
@@ -97,8 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const search = document.getElementById('searchBar');
   let baseRecords = d.medicalRecords || [];
+  // Track if showing only current vet's records
   let onlyMyRecords = false;
 
+  // Apply search and vet filter then re-render table
   const applyFiltersAndRender = () => {
     const q = (search?.value || '').toLowerCase();
 
@@ -114,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderRecords(filtered);
   };
 
+  // Create toggle checkbox to filter records by current veterinarian
   const renderMyRecordsToggle = () => {
     console.log('renderMyRecordsToggle called: from=' + from + ', apptId=' + apptId + ', search=' + !!search);
     if (from !== 'ongoing' || !apptId) {
@@ -142,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
     search.parentNode.insertBefore(wrap, search.nextSibling);
     console.log('Toggle inserted successfully');
 
+    // Attach change listener to toggle checkbox
     const toggle = document.getElementById('myVetOnlyToggle');
     if (toggle) {
       toggle.addEventListener('change', () => {
@@ -151,18 +160,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // Get all medical records for a specific pet by name
   function filterRecordsByPet(petName){
     return d.medicalRecords.filter(r =>
       (r.pet_name || r.petName) === petName
     );
   }
 
+  // Get medical records linked to a specific appointment
   function filterRecordsByAppointment(){
     return d.medicalRecords.filter(r =>
       Number(r.appointment_id || r.appointmentId) === apptId
     );
   }
 
+  // Determine context and load appropriate records and form state
   if(from === 'ongoing' && apptId){
     showForm(true, apptId);
     // Show all records for this pet
@@ -184,20 +196,21 @@ document.addEventListener('DOMContentLoaded', () => {
   renderMyRecordsToggle();
   applyFiltersAndRender();
 
-  // Search
+  // Attach search input listener for real-time filtering
   if(search){
     search.addEventListener('input', () => {
       applyFiltersAndRender();
     });
   }
 
-  // ✅ REAL SAVE (DB) with file upload
+  // Handle form submission with file upload to server
   const form = document.getElementById('medicalRecordForm');
   if(form){
-    // File preview
+    // Display preview of selected files before upload
     const fileInput = form.querySelector('input[type="file"]');
     const filePreview = document.getElementById('filePreview');
     
+    // Update preview when files are selected
     if (fileInput && filePreview) {
       fileInput.addEventListener('change', (e) => {
         filePreview.innerHTML = '';
@@ -217,6 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Submit form data and files to API endpoint
     form.addEventListener('submit', async e => {
       e.preventDefault();
 
@@ -226,13 +240,14 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('diagnosis', form.elements['diagnosis'].value);
       formData.append('treatment', form.elements['treatment'].value);
 
-      // Add files
+      // Add file attachments to request
       const files = form.elements['reports[]'].files;
       for (let i = 0; i < files.length; i++) {
         formData.append('reports[]', files[i]);
       }
 
       try {
+        // Send medical record and files to API
         const res = await fetch('/PETVET/api/vet/medical-records/add.php', {
           method: 'POST',
           body: formData
@@ -244,6 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
+        // Reload page to display updated records
         alert('Medical record saved successfully.');
         location.reload();
       } catch(err){

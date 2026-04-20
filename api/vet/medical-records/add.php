@@ -1,14 +1,16 @@
 <?php
+// API endpoint for creating medical records with file uploads
 require_once __DIR__ . '/../../../config/connect.php';
 require_once __DIR__ . '/../../../config/auth_helper.php';
 require_once __DIR__ . '/../../../config/MedicalFileUploader.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
+// Verify user is authenticated and has vet role
 requireLogin('/PETVET/index.php?module=guest&page=login');
 requireRole('vet', '/PETVET/index.php');
 
-// Suspended vets cannot add medical records
+// Check if vet account is not suspended
 enforceVetNotSuspendedApi();
 
 if (empty($_SESSION['clinic_id']) || empty($_SESSION['user_id'])) {
@@ -16,12 +18,13 @@ if (empty($_SESSION['clinic_id']) || empty($_SESSION['user_id'])) {
     exit;
 }
 
-// Handle both multipart/form-data and JSON
+// Extract and validate medical record data from form
 $appointmentId = isset($_POST['appointment_id']) ? (int)$_POST['appointment_id'] : 0;
 $symptoms = trim($_POST['symptoms'] ?? '');
 $diagnosis = trim($_POST['diagnosis'] ?? '');
 $treatment = trim($_POST['treatment'] ?? '');
 
+// Ensure all required fields are provided
 if ($appointmentId <= 0 || $symptoms === '' || $diagnosis === '' || $treatment === '') {
     echo json_encode(['success' => false, 'error' => 'Missing required fields']);
     exit;
@@ -33,7 +36,7 @@ $clinicId = (int)$_SESSION['clinic_id'];
 try {
     $pdo = db();
 
-    // Verify appointment ownership + status
+    // Verify appointment exists and belongs to current vet and clinic
     $stmt = $pdo->prepare("
         SELECT id, status
         FROM appointments
@@ -48,13 +51,13 @@ try {
         exit;
     }
 
-    // Only allow adding record for ongoing appointment (recommended)
+    // Check that appointment status allows medical record creation
     if (!in_array($appt['status'], ['ongoing','completed'], true)) {
         echo json_encode(['success' => false, 'error' => 'Medical record allowed only for ongoing/completed appointments']);
         exit;
     }
 
-    // Optional: prevent duplicates (one medical record per appointment)
+    // Prevent duplicate medical records for same appointment
     $check = $pdo->prepare("SELECT id FROM medical_records WHERE appointment_id = ? LIMIT 1");
     $check->execute([$appointmentId]);
     if ($check->fetch()) {
@@ -62,15 +65,17 @@ try {
         exit;
     }
 
-    // Handle file uploads
+    // Upload medical documents/reports if provided
     $reports = null;
     if (isset($_FILES['reports']) && !empty($_FILES['reports']['name'][0])) {
         $uploader = new MedicalFileUploader();
         $uploadResult = $uploader->uploadFiles($_FILES['reports']);
         
         if ($uploadResult['success'] && !empty($uploadResult['files'])) {
+            // Store file references as JSON
             $reports = json_encode($uploadResult['files']);
         } elseif (!$uploadResult['success']) {
+            // Return file upload errors
             echo json_encode(['success' => false, 'error' => 'File upload error: ' . implode(', ', $uploadResult['errors'])]);
             exit;
         }

@@ -28,6 +28,7 @@ class MedicalRecordsModel extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Fetch medical records for specific appointment by appointment ID
     public function getRecordsByAppointment(int $appointmentId, int $vetId, int $clinicId): array
     {
         $sql = "
@@ -58,6 +59,7 @@ class MedicalRecordsModel extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Fetch all medical records for a pet from all veterinarians
     public function getMedicalRecordsByPetAcrossVets(int $petId): array
     {
         $sql = "
@@ -83,6 +85,7 @@ class MedicalRecordsModel extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Fetch all medical records for guest pet by name and optional owner name
     public function getMedicalRecordsByGuestPetAcrossVets(string $guestPetName, ?string $guestClientName = null): array
     {
         $sql = "
@@ -116,6 +119,7 @@ class MedicalRecordsModel extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Create new medical record for appointment with symptoms, diagnosis, and treatment
     public function addMedicalRecord(
         int $appointmentId,
         int $vetId,

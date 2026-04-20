@@ -1,3 +1,4 @@
+// Initialize page, load data, setup filters, and form handlers
 document.addEventListener("DOMContentLoaded", () => {
   const data = window.PETVET_INITIAL_DATA ?? {};
   const currentVetId = Number(window.PETVET_CURRENT_VET_ID || 0);
@@ -12,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let baseVaccinations = vaccinations;
   let onlyMyRecords = false;
 
+  // Build and render HTML table of vaccination records with file viewer links
   function renderVaccinations(list) {
     if (!container) return;
 
@@ -77,6 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
   }
 
+  // Show or hide vaccination form and prefill with appointment data if provided
   function showForm(prefill, apptId) {
     if (!formSection || !form) return;
 
@@ -98,11 +101,12 @@ document.addEventListener("DOMContentLoaded", () => {
     form.elements["ownerName"].value = appt.owner_name || "";
   }
 
-  // ✅ URL MODE
+  // Determine context and load appropriate vaccinations and form state
   const url = new URL(window.location.href);
   const from = url.searchParams.get("from");
   const apptId = url.searchParams.get("appointment");
 
+  // Apply search and vet filter then re-render table
   const applyFiltersAndRender = () => {
     const q = (searchBar?.value || '').toLowerCase();
 
@@ -118,6 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderVaccinations(filtered);
   };
 
+  // Create toggle checkbox to filter records by current veterinarian
   const renderMyRecordsToggle = () => {
     console.log('renderMyRecordsToggle called: from=' + from + ', apptId=' + apptId + ', searchBar=' + !!searchBar);
     if (from !== 'ongoing' || !apptId) {
@@ -176,16 +181,17 @@ document.addEventListener("DOMContentLoaded", () => {
   renderMyRecordsToggle();
   applyFiltersAndRender();
 
-  // Search
+  // Attach search input listener for real-time filtering
   if (searchBar) {
     searchBar.addEventListener("input", () => {
       applyFiltersAndRender();
     });
   }
 
-  // ✅ Dynamic vaccine rows
+  // Dynamic vaccine rows
   let vaccineRowCounter = 1;
 
+  // Add new vaccine input row to form
   window.addVaccineRow = function() {
     const container = document.getElementById('vaccinesContainer');
     const newRow = document.createElement('div');
@@ -208,6 +214,7 @@ document.addEventListener("DOMContentLoaded", () => {
     vaccineRowCounter++;
   };
 
+  // Remove vaccine input row from form
   window.removeVaccineRow = function(rowId) {
     const rows = document.querySelectorAll('.vaccine-row');
     if (rows.length > 1) {
@@ -218,13 +225,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Save
+  // Handle form submission with vaccines collection and file upload
   if (form) {
-    // File preview
+    // Display preview of selected files before upload
     const fileInput = form.querySelector('input[type="file"]');
     const filePreview = document.getElementById('filePreview');
     
     if (fileInput && filePreview) {
+      // Update preview when files are selected
       fileInput.addEventListener('change', (e) => {
         filePreview.innerHTML = '';
         const files = Array.from(e.target.files);
@@ -243,13 +251,14 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
+    // Submit form data with vaccines and files to API endpoint
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
       const formData = new FormData();
       formData.append('appointmentId', form.elements["appointmentId"].value);
 
-      // Collect all vaccines
+      // Collect all vaccines from form rows
       const vaccines = [];
       document.querySelectorAll('.vaccine-row').forEach(row => {
         const vacInput = row.querySelector('input[name*="[vaccine]"]');
@@ -263,7 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       formData.append('vaccines', JSON.stringify(vaccines));
 
-      // Add files
+      // Add file attachments to request
       const files = form.elements['reports[]'].files;
       for (let i = 0; i < files.length; i++) {
         formData.append('reports[]', files[i]);

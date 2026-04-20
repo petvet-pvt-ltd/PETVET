@@ -25,6 +25,7 @@ class AppointmentsModel extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Fetch current ongoing appointment for vet or null if none exists
     public function getOngoingAppointmentForVet(int $vetId, int $clinicId): ?array
     {
         $sql = "
@@ -48,6 +49,7 @@ class AppointmentsModel extends BaseModel
         return $row ?: null;
     }
 
+    // Fetch completed appointments for vet sorted by most recent first
     public function getCompletedAppointments(int $vetId, int $clinicId): array
     {
         $sql = "
@@ -69,6 +71,7 @@ class AppointmentsModel extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Fetch cancelled appointments for vet sorted by most recent first
     public function getCancelledAppointments(int $vetId, int $clinicId): array
     {
         $sql = "
@@ -90,6 +93,7 @@ class AppointmentsModel extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Fetch all appointments for vet in all statuses sorted by most recent first
     public function getAllAppointmentsForVet(int $vetId, int $clinicId): array
     {
         $sql = "
@@ -110,12 +114,7 @@ class AppointmentsModel extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * SAFE status update with transition rules
-     * allowed:
-     *  approved -> ongoing / cancelled
-     *  ongoing  -> completed / cancelled
-     */
+    // Update appointment status with validation of allowed transitions
     public function updateAppointmentStatus(int $appointmentId, string $newStatus, int $vetId, int $clinicId): bool
     {
         $allowedNew = ['ongoing', 'completed', 'cancelled'];

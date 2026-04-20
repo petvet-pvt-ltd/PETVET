@@ -1,5 +1,5 @@
 <?php
-// VetController passes: ['dashboardData' => ...]
+// Initialize page data from controller
 $data = $dashboardData ?? [
   'appointments' => [],
   'medicalRecords' => [],
@@ -7,6 +7,7 @@ $data = $dashboardData ?? [
   'vaccinations' => []
 ];
 
+// Check if vet account is suspended
 $isSuspended = (bool)($isSuspended ?? false);
 
 $GLOBALS['currentPage'] = 'dashboard.php';
@@ -27,8 +28,10 @@ $GLOBALS['module'] = 'vet';
 <div class="main-content">
   <?php include __DIR__ . '/../shared/components/user-welcome-header.php'; ?>
 
+  <!-- Display suspension notice or dashboard content -->
   <div class="page-frame<?= $isSuspended ? ' suspension-frame' : '' ?>">
     <?php if ($isSuspended): ?>
+      <!-- Account suspension warning -->
       <div class="suspension-wrap">
         <div class="suspension-hero" role="status" aria-live="polite">
           <div class="suspension-hero-left">
@@ -76,6 +79,7 @@ $GLOBALS['module'] = 'vet';
         </div>
       </div>
     <?php else: ?>
+      <!-- Dashboard content when account is active -->
       <div class="page-header">
         <h1 class="page-title">Dashboard Overview</h1>
         <p class="page-subtitle">Monitor your appointments and patient care</p>
@@ -116,6 +120,7 @@ $GLOBALS['module'] = 'vet';
 </div>
 
 <?php if (!$isSuspended): ?>
+  <!-- Load data and scripts only when account is active -->
   <script>
   window.PETVET_INITIAL_DATA = <?php echo json_encode($data, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>;
   window.PETVET_TODAY = "<?php echo date('Y-m-d'); ?>";

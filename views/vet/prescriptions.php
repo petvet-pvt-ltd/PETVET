@@ -1,12 +1,15 @@
 <?php
+// Initialize page context and prepare prescription data
 $GLOBALS['currentPage'] = 'prescriptions.php';
 $GLOBALS['module'] = 'vet';
 
+// Prepare data for JavaScript
 $data = [
     'appointments'   => $appointments ?? [],
     'prescriptions'  => $prescriptions ?? []
 ];
 
+// Check if returning from ongoing appointment
 $showBackToOngoing = isset($_GET['from']) && $_GET['from'] === 'ongoing';
 ?>
 <!DOCTYPE html>
@@ -24,6 +27,7 @@ $showBackToOngoing = isset($_GET['from']) && $_GET['from'] === 'ongoing';
 <div class="main-content">
   <?php include __DIR__ . '/../shared/components/user-welcome-header.php'; ?>
 
+  <!-- Page content with form and records -->
   <div class="page-frame">
     <div class="page-header">
       <div>
@@ -32,6 +36,7 @@ $showBackToOngoing = isset($_GET['from']) && $_GET['from'] === 'ongoing';
       </div>
     </div>
 
+    <!-- Form for adding new prescriptions (hidden by default) -->
     <section id="prescriptionFormSection" class="form-section" style="display:none">
       <h3>Add Prescription</h3>
       <form id="prescriptionForm">
@@ -98,18 +103,23 @@ $showBackToOngoing = isset($_GET['from']) && $_GET['from'] === 'ongoing';
       <?php endif; ?>
     </section>
 
+    <!-- Prescription records list with search -->
     <section>
       <h3>Prescription Records</h3>
+      <!-- Search filter -->
       <input id="searchBar" placeholder="Search prescriptions by pet, owner, phone, or medication...">
+      <!-- Prescriptions table container -->
       <div id="prescriptionsContainer" class="table-wrap"></div>
     </section>
   </div>
 </div>
 
+<!-- Pass data to JavaScript -->
 <script>
 window.PETVET_INITIAL_DATA = <?php echo json_encode($data, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?>;
 window.PETVET_CURRENT_VET_ID = <?php echo json_encode((int)($vet['id'] ?? 0)); ?>;
 </script>
+<!-- File viewer modal and prescription management functionality -->
 <script src="/PETVET/public/js/vet/file-viewer-modal.js"></script>
 <script src="/PETVET/public/js/vet/prescriptions.js"></script>
 </body>

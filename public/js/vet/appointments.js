@@ -1,7 +1,5 @@
-// ===========================
-// Appointments JS (DB-driven)
-// ===========================
 
+// Build HTML table from appointment rows with optional action buttons
 function buildTableHTML(rows, includeActions=false){
     if(rows.length===0) 
         return '<div class="simple-mobile-table"><table><thead><tr><th>Date</th><th>Time</th><th>Pet</th><th>Owner</th><th>Reason</th>' + 
@@ -34,10 +32,12 @@ function buildTableHTML(rows, includeActions=false){
     return html;
 }
 
+// Navigate to view page for completed appointment records
 function goView(page, apptId){
     location.href = `/PETVET/?module=vet&page=${page}&from=completed&appointment=${encodeURIComponent(apptId)}`;
 }
 
+// Render all appointment sections (ongoing, upcoming, completed, cancelled)
 function renderAll(){
     const d = window.PETVET_INITIAL_DATA;
     if(!d) return;
@@ -48,6 +48,7 @@ function renderAll(){
     renderSection('cancelledTableContainer', d.cancelled, false);
 }
 
+// Render appointments into specific container
 function renderSection(containerId, data, includeActions=false){
     const container = document.getElementById(containerId);
     if(container){
@@ -55,6 +56,7 @@ function renderSection(containerId, data, includeActions=false){
     }
 }
 
+// Setup search/filter listeners for each appointment section
 function setupSearch(){
     const inputs = document.querySelectorAll('input[id^="searchBar"]');
     inputs.forEach(input=>{
@@ -78,6 +80,7 @@ function setupSearch(){
     });
 }
 
+// Initialize page and setup search functionality
 document.addEventListener('DOMContentLoaded', ()=>{
     renderAll();
     setupSearch();

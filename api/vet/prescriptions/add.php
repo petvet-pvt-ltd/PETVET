@@ -1,26 +1,29 @@
 <?php
+// API endpoint to create new prescription with medications and optional file uploads
 require_once __DIR__ . '/../../../config/connect.php';
 require_once __DIR__ . '/../../../config/auth_helper.php';
 require_once __DIR__ . '/../../../config/MedicalFileUploader.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
+// Enforce authentication and vet role
 requireLogin('/PETVET/index.php?module=guest&page=login');
 requireRole('vet', '/PETVET/index.php');
 
-// Suspended vets cannot add prescriptions
+// Prevent suspended vets from adding prescriptions
 enforceVetNotSuspendedApi();
 
+// Validate clinic and user context from session
 if (empty($_SESSION['clinic_id']) || empty($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'error' => 'Clinic or user not set']);
     exit;
 }
 
-// Handle both multipart/form-data and JSON
+// Parse appointment ID and notes from form data
 $appointmentId = isset($_POST['appointment_id']) ? (int)$_POST['appointment_id'] : 0;
 $notes = trim($_POST['notes'] ?? '');
 
-// Get medications array from JSON
+// Parse medications array from JSON format
 $medications = [];
 if (isset($_POST['medications'])) {
     $medicationsData = json_decode($_POST['medications'], true);
@@ -29,6 +32,7 @@ if (isset($_POST['medications'])) {
     }
 }
 
+// Validate appointment ID and medications are provided
 if ($appointmentId <= 0 || empty($medications)) {
     echo json_encode(['success' => false, 'error' => 'Missing required fields']);
     exit;
@@ -40,7 +44,7 @@ $clinicId = (int)$_SESSION['clinic_id'];
 try {
     $pdo = db();
 
-    // Verify appointment ownership + status
+    // Fetch appointment and verify vet ownership and status
     $stmt = $pdo->prepare("
         SELECT id, status
         FROM appointments
@@ -50,18 +54,19 @@ try {
     $stmt->execute(['id' => $appointmentId, 'vet_id' => $vetId, 'clinic_id' => $clinicId]);
     $appt = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    // Verify appointment exists and belongs to this vet
     if (!$appt) {
         echo json_encode(['success' => false, 'error' => 'Appointment not found']);
         exit;
     }
 
+    // Validate appointment is in appropriate status for prescriptions
     if (!in_array($appt['status'], ['ongoing','completed'], true)) {
         echo json_encode(['success' => false, 'error' => 'Prescription allowed only for ongoing/completed appointments']);
         exit;
     }
 
-    // Optional: prevent duplicates (one prescription per appointment)
-    // Remove this block if you want multiple prescriptions per appointment.
+    // Prevent duplicate prescriptions for same appointment
     $check = $pdo->prepare("SELECT id FROM prescriptions WHERE appointment_id = ? LIMIT 1");
     $check->execute([$appointmentId]);
     if ($check->fetch()) {
@@ -69,21 +74,23 @@ try {
         exit;
     }
 
-    // Handle file uploads
+    // Handle optional file uploads for prescription reports
     $reports = null;
     if (isset($_FILES['reports']) && !empty($_FILES['reports']['name'][0])) {
         $uploader = new MedicalFileUploader();
         $uploadResult = $uploader->uploadFiles($_FILES['reports']);
         
+        // Store uploaded file metadata as JSON
         if ($uploadResult['success'] && !empty($uploadResult['files'])) {
             $reports = json_encode($uploadResult['files']);
         } elseif (!$uploadResult['success']) {
+            // Return upload error if files failed to save
             echo json_encode(['success' => false, 'error' => 'File upload error: ' . implode(', ', $uploadResult['errors'])]);
             exit;
         }
     }
 
-    // Create prescription header (with placeholder for old columns)
+    // Create prescription header record with file references
     $stmt = $pdo->prepare("
         INSERT INTO prescriptions (appointment_id, medication, dosage, notes, reports, created_at)
         VALUES (:appointment_id, :medication, :dosage, :notes, :reports, NOW())
@@ -98,13 +105,14 @@ try {
 
     $prescriptionId = (int)$pdo->lastInsertId();
 
-    // Insert medications into prescription_items
+    // Insert individual medication items linked to prescription
     $itemStmt = $pdo->prepare("
         INSERT INTO prescription_items (prescription_id, medication, dosage)
         VALUES (:prescription_id, :medication, :dosage)
     ");
 
     foreach ($medications as $med) {
+        // Validate and insert each medication with dosage
         $medication = trim($med['medication'] ?? '');
         $dosage = trim($med['dosage'] ?? '');
         
@@ -117,7 +125,9 @@ try {
         }
     }
 
+    // Return success response with new prescription ID
     echo json_encode(['success' => true, 'id' => $prescriptionId]);
 } catch (Throwable $e) {
+    // Return error response if database operation fails
     echo json_encode(['success' => false, 'error' => 'Server error: ' . $e->getMessage()]);
 }

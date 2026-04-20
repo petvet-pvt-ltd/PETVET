@@ -18,6 +18,7 @@ class VetController extends BaseController
     private VaccinationsModel $vaccinationsModel;
     private bool $isSuspended = false;
 
+    // Enforce authentication, role, clinic context, and initialize models
     public function __construct()
     {
         // ✅ Enforce auth + role
@@ -40,9 +41,7 @@ class VetController extends BaseController
         $this->vaccinationsModel   = new VaccinationsModel();
     }
 
-    /**
-     * Get current vet context safely
-     */
+    // Get and validate current vet ID and clinic ID from session
     private function vetContext(): array
     {
         $vetId = $_SESSION['user_id'] ?? null;
@@ -60,6 +59,7 @@ class VetController extends BaseController
         ];
     }
 
+    // Search appointment list for matching ID
     private function findAppointmentInList(array $appointments, int $appointmentId): ?array
     {
         foreach ($appointments as $appointment) {
@@ -71,7 +71,7 @@ class VetController extends BaseController
         return null;
     }
 
-    /* DASHBOARD PAGE */
+    // Display vet dashboard with appointments, records, prescriptions, vaccinations
     public function dashboard()
     {
         $vet = $this->vetContext();
@@ -94,7 +94,7 @@ class VetController extends BaseController
         ]);
     }
 
-    /* APPOINTMENTS PAGE */
+    // Display appointments page with all status categories
     public function appointments()
     {
         if ($this->isSuspended) {
@@ -125,7 +125,7 @@ class VetController extends BaseController
         ));
     }
 
-    /* MEDICAL RECORDS PAGE */
+    // Display medical records page with optional pet-specific filtering from ongoing appointment
     public function medicalRecords()
     {
         if ($this->isSuspended) {
@@ -167,7 +167,7 @@ class VetController extends BaseController
         ));
     }
 
-    /* PRESCRIPTIONS PAGE */
+    // Display prescriptions page with optional pet-specific filtering from ongoing appointment
     public function prescriptions()
     {
         if ($this->isSuspended) {
@@ -205,7 +205,7 @@ class VetController extends BaseController
         ));
     }
 
-    /* VACCINATIONS PAGE */
+    // Display vaccinations page with optional pet-specific filtering from ongoing appointment
     public function vaccinations()
     {
         if ($this->isSuspended) {
@@ -243,7 +243,7 @@ class VetController extends BaseController
         ));
     }
 
-    /* SETTINGS PAGE */
+    // Display vet settings page with profile, preferences, and account statistics
     public function settings()
     {
         $settingsModel = new VetSettingsModel();

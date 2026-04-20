@@ -1,13 +1,15 @@
 <?php
+// Initialize page context for vet appointments view
 $GLOBALS['currentPage'] = 'appointments.php';
 $GLOBALS['module'] = 'vet';
 
-// IMPORTANT FIX: ongoing may be a single associative row → wrap to array
+// Normalize ongoing appointment to array format for consistency
 $ongoingArr = [];
 if (!empty($ongoing)) {
   $ongoingArr = is_array($ongoing) && isset($ongoing[0]) ? $ongoing : [$ongoing];
 }
 
+// Prepare appointment data from controller for JavaScript
 $data = [
     'ongoing'   => $ongoingArr,
     'upcoming'  => $upcoming ?? [],
@@ -24,6 +26,7 @@ $data = [
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Appointments | Veterinarian</title>
+  <!-- Appointment management styling -->
   <link rel="stylesheet" href="/PETVET/public/css/vet/enhanced-vet.css">
 </head>
 <body>

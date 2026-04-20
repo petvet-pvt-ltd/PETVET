@@ -1,5 +1,6 @@
-// Groomer Packages JavaScript
+// Groomer Packages JavaScript - Handles package CRUD operations and UI interactions
 document.addEventListener('DOMContentLoaded', function() {
+    // Cache DOM elements for modal and form
     const modal = document.getElementById('packageModal');
     const packageForm = document.getElementById('packageForm');
     const addPackageBtn = document.getElementById('addPackageBtn');
@@ -15,10 +16,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const serviceSelector = document.getElementById('serviceSelector');
     const includedServicesInput = document.getElementById('includedServices');
 
+    // State variables for services and selections
     let availableServices = [];
     let selectedServices = [];
 
-    // Fetch available services from the database
+    // Fetch available services from the database API
     async function fetchServices() {
         try {
             const formData = new FormData();
@@ -43,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Render the service selector
+    // Build interactive checkbox list of available services for package composition
     function renderServiceSelector() {
         if (availableServices.length === 0) {
             showEmptyServiceSelector();
@@ -110,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Show empty state when no services available
+    // Display empty state message when no services exist in the system
     function showEmptyServiceSelector() {
         serviceSelector.innerHTML = `
             <div class="service-selector-empty">
@@ -120,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    // Update selected services and calculate total price
+    // Update service selections, recalculate total price, and auto-select pet types
     function updateSelectedServices() {
         selectedServices = [];
         let totalPrice = 0;
@@ -173,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Auto-select animal types based on selected services
+    // Automatically check pet type boxes matching all selected services
     function updateAnimalTypes() {
         if (selectedServices.length === 0) {
             // No services selected, don't change anything
@@ -197,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (forCatsCheckbox) forCatsCheckbox.checked = allForCats;
     }
 
-    // Calculate discount percentage
+    // Compute and display discount percentage and savings amount
     function calculateDiscount() {
         const original = parseFloat(originalPriceInput.value) || 0;
         const discounted = parseFloat(discountedPriceInput.value) || 0;
@@ -214,11 +216,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Recalculate discount when discounted price changes
     if (originalPriceInput && discountedPriceInput) {
         discountedPriceInput.addEventListener('input', calculateDiscount);
     }
 
-    // Open modal for adding new package
+    // Reset form and open add package modal with fresh service list
     async function openAddModal() {
         modalTitle.textContent = 'Add New Package';
         packageForm.reset();
@@ -236,6 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.classList.add('active');
     }
 
+    // Attach click listeners to add package buttons
     if (addPackageBtn) {
         addPackageBtn.addEventListener('click', openAddModal);
     }
@@ -244,11 +248,12 @@ document.addEventListener('DOMContentLoaded', function() {
         addFirstPackage.addEventListener('click', openAddModal);
     }
 
-    // Close modal
+    // Hide modal and reset state
     function closeModalHandler() {
         modal.classList.remove('active');
     }
 
+    // Close modal on button clicks
     if (closeModal) {
         closeModal.addEventListener('click', closeModalHandler);
     }
@@ -257,14 +262,14 @@ document.addEventListener('DOMContentLoaded', function() {
         cancelBtn.addEventListener('click', closeModalHandler);
     }
 
-    // Close modal when clicking outside
+    // Close modal when clicking backdrop area
     modal.addEventListener('click', function(e) {
         if (e.target === modal) {
             closeModalHandler();
         }
     });
 
-    // Edit package - using event delegation
+    // Load package data into form when edit button is clicked
     document.addEventListener('click', async function(e) {
         if (e.target.closest('.btn-icon.edit')) {
             const btn = e.target.closest('.btn-icon.edit');
@@ -282,10 +287,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const serviceItems = card.querySelectorAll('.included-services li');
             const servicesArray = Array.from(serviceItems).map(li => li.textContent.replace('✓', '').trim());
             
-            // Get duration
-            const metaValue = card.querySelector('.meta-value');
-            const packageDuration = metaValue ? metaValue.textContent.trim() : '';
-            
+            // Get duration and pet_size from meta items            
+            let packageDuration = '';
+
+            card.querySelectorAll('.meta-item').forEach(item => {
+            const icon = item.querySelector('.meta-icon').textContent;
+            const value = item.querySelector('.meta-value').textContent.trim();
+            if (icon.includes('⏱️')) packageDuration = value;
+            });
+
             // Get prices
             const originalPriceElement = card.querySelector('.original-price .value.crossed');
             const discountedPriceElement = card.querySelector('.discounted-price .value');
@@ -303,6 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('packageName').value = packageName;
             document.getElementById('packageDescription').value = packageDescription;
             document.getElementById('packageDuration').value = packageDuration;
+            document.getElementById('originalPrice').value = originalPriceText;
             document.getElementById('discountedPrice').value = discountedPriceText;
             
             // Set pet type checkboxes
@@ -333,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Delete package - using event delegation with custom modal
+    // Remove package after confirmation with delete confirmation dialog
     document.addEventListener('click', async function(e) {
         if (e.target.closest('.btn-icon.delete')) {
             const btn = e.target.closest('.btn-icon.delete');
@@ -397,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Toggle package availability
+    // Update package availability status when toggle is switched
     document.addEventListener('change', async function(e) {
         if (e.target.matches('.package-footer .toggle-switch input')) {
             const toggle = e.target;
@@ -441,7 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Form submission
+    // Validate and submit package form to API for create/update operation
     packageForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
@@ -496,10 +507,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 showToast(result.message);
                 closeModalHandler();
                 
-                // Reload page to show updated data
-                setTimeout(() => {
-                    location.reload();
-                }, 1000);
+                // Reload page to show updated data immediately
+                window.location.reload();
             } else {
                 showToast(result.message || 'Failed to save package');
                 saveBtn.disabled = false;
@@ -513,7 +522,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Pet type toggle styling
+    // Add scale animation when pet type checkbox is toggled
     document.querySelectorAll('.pet-toggle input').forEach(input => {
         input.addEventListener('change', function() {
             if (this.checked) {
@@ -525,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Toast notification
+    // Display temporary notification message at bottom of page
     function showToast(message) {
         toast.textContent = message;
         toast.classList.add('show');

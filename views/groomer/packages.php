@@ -1,4 +1,5 @@
 <?php
+// Initialize page and module globals for navigation and context
 $currentPage = basename($_SERVER['PHP_SELF']);
 $module = 'groomer';
 $GLOBALS['currentPage'] = 'packages.php';
@@ -15,8 +16,10 @@ $GLOBALS['module'] = 'groomer';
 </head>
 <body>
 <?php include __DIR__ . '/../shared/sidebar/sidebar.php'; ?>
+<!-- Main content area -->
 <main class="main-content">
 <div class="page-wrap">
+<!-- Header section with title and add package button -->
 <div class="packages-header">
 <div>
 <h1>My Packages</h1>
@@ -25,15 +28,20 @@ $GLOBALS['module'] = 'groomer';
 <button class="btn primary" id="addPackageBtn">+ Add New Package</button>
 </div>
 
+<!-- Grid layout displaying all groomer packages -->
 <div class="packages-grid">
 <?php if (!empty($packages)): ?>
+<!-- Iterate through each package and display as card -->
 <?php foreach ($packages as $package): ?>
 <div class="package-card <?php echo $package['available'] ? '' : 'unavailable'; ?>" data-package-id="<?php echo $package['id']; ?>">
+<!-- Package card header with title and action buttons -->
 <div class="package-header">
+<!-- Display package name and discount percentage -->
 <div class="package-title-section">
 <h3 class="package-name"><?php echo htmlspecialchars($package['name']); ?></h3>
 <span class="discount-text">Save <?php echo number_format($package['discount_percent'], 1); ?>%</span>
 </div>
+<!-- Edit and delete buttons for package management -->
 <div class="package-actions">
 <button class="btn-icon edit" title="Edit Package" data-action="edit">✏️</button>
 <button class="btn-icon delete" title="Delete Package" data-action="delete">🗑️</button>
@@ -41,6 +49,7 @@ $GLOBALS['module'] = 'groomer';
 </div>
 <div class="package-body">
 <p class="package-description"><?php echo htmlspecialchars($package['description']); ?></p>
+<!-- List of services included in the package -->
 <div class="included-services">
 <h4>Includes:</h4>
 <ul>
@@ -51,7 +60,9 @@ foreach ($services as $service): ?>
 <?php endforeach; ?>
 </ul>
 </div>
+<!-- Pricing breakdown showing original and discounted prices -->
 <div class="package-pricing">
+<!-- Original full price before discount -->
 <div class="original-price">
 <span class="label">Regular:</span>
 <span class="value crossed">LKR <?php echo number_format($package['original_price'], 2); ?></span>
@@ -61,11 +72,14 @@ foreach ($services as $service): ?>
 <span class="value">LKR <?php echo number_format($package['discounted_price'], 2); ?></span>
 </div>
 </div>
+<!-- Additional package details like duration and pet types -->
 <div class="package-meta">
+<!-- Display package duration -->
 <div class="meta-item">
 <span class="meta-icon">⏱️</span>
 <span class="meta-value"><?php echo htmlspecialchars($package['duration']); ?></span>
 </div>
+<!-- Show which pet types this package applies to -->
 <div class="pet-types">
 <?php if ($package['for_dogs']): ?>
 <span class="badge dog">🐕 Dogs</span>
@@ -76,6 +90,7 @@ foreach ($services as $service): ?>
 </div>
 </div>
 </div>
+<!-- Package availability toggle switch -->
 <div class="package-footer">
 <label class="toggle-switch">
 <input type="checkbox" <?php echo $package['available'] ? 'checked' : ''; ?> data-action="toggle">
@@ -86,6 +101,7 @@ foreach ($services as $service): ?>
 </div>
 <?php endforeach; ?>
 <?php else: ?>
+<!-- Display empty state when no packages exist -->
 <div class="empty-state">
 <div class="empty-icon">📦</div>
 <h3>No Packages Yet</h3>
@@ -97,14 +113,16 @@ foreach ($services as $service): ?>
 </div>
 </main>
 
-<!-- Add/Edit Package Modal -->
+<!-- Modal form for creating or editing package details -->
 <div id="packageModal" class="modal">
 <div class="modal-content">
 <div class="modal-header">
 <h2 id="modalTitle">Add New Package</h2>
 <button class="modal-close" id="closeModal">&times;</button>
 </div>
+<!-- Form for package data input -->
 <form id="packageForm" class="modal-body">
+<!-- Hidden field to store package ID for editing -->
 <input type="hidden" id="packageId" name="package_id">
 <div class="form-group">
 <label for="packageName">Package Name *</label>
@@ -116,13 +134,16 @@ foreach ($services as $service): ?>
 </div>
 <div class="form-group">
 <label>Included Services *</label>
+<!-- Dynamic service selector for package composition -->
 <div id="serviceSelector" class="service-selector">
 <div class="service-selector-loading">Loading your services...</div>
 </div>
 <input type="hidden" id="includedServices" name="included_services" required>
 <p class="form-hint">Select at least one service to include in this package</p>
 </div>
+<!-- Price input fields for original and discounted prices -->
 <div class="form-row">
+<!-- Original price (auto-calculated from services) -->
 <div class="form-group">
 <label for="originalPrice">Regular Price (LKR) *</label>
 <input type="number" id="originalPrice" name="original_price" step="0.01" min="0" required placeholder="0.00" readonly>
@@ -134,6 +155,7 @@ foreach ($services as $service): ?>
 <p class="form-hint">Set your discounted package price</p>
 </div>
 </div>
+<!-- Real-time discount calculation display -->
 <div class="discount-preview">
 <span id="discountPercent">Discount: 0%</span>
 <span id="savings">You save: $0.00</span>
@@ -144,6 +166,7 @@ foreach ($services as $service): ?>
 </div>
 <div class="form-group">
 <label>Available For *</label>
+<!-- Toggle buttons to select which pet types package applies to -->
 <div class="pet-type-toggles">
 <label class="pet-toggle">
 <input type="checkbox" id="forDogs" name="for_dogs" value="true">
@@ -161,6 +184,7 @@ foreach ($services as $service): ?>
 </label>
 </div>
 </div>
+<!-- Form action buttons -->
 <div class="modal-footer">
 <button type="button" class="btn outline" id="cancelBtn">Cancel</button>
 <button type="submit" class="btn primary" id="saveBtn">Save Package</button>
@@ -169,6 +193,7 @@ foreach ($services as $service): ?>
 </div>
 </div>
 
+<!-- Notification toast and JavaScript files for modal and package management -->
 <div id="toast" class="toast"></div>
 <script src="/PETVET/public/js/shared/confirm-modal.js"></script>
 <script src="/PETVET/public/js/groomer/packages.js"></script>

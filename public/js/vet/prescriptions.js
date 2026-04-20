@@ -1,3 +1,4 @@
+// Show or hide prescription form and prefill with appointment data if provided
 function showForm(prefill = false, apptId = null) {
   const sec = document.getElementById('prescriptionFormSection');
   if (!sec) return;
@@ -22,6 +23,7 @@ function showForm(prefill = false, apptId = null) {
   }
 }
 
+// Build and render HTML table of prescriptions with file viewer links
 function renderPrescriptions(list) {
   const container = document.getElementById('prescriptionsContainer');
   if (!container) return;
@@ -92,6 +94,7 @@ function renderPrescriptions(list) {
   container.innerHTML = html;
 }
 
+// Initialize page, load data, setup filters, and form handlers
 document.addEventListener('DOMContentLoaded', () => {
   const d = window.PETVET_INITIAL_DATA;
   if (!d) return;
@@ -105,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let basePrescriptions = d.prescriptions || [];
   let onlyMyRecords = false;
 
+  // Apply search and vet filter then re-render table
   const applyFiltersAndRender = () => {
     const q = (search?.value || '').toLowerCase();
 
@@ -120,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPrescriptions(filtered);
   };
 
+  // Create toggle checkbox to filter records by current veterinarian
   const renderMyRecordsToggle = () => {
     console.log('renderMyRecordsToggle called: from=' + from + ', apptId=' + apptId + ', search=' + !!search);
     if (from !== 'ongoing' || !apptId) {
@@ -157,6 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // Determine context and load appropriate prescriptions and form state
   if (from === 'ongoing' && apptId) {
     showForm(true, apptId);
     // Show all prescriptions for this pet
@@ -180,15 +186,17 @@ document.addEventListener('DOMContentLoaded', () => {
   renderMyRecordsToggle();
   applyFiltersAndRender();
 
+  // Attach search input listener for real-time filtering
   if (search) {
     search.addEventListener('input', () => {
       applyFiltersAndRender();
     });
   }
 
-  // ✅ Dynamic medication rows
+  // Dynamic medication rows
   let medicationRowCounter = 1;
 
+  // Add new medication input row to form
   window.addMedicationRow = function() {
     const container = document.getElementById('medicationsContainer');
     const newRow = document.createElement('div');
@@ -211,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
     medicationRowCounter++;
   };
 
+  // Remove medication input row from form
   window.removeMedicationRow = function(rowId) {
     const rows = document.querySelectorAll('.medication-row');
     if (rows.length > 1) {
@@ -221,14 +230,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // ✅ REAL SAVE (DB) with file upload
+  // Handle form submission with medications collection and file upload
   const form = document.getElementById('prescriptionForm');
   if (form) {
-    // File preview
+    // Display preview of selected files before upload
     const fileInput = form.querySelector('input[type="file"]');
     const filePreview = document.getElementById('filePreview');
     
     if (fileInput && filePreview) {
+      // Update preview when files are selected
       fileInput.addEventListener('change', (e) => {
         filePreview.innerHTML = '';
         const files = Array.from(e.target.files);
@@ -247,6 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Submit form data with medications and files to API endpoint
     form.addEventListener('submit', async e => {
       e.preventDefault();
 
@@ -254,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('appointment_id', form.elements['appointmentId'].value);
       formData.append('notes', form.elements['notes'].value);
 
-      // Collect all medications
+      // Collect all medications from form rows
       const medications = [];
       document.querySelectorAll('.medication-row').forEach(row => {
         const medInput = row.querySelector('input[name*="[medication]"]');
@@ -268,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       formData.append('medications', JSON.stringify(medications));
 
-      // Add files
+      // Add file attachments to request
       const files = form.elements['reports[]'].files;
       for (let i = 0; i < files.length; i++) {
         formData.append('reports[]', files[i]);
