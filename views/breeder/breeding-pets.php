@@ -88,6 +88,7 @@ $pageTitle = "Breeding Pets";
                         <th>Date of Birth</th>
                         <th>Age</th>
                         <th>Species</th>
+                        <th>Price (Rs)</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -123,6 +124,7 @@ $pageTitle = "Breeding Pets";
                                     <?php echo htmlspecialchars($pet['species']); ?>
                                 </span>
                             </td>
+                            <td data-label="Price (Rs)"><?php echo number_format($pet['reward'], 2); ?></td>
                             <td data-label="Status">
                                 <label class="toggle-switch">
                                     <input type="checkbox" 
@@ -187,7 +189,7 @@ $pageTitle = "Breeding Pets";
                                 <div class="photo-preview" id="photoPreview">
                                     <span class="photo-placeholder">📷</span>
                                 </div>
-                                <input type="file" id="petPhoto" name="photo" accept="image/*" onchange="previewPhoto(event)">
+                                <input type="file" id="petPhoto" name="photo" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" onchange="previewPhoto(event)" required>
                                 <label for="petPhoto" class="photo-upload-btn">Choose Photo</label>
                             </div>
                         </div>

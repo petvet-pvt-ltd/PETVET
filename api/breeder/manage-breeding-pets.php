@@ -2,6 +2,7 @@
 header('Content-Type: application/json');
 require_once dirname(__DIR__, 2) . '/config/connect.php';
 require_once dirname(__DIR__, 2) . '/config/ImageUploader.php';
+require_once dirname(__DIR__, 2) . '/models/Breeder/PetsModel.php';
 
 session_start();
 
@@ -14,27 +15,28 @@ if (!isset($_SESSION['user_id'])) {
 
 $userId = $_SESSION['user_id'];
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
+$model = new BreederPetsModel();
 
 try {
     switch ($action) {
         case 'get_all':
-            getAllBreedingPets($conn, $userId);
+            getAllBreedingPets($model, $userId);
             break;
         
         case 'add':
-            addBreedingPet($conn, $userId);
+            addBreedingPet($model, $userId);
             break;
         
         case 'update':
-            updateBreedingPet($conn, $userId);
+            updateBreedingPet($model, $userId);
             break;
         
         case 'delete':
-            deleteBreedingPet($conn, $userId);
+            deleteBreedingPet($model, $userId);
             break;
         
         case 'toggle_status':
-            togglePetStatus($conn, $userId);
+            togglePetStatus($model, $userId);
             break;
         
         default:
@@ -46,29 +48,12 @@ try {
     echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
 }
 
-function getAllBreedingPets($conn, $userId) {
-    $stmt = $conn->prepare("
-        SELECT id, name, breed,  date_of_birth as dob,species,
-               photo, description, is_active, age
-        FROM breeder_pets
-        WHERE breeder_id = ?
-        ORDER BY age DESC
-    ");
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    $pets = [];
-    while ($row = $result->fetch_assoc()) {
-        $row['is_active'] = (bool)$row['is_active'];
-        $row['age'] = $row['age'] . ' ' . ($row['age'] == 1 ? 'year' : 'years');
-        $pets[] = $row;
-    }
-    
+function getAllBreedingPets($model, $userId) {
+    $pets = $model->getBreedingPets($userId);
     echo json_encode(['success' => true, 'pets' => $pets]);
 }
 
-function addBreedingPet($conn, $userId) {
+function addBreedingPet($model, $userId) {
     $name = $_POST['name'] ?? '';
     $breed = $_POST['breed'] ?? '';
     $gender = $_POST['gender'] ?? '';
@@ -76,7 +61,6 @@ function addBreedingPet($conn, $userId) {
     $dob = $_POST['dob'] ?? '';
     $reward = $_POST['reward'] ?? 0;
     $description = $_POST['description'] ?? '';
-    // Handle checkbox - it's checked if the field exists in POST
     $isActive = isset($_POST['is_active']) ? 1 : 0;
     
     // Validate required fields
@@ -86,14 +70,13 @@ function addBreedingPet($conn, $userId) {
         return;
     }
     
-    // Calculate age from date of birth
+    // Calculate age from date of birth and validate
     $age = 0;
     try {
         $dobDate = new DateTime($dob);
         $today = new DateTime();
         $age = $today->diff($dobDate)->y;
         
-        // Validate pet is at least 1 year old
         if ($age < 1) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Breeding pet must be at least 1 year old']);
@@ -113,35 +96,43 @@ function addBreedingPet($conn, $userId) {
             mkdir($uploadDir, 0777, true);
         }
         
-        // Create custom uploader for breeder pets directory
         $uploader = new ImageUploader($uploadDir);
         $uploadResult = $uploader->upload($_FILES['photo'], 'breeder_pet_');
         
         if ($uploadResult['success']) {
-            // Construct the full web path
             $photoPath = '/PETVET/uploads/breeder_pets/' . $uploadResult['path'];
         }
     }
     
-    $stmt = $conn->prepare("
-        INSERT INTO breeder_pets (breeder_id, name, breed, gender, date_of_birth, age, species, photo, description, reward, is_active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ");
-    $stmt->bind_param("issssisssdi", $userId, $name, $breed, $gender, $dob, $age, $species, $photoPath, $description, $reward, $isActive);
+    // Prepare data for model
+    $data = [
+        'name' => $name,
+        'breed' => $breed,
+        'gender' => $gender,
+        'dob' => $dob,
+        'age' => $age,
+        'species' => $species,
+        'photo' => $photoPath,
+        'description' => $description,
+        'reward' => $reward,
+        'is_active' => $isActive
+    ];
     
-    if ($stmt->execute()) {
+    $result = $model->addBreedingPet($userId, $data);
+    
+    if ($result['success']) {
         echo json_encode([
             'success' => true, 
             'message' => 'Pet added successfully',
-            'pet_id' => $conn->insert_id
+            'pet_id' => $result['pet_id']
         ]);
     } else {
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Failed to add pet: ' . $stmt->error]);
+        echo json_encode(['success' => false, 'message' => 'Failed to add pet: ' . $result['error']]);
     }
 }
 
-function updateBreedingPet($conn, $userId) {
+function updateBreedingPet($model, $userId) {
     $petId = $_POST['pet_id'] ?? 0;
     $name = $_POST['name'] ?? '';
     $breed = $_POST['breed'] ?? '';
@@ -150,27 +141,7 @@ function updateBreedingPet($conn, $userId) {
     $dob = $_POST['dob'] ?? '';
     $reward = $_POST['reward'] ?? 0;
     $description = $_POST['description'] ?? '';
-    // Handle checkbox - it's checked if the field exists in POST
     $isActive = isset($_POST['is_active']) ? 1 : 0;
-    
-    // Calculate age from date of birth
-    $age = 0;
-    try {
-        $dobDate = new DateTime($dob);
-        $today = new DateTime();
-        $age = $today->diff($dobDate)->y;
-        
-        // Validate pet is at least 1 year old
-        if ($age < 1) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Breeding pet must be at least 1 year old']);
-            return;
-        }
-    } catch (Exception $e) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Invalid date format: ' . $e->getMessage()]);
-        return;
-    }
     
     // Validate required fields
     if (empty($petId) || empty($name) || empty($breed) || empty($gender) || empty($dob) || $reward === '') {
@@ -179,13 +150,28 @@ function updateBreedingPet($conn, $userId) {
         return;
     }
     
-    // Check if pet belongs to this breeder
-    $checkStmt = $conn->prepare("SELECT id FROM breeder_pets WHERE id = ? AND breeder_id = ?");
-    $checkStmt->bind_param("ii", $petId, $userId);
-    $checkStmt->execute();
-    if ($checkStmt->get_result()->num_rows === 0) {
+    // Verify ownership
+    if (!$model->verifyPetOwnership($petId, $userId)) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        return;
+    }
+    
+    // Calculate age and validate
+    $age = 0;
+    try {
+        $dobDate = new DateTime($dob);
+        $today = new DateTime();
+        $age = $today->diff($dobDate)->y;
+        
+        if ($age < 1) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Breeding pet must be at least 1 year old']);
+            return;
+        }
+    } catch (Exception $e) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid date format: ' . $e->getMessage()]);
         return;
     }
     
@@ -198,43 +184,45 @@ function updateBreedingPet($conn, $userId) {
             mkdir($uploadDir, 0777, true);
         }
         
-        // Create custom uploader for breeder pets directory
         $uploader = new ImageUploader($uploadDir);
         $uploadResult = $uploader->upload($_FILES['photo'], 'breeder_pet_');
         
         if ($uploadResult['success']) {
-            // Construct the full web path
             $photoPath = '/PETVET/uploads/breeder_pets/' . $uploadResult['path'];
             $updatePhoto = true;
         }
     }
     
-    // Build update query
+    // Prepare data for model
+    $data = [
+        'name' => $name,
+        'breed' => $breed,
+        'gender' => $gender,
+        'dob' => $dob,
+        'age' => $age,
+        'species' => $species,
+        'photo' => $photoPath,
+        'description' => $description,
+        'reward' => $reward,
+        'is_active' => $isActive
+    ];
+    
+    // Call appropriate model method
     if ($updatePhoto) {
-        $stmt = $conn->prepare("
-            UPDATE breeder_pets 
-            SET name = ?, breed = ?, gender = ?, date_of_birth = ?, age = ?, species = ?, photo = ?, description = ?, reward = ?, is_active = ?
-            WHERE id = ? AND breeder_id = ?
-        ");
-        $stmt->bind_param("sssssissdiii", $name, $breed, $gender, $dob, $age, $species, $photoPath, $description, $reward, $isActive, $petId, $userId);
+        $result = $model->updateBreedingPetWithPhoto($petId, $userId, $data);
     } else {
-        $stmt = $conn->prepare("
-            UPDATE breeder_pets 
-            SET name = ?, breed = ?, gender = ?, date_of_birth = ?, age = ?, species = ?, description = ?, reward = ?, is_active = ?
-            WHERE id = ? AND breeder_id = ?
-        ");
-        $stmt->bind_param("ssssissdiii", $name, $breed, $gender, $dob, $age, $species, $description, $reward, $isActive, $petId, $userId);
+        $result = $model->updateBreedingPet($petId, $userId, $data);
     }
     
-    if ($stmt->execute()) {
+    if ($result['success']) {
         echo json_encode(['success' => true, 'message' => 'Pet updated successfully']);
     } else {
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Failed to update pet: ' . $stmt->error]);
+        echo json_encode(['success' => false, 'message' => 'Failed to update pet: ' . $result['error']]);
     }
 }
 
-function deleteBreedingPet($conn, $userId) {
+function deleteBreedingPet($model, $userId) {
     $petId = $_POST['pet_id'] ?? $_GET['pet_id'] ?? 0;
     
     if (empty($petId)) {
@@ -243,20 +231,16 @@ function deleteBreedingPet($conn, $userId) {
         return;
     }
     
-    // Check if pet belongs to this breeder
-    $checkStmt = $conn->prepare("SELECT id FROM breeder_pets WHERE id = ? AND breeder_id = ?");
-    $checkStmt->bind_param("ii", $petId, $userId);
-    $checkStmt->execute();
-    if ($checkStmt->get_result()->num_rows === 0) {
+    // Verify ownership
+    if (!$model->verifyPetOwnership($petId, $userId)) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Unauthorized']);
         return;
     }
     
-    $stmt = $conn->prepare("DELETE FROM breeder_pets WHERE id = ? AND breeder_id = ?");
-    $stmt->bind_param("ii", $petId, $userId);
+    $result = $model->deleteBreedingPet($petId, $userId);
     
-    if ($stmt->execute()) {
+    if ($result['success']) {
         echo json_encode(['success' => true, 'message' => 'Pet deleted successfully']);
     } else {
         http_response_code(500);
@@ -264,7 +248,7 @@ function deleteBreedingPet($conn, $userId) {
     }
 }
 
-function togglePetStatus($conn, $userId) {
+function togglePetStatus($model, $userId) {
     $petId = $_POST['pet_id'] ?? 0;
     $isActive = isset($_POST['is_active']) ? (int)$_POST['is_active'] : 0;
     
@@ -274,20 +258,16 @@ function togglePetStatus($conn, $userId) {
         return;
     }
     
-    // Check if pet belongs to this breeder
-    $checkStmt = $conn->prepare("SELECT id FROM breeder_pets WHERE id = ? AND breeder_id = ?");
-    $checkStmt->bind_param("ii", $petId, $userId);
-    $checkStmt->execute();
-    if ($checkStmt->get_result()->num_rows === 0) {
+    // Verify ownership
+    if (!$model->verifyPetOwnership($petId, $userId)) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Unauthorized']);
         return;
     }
     
-    $stmt = $conn->prepare("UPDATE breeder_pets SET is_active = ? WHERE id = ? AND breeder_id = ?");
-    $stmt->bind_param("iii", $isActive, $petId, $userId);
+    $result = $model->togglePetStatus($petId, $userId, $isActive);
     
-    if ($stmt->execute()) {
+    if ($result['success']) {
         echo json_encode([
             'success' => true, 
             'message' => 'Pet status updated successfully',
@@ -298,3 +278,4 @@ function togglePetStatus($conn, $userId) {
         echo json_encode(['success' => false, 'message' => 'Failed to update status']);
     }
 }
+

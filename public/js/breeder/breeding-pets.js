@@ -55,7 +55,24 @@ function closePetModal() {
 // Preview Photo
 function previewPhoto(event) {
     const file = event.target.files[0];
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const maxFileSize = 5 * 1024 * 1024; // 5MB
+    
     if (file) {
+        // Validate file type
+        if (!allowedTypes.includes(file.type)) {
+            showToast('Invalid file type. Only JPG, PNG, GIF, and WebP are allowed', 'error');
+            event.target.value = ''; // Reset input
+            return;
+        }
+        
+        // Validate file size
+        if (file.size > maxFileSize) {
+            showToast('File size exceeds 5MB limit', 'error');
+            event.target.value = ''; // Reset input
+            return;
+        }
+        
         const reader = new FileReader();
         reader.onload = function(e) {
             document.getElementById('photoPreview').innerHTML = `<img src="${e.target.result}" alt="Pet Photo">`;
@@ -218,7 +235,7 @@ function confirmDelete() {
 }
 
 // Show Toast Notification
-function showToast(message) {
+function showToast(message, type = 'success') {
     // Create toast element if it doesn't exist
     let toast = document.getElementById('toast');
     if (!toast) {
@@ -228,7 +245,6 @@ function showToast(message) {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: #10b981;
             color: white;
             padding: 15px 20px;
             border-radius: 8px;
@@ -240,6 +256,15 @@ function showToast(message) {
         document.body.appendChild(toast);
     }
     
+    // Set background color based on type
+    const colors = {
+        'success': '#10b981',
+        'error': '#ef4444',
+        'warning': '#f59e0b',
+        'info': '#3b82f6'
+    };
+    
+    toast.style.background = colors[type] || colors['success'];
     toast.textContent = message;
     toast.style.opacity = '1';
     
