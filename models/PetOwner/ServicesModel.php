@@ -6,17 +6,17 @@ class ServicesModel extends BaseModel {
     /**
      * Get all service providers based on service type and filters
      */
-    public function getServiceProviders($serviceType, $filters = []) {
+    public function getServiceProviders($serviceType, $filters = [], $currentUserId = null) {
         // Mock data - replace with database queries when DB is implemented
         switch ($serviceType) {
             case 'trainers':
-                return $this->getTrainers($filters);
+                return $this->getTrainers($filters, $currentUserId);
             case 'sitters':
-                return $this->getSitters($filters);
+                return $this->getSitters($filters, $currentUserId);
             case 'breeders':
-                return $this->getBreeders($filters);
+                return $this->getBreeders($filters, $currentUserId);
             case 'groomers':
-                return $this->getGroomers($filters);
+                return $this->getGroomers($filters, $currentUserId);
             default:
                 return [];
         }
@@ -25,7 +25,7 @@ class ServicesModel extends BaseModel {
     /**
      * Get trainers with filters (Real Data from Database)
      */
-    private function getTrainers($filters) {
+    private function getTrainers($filters, $currentUserId = null) {
         $pdo = db();
         
         // Build SQL query
@@ -70,8 +70,17 @@ class ServicesModel extends BaseModel {
                     OR spp.training_advanced_enabled = 1
                 )";
         
+        // Exclude current user if provided
+        if ($currentUserId) {
+            $sql .= " AND u.id != ?";
+        }
+        
         // Apply filters
         $params = [];
+        
+        if ($currentUserId) {
+            $params[] = $currentUserId;
+        }
         
         if (!empty($filters['search'])) {
             $sql .= " AND (u.first_name LIKE ? OR u.last_name LIKE ? OR spp.business_name LIKE ? OR spp.service_area LIKE ?)";
@@ -162,7 +171,7 @@ class ServicesModel extends BaseModel {
     /**
      * Get sitters with filters (Real Data from Database)
      */
-    private function getSitters($filters) {
+    private function getSitters($filters, $currentUserId = null) {
         $pdo = db();
         
         // Build SQL query
@@ -200,8 +209,17 @@ class ServicesModel extends BaseModel {
                 AND spp.location_latitude IS NOT NULL
                 AND spp.location_longitude IS NOT NULL";
         
+        // Exclude current user if provided
+        if ($currentUserId) {
+            $sql .= " AND u.id != ?";
+        }
+        
         // Apply filters
         $params = [];
+        
+        if ($currentUserId) {
+            $params[] = $currentUserId;
+        }
         
         if (!empty($filters['search'])) {
             $sql .= " AND (u.first_name LIKE ? OR u.last_name LIKE ? OR spp.service_area LIKE ?)";
@@ -279,7 +297,7 @@ class ServicesModel extends BaseModel {
     /**
      * Get breeders with filters (Mock Data)
      */
-    private function getBreeders($filters) {
+    private function getBreeders($filters, $currentUserId = null) {
         $pdo = db();
         
         // Build SQL query
@@ -318,8 +336,17 @@ class ServicesModel extends BaseModel {
                 AND spp.location_latitude IS NOT NULL
                 AND spp.location_longitude IS NOT NULL";
         
+        // Exclude current user if provided
+        if ($currentUserId) {
+            $sql .= " AND u.id != ?";
+        }
+        
         // Apply filters
         $params = [];
+        
+        if ($currentUserId) {
+            $params[] = $currentUserId;
+        }
         
         if (!empty($filters['search'])) {
             $sql .= " AND (u.first_name LIKE ? OR u.last_name LIKE ? OR spp.business_name LIKE ? OR spp.service_area LIKE ?)";
@@ -394,22 +421,22 @@ class ServicesModel extends BaseModel {
     /**
      * Get groomers with filters (Mock Data)
      */
-    private function getGroomers($filters) {
+    private function getGroomers($filters, $currentUserId = null) {
         // When show=services/packages, return items instead of providers
         if (!empty($filters['show']) && $filters['show'] === 'services') {
-            return $this->getGroomerServiceItems($filters);
+            return $this->getGroomerServiceItems($filters, $currentUserId);
         }
         if (!empty($filters['show']) && $filters['show'] === 'packages') {
-            return $this->getGroomerPackageItems($filters);
+            return $this->getGroomerPackageItems($filters, $currentUserId);
         }
 
-        return $this->getGroomerProviders($filters);
+        return $this->getGroomerProviders($filters, $currentUserId);
     }
     
     /**
      * Providers view: only approved groomers with >= 1 service in groomer_services
      */
-    private function getGroomerProviders($filters) {
+    private function getGroomerProviders($filters, $currentUserId = null) {
         $pdo = db();
 
         $sql = "SELECT
@@ -446,8 +473,17 @@ class ServicesModel extends BaseModel {
                       FROM groomer_services gs
                       WHERE gs.user_id = u.id
                   )";
+        
+        // Exclude current user if provided
+        if ($currentUserId) {
+            $sql .= " AND u.id != ?";
+        }
 
         $params = [];
+        
+        if ($currentUserId) {
+            $params[] = $currentUserId;
+        }
 
         if (!empty($filters['search'])) {
             $sql .= " AND (
@@ -496,7 +532,7 @@ class ServicesModel extends BaseModel {
     /**
      * Services view: single services across groomers (or one groomer via groomer_id)
      */
-    private function getGroomerServiceItems($filters) {
+    private function getGroomerServiceItems($filters, $currentUserId = null) {
         $pdo = db();
 
         $sql = "SELECT
@@ -524,6 +560,12 @@ class ServicesModel extends BaseModel {
                   AND ur.is_active = 1";
 
         $params = [];
+        
+        // Exclude current user if provided
+        if ($currentUserId) {
+            $sql .= " AND u.id != ?";
+            $params[] = $currentUserId;
+        }
 
         if (!empty($filters['groomer_id'])) {
             $sql .= " AND u.id = ?";
@@ -587,7 +629,7 @@ class ServicesModel extends BaseModel {
     /**
      * Packages view: packages across groomers (or one groomer via groomer_id)
      */
-    private function getGroomerPackageItems($filters) {
+    private function getGroomerPackageItems($filters, $currentUserId = null) {
         $pdo = db();
 
         $sql = "SELECT
@@ -629,6 +671,12 @@ class ServicesModel extends BaseModel {
                   AND ur.is_active = 1";
 
         $params = [];
+        
+        // Exclude current user if provided
+        if ($currentUserId) {
+            $sql .= " AND u.id != ?";
+            $params[] = $currentUserId;
+        }
 
         if (!empty($filters['groomer_id'])) {
             $sql .= " AND u.id = ?";

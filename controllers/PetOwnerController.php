@@ -187,7 +187,7 @@ class PetOwnerController extends BaseController {
         }
         
         // Fetch providers and cities for dropdown
-        $providers = $servicesModel->getServiceProviders($serviceType, $filters);
+        $providers = $servicesModel->getServiceProviders($serviceType, $filters, $ownerId);
         $cities = $servicesModel->getCities($serviceType);
 
         // Provider IDs that already have an active booking (used to grey out booking buttons)
