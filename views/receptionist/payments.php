@@ -117,7 +117,7 @@
             <div class="meta-grid">
               <div class="form-group">
                 <label for="invoice-date">Date</label>
-                <input type="date" id="invoice-date" name="invoice_date" required>
+                <input type="date" id="invoice-date" name="invoice_date" required readonly style="background-color: #f8fafc; cursor: not-allowed;">
               </div>
 
               <div class="form-group">
@@ -135,7 +135,7 @@
 
               <div class="form-group">
                 <label for="client-phone">Client Phone</label>
-                <input type="text" id="client-phone" name="client_phone" placeholder="e.g., 0773983002" autocomplete="off">
+                <input type="text" id="client-phone" name="client_phone" placeholder="Loading..." autocomplete="off" readonly style="background-color: #f8fafc; cursor: not-allowed;">
               </div>
 
               <div class="form-group" style="grid-column: 1 / -1;">
@@ -258,6 +258,7 @@
     // Auto-refresh payments list every 30 seconds
     let autoRefreshInterval = null;
     let lastPaymentCount = <?php echo count($pendingPayments); ?>;
+    let isRefreshing = false;
     
     function startAutoRefresh() {
       // Clear any existing interval
@@ -267,39 +268,50 @@
       
       // Refresh every 30 seconds (30000 ms)
       autoRefreshInterval = setInterval(() => {
-        // Only refresh if no modal is open
+        // Only refresh if no modal is open and not already refreshing
         const modals = ['paymentModal', 'invoiceModal', 'confirmPaymentModal', 'successModal'];
         const anyModalOpen = modals.some(id => {
           const modal = document.getElementById(id);
           return modal && modal.style.display === 'flex';
         });
         
-        if (!anyModalOpen) {
+        if (!anyModalOpen && !isRefreshing) {
           fetchPaymentsList();
         }
       }, 30000);
     }
     
-    function fetchPaymentsList() {
+    function fetchPaymentsList(retryCount = 0) {
+      const maxRetries = 3;
+      
+      if (isRefreshing) {
+        console.warn('Payment list refresh already in progress, skipping...');
+        return;
+      }
+      
+      isRefreshing = true;
+      console.log('🔄 Fetching payments list...');
+      
       fetch('/PETVET/api/receptionist/get-pending-payments.php')
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+      })
       .then(data => {
         if (!data.success) {
-          console.error('Failed to fetch payments:', data.error);
-          return;
+          throw new Error(data.error || 'Failed to fetch payments');
         }
         
         const payments = data.payments || [];
         const container = document.querySelector('.page-container');
         
-        if (!container) return;
-        
-        // Remove existing grid or empty state
-        const existingGrid = container.querySelector('.payments-grid');
-        const existingEmpty = container.querySelector('.empty-state');
-        
-        if (existingGrid) existingGrid.remove();
-        if (existingEmpty) existingEmpty.remove();
+        if (!container) {
+          console.error('Container not found');
+          isRefreshing = false;
+          return;
+        }
         
         // Show notification if count changed
         if (payments.length !== lastPaymentCount) {
@@ -310,6 +322,13 @@
           }
           lastPaymentCount = payments.length;
         }
+        
+        // NOW remove the old content (only after successful fetch)
+        const existingGrid = container.querySelector('.payments-grid');
+        const existingEmpty = container.querySelector('.empty-state');
+        
+        if (existingGrid) existingGrid.remove();
+        if (existingEmpty) existingEmpty.remove();
         
         if (payments.length === 0) {
           // Show empty state
@@ -364,9 +383,24 @@
         }
         
         console.log('✅ Payments list refreshed (' + payments.length + ' pending)');
+        isRefreshing = false;
       })
       .catch(err => {
-        console.error('Failed to refresh payments list:', err);
+        console.error('❌ Failed to refresh payments list:', err);
+        isRefreshing = false;
+        
+        // Retry logic - try up to 3 times
+        if (retryCount < maxRetries) {
+          const retryDelay = 2000 * (retryCount + 1); // Exponential backoff: 2s, 4s, 6s
+          console.log(`📋 Retrying payments fetch in ${retryDelay}ms... (attempt ${retryCount + 1}/${maxRetries})`);
+          
+          setTimeout(() => {
+            fetchPaymentsList(retryCount + 1);
+          }, retryDelay);
+        } else {
+          // Show error notification after all retries fail
+          showNotification('⚠️ Unable to refresh payments. Please try refreshing the page.', 'error');
+        }
       });
     }
     
@@ -375,26 +409,35 @@
       const notif = document.createElement('div');
       notif.className = `notification notification-${type}`;
       notif.textContent = message;
+      
+      // Determine colors based on type
+      let bgColor = '#007bff'; // default info
+      if (type === 'success') bgColor = '#28a745';
+      else if (type === 'error') bgColor = '#dc3545';
+      
       notif.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
         padding: 15px 20px;
-        background: ${type === 'success' ? '#28a745' : '#007bff'};
+        background: ${bgColor};
         color: white;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         z-index: 10000;
         animation: slideIn 0.3s ease;
+        font-weight: 500;
+        max-width: 400px;
       `;
       
       document.body.appendChild(notif);
       
-      // Remove after 3 seconds
+      // Remove after 3 seconds (or 5 seconds for errors)
+      const duration = type === 'error' ? 5000 : 3000;
       setTimeout(() => {
         notif.style.animation = 'slideOut 0.3s ease';
         setTimeout(() => notif.remove(), 300);
-      }, 3000);
+      }, duration);
     }
     
     function escapeHtml(text) {

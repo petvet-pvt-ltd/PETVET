@@ -12,6 +12,176 @@ let receptionistDisabledDates = [];
 let walkinCustomerPhone = null;
 
 /**
+ * Validation Rules:
+ * - Phone: Must start with 07, exactly 10 digits (0701234567)
+ * - Client Name: Letters and spaces only, no numbers
+ * - Pet Name: Letters and spaces only, no numbers
+ */
+
+/**
+ * Validate phone number: starts with 07, exactly 10 digits
+ */
+function validatePhone(phone) {
+  const cleanPhone = phone.trim().replace(/\s/g, '');
+  const phoneRegex = /^07\d{8}$/;
+  return phoneRegex.test(cleanPhone);
+}
+
+/**
+ * Validate names: letters and spaces only, no numbers
+ */
+function validateName(name) {
+  const cleanName = name.trim();
+  const nameRegex = /^[a-zA-Z\s]+$/;
+  return nameRegex.test(cleanName) && cleanName.length > 0;
+}
+
+/**
+ * Show validation error message for phone
+ */
+function showPhoneError(message) {
+  const errorDiv = document.getElementById('phoneError');
+  if (errorDiv) {
+    if (message) {
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+    } else {
+      errorDiv.style.display = 'none';
+    }
+  }
+}
+
+/**
+ * Show validation error message for client name
+ */
+function showClientNameError(message) {
+  const errorDiv = document.getElementById('clientNameError');
+  if (errorDiv) {
+    if (message) {
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+    } else {
+      errorDiv.style.display = 'none';
+    }
+  }
+}
+
+/**
+ * Show validation error message for pet name
+ */
+function showPetNameError(message) {
+  const errorDiv = document.getElementById('petNameError');
+  if (errorDiv) {
+    if (message) {
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+    } else {
+      errorDiv.style.display = 'none';
+    }
+  }
+}
+
+/**
+ * Real-time phone validation
+ */
+function validatePhoneInput(e) {
+  const phoneInput = document.getElementById('newCustomerPhone');
+  const phone = phoneInput.value.trim();
+  
+  // Allow empty (not yet filled)
+  if (phone === '') {
+    showPhoneError('');
+    return;
+  }
+  
+  const cleanPhone = phone.replace(/\s/g, '');
+  
+  // Check if it starts with 07
+  if (!cleanPhone.startsWith('07')) {
+    showPhoneError('❌ Phone must start with 07');
+    return;
+  }
+  
+  // Check if it has exactly 10 digits
+  if (cleanPhone.length < 10) {
+    showPhoneError(`❌ Phone must have 10 digits (${cleanPhone.length}/10)`);
+    return;
+  }
+  
+  if (cleanPhone.length > 10) {
+    showPhoneError('❌ Phone must have exactly 10 digits');
+    return;
+  }
+  
+  // Check if all characters after 07 are digits
+  if (!/^\d{8}$/.test(cleanPhone.substring(2))) {
+    showPhoneError('❌ Phone must contain only digits');
+    return;
+  }
+  
+  // Valid phone
+  showPhoneError('');
+}
+
+/**
+ * Real-time client name validation
+ */
+function validateClientNameInput(e) {
+  const clientNameInput = document.getElementById('newClientName');
+  const clientName = clientNameInput.value.trim();
+  
+  // Allow empty (not yet filled)
+  if (clientName === '') {
+    showClientNameError('');
+    return;
+  }
+  
+  // Check if contains only letters and spaces
+  if (!/^[a-zA-Z\s]+$/.test(clientName)) {
+    showClientNameError('❌ Client name must contain letters only (no numbers or special characters)');
+    return;
+  }
+  
+  // Check if at least 2 characters
+  if (clientName.length < 2) {
+    showClientNameError('❌ Client name must be at least 2 characters');
+    return;
+  }
+  
+  // Valid
+  showClientNameError('');
+}
+
+/**
+ * Real-time pet name validation
+ */
+function validatePetNameInput(e) {
+  const petNameInput = document.getElementById('newPetName');
+  const petName = petNameInput.value.trim();
+  
+  // Allow empty (not yet filled)
+  if (petName === '') {
+    showPetNameError('');
+    return;
+  }
+  
+  // Check if contains only letters and spaces
+  if (!/^[a-zA-Z\s]+$/.test(petName)) {
+    showPetNameError('❌ Pet name must contain letters only (no numbers or special characters)');
+    return;
+  }
+  
+  // Check if at least 2 characters
+  if (petName.length < 2) {
+    showPetNameError('❌ Pet name must be at least 2 characters');
+    return;
+  }
+  
+  // Valid
+  showPetNameError('');
+}
+
+/**
  * Handle phone number input validation
  */
 function handlePhoneInput() {
@@ -518,24 +688,56 @@ function validateReceptionistBooking() {
   
   if (!saveBtn) return;
   
-  const isValid = newDate?.value &&
-                  newTime?.value &&
-                  newVetName?.value &&
-                  newPetName?.value &&
-                  newClientName?.value &&
-                  newAppointmentType?.value &&
-                  newCustomerPhone?.value &&
-                  newPetType?.value;
+  // Check all fields are filled
+  const allFieldsFilled = newDate?.value &&
+                          newTime?.value &&
+                          newVetName?.value &&
+                          newPetName?.value &&
+                          newClientName?.value &&
+                          newAppointmentType?.value &&
+                          newCustomerPhone?.value &&
+                          newPetType?.value;
   
+  // Check validation rules for specific fields
+  let isValidPhone = true;
+  let isValidClientName = true;
+  let isValidPetName = true;
+  
+  if (newCustomerPhone?.value) {
+    isValidPhone = validatePhone(newCustomerPhone.value);
+  }
+  
+  if (newClientName?.value) {
+    isValidClientName = validateName(newClientName.value);
+  }
+  
+  if (newPetName?.value) {
+    isValidPetName = validateName(newPetName.value);
+  }
+  
+  const isValid = allFieldsFilled && isValidPhone && isValidClientName && isValidPetName;
+  
+  // Update button state
   saveBtn.disabled = !isValid;
   
   if (isValid) {
     saveBtn.style.opacity = '1';
     saveBtn.style.cursor = 'pointer';
+    saveBtn.classList.remove('disabled');
   } else {
     saveBtn.style.opacity = '0.5';
     saveBtn.style.cursor = 'not-allowed';
+    saveBtn.classList.add('disabled');
   }
+  
+  console.log('Validation check:', {
+    allFieldsFilled,
+    isValidPhone,
+    isValidClientName,
+    isValidPetName,
+    isValid,
+    buttonDisabled: saveBtn.disabled
+  });
 }
 
 /**
@@ -660,6 +862,11 @@ function resetReceptionistBooking() {
   if (newPetTypeField) newPetTypeField.value = 'other';
   if (newEmailField) newEmailField.value = '';
   
+  // Clear validation error messages
+  showPhoneError('');
+  showClientNameError('');
+  showPetNameError('');
+  
   loadReceptionistDisabledDates();
   validateReceptionistBooking();
 }
@@ -668,8 +875,58 @@ function resetReceptionistBooking() {
 document.addEventListener('DOMContentLoaded', () => {
   handleReceptionistVetSelection();
   
+  // Add real-time validation listeners for contact and pet details
+  const phoneField = document.getElementById('newCustomerPhone');
+  const clientNameField = document.getElementById('newClientName');
+  const petNameField = document.getElementById('newPetName');
+  
+  if (phoneField) {
+    phoneField.addEventListener('input', (e) => {
+      validatePhoneInput(e);
+      validateReceptionistBooking();
+    });
+    phoneField.addEventListener('change', (e) => {
+      validatePhoneInput(e);
+      validateReceptionistBooking();
+    });
+    phoneField.addEventListener('blur', (e) => {
+      validatePhoneInput(e);
+      validateReceptionistBooking();
+    });
+  }
+  
+  if (clientNameField) {
+    clientNameField.addEventListener('input', (e) => {
+      validateClientNameInput(e);
+      validateReceptionistBooking();
+    });
+    clientNameField.addEventListener('change', (e) => {
+      validateClientNameInput(e);
+      validateReceptionistBooking();
+    });
+    clientNameField.addEventListener('blur', (e) => {
+      validateClientNameInput(e);
+      validateReceptionistBooking();
+    });
+  }
+  
+  if (petNameField) {
+    petNameField.addEventListener('input', (e) => {
+      validatePetNameInput(e);
+      validateReceptionistBooking();
+    });
+    petNameField.addEventListener('change', (e) => {
+      validatePetNameInput(e);
+      validateReceptionistBooking();
+    });
+    petNameField.addEventListener('blur', (e) => {
+      validatePetNameInput(e);
+      validateReceptionistBooking();
+    });
+  }
+  
   // Add validation listeners for form fields
-  const formFields = ['newPetName', 'newClientName', 'newAppointmentType'];
+  const formFields = ['newPetName', 'newClientName', 'newAppointmentType', 'newDate', 'newTime', 'newVetName'];
   formFields.forEach(fieldId => {
     const field = document.getElementById(fieldId);
     if (field) {

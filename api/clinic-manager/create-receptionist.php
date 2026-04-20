@@ -67,6 +67,15 @@ if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
+// Validate phone format (must start with 07 and be exactly 10 digits)
+$phone = preg_replace('/\s+/', '', (string)$data['phone']);
+if (!preg_match('/^07\d{8}$/', $phone)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Invalid phone number. Must start with 07 and be exactly 10 digits']);
+    exit;
+}
+$data['phone'] = $phone;
+
 // Validate password length
 if (strlen($data['password']) < 6) {
     http_response_code(400);

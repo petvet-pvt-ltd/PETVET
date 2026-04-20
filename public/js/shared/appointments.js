@@ -514,6 +514,19 @@
                 window.initReceptionistBooking();
             }
             
+            // Ensure button is disabled on modal open
+            const saveBtn = document.getElementById('saveAppointmentBtn');
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.style.opacity = '0.5';
+                saveBtn.style.cursor = 'not-allowed';
+            }
+            
+            // Run validation
+            if (typeof window.validateReceptionistBooking === 'function') {
+                window.validateReceptionistBooking();
+            }
+            
             modal.classList.remove('hidden');
             modal.classList.add('active');
         }
@@ -808,6 +821,13 @@
         const timeInput = document.getElementById('newTime');
         const appointmentTypeInput = document.getElementById('newAppointmentType');
         const emailInput = document.getElementById('newCustomerEmail');
+        const saveBtn = document.getElementById('saveAppointmentBtn');
+        
+        // CHECK: Button should be enabled before calling this
+        if (saveBtn && saveBtn.disabled) {
+            showNotification('Please fill in all required fields correctly before saving', 'Validation Error', 'error');
+            return;
+        }
         
         // Check if this is a registered user
         const isRegisteredUser = window.currentRegisteredUserId != null;
@@ -850,7 +870,7 @@
                 // For now, we'll need to enhance this later, but we have pet_id
             }
         } else {
-            // Walk-in flow
+            // Walk-in flow - VALIDATE ALL FIELDS
             const petInput = document.getElementById('newPetName');
             const clientInput = document.getElementById('newClientName');
             const petTypeInput = document.getElementById('newPetType');
@@ -860,9 +880,48 @@
                 return;
             }
             
-            petName = petInput.value.trim();
+            // ===== VALIDATION RULES =====
+            
+            // PHONE VALIDATION: starts with 07, exactly 10 digits
+            const cleanPhone = phoneInput.value.trim().replace(/\s/g, '');
+            if (!cleanPhone.startsWith('07')) {
+                showNotification('❌ Phone must start with 07', 'Invalid Phone', 'error');
+                return;
+            }
+            if (cleanPhone.length !== 10) {
+                showNotification('❌ Phone must contain exactly 10 digits', 'Invalid Phone', 'error');
+                return;
+            }
+            if (!/^07\d{8}$/.test(cleanPhone)) {
+                showNotification('❌ Phone must contain only digits', 'Invalid Phone', 'error');
+                return;
+            }
+            
+            // CLIENT NAME VALIDATION: letters and spaces only
+            const clientNameValue = clientInput.value.trim();
+            if (!/^[a-zA-Z\s]+$/.test(clientNameValue)) {
+                showNotification('❌ Client name must contain letters only (no numbers or special characters)', 'Invalid Client Name', 'error');
+                return;
+            }
+            if (clientNameValue.length < 2) {
+                showNotification('❌ Client name must be at least 2 characters', 'Invalid Client Name', 'error');
+                return;
+            }
+            
+            // PET NAME VALIDATION: letters and spaces only
+            const petNameValue = petInput.value.trim();
+            if (!/^[a-zA-Z\s]+$/.test(petNameValue)) {
+                showNotification('❌ Pet name must contain letters only (no numbers or special characters)', 'Invalid Pet Name', 'error');
+                return;
+            }
+            if (petNameValue.length < 2) {
+                showNotification('❌ Pet name must be at least 2 characters', 'Invalid Pet Name', 'error');
+                return;
+            }
+            
+            petName = petNameValue;
             petType = petTypeInput.value;
-            clientName = clientInput.value.trim();
+            clientName = clientNameValue;
             guestClientName = clientName;
         }
         

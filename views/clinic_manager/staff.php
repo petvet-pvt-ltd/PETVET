@@ -207,8 +207,16 @@ $total_staff = count($staff);
         </select></label>
       </div>
       <div class="row">
-        <label>Email<input type="email" name="email" id="editStaffEmail" required></label>
-        <label>Phone<input name="phone" id="editStaffPhone" required></label>
+        <label>
+          Email
+          <input type="email" name="email" id="editStaffEmail">
+          <span class="email-validation-error" id="editStaffEmailError" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;"></span>
+        </label>
+        <label>
+          Phone
+          <input name="phone" id="editStaffPhone" required>
+          <span class="phone-validation-error" id="editStaffPhoneError" style="display:none;color:#dc2626;font-size:12px;margin-top:4px;"></span>
+        </label>
       </div>
       <div class="row">
         <label>Status<select name="status" id="editStaffStatus" required>
@@ -305,6 +313,44 @@ $total_staff = count($staff);
 
 <script>
 // ============================================
+// SHARED VALIDATION HELPERS
+// ============================================
+function getPhoneError07(phone, { required = true } = {}) {
+  const value = String(phone || '').trim();
+  if (!value) {
+    return required ? 'Phone is required' : '';
+  }
+  if (!/^\d+$/.test(value)) return 'Only numbers allowed';
+  if (!value.startsWith('07')) return 'Phone must start with 07';
+  if (value.length > 10) return 'Phone must be exactly 10 digits';
+  if (value.length < 10) return `Need ${10 - value.length} more digit(s)`;
+  return '';
+}
+
+function getEmailError(email, { required = true } = {}) {
+  const value = String(email || '').trim();
+  if (!value) {
+    return required ? 'Email is required' : '';
+  }
+  // Simple, practical email check (avoids relying on browser bubbles)
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Invalid email format';
+  return '';
+}
+
+function applyFieldError(inputEl, errorEl, message) {
+  if (!inputEl || !errorEl) return;
+  if (message) {
+    errorEl.textContent = message;
+    errorEl.style.display = 'block';
+    inputEl.setCustomValidity(message);
+  } else {
+    errorEl.textContent = '';
+    errorEl.style.display = 'none';
+    inputEl.setCustomValidity('');
+  }
+}
+
+// ============================================
 // ADD STAFF MEMBER
 // ============================================
 const addBtn = document.getElementById('openAddStaff');
@@ -332,35 +378,8 @@ const staffPhoneInput = document.getElementById('staffPhone');
 const staffPhoneError = document.getElementById('staffPhoneError');
 
 staffPhoneInput.addEventListener('input', function() {
-  const phone = this.value.trim();
-  let errorMsg = '';
-  
-  if (phone) {
-    // Check if only numbers
-    if (!/^\d*$/.test(phone)) {
-      errorMsg = 'Only numbers allowed';
-    }
-    // Check if starts with 07
-    else if (phone.length > 0 && !phone.startsWith('07')) {
-      errorMsg = 'Phone must start with 07';
-    }
-    // Check if exactly 10 digits when complete
-    else if (phone.length > 10) {
-      errorMsg = 'Phone must be exactly 10 digits';
-    }
-    else if (phone.length > 0 && phone.length < 10) {
-      errorMsg = `Need ${10 - phone.length} more digit(s)`;
-    }
-  }
-  
-  if (errorMsg) {
-    staffPhoneError.textContent = errorMsg;
-    staffPhoneError.style.display = 'block';
-    this.setCustomValidity(errorMsg);
-  } else {
-    staffPhoneError.style.display = 'none';
-    this.setCustomValidity('');
-  }
+  const errorMsg = getPhoneError07(this.value, { required: true });
+  applyFieldError(this, staffPhoneError, errorMsg);
 });
 
 // Email validation for staff form
@@ -372,30 +391,26 @@ staffEmailInput.addEventListener('input', function() {
   clearTimeout(staffEmailCheckTimeout);
   const email = this.value.trim();
   
-  // Clear error if email is empty
-  if (!email) {
-    staffEmailError.style.display = 'none';
+  // Email is optional, but must be valid format if entered
+  const formatError = getEmailError(email, { required: false });
+  if (formatError || !email) {
+    applyFieldError(staffEmailInput, staffEmailError, formatError);
     return;
   }
   
   // Wait 500ms after user stops typing
   staffEmailCheckTimeout = setTimeout(async () => {
-    if (email && email.includes('@')) {
-      try {
-        const response = await fetch(`/PETVET/api/clinic-manager/check-email.php?email=${encodeURIComponent(email)}`);
-        const result = await response.json();
-        
-        if (result.success && result.exists) {
-          staffEmailError.textContent = `❌ ${result.message} (${result.user.name})`;
-          staffEmailError.style.display = 'block';
-          staffEmailInput.setCustomValidity('Email already exists');
-        } else {
-          staffEmailError.style.display = 'none';
-          staffEmailInput.setCustomValidity('');
-        }
-      } catch (error) {
-        console.error('Email check error:', error);
+    try {
+      const response = await fetch(`/PETVET/api/clinic-manager/check-email.php?email=${encodeURIComponent(email)}`);
+      const result = await response.json();
+      
+      if (result.success && result.exists) {
+        applyFieldError(staffEmailInput, staffEmailError, `❌ ${result.message} (${result.user.name})`);
+      } else {
+        applyFieldError(staffEmailInput, staffEmailError, '');
       }
+    } catch (error) {
+      console.error('Email check error:', error);
     }
   }, 500);
 });
@@ -403,6 +418,14 @@ staffEmailInput.addEventListener('input', function() {
 // Handle add staff form submission
 staffForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+
+  // Force-validation (prevents fetch submit when invalid)
+  applyFieldError(staffPhoneInput, staffPhoneError, getPhoneError07(staffPhoneInput.value, { required: true }));
+  applyFieldError(staffEmailInput, staffEmailError, getEmailError(staffEmailInput.value, { required: false }) || (staffEmailInput.validity.customError ? staffEmailInput.validationMessage : ''));
+  if (!staffForm.checkValidity()) {
+    staffForm.reportValidity();
+    return;
+  }
   
   // Check if email validation passed
   if (staffEmailInput.validity.customError) {
@@ -445,6 +468,10 @@ staffForm.addEventListener('submit', async (e) => {
 const editModal = document.getElementById('editStaffModal');
 const cancelEdit = document.getElementById('cancelEditStaff');
 const editStaffForm = document.getElementById('editStaffForm');
+const editStaffPhoneInput = document.getElementById('editStaffPhone');
+const editStaffPhoneError = document.getElementById('editStaffPhoneError');
+const editStaffEmailInput = document.getElementById('editStaffEmail');
+const editStaffEmailError = document.getElementById('editStaffEmailError');
 
 function openEdit(staffData) {
   document.getElementById('editStaffId').value = staffData.id;
@@ -470,6 +497,14 @@ editModal.addEventListener('click', e => {
 // Handle edit staff form submission
 editStaffForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+
+  // Validate phone + email before allowing submit
+  applyFieldError(editStaffPhoneInput, editStaffPhoneError, getPhoneError07(editStaffPhoneInput.value, { required: true }));
+  applyFieldError(editStaffEmailInput, editStaffEmailError, getEmailError(editStaffEmailInput.value, { required: false }));
+  if (!editStaffForm.checkValidity()) {
+    editStaffForm.reportValidity();
+    return;
+  }
   
   const formData = new FormData(editStaffForm);
   const data = Object.fromEntries(formData.entries());
@@ -498,6 +533,14 @@ editStaffForm.addEventListener('submit', async (e) => {
     console.error('Error updating staff:', error);
     alert('An error occurred. Please try again.');
   }
+});
+
+// Realtime validation for edit staff
+editStaffPhoneInput.addEventListener('input', function() {
+  applyFieldError(this, editStaffPhoneError, getPhoneError07(this.value, { required: true }));
+});
+editStaffEmailInput.addEventListener('input', function() {
+  applyFieldError(this, editStaffEmailError, getEmailError(this.value, { required: false }));
 });
 
 // Bind edit buttons
@@ -648,35 +691,7 @@ const recepPhoneInput = document.getElementById('recepPhone');
 const recepPhoneError = document.getElementById('recepPhoneError');
 
 recepPhoneInput.addEventListener('input', function() {
-  const phone = this.value.trim();
-  let errorMsg = '';
-  
-  if (phone) {
-    // Check if only numbers
-    if (!/^\d*$/.test(phone)) {
-      errorMsg = 'Only numbers allowed';
-    }
-    // Check if starts with 07
-    else if (phone.length > 0 && !phone.startsWith('07')) {
-      errorMsg = 'Phone must start with 07';
-    }
-    // Check if exactly 10 digits when complete
-    else if (phone.length > 10) {
-      errorMsg = 'Phone must be exactly 10 digits';
-    }
-    else if (phone.length > 0 && phone.length < 10) {
-      errorMsg = `Need ${10 - phone.length} more digit(s)`;
-    }
-  }
-  
-  if (errorMsg) {
-    recepPhoneError.textContent = errorMsg;
-    recepPhoneError.style.display = 'block';
-    this.setCustomValidity(errorMsg);
-  } else {
-    recepPhoneError.style.display = 'none';
-    this.setCustomValidity('');
-  }
+  applyFieldError(this, recepPhoneError, getPhoneError07(this.value, { required: true }));
 });
 
 // Email validation for receptionist form
@@ -687,31 +702,27 @@ let recepEmailCheckTimeout;
 recepEmailInput.addEventListener('input', function() {
   clearTimeout(recepEmailCheckTimeout);
   const email = this.value.trim();
-  
-  // Clear error if email is empty
-  if (!email) {
-    recepEmailError.style.display = 'none';
+
+  // Email is required and must be valid format
+  const formatError = getEmailError(email, { required: true });
+  if (formatError) {
+    applyFieldError(recepEmailInput, recepEmailError, formatError);
     return;
   }
   
   // Wait 500ms after user stops typing
   recepEmailCheckTimeout = setTimeout(async () => {
-    if (email && email.includes('@')) {
-      try {
-        const response = await fetch(`/PETVET/api/clinic-manager/check-email.php?email=${encodeURIComponent(email)}`);
-        const result = await response.json();
-        
-        if (result.success && result.exists) {
-          recepEmailError.textContent = `❌ ${result.message} (${result.user.name})`;
-          recepEmailError.style.display = 'block';
-          recepEmailInput.setCustomValidity('Email already exists');
-        } else {
-          recepEmailError.style.display = 'none';
-          recepEmailInput.setCustomValidity('');
-        }
-      } catch (error) {
-        console.error('Email check error:', error);
+    try {
+      const response = await fetch(`/PETVET/api/clinic-manager/check-email.php?email=${encodeURIComponent(email)}`);
+      const result = await response.json();
+      
+      if (result.success && result.exists) {
+        applyFieldError(recepEmailInput, recepEmailError, `❌ ${result.message} (${result.user.name})`);
+      } else {
+        applyFieldError(recepEmailInput, recepEmailError, '');
       }
+    } catch (error) {
+      console.error('Email check error:', error);
     }
   }, 500);
 });
@@ -719,6 +730,18 @@ recepEmailInput.addEventListener('input', function() {
 // Handle receptionist form submission
 receptionistForm.addEventListener('submit', async function(e) {
   e.preventDefault();
+
+  // Force-validation (prevents fetch submit when invalid)
+  applyFieldError(recepPhoneInput, recepPhoneError, getPhoneError07(recepPhoneInput.value, { required: true }));
+  // email required; will also carry "email exists" custom errors
+  const recepEmailFormatError = getEmailError(recepEmailInput.value, { required: true });
+  if (recepEmailFormatError && !recepEmailInput.validity.customError) {
+    applyFieldError(recepEmailInput, recepEmailError, recepEmailFormatError);
+  }
+  if (!receptionistForm.checkValidity()) {
+    receptionistForm.reportValidity();
+    return;
+  }
   
   // Check if email validation passed
   if (recepEmailInput.validity.customError) {
