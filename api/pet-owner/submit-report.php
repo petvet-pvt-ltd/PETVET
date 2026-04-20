@@ -44,13 +44,12 @@ try {
     $phone = $_POST['phone'] ?? '';
     $phone2 = $_POST['phone2'] ?? '';
     $email = $_POST['email'] ?? '';
-    $reward = $_POST['reward'] ?? '';
     $price = $_POST['price'] ?? '';
     $risk = $_POST['risk'] ?? 'Medium';
     
     // Validate all fields using model
     $lostFoundModel = new LostFoundModel();
-    $validation = $lostFoundModel->validateReportFields($type, $species, $name, $color, $location, $date, $time, $phone, $phone2, $email, $notes, $reward, $price);
+    $validation = $lostFoundModel->validateReportFields($type, $species, $name, $color, $location, $date, $time, $phone, $phone2, $email, $notes, $price);
     
     if (!$validation['valid']) {
         http_response_code(400);
@@ -121,7 +120,6 @@ try {
         'age' => null,
         'notes' => $notes,
         'time' => $time,
-        'reward' => $reward,
         'price' => $price,
         'risk' => $risk,
         'contact' => [

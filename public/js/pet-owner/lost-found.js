@@ -355,7 +355,6 @@ document.addEventListener('DOMContentLoaded', () => {
 					species: report.species,
 					name: report.name || 'Unknown',
 					color: report.color,
-					reward: report.reward || 0,
 					price: report.price || 0,
 					location: report.last_seen,
 					date: report.date,
@@ -534,8 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		qs('#editSpecies').value = listing.species;
 		qs('#editName').value = listing.name || '';
 		qs('#editColor').value = listing.color || '';
-		qs('#editReward').value = listing.reward || '0';
-		qs('#editPrice').value = listing.price || '0';
+		qs('#editprice').value = listing.price || '0';
 		qs('#editrisk').value = listing.risk || 'Medium';
 		qs('#editLocation').value = listing.location || '';
 		qs('#editDate').value = listing.date;
@@ -829,8 +827,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		formData.append('phone', qs('#rPhone').value || '');
 		formData.append('phone2', qs('#rPhone2').value || '');
 		formData.append('email', qs('#rEmail').value || '');
-	    formData.append('reward', qs('#rReward').value || '0'); 
-		formData.append('price', qs('#rPrice').value || '0');
+	    formData.append('price', qs('#rprice').value || '0'); 
 		formData.append('risk', qs('#rrisk').value);
 		
 		// Append multiple photos
@@ -914,8 +911,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			formData.append('phone', qs('#editPhone').value);
 			formData.append('phone2', qs('#editPhone2').value);
 			formData.append('email', qs('#editEmail').value);
-			formData.append('reward', qs('#editReward').value || '0');
-			formData.append('price', qs('#editPrice').value || '0');
+			formData.append('price', qs('#editprice').value || '0');
 			formData.append('risk', qs('#editrisk').value);
 			
 			// Log form data for debugging

@@ -102,12 +102,10 @@ function lf_fmtDate($ymd){
 					</h4>
 					<p >Risk: <?php echo $r['risk']; ?></p>
 					<p class="meta"><strong>Last seen:</strong> <?php echo lf_esc($r['last_seen'] && $r['last_seen'] !== 'Unknown' ? $r['last_seen'] : 'Location not specified'); ?> — <?php echo lf_fmtDate($r['date']); ?></p>
-					<?php if(!empty($r['reward']) && $r['reward'] > 0): ?>
-						<p>💰 Reward: <?php echo number_format($r['reward'], 2); ?></p>
-					<?php endif; ?>
 					<?php if(!empty($r['price']) && $r['price'] > 0): ?>
-						<p> Price: <?php echo number_format($r['price'], 2); ?></p>
+						<p>💰 price: <?php echo number_format($r['price'], 2); ?></p>
 					<?php endif; ?>
+					
 					<p>Missing for <?php echo $r['days_missing'] ?? 0; ?> days</p>
 					<p class="time-ago" data-time="<?php echo lf_esc($r['time'] ?? ''); ?>" data-date="<?php echo lf_esc($r['date']); ?>" style="color: var(--primary); font-weight: 500; font-size: 0.9em; margin-top: 4px;"></p>
 				<p class="report-distance" data-report-id="<?php echo lf_esc($r['id']); ?>">
@@ -225,11 +223,8 @@ function lf_fmtDate($ymd){
 						<option value="High">High</option>
 					</select>
 				</label>
-				<label class="field">Reward
-					<input type="number" id="rReward" placeholder="0.00" min="0">
-				</label>
-					<label class="field">Price
-					<input type="number" id="rPrice" placeholder="0.00" min="0">
+				<label class="field">price
+					<input type="number" id="rprice" placeholder="0.00" min="0">
 				</label>
 			</div>
 			<label class="field">Select location on map
@@ -345,12 +340,10 @@ function lf_fmtDate($ymd){
 						<option value="High">High</option>
 					</select>
 				</label>
-				<label class="field">Reward
-					<input type="number" id="editReward" placeholder="0.00" min="0">
+				<label class="field">price
+					<input type="number" id="editprice" placeholder="0.00" min="0">
 				</label>
-				<label class="field">Price
-					<input type="number" id="editPrice" placeholder="0.00" min="0">
-				</label>
+			
 			</div>
 			<label class="field">Select location on map
 				<div id="editMapContainer" style="height: 450px; width: 100%; border-radius: 8px; margin-top: 8px; border: 1px solid var(--line, #e0e0e0);"></div>

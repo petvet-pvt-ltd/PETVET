@@ -7,7 +7,7 @@ class LostFoundModel extends BaseModel {
      * Validate all report form fields
      * Returns array with 'valid' boolean and 'errors' array
      */
-    public function validateReportFields($type, $species, $name, $color, $location, $date, $time, $phone, $phone2, $email, $notes, $reward = null,$price = null) {
+    public function validateReportFields($type, $species, $name, $color, $location, $date, $time, $phone, $phone2, $email, $notes, $price = null) {
         $errors = [];
         
         // Validate type
@@ -78,7 +78,8 @@ class LostFoundModel extends BaseModel {
         // Validate time (optional but validate if provided)
         $time = trim($time ?? '');
         if (!empty($time)) {
-            if (!preg_match('/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/', $time)) {
+            // Accept both HH:MM and HH:MM:SS formats
+            if (!preg_match('/^([0-1][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/', $time)) {
                 $errors[] = 'Time must be in HH:MM format (24-hour)';
             }
         }
@@ -113,22 +114,15 @@ class LostFoundModel extends BaseModel {
             }
         }
         
-        // Validate reward (optional but if provided must be numeric and non-negative)
-        if ($reward !== null && $reward !== '') {
-            if (!is_numeric($reward) || $reward < 0) {
-                $errors[] = 'Reward must be a positive number';
-            } elseif ($reward > 9999999) {
-                $errors[] = 'Reward amount is too large';
+        // Validate price (optional but if provided must be numeric and non-negative)
+        if ($price !== null && $price !== '') {
+            if (!is_numeric($price) || $price < 0) {
+                $errors[] = 'price must be a positive number';
+            } elseif ($price > 9999999) {
+                $errors[] = 'price amount is too large';
             }
         }
         
-        if ($price !== null && $price !== '') {
-            if (!is_numeric($price) || $price < 0) {
-                $errors[] = 'Price must be a positive number';
-            } elseif ($price > 9999999) {
-                $errors[] = 'Price amount is too large';
-            }
-        }
         return [
             'valid' => empty($errors),
             'errors' => $errors
@@ -225,7 +219,6 @@ class LostFoundModel extends BaseModel {
                 'breed' => $report['breed'] ?? 'Unknown',
                 'age' => $report['age'] ?? 'Unknown',
                 'color' => $report['color'] ?? '',
-                'reward' => $report['reward'] ? (float)$report['reward'] : 0,
                 'price' => $report['price'] ? (float)$report['price'] : 0,
                 'risk' => $report['risk'] ?? 'medium',
                 'time' => $report['time'] ?? null,
@@ -271,7 +264,7 @@ class LostFoundModel extends BaseModel {
         try {
             $stmt = $this->db->prepare("
                 SELECT * FROM LostFoundReport 
-                WHERE type = 'lost' AND reward BETWEEN 8 AND 80000
+                WHERE type = 'lost' AND price BETWEEN 8 AND 80000
                 ORDER BY date_reported DESC
             ");
             $stmt->execute();
@@ -333,7 +326,6 @@ class LostFoundModel extends BaseModel {
             $age = isset($data['age']) ? $data['age'] : null;
             $notes = isset($data['notes']) ? $data['notes'] : null;
             $time = isset($data['time']) ? $data['time'] : null;
-            $reward = isset($data['reward']) ? (float)$data['reward'] : null;
             $price = isset($data['price']) ? (float)$data['price'] : null;
             $risk = isset($data['risk']) ? $data['risk'] : 'medium';
             $phone = isset($data['contact']['phone']) ? $data['contact']['phone'] : (isset($data['phone']) ? $data['phone'] : null);
@@ -348,10 +340,10 @@ class LostFoundModel extends BaseModel {
             $stmt = $this->db->prepare("
                 INSERT INTO LostFoundReport (
                     type, location, date_reported, species, name, color, breed, age, notes, time,
-                    reward, price, risk, phone, phone2, email, photos, latitude, longitude, user_id, submitted_at, description
+                    price, risk, phone, phone2, email, photos, latitude, longitude, user_id, submitted_at, description
                 ) VALUES (
                     :type, :location, :date_reported, :species, :name, :color, :breed, :age, :notes, :time,
-                    :reward, :price, :risk, :phone, :phone2, :email, :photos, :latitude, :longitude, :user_id, :submitted_at, :description
+                    :price,:risk, :phone, :phone2, :email, :photos, :latitude, :longitude, :user_id, :submitted_at, :description
                 )
             ");
             
@@ -366,7 +358,6 @@ class LostFoundModel extends BaseModel {
                 ':age' => $age,
                 ':notes' => $notes,
                 ':time' => $time,
-                ':reward' => $reward,
                 ':price' => $price,
                 ':risk' => $risk,
                 ':phone' => $phone,
@@ -417,8 +408,8 @@ class LostFoundModel extends BaseModel {
             $age = isset($data['age']) ? $data['age'] : null;
             $notes = isset($data['notes']) ? $data['notes'] : null;
             $time = isset($data['time']) ? $data['time'] : null;
-            $reward = isset($data['reward']) ? (float)$data['reward'] : null;
             $price = isset($data['price']) ? (float)$data['price'] : null;
+           
             $risk = isset($data['risk']) ? $data['risk'] : 'medium';
             $phone = isset($data['contact']['phone']) ? $data['contact']['phone'] : (isset($data['phone']) ? $data['phone'] : null);
             $phone2 = isset($data['contact']['phone2']) ? $data['contact']['phone2'] : (isset($data['phone2']) ? $data['phone2'] : null);
@@ -441,7 +432,6 @@ class LostFoundModel extends BaseModel {
                     age = :age,
                     notes = :notes,
                     time = :time,
-                    reward = :reward,
                     price = :price,
                     risk = :risk,
                     phone = :phone,
@@ -467,7 +457,6 @@ class LostFoundModel extends BaseModel {
                 ':age' => $age,
                 ':notes' => $notes,
                 ':time' => $time,
-                ':reward' => $reward,
                 ':price' => $price,
                 ':risk' => $risk,
                 ':phone' => $phone,
