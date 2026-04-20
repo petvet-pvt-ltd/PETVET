@@ -36,7 +36,7 @@ class BreederPetsModel extends BaseModel {
     public function getBreedingPets($breederId) {
         $stmt = $this->db->prepare("
             SELECT id, name, breed, date_of_birth as dob, species,
-                   photo, description, reward, is_active, age,
+                   photo, breeding_certificate, description, reward, is_active, age,
                    TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) as age_years
             FROM breeder_pets
             WHERE breeder_id = ?
@@ -61,8 +61,8 @@ class BreederPetsModel extends BaseModel {
      */
     public function addBreedingPet($breederId, $data) {
         $stmt = $this->db->prepare("
-            INSERT INTO breeder_pets (breeder_id, name, breed, gender, date_of_birth, age, species, photo, description, reward, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO breeder_pets (breeder_id, name, breed, gender, date_of_birth, age, species, photo, breeding_certificate, description, reward, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
         $result = $stmt->execute([
@@ -73,7 +73,8 @@ class BreederPetsModel extends BaseModel {
             $data['dob'],
             $data['age'],
             $data['species'],
-            $data['photo'],
+            $data['photo'] ?? null,
+            $data['breeding_certificate'] ?? null,
             $data['description'],
             $data['reward'],
             $data['is_active']
@@ -92,7 +93,7 @@ class BreederPetsModel extends BaseModel {
     public function updateBreedingPetWithPhoto($petId, $breederId, $data) {
         $stmt = $this->db->prepare("
             UPDATE breeder_pets 
-            SET name = ?, breed = ?, gender = ?, date_of_birth = ?, age = ?, species = ?, photo = ?, description = ?, reward = ?, is_active = ?
+            SET name = ?, breed = ?, gender = ?, date_of_birth = ?, age = ?, species = ?, photo = ?, breeding_certificate = ?, description = ?, reward = ?, is_active = ?
             WHERE id = ? AND breeder_id = ?
         ");
         
@@ -104,6 +105,7 @@ class BreederPetsModel extends BaseModel {
             $data['age'],
             $data['species'],
             $data['photo'],
+            $data['breeding_certificate'] ?? null,
             $data['description'],
             $data['reward'],
             $data['is_active'],
@@ -124,7 +126,7 @@ class BreederPetsModel extends BaseModel {
     public function updateBreedingPet($petId, $breederId, $data) {
         $stmt = $this->db->prepare("
             UPDATE breeder_pets 
-            SET name = ?, breed = ?, gender = ?, date_of_birth = ?, age = ?, species = ?, description = ?, reward = ?, is_active = ?
+            SET name = ?, breed = ?, gender = ?, date_of_birth = ?, age = ?, species = ?, breeding_certificate = ?, description = ?, reward = ?, is_active = ?
             WHERE id = ? AND breeder_id = ?
         ");
         
@@ -135,6 +137,7 @@ class BreederPetsModel extends BaseModel {
             $data['dob'],
             $data['age'],
             $data['species'],
+            $data['breeding_certificate'] ?? null,
             $data['description'],
             $data['reward'],
             $data['is_active'],

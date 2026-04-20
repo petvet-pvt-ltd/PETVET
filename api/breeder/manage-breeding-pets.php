@@ -104,6 +104,40 @@ function addBreedingPet($model, $userId) {
         }
     }
     
+    // Handle breeding certificate upload
+    $certificatePath = null;
+    if (isset($_FILES['breeding_certificate']) && $_FILES['breeding_certificate']['error'] === UPLOAD_ERR_OK) {
+        $file = $_FILES['breeding_certificate'];
+        
+        // Validate file type (only PDF)
+        if ($file['type'] !== 'application/pdf') {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Breeding certificate must be a PDF file']);
+            return;
+        }
+        
+        // Validate file size (max 10MB)
+        $maxFileSize = 10 * 1024 * 1024;
+        if ($file['size'] > $maxFileSize) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'PDF file size must not exceed 10MB']);
+            return;
+        }
+        
+        $uploadDir = dirname(__DIR__, 2) . '/uploads/breeding_certificates/';
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+        
+        // Generate unique filename
+        $fileName = 'cert_' . time() . '_' . uniqid() . '.pdf';
+        $filePath = $uploadDir . $fileName;
+        
+        if (move_uploaded_file($file['tmp_name'], $filePath)) {
+            $certificatePath = '/PETVET/uploads/breeding_certificates/' . $fileName;
+        }
+    }
+    
     // Prepare data for model
     $data = [
         'name' => $name,
@@ -113,6 +147,7 @@ function addBreedingPet($model, $userId) {
         'age' => $age,
         'species' => $species,
         'photo' => $photoPath,
+        'breeding_certificate' => $certificatePath,
         'description' => $description,
         'reward' => $reward,
         'is_active' => $isActive
@@ -193,6 +228,42 @@ function updateBreedingPet($model, $userId) {
         }
     }
     
+    // Handle breeding certificate upload
+    $certificatePath = null;
+    $updateCertificate = false;
+    if (isset($_FILES['breeding_certificate']) && $_FILES['breeding_certificate']['error'] === UPLOAD_ERR_OK) {
+        $file = $_FILES['breeding_certificate'];
+        
+        // Validate file type (only PDF)
+        if ($file['type'] !== 'application/pdf') {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Breeding certificate must be a PDF file']);
+            return;
+        }
+        
+        // Validate file size (max 10MB)
+        $maxFileSize = 10 * 1024 * 1024;
+        if ($file['size'] > $maxFileSize) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'PDF file size must not exceed 10MB']);
+            return;
+        }
+        
+        $uploadDir = dirname(__DIR__, 2) . '/uploads/breeding_certificates/';
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+        
+        // Generate unique filename
+        $fileName = 'cert_' . time() . '_' . uniqid() . '.pdf';
+        $filePath = $uploadDir . $fileName;
+        
+        if (move_uploaded_file($file['tmp_name'], $filePath)) {
+            $certificatePath = '/PETVET/uploads/breeding_certificates/' . $fileName;
+            $updateCertificate = true;
+        }
+    }
+    
     // Prepare data for model
     $data = [
         'name' => $name,
@@ -202,6 +273,7 @@ function updateBreedingPet($model, $userId) {
         'age' => $age,
         'species' => $species,
         'photo' => $photoPath,
+        'breeding_certificate' => $certificatePath,
         'description' => $description,
         'reward' => $reward,
         'is_active' => $isActive

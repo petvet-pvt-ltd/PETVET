@@ -90,6 +90,7 @@ $pageTitle = "Breeding Pets";
                         <th>Species</th>
                         <th>Price (Rs)</th>
                         <th>Status</th>
+                        <th>Certificate</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -133,6 +134,18 @@ $pageTitle = "Breeding Pets";
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <span class="status-text"><?php echo $pet['is_active'] ? 'Active' : 'Inactive'; ?></span>
+                            </td>
+                            <td data-label="Certificate">
+                                <?php if (!empty($pet['breeding_certificate'])): ?>
+                                    <a href="<?php echo htmlspecialchars($pet['breeding_certificate']); ?>" 
+                                       target="_blank" 
+                                       class="certificate-link" 
+                                       title="Download Certificate">
+                                        📄 Certificate
+                                    </a>
+                                <?php else: ?>
+                                    <span class="no-certificate">—</span>
+                                <?php endif; ?>
                             </td>
                             <td data-label="Actions">
                                 <div class="action-buttons">
@@ -241,6 +254,15 @@ $pageTitle = "Breeding Pets";
                         <div class="form-group full-width">
                             <label for="petDescription">Description (Optional)</label>
                             <textarea id="petDescription" name="description" class="form-control" rows="3" placeholder="Add any additional information about the pet..."></textarea>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="breedingCertificate">Breeding Certificate (PDF)</label>
+                            <div class="file-upload">
+                                <input type="file" id="breedingCertificate" name="breeding_certificate" accept="application/pdf" onchange="previewCertificate(event)">
+                                <label for="breedingCertificate" class="file-upload-btn">📄 Choose PDF File</label>
+                                <span id="certificateFileName" class="file-name"></span>
+                            </div>
                         </div>
 
                         <div class="form-group full-width">

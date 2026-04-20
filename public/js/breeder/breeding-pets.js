@@ -11,6 +11,7 @@ function showAddPetModal() {
     document.getElementById('petForm').reset();
     document.getElementById('petId').value = '';
     document.getElementById('photoPreview').innerHTML = '<span class="photo-placeholder">📷</span>';
+    document.getElementById('certificateFileName').textContent = '';
     document.getElementById('petAge').value = '';
     document.getElementById('petModal').classList.add('active');
 }
@@ -42,6 +43,12 @@ function showEditPetModal(petId) {
         document.getElementById('photoPreview').innerHTML = `<img src="${pet.photo}" alt="Pet Photo">`;
     }
     
+    // Show certificate file name if exists
+    if (pet.breeding_certificate) {
+        const certFileName = pet.breeding_certificate.split('/').pop();
+        document.getElementById('certificateFileName').textContent = '✓ ' + certFileName;
+    }
+    
     document.getElementById('petModal').classList.add('active');
 }
 
@@ -49,6 +56,8 @@ function showEditPetModal(petId) {
 function closePetModal() {
     document.getElementById('petModal').classList.remove('active');
     document.getElementById('petForm').reset();
+    document.getElementById('photoPreview').innerHTML = '<span class="photo-placeholder">📷</span>';
+    document.getElementById('certificateFileName').textContent = '';
     editingPetId = null;
 }
 
@@ -78,6 +87,33 @@ function previewPhoto(event) {
             document.getElementById('photoPreview').innerHTML = `<img src="${e.target.result}" alt="Pet Photo">`;
         };
         reader.readAsDataURL(file);
+    }
+}
+
+// Preview Breeding Certificate (PDF)
+function previewCertificate(event) {
+    const file = event.target.files[0];
+    const maxFileSize = 10 * 1024 * 1024; // 10MB for PDF
+    
+    if (file) {
+        // Validate file type
+        if (file.type !== 'application/pdf') {
+            showToast('Invalid file type. Only PDF files are allowed', 'error');
+            event.target.value = ''; // Reset input
+            document.getElementById('certificateFileName').textContent = '';
+            return;
+        }
+        
+        // Validate file size
+        if (file.size > maxFileSize) {
+            showToast('PDF file size exceeds 10MB limit', 'error');
+            event.target.value = ''; // Reset input
+            document.getElementById('certificateFileName').textContent = '';
+            return;
+        }
+        
+        // Display file name
+        document.getElementById('certificateFileName').textContent = '✓ ' + file.name;
     }
 }
 
