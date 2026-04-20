@@ -41,26 +41,57 @@ function openPaymentForm(appointment) {
 
   // Reset invoice editor inputs
   document.getElementById('paymentForm').reset();
+  
+  // Set device date (read-only)
   document.getElementById('invoice-date').value = todayISO();
+  
   // Use appointment ID as invoice number
   document.getElementById('invoice-no').value = 'INV-' + String(appointment.id).padStart(6, '0');
   document.getElementById('payment-method').value = 'CASH';
-  document.getElementById('client-phone').value = '';
+  
+  // Set phone to loading state initially (will be updated from API)
+  document.getElementById('client-phone').value = 'Loading...';
+  
   document.getElementById('invoice-note').value = '';
   document.getElementById('invoice-discount').value = '0';
   document.getElementById('invoice-cardfee').value = '0';
 
+  // Show loading state
+  document.getElementById('paymentModal').style.display = 'flex';
+  
+  // Show loading message
+  const itemsTbody = document.getElementById('itemsTbody');
+  if (itemsTbody) {
+    itemsTbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">⏳ Loading invoice data...</td></tr>';
+  }
+
   // Fetch real data from database
+  console.log('📄 Loading invoice data for appointment:', appointment.id);
+  
   fetch(`/PETVET/api/receptionist/get-invoice-data.php?appointment_id=${appointment.id}`)
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      return res.json();
+    })
     .then(data => {
       if (!data.success) {
-        alert('Error loading invoice data: ' + (data.error || 'Unknown error'));
-        return;
+        throw new Error(data.error || 'Failed to load invoice data');
       }
 
       // Store clinic data globally for invoice generation
       window.currentClinicData = data.clinic;
+      
+      // Auto-load client phone from appointment data (works for both registered and guest customers)
+      const clientPhone = data.client_phone || data.phone || appointment.client_phone || appointment.phone || '';
+      if (clientPhone) {
+        document.getElementById('client-phone').value = clientPhone;
+        console.log('📞 Client phone auto-loaded:', clientPhone);
+      } else {
+        document.getElementById('client-phone').value = '—';
+        console.warn('⚠️ No phone number found for client');
+      }
 
       // Process medications and vaccinations
       editorDetected = {
@@ -96,11 +127,15 @@ function openPaymentForm(appointment) {
       renderItemsTable();
       recalcTotals();
 
-      document.getElementById('paymentModal').style.display = 'flex';
+      console.log('✅ Invoice data loaded successfully');
     })
     .catch(err => {
-      console.error('Error fetching invoice data:', err);
-      alert('Failed to load invoice data. Please try again.');
+      console.error('❌ Error fetching invoice data:', err);
+      
+      // Clear loading message and show error
+      if (itemsTbody) {
+        itemsTbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px; color: #dc2626;">❌ Failed to load invoice data: ${escapeHtml(err.message)}<br><button onclick="closePaymentModal(); setTimeout(() => location.reload(), 300);" style="margin-top: 10px; padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer;">Retry</button></td></tr>`;
+      }
     });
 }
 
@@ -523,6 +558,8 @@ function confirmPaymentFinal() {
     confirmBtn.textContent = 'Processing...';
   }
   
+  console.log('💳 Confirming payment for appointment:', appointmentId);
+  
   fetch('/PETVET/api/receptionist/confirm-payment.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -531,9 +568,16 @@ function confirmPaymentFinal() {
       invoice_data: invoiceData
     })
   })
-  .then(response => response.json())
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    return response.json();
+  })
   .then(data => {
     if (data.success) {
+      console.log('✅ Payment confirmed successfully for appointment:', appointmentId);
+      
       // Close modals
       closeConfirmPaymentModal();
       closeInvoiceModal();
@@ -542,26 +586,26 @@ function confirmPaymentFinal() {
       // Show success message
       showSuccessMessage();
       
-      // Trigger AJAX refresh instead of full page reload
+      // Trigger AJAX refresh after a short delay to ensure data is committed to DB
       setTimeout(() => {
         if (typeof fetchPaymentsList === 'function') {
+          console.log('🔄 Refreshing payments list after successful payment...');
           fetchPaymentsList();
         } else {
           // Fallback to page reload if AJAX function not available
+          console.warn('fetchPaymentsList not available, doing full page reload');
           window.location.reload();
         }
-      }, 1500);
+      }, 1000);
     } else {
-      alert('Error confirming payment: ' + (data.error || 'Unknown error'));
-      if (confirmBtn) {
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = '✓ Confirm Payment';
-      }
+      throw new Error(data.error || 'Unknown error confirming payment');
     }
   })
   .catch(err => {
-    console.error('Error confirming payment:', err);
-    alert('Failed to confirm payment. Please try again.');
+    console.error('❌ Error confirming payment:', err);
+    alert('Error confirming payment: ' + err.message);
+    
+    // Re-enable button on error
     if (confirmBtn) {
       confirmBtn.disabled = false;
       confirmBtn.textContent = '✓ Confirm Payment';
@@ -578,11 +622,14 @@ function showSuccessMessage() {
 // Close success modal
 function closeSuccessModal() {
   document.getElementById('successModal').style.display = 'none';
-  // Trigger AJAX refresh instead of page reload
+  
+  // Trigger AJAX refresh when closing success modal
   if (typeof fetchPaymentsList === 'function') {
+    console.log('🔄 Refreshing payments list when closing success modal...');
     fetchPaymentsList();
   } else {
     // Fallback to page reload if AJAX function not available
+    console.warn('fetchPaymentsList not available, doing full page reload');
     window.location.reload();
   }
 }

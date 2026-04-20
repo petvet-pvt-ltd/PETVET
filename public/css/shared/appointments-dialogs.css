@@ -115,12 +115,19 @@
     font-weight: 600;
 }
 
+/* Disabled button state */
+.modal-actions .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .btn-danger {
     background: #dc2626;
     border-color: #dc2626;
 }
 
-.btn-danger:hover {
+.btn-danger:hover:not(:disabled) {
     background: #b91c1c;
     border-color: #b91c1c;
 }
@@ -130,7 +137,7 @@
     border-color: #2563eb;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
     background: #1d4ed8;
     border-color: #1d4ed8;
 }
@@ -141,7 +148,7 @@
     border: 1px solid #cbd5e1;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
     background: #f8fafc;
     color: #475569;
     border-color: #94a3b8;

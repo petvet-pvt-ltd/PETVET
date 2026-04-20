@@ -364,14 +364,17 @@ if (!isset($appointments) || !isset($vetNames) || !isset($view) || !isset($modul
             <div class="form-group">
                 <label>Phone Number</label>
                 <input type="tel" id="newCustomerPhone" placeholder="0701234567" required>
+                <div id="phoneError" class="error-message" style="display:none; color:#dc2626; font-size:12px; margin-top:4px;"></div>
             </div>
             <div class="form-group">
                 <label>Client Name</label>
                 <input type="text" id="newClientName" placeholder="Enter client name" required>
+                <div id="clientNameError" class="error-message" style="display:none; color:#dc2626; font-size:12px; margin-top:4px;"></div>
             </div>
             <div class="form-group">
                 <label>Pet Name</label>
                 <input type="text" id="newPetName" placeholder="Enter pet name" required>
+                <div id="petNameError" class="error-message" style="display:none; color:#dc2626; font-size:12px; margin-top:4px;"></div>
             </div>
             <div class="form-group" style="display:none;">
                 <label>Pet Type</label>

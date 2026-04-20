@@ -24,11 +24,15 @@ $clinicId = (int)$_SESSION['clinic_id'];
 try {
     $pdo = db();
 
-    // Verify appointment belongs to this clinic
+    // Fetch appointment with client phone (works for both registered and guest customers)
     $stmt = $pdo->prepare("
-        SELECT id, status 
-        FROM appointments 
-        WHERE id = ? AND clinic_id = ?
+        SELECT 
+            a.id, 
+            a.status, 
+            COALESCE(u.phone, a.guest_phone) as client_phone
+        FROM appointments a
+        LEFT JOIN users u ON a.pet_owner_id = u.id
+        WHERE a.id = ? AND a.clinic_id = ?
     ");
     $stmt->execute([$appointmentId, $clinicId]);
     $appt = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -180,6 +184,7 @@ try {
             'email' => $clinic['clinic_email'] ?? '',
             'logo' => $clinic['clinic_logo'] ?? '/PETVET/views/shared/images/sidebar/petvet-logo-web.png'
         ],
+        'client_phone' => $appt['client_phone'] ?? '',
         'medications' => $medications,
         'vaccinations' => $vaccinations
     ]);

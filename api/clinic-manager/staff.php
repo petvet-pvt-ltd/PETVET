@@ -126,6 +126,15 @@ function handlePost($staffModel, $clinicId) {
         echo json_encode(['success' => false, 'message' => 'Invalid email format']);
         return;
     }
+
+    // Validate phone format (must start with 07 and be exactly 10 digits)
+    $phone = isset($data['phone']) ? preg_replace('/\s+/', '', (string)$data['phone']) : '';
+    if (!preg_match('/^07\d{8}$/', $phone)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid phone number. Must start with 07 and be exactly 10 digits']);
+        return;
+    }
+    $data['phone'] = $phone;
     
     // Prevent adding receptionists through this form (they need system accounts)
     if (strtolower($data['role']) === 'receptionist') {
@@ -180,8 +189,8 @@ function handlePut($staffModel, $clinicId) {
         return;
     }
     
-    // Validate required fields
-    $requiredFields = ['name', 'role', 'email', 'phone', 'status'];
+    // Validate required fields (email is optional)
+    $requiredFields = ['name', 'role', 'phone', 'status'];
     $missing = [];
     
     foreach ($requiredFields as $field) {
@@ -199,15 +208,24 @@ function handlePut($staffModel, $clinicId) {
         return;
     }
     
-    // Validate email format
-    if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+    // Validate email format if provided
+    if (!empty($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Invalid email format']);
         return;
     }
+
+    // Validate phone format (must start with 07 and be exactly 10 digits)
+    $phone = isset($data['phone']) ? preg_replace('/\s+/', '', (string)$data['phone']) : '';
+    if (!preg_match('/^07\d{8}$/', $phone)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid phone number. Must start with 07 and be exactly 10 digits']);
+        return;
+    }
+    $data['phone'] = $phone;
     
-    // Check if email already exists for another staff member
-    if ($staffModel->emailExists($data['email'], $id, $clinicId)) {
+    // Check if email already exists for another staff member (only if email is provided)
+    if (!empty($data['email']) && $staffModel->emailExists($data['email'], $id, $clinicId)) {
         http_response_code(409);
         echo json_encode(['success' => false, 'message' => 'Email already exists']);
         return;
